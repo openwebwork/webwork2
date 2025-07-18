@@ -13,12 +13,9 @@
 		file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
 	}) =%>
 	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs',
-		file => 'node_modules/codemirror/lib/codemirror.css' }) =%>
-	<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs',
 		file => 'js/SampleProblemViewer/sample-problem.css' }) =%>
 	<%= javascript $c->url({ type => 'webwork', name => 'htdocs',
-		file => 'node_modules/codemirror/addon/runmode/runmode-standalone.js' }), defer => undef =%>
-	<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PGCodeMirror/PG.js' }), defer => undef =%>
+		file => 'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js' }), defer => undef =%>
 	<%= javascript $c->url({ type => 'webwork', name => 'htdocs',
 		file => 'js/SampleProblemViewer/sample-problem.js' }), defer => undef =%>
 </head>
@@ -94,7 +91,7 @@
 						type="button" data-code="<%= $_->{code} %>" aria-label="<%= maketext('copy to clipboard') %>">
 						<i class="fa-regular fa-clipboard fa-xl"></i>
 					</button>
-					<pre class="CodeMirror cm-s-default m-0 h-100 p-3 border border-secondary overflow-scroll"><% =%>\
+					<pre class="PGCodeMirror m-0 h-100 p-3 border border-secondary overflow-scroll"><% =%>\
 						<%= $_->{code} =%>\
 					</pre><% =%>\
 				</div>

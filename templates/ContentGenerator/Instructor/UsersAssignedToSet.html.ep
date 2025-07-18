@@ -41,9 +41,9 @@
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
-				% for my $user (@{ $c->{user_records} }) {
+				% for my $user (@$user_records) {
 					% my $userID  = $user->user_id;
-					% my $userSet = $db->getUserSet($userID, $setID);
+					% my $userSet = $set_records->{$userID};
 					%
 					<tr>
 						<td class="text-center">

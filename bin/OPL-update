@@ -33,9 +33,6 @@ my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 print "\nDownloading the latest OPL release.\n";
 runScript("$ENV{WEBWORK_ROOT}/bin/download-OPL-metadata-release.pl");
 
-# Generate set definition list files.
-runScript("$ENV{WEBWORK_ROOT}/bin/generate-OPL-set-def-lists.pl");
-
 if ($ce->{problemLibrary}{showLibraryLocalStats} ||
     $ce->{problemLibrary}{showLibraryGlobalStats}) {
   print "\nUpdating Library Statistics.\n";

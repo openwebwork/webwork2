@@ -507,7 +507,7 @@ TEXT(tag(
 								>]{ [ style => 'border: 1px solid black; padding: 1rem;' ] }
 
 								One useful application is when using the parserMultiAnswer.pl macro with
-								singleResult answers. Wrap the answers in in a div tag with the
+								singleResult answers. Wrap the answers in a div tag with the
 								"ww-feedback-container" class to tell PG where to place the feedback
 								button. The feedback button will be placed at the end of the containing div
 								tag.

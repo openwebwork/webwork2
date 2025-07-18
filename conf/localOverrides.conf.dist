@@ -1,18 +1,4 @@
 #!perl
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
 
 # This file should be used to override any of the default settings in defaults.config.
 # The most commonly changed settings are provided as examples below, but any directive
@@ -26,13 +12,11 @@
 
 # localOverrides.conf contains the local modifications commonly made
 # when installing WeBWorK on a new site. The configurations in defaults.config
-# and in database.conf can usually remain untouched.
+# should not be changed.
 #
 # localOverride.conf is the appropriate place to override permission settings,
 # paths to macros and other customizations that are specific to your
 # WeBWorK site
-
-
 
 ################################################################################
 # Additional mail settings in defaults.config can be overridden here
@@ -251,6 +235,24 @@ $mail{feedbackRecipients}    = [
 #$permissionLevels{record_answers_when_acting_as_student} = "professor";
 
 ################################################################################
+# Initial password fallback
+################################################################################
+
+# This sets the default fallback source to use for a user's password when a user
+# account is created in a course. That is the source that will be shown by
+# default in a select menu in the user interface, and the source that will be
+# used by the importClassList.pl and addcourse scripts.  It can be one of
+# 'user_id', 'first_name', 'last_name', or 'student_id', or can be set to '' (or
+# anything not listed before).  If a user is created and no password is
+# explicitly provided, then this source will used for the password (assuming
+# that source value is also set).  If this is not one of the allowed sources,
+# and if a password is not explicitly provided, then the user will be created
+# without a password and will not be able to sign in with username and password.
+# Note that this is only used at the time that a user is initially created in a
+# course, and not when editing passwords at a later time.
+#$fallback_password_source = 'student_id';
+
+################################################################################
 # Default settings for the problem editor pages
 ################################################################################
 
@@ -460,24 +462,16 @@ $mail{feedbackRecipients}    = [
 # methods of authentication.
 
 # Select the authentication module to use for normal logins.
-#
-# If this value is a string, the given authentication module will be used
-# regardless of the database layout.
-#
-# If it is a hash, the database layout name will be looked up in the hash and
-# the resulting value will be used as the authentication module.  The special
-# hash key "*" is used if no entry for the current database layout is found.
-#
-# If this value is a sequence of strings or hashes, then each string or hash in
-# the sequence will be successively tested to see if it provides a module that
-# can handle the authentication request by calling the module's sub
-# request_has_data_for_this_verification_module().  The first module that
+# If this value is a string, then that authentication module will be used.  If
+# this value is a reference to an array of strings, then each string in the
+# array will be successively tested to see if it provides a module that can
+# handle the authentication request (by calling that module's
+# request_has_data_for_this_verification_module method).  The first module that
 # responds affirmatively will be used.
-
-#$authen{user_module} = {
-#	"*" => "WeBWorK::Authen::LDAP"
-#	"*" => "WeBWorK::Authen::Basic_TheLastOption"
-#};
+#$authen{user_module} = [
+#	"WeBWorK::Authen::LDAP",
+#	"WeBWorK::Authen::Basic_TheLastOption"
+#];
 
 # Select the authentication module to use for proctor logins.
 # A string or a hash is accepted, as above.
@@ -538,6 +532,16 @@ $mail{feedbackRecipients}    = [
 #include("conf/authen_shibboleth.conf");
 
 ################################################################################
+# Saml2 Authentication
+################################################################################
+# Uncomment the following line to enable authentication via a Saml2 identity
+# provider.  You will also need to copy the file authen_saml2.conf.dist to
+# authen_saml2.conf, and then edit that file to fill in the settings for your
+# installation.
+
+#include("conf/authen_saml2.conf");
+
+################################################################################
 # Session Management
 ################################################################################
 
@@ -586,8 +590,8 @@ $mail{feedbackRecipients}    = [
 #$CookieSameSite = "Lax";
 
 # Set the value of the secure cookie attribute.
-# The default is 0, as 1 will not work without https.
-#$CookieSecure = 1;
+# The default is 1, so if you are serving without https then set this to 0.
+#$CookieSecure = 0;
 
 # If $useSessionCookie is set to 1, then a "session" cookie will be used. This
 # means that the cookie will be deleted when the browser session ends.
@@ -756,5 +760,13 @@ $mail{feedbackRecipients}    = [
 # 		'name' => $user->first_name() . " " . $user->last_name(),
 # 	};
 # };
+
+###############################################################################
+# Test settings
+###############################################################################
+
+# Cap for the number of problems that can be used on a page.
+# If 0, there is no cap. Otherwise, should be a positive integer.
+#$test{maxProblemsPerPage} = 1;
 
 1; #final line of the file to reassure perl that it was read properly.

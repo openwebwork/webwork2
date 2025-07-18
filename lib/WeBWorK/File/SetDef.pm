@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::File::SetDef;
 use Mojo::Base 'Exporter', -signatures;
 
@@ -25,12 +10,12 @@ WeBWorK::File::SetDef - utilities for dealing with set definition files.
 use Carp;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(x);
-use WeBWorK::Utils::DateTime qw(formatDateTime getDefaultSetDueDate parseDateTime timeToSec);
-use WeBWorK::Utils::Files qw(surePathToFile);
+use WeBWorK::Utils             qw(x);
+use WeBWorK::Utils::DateTime   qw(formatDateTime getDefaultSetDueDate parseDateTime timeToSec);
+use WeBWorK::Utils::Files      qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers addProblemToSet);
-use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets       qw(format_set_name_display);
 
 our @EXPORT_OK = qw(importSetsFromDef readSetDef exportSetsToDef);
 
@@ -562,7 +547,6 @@ sub readSetDef ($ce, $fileName) {
 					$problemData->{$item} = $value if defined $value;
 				} elsif ($item eq 'problem_end') {
 					# Clean up and validate values
-					$problemData->{source_file} =~ s/\s*//g;
 					push(@errors, [ 'No source_file for problem in "[_1]"', $fileName ])
 						unless $problemData->{source_file};
 
@@ -662,7 +646,7 @@ SET: for my $set (@sets) {
 				};
 		}
 
-		# These dates can not be created in locale of the course language and need to be in the specified format.  The
+		# These dates cannot be created in locale of the course language and need to be in the specified format.  The
 		# set import method uses the WeBWorK::Utils::parseDateTime method which does not know how to parse dates in
 		# other locales than the hard coded old format.  Furthermore, even modern libraries that parse date/time strings
 		# claim not to be able to do so reliably when they are localized.

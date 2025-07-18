@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authen;
 
 =head1 NAME
@@ -52,10 +37,10 @@ use warnings;
 
 use Date::Format;
 use Scalar::Util qw(weaken);
-use Mojo::Util qw(b64_encode b64_decode);
+use Mojo::Util   qw(b64_encode b64_decode);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(x runtime_use);
+use WeBWorK::Utils       qw(x runtime_use utf8Crypt);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
@@ -94,29 +79,21 @@ sub class {
 	my ($ce, $type) = @_;
 
 	if (exists $ce->{authen}{$type}) {
-		if (ref $ce->{authen}{$type} eq "ARRAY") {
+		if (ref $ce->{authen}{$type} eq 'ARRAY') {
 			my $authen_type = shift @{ $ce->{authen}{$type} };
-			if (ref($authen_type) eq "HASH") {
-				if (exists $authen_type->{ $ce->{dbLayoutName} }) {
-					return $authen_type->{ $ce->{dbLayoutName} };
-				} elsif (exists $authen_type->{"*"}) {
-					return $authen_type->{"*"};
-				} else {
-					die "authentication type '$type' in the course environment has no entry for db layout '",
-						$ce->{dbLayoutName}, "' and no default entry (*)";
-				}
+			if (ref($authen_type) eq 'HASH') {
+				# Basic backwards compatibility.
+				return $authen_type->{'*'}        if exists $authen_type->{'*'};
+				return $authen_type->{sql_single} if exists $authen_type->{sql_single};
+				die 'Unsupported authentication module format in the course environment.';
 			} else {
 				return $authen_type;
 			}
-		} elsif (ref $ce->{authen}{$type} eq "HASH") {
-			if (exists $ce->{authen}{$type}{ $ce->{dbLayoutName} }) {
-				return $ce->{authen}{$type}{ $ce->{dbLayoutName} };
-			} elsif (exists $ce->{authen}{$type}{"*"}) {
-				return $ce->{authen}{$type}{"*"};
-			} else {
-				die "authentication type '$type' in the course environment has no entry for db layout '",
-					$ce->{dbLayoutName}, "' and no default entry (*)";
-			}
+		} elsif (ref $ce->{authen}{$type} eq 'HASH') {
+			# Basic backwards compatibility.
+			return $ce->{authen}{$type}{'*'}        if exists $ce->{authen}{$type}{'*'};
+			return $ce->{authen}{$type}{sql_single} if exists $ce->{authen}{$type}{sql_single};
+			die 'Unsupported authentication module format in the course environment.';
 		} else {
 			return $ce->{authen}{$type};
 		}
@@ -130,9 +107,7 @@ sub call_next_authen_method {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	my $user_authen_module =
-		WeBWorK::Authen::class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
-
+	my $user_authen_module = class($ce, $ce->{courseName} eq $ce->{admin_course_id} ? 'admin_module' : 'user_module');
 	if (!defined $user_authen_module || $user_authen_module eq '') {
 		$self->{error} = $c->maketext(
 			"No authentication method found for your request.  If this recurs, please speak with your instructor.");
@@ -633,7 +608,7 @@ sub checkPassword {
 	my $Password = $db->getPassword($userID);
 	if (defined $Password) {
 		# Check against the password in the database.
-		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
+		my $possibleCryptPassword = utf8Crypt($possibleClearPassword, $Password->password);
 		my $dbPassword            = $Password->password;
 		# This next line explicitly insures that blank or null passwords from the database can never succeed in matching
 		# an entered password.  This also rejects cases when the database has a crypted password which matches a
@@ -868,6 +843,10 @@ sub store_session {
 			debug("The cookie session contains\n", $self->{c}->dumper($cookieSession));
 		}
 	}
+
+	# The session parameters need to be set again, because another request may have occured during this
+	# request in which case the session parameters for the app will now be set for that request.
+	$self->{c}->setSessionParams;
 
 	return;
 }

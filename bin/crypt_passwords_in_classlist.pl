@@ -13,7 +13,7 @@ BEGIN {
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
 
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils           qw(cryptPassword);
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 
 unless (@ARGV == 1) {

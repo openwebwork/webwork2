@@ -49,7 +49,8 @@
 									params => { editMode => 1, selected_achievements => $achievement_id }
 								),
 								begin %>
-								<i class="icon fas fa-pencil-alt" data-alt="edit" aria-hidden="true"></i>
+								<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+								<span class="visually-hidden"><%= maketext('Edit') =%></span>
 							<% end %>
 						</div>
 					</td>

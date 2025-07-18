@@ -80,7 +80,7 @@
 			<div class="btn-group student-nav-filter-selector">
 				<%= link_to $filter ? $filters->{$filter}[0] : maketext('Showing all tests') => '#',
 						id              => 'testSelectorFilter',
-						class           => 'btn btn-primary dropdown-toggle dropdown-toggle-split',
+						class           => 'btn btn-primary dropdown-toggle',
 						role            => 'button',
 						data            => { bs_toggle => 'dropdown' },
 						'aria-expanded' => 'false' =%>

@@ -2,20 +2,20 @@
 
 # This script downloads the latest OPL metadata release, and restores the database dump file in that release.
 
-use feature say;
 use strict;
 use warnings;
+use feature 'say';
 
 use File::Fetch;
 use File::Copy;
 use File::Path;
 use Archive::Tar;
 use Mojo::File;
-use JSON;
+use Mojo::JSON qw(decode_json);
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -36,7 +36,7 @@ my $releaseDataFF =
 	File::Fetch->new(uri => 'https://api.github.com/repos/openwebwork/webwork-open-problem-library/releases/latest');
 my $file        = $releaseDataFF->fetch(to => $ce->{webworkDirs}{tmp}) or die $releaseDataFF->error;
 my $path        = Mojo::File->new($file);
-my $releaseData = JSON->new->utf8->decode($path->slurp);
+my $releaseData = decode_json($path->slurp);
 $path->remove;
 
 my $releaseTag = $releaseData->{tag_name};

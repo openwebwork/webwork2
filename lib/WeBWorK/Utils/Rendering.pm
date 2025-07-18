@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Utils::Rendering;
 use Mojo::Base 'Exporter', -signatures;
 
@@ -23,12 +8,12 @@ WeBWorK::Utils::Rendering - utilities for rendering problems.
 =cut
 
 use Mojo::IOLoop;
-use Mojo::JSON qw(decode_json);
+use Mojo::JSON            qw(decode_json);
 use Data::Structure::Util qw(unbless);
-use Digest::MD5 qw(md5_hex);
-use Encode qw(encode_utf8);
+use Digest::MD5           qw(md5_hex);
+use Encode                qw(encode_utf8);
 
-use WeBWorK::Utils::DateTime qw(formatDateTime);
+use WeBWorK::Utils::DateTime          qw(formatDateTime);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::PG;
 
@@ -133,7 +118,8 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{needs_grading} = ($problem->flags // '') =~ /:needs_grading$/;
 
 	# Persistent problem data
-	$options{PERSISTENCE_HASH} = decode_json($problem->problem_data || '{}');
+	$options{PERSISTENCE_HASH} = decode_json($translationOptions->{problemData}
+			// (defined $problem->problem_data && $problem->problem_data ne '' ? $problem->problem_data : '{}'));
 
 	# Language
 	$options{language} = $ce->{language};
@@ -239,7 +225,7 @@ This method requires a course environment, user, set, problem, psvn, form
 fields, and translation options.  These are passed to the WeBWorK::PG
 constructor inside of a subprocess.  The created object is then parsed into a
 hash that containing all of the data webwork2 needs for rendering and processing
-the problem.  Note that this hash can not contain any blessed references.  Those
+the problem.  Note that this hash cannot contain any blessed references.  Those
 will all be lost in the return value from the process.
 
 The return value of the method is a Mojo::Promise that will resolve to the above
@@ -284,8 +270,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 				map { $_ => $pg->{pgcore}{PG_alias}{resource_list}{$_}{uri} }
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
-			$ret->{PERSISTENCE_HASH_UPDATED} = $pg->{pgcore}{PERSISTENCE_HASH_UPDATED};
-			$ret->{PERSISTENCE_HASH}         = $pg->{pgcore}{PERSISTENCE_HASH};
+			$ret->{PERSISTENCE_HASH} = $pg->{pgcore}{PERSISTENCE_HASH};
 		}
 
 		# Save the problem source. This is used by Caliper::Entity. Why?

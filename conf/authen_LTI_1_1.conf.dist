@@ -129,7 +129,7 @@ $LTI{v1p1}{BasicConsumerSecret} = '';
 # The consumer key is entered in the LMS request form, and needs to match the entry here if this
 # is set.  This is only used for content item selection requests from an LMS, and this does not
 # even need to be set for that unless there are multiple courses from different LMS's that have
-# the same LMS course id and both use a course on this webwork2 server.  In that case each LMS
+# the same LMS context id and both use a course on this webwork2 server.  In that case each LMS
 # must use a different consumer key, and the correct consumer keys should be set in the
 # course.conf file for each course. If this server is a tool provider for multiple LMS's, then
 # it is recommended that this be set. Usually it is not useful to set this here.  However, if
@@ -226,8 +226,5 @@ $LTI{v1p1}{LMSrolesToWeBWorKroles} = {
 #  $userSet->due_date($niceDueTime);
 #  $userSet->answer_date($niceAnswerTime);
 #};
-
-# Do not change this.
-$LTI{v1p1}{grader} = 'WeBWorK::Authen::LTIAdvanced::SubmitGrade';
 
 1;    # final line of the file to reassure perl that it was read properly.

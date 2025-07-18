@@ -509,39 +509,4 @@
 	document
 		.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
 		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
-
-	// If this is the browse setdef panel, then set up the check boxes for including OPL or Contrib sets.
-	const setDefSelect = document.getElementsByName('library_sets')[0];
-	const listOPLSetsCheck = document.getElementById('list_opl_sets');
-	const listContribSetsCheck = document.getElementById('list_contrib_sets');
-
-	if (setDefSelect && (listOPLSetsCheck || listContribSetsCheck)) {
-		const allOptions = Array.from(setDefSelect.options);
-
-		const updateAvailableOptions = () => {
-			// Save the currently selected option.
-			let selectedDef = setDefSelect.selectedOptions[0];
-
-			for (const option of Array.from(setDefSelect.options)) option.value && option.remove();
-			for (const option of allOptions) {
-				if (option.value.startsWith('Library/')) {
-					if (listOPLSetsCheck.checked) setDefSelect.add(option);
-					else if (selectedDef === option) selectedDef = null;
-				} else if (option.value.startsWith('Contrib/')) {
-					if (listContribSetsCheck.checked) setDefSelect.add(option);
-					else if (selectedDef === option) selectedDef = null;
-				} else setDefSelect.add(option);
-			}
-
-			// Reselect the option that was selected before if it is still available. Otherwise
-			// select the first option which should be the "Select a Set Defintion File" option.
-			if (selectedDef) selectedDef.selected = true;
-			else allOptions[0].selected = true;
-		};
-
-		listOPLSetsCheck?.addEventListener('change', updateAvailableOptions);
-		listContribSetsCheck?.addEventListener('change', updateAvailableOptions);
-
-		updateAvailableOptions();
-	}
 })();

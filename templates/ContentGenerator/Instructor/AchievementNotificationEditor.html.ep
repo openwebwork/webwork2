@@ -1,9 +1,8 @@
 % use WeBWorK::Utils qw(not_blank getAssetURL);
-% use WeBWorK::HTML::CodeMirrorEditor
-	% qw(generate_codemirror_html generate_codemirror_controls_html output_codemirror_static_files);
+% use WeBWorK::HTML::CodeMirrorEditor qw(generate_codemirror_html output_codemirror_static_files);
 %
 % content_for js => begin
-	<%= output_codemirror_static_files($c, 'perl') =%>
+	<%= output_codemirror_static_files($c) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 % end
 %
@@ -24,8 +23,7 @@
 	% }
 	%
 	<div class="mb-2">
-    <%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'perl') =%></div>
-	<%= generate_codemirror_controls_html($c) =%>
+    <%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'mt-text') =%></div>
 	%
 	% # Output action forms
 	% my $default_choice;

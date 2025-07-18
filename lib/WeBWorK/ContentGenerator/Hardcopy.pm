@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Hardcopy;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
@@ -29,13 +14,13 @@ use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
 
-use WeBWorK::DB::Utils qw/user2global/;
-use WeBWorK::Utils qw(decodeAnswers x);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files qw(readFile);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::DB::Utils        qw/user2global/;
+use WeBWorK::Utils            qw(decodeAnswers x);
+use WeBWorK::Utils::DateTime  qw(after);
+use WeBWorK::Utils::Files     qw(readFile);
+use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted);
+use WeBWorK::Utils::Sets      qw(is_restricted);
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -1007,8 +992,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	{
 		print $FH '\\def\\webworkReducedScoringDate{'
 			. ($c->formatDateTime($MergedSet->{reduced_scoring_date}, $ce->{studentDateDisplayFormat}) =~
-				s/\x{202f}/ /gr)
-			. "}%\n";
+				s/\x{202f}/ /gr) . "}%\n";
 	}
 
 	# write set header (theme presetheader, then PG header, then theme postsetheader)
@@ -1181,10 +1165,10 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 				problemID => $MergedProblem->problem_id,
 			),
 			$MergedProblem->problem_id == 0
-				# link for a fake problem (like a header file)
+			# link for a fake problem (like a header file)
 			? (params =>
 					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
-				# link for a real problem
+			# link for a real problem
 			: (),
 		);
 

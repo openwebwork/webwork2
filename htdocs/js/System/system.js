@@ -1,17 +1,3 @@
-/* WeBWorK Online Homework Delivery System
- * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of either: (a) the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any later
- * version, or (b) the "Artistic License" which comes with this package.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
- * Artistic License for more details.
- */
-
 (() => {
 	// Enable site-navigation menu toggling if the page has a site-navigation element.
 	const navigation_element = document.getElementById('site-navigation');
@@ -117,18 +103,4 @@
 			messages.forEach((message) => bootstrap.Alert.getOrCreateInstance(message)?.close())
 		);
 	}
-
-	// Accessibility
-	// Present the contents of the data-alt attribute as alternative content for screen reader users.
-	// The icon should be formatted as <i class="icon fas fa-close" data-alt="close"></i>
-	// FIXME:  Don't add these by javascript.  Just add these in place instead.
-	document.querySelectorAll('i.icon').forEach((icon) => {
-		if (typeof icon.dataset.alt !== 'undefined') {
-			const glyph = document.createElement('span');
-			glyph.classList.add('visually-hidden');
-			glyph.style.fontSize = icon.style.fontSize;
-			glyph.textContent = icon.dataset.alt;
-			icon.after(glyph);
-		}
-	});
 })();

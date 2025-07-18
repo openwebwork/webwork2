@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WebworkWebservice::RenderProblem;
 
 use strict;
@@ -25,9 +10,9 @@ use Mojo::Util qw(url_unescape);
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
-use WeBWorK::Utils qw(decode_utf8_base64);
-use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::DB::Utils        qw(global2user fake_set fake_problem);
+use WeBWorK::Utils            qw(decode_utf8_base64);
+use WeBWorK::Utils::Files     qw(readFile);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 our $UNIT_TESTS_ON = 0;
@@ -226,8 +211,9 @@ async sub renderProblem {
 		forceScaffoldsOpen       => $rh->{WWcorrectAnsOnly} ? 1 : ($rh->{forceScaffoldsOpen} // 0),
 		QUIZ_PREFIX              => $rh->{answerPrefix},
 		showFeedback             => $rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns},
-		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0 : ($rh->{showAttemptAnswers} // 1),
-		showAttemptPreviews      => (
+		showAttemptAnswers       => $rh->{WWcorrectAnsOnly} ? 0
+		: ($rh->{showAttemptAnswers} // $ce->{pg}{options}{showEvaluatedAnswers}),
+		showAttemptPreviews => (
 			$rh->{WWcorrectAnsOnly} ? 0
 			: ($rh->{showAttemptPreviews} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
 		),
@@ -252,7 +238,8 @@ async sub renderProblem {
 			show_pg_info                => $rh->{show_pg_info}                // 0,
 			show_answer_hash_info       => $rh->{show_answer_hash_info}       // 0,
 			show_answer_group_info      => $rh->{show_answer_group_info}      // 0
-		}
+		},
+		defined $rh->{problem_data} && $rh->{problem_data} ne '' ? (problemData => $rh->{problem_data}) : ()
 	};
 
 	$ce->{pg}{specialPGEnvironmentVars}{problemPreamble}  = { TeX => '', HTML => '' } if $rh->{noprepostambles};
@@ -270,6 +257,7 @@ async sub renderProblem {
 		errors                  => $pg->{errors},
 		pg_warnings             => $pg->{warnings},
 		PG_ANSWERS_HASH         => $pg->{PG_ANSWERS_HASH},
+		PERSISTENCE_HASH        => $pg->{PERSISTENCE_HASH},
 		problem_result          => $pg->{result},
 		problem_state           => $pg->{state},
 		flags                   => $pg->{flags},

@@ -1,18 +1,3 @@
-%################################################################################
-%# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-%#
-%# This program is free software; you can redistribute it and/or modify it under
-%# the terms of either: (a) the GNU General Public License as published by the
-%# Free Software Foundation; either version 2, or (at your option) any later
-%# version, or (b) the "Artistic License" which comes with this package.
-%#
-%# This program is distributed in the hope that it will be useful, but WITHOUT
-%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-%# Artistic License for more details.
-%################################################################################
-%
 % layout 'help_macro';
 % title maketext('Account Settings Help');
 %
@@ -21,6 +6,14 @@
 		. 'problems. Note that you can hide this page entirely for students by setting permission levels to '
 		. 'login_proctor or higher for the permissions to change password, change email address, and change display '
 		. 'settings used in pg problems.') =%>
+</p>
+<h2><%= maketext('Name') %></h2>
+<p>
+	<%= maketext('The first and last name can be any combination of letters, numbers and special symbols. Name changes '
+		. 'and preferences can be respected here. Students should use a name that will not confuse their instructor. '
+		. 'If WeBWorK is used with an LMS (Canvas, Moodle, D2L, Blackboard, etc) the LMS might periodically override '
+		. 'a name setting here if WeBWorK is configured to allow that. Name settings will only appear here if a user '
+		. 'has permission to change their name.') =%>
 </p>
 <h2><%= maketext('Password') %></h2>
 <p>
@@ -31,7 +24,7 @@
 </p>
 <h2><%= maketext('Email Address') %></h2>
 <p>
-	<%= maketext('It is important that students enter an email address or they will not recieve any of the important '
+	<%= maketext('It is important that students enter an email address or they will not receive any of the important '
 		. 'emails sent by the instructor. The email address will only be present on the page if the user has '
 		. 'permission to change the email address.') =%>
 </p>

@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 ###########################
 # Utils::Tags
 #
@@ -211,7 +196,7 @@ sub new {
 	my $textno;
 	my $textinfo = [];
 
-	open(IN, '<:encoding(UTF-8)', "$name") or die "can not open $name: $!";
+	open(IN, '<:encoding(UTF-8)', "$name") or die "cannot open $name: $!";
 	if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
 		warn "Not a pg file";    #print caused trouble with XMLRPC
 		$self->{file} = undef;
@@ -421,10 +406,10 @@ sub dumptags {
 sub write {
 	my $self = shift;
 	# First read it into an array
-	open(IN, $self->{file}) or die "can not open $self->{file}: $!";
+	open(IN, $self->{file}) or die "cannot open $self->{file}: $!";
 	my @lines = <IN>;
 	close(IN);
-	my $fh = IO::File->new(">" . $self->{file}) or die "can not open $self->{file}: $!";
+	my $fh = IO::File->new(">" . $self->{file}) or die "cannot open $self->{file}: $!";
 	my ($line, $lineno) = ('', 0);
 	while ($line = shift @lines) {
 		$lineno++;

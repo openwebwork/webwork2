@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::InstructorRPCHandler;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
@@ -38,8 +23,6 @@ error occurs, then the response will contain an "error" key.
 # FIXME: This is no longer "instructor" only.  Even students can use the getCurrentServerTime command.  Really, it never
 # was "instructor" only.  Usage of all commands is based on permissions, and there have always been non-instructor users
 # that have some of these permissions. So this module and the corresponding route should really be renamed.
-
-use JSON;
 
 use WebworkWebservice;
 

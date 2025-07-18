@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Utils::CourseManagement;
 use base qw(Exporter);
 
@@ -28,8 +13,8 @@ use warnings;
 use Carp;
 use DBI;
 use String::ShellQuote;
-use UUID::Tiny qw(create_uuid_as_string);
-use Mojo::File qw(path);
+use UUID::Tiny            qw(create_uuid_as_string);
+use Mojo::File            qw(path);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
 use Archive::Tar;
@@ -37,8 +22,8 @@ use Archive::Tar;
 use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw(runtime_use);
-use WeBWorK::Utils::Files qw(surePathToFile);
+use WeBWorK::Utils             qw(runtime_use);
+use WeBWorK::Utils::Files      qw(surePathToFile);
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
@@ -50,7 +35,6 @@ our @EXPORT_OK = qw(
 	deleteCourse
 	archiveCourse
 	unarchiveCourse
-	dbLayoutSQLSources
 	initNonNativeTables
 
 );
@@ -61,11 +45,6 @@ use constant {    # constants describing the comparison of two hashes.
 	DIFFER_IN_A_AND_B => 2,
 	SAME_IN_A_AND_B   => 3
 };
-################################################################################
-
-# 	checkCourseTables
-# 	updateCourseTables
-# 	checkCourseDirectories
 
 =head1 FUNCTIONS
 
@@ -173,10 +152,9 @@ environment.
 
 $courseOptions is a reference to a hash containing the following options:
 
- dbLayoutName         => $dbLayoutName
- PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
+    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}
 
-C<dbLayoutName> is required. C<PRINT_FILE_NAMES_FOR> is a reference to an array.
+C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -201,7 +179,7 @@ boolean options:
 =cut
 
 sub addCourse {
-	my (%options) = (initial_userID => '', @_);
+	my (%options) = @_;
 
 	for my $key (keys(%options)) {
 		my $value = '####UNDEF###';
@@ -212,15 +190,13 @@ sub addCourse {
 	my $courseID      = $options{courseID};
 	my $sourceCourse  = $options{copyFrom} // '';
 	my $ce            = $options{ce};
-	my %courseOptions = %{ $options{courseOptions} };
+	my %courseOptions = %{ $options{courseOptions} // {} };
 	my @users         = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
 
-	my ($initialUser) = grep { $_->[0]{user_id} eq $options{initial_userID} } @users;
-
-	# get the database layout out of the options hash
-	my $dbLayoutName = $courseOptions{dbLayoutName};
+	my @initialUsers = @users;
+	my %user_args    = map { $_->[0]{user_id} => 1 } @users;
 
 	# collect some data
 	my $coursesDir = $ce->{webworkDirs}->{courses};
@@ -244,16 +220,6 @@ sub addCourse {
 	# fail if requested course ID is too long
 	croak "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
 		if (length($courseID) > $ce->{maxCourseIdLength});
-
-	# if we didn't get a database layout, use the default one
-	if (not defined $dbLayoutName) {
-		$dbLayoutName = $ce->{dbLayoutName};
-	}
-
-	# fail if the database layout is invalid
-	if (not exists $ce->{dbLayouts}->{$dbLayoutName}) {
-		croak "$dbLayoutName: not found in \%dbLayouts";
-	}
 
 	##### step 1: create course directory structure #####
 
@@ -324,7 +290,7 @@ sub addCourse {
 
 	##### step 2: create course database #####
 
-	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $db               = WeBWorK::DB->new($ce);
 	my $create_db_result = $db->create_tables;
 	die "$courseID: course database creation failed.\n" unless $create_db_result;
 
@@ -343,91 +309,101 @@ sub addCourse {
 		)
 	{
 		$ce0 = WeBWorK::CourseEnvironment->new({ courseName => $sourceCourse });
-		$db0 = WeBWorK::DB->new($ce0->{dbLayouts}{$dbLayoutName});
+		$db0 = WeBWorK::DB->new($ce0);
 	}
 
 	# add users (users that were directly passed to addCourse() as well as those copied from a source course)
-	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
-		debug("not adding users to the course database: 'user' table is non-native.\n");
-	} else {
-		if ($db0 && $options{copyNonStudents}) {
-			# If the course.conf file is being copied, then the student role from the source course needs to be used,
-			# as the role might be customized in that file.
-			my @non_student_ids =
-				map {@$_} ($db0->listPermissionLevelsWhere({
-					permission =>
-					{ '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
-					user_id => { not_like => 'set_id:%' }
-				}));
-			my %user_args = map { $_->[0]{user_id} => 1 } @users;
+	if ($db0 && $options{copyNonStudents}) {
+		# If the course.conf file is being copied, then the student role from the source course needs to be used,
+		# as the role might be customized in that file.
+		my @non_student_ids =
+			map {@$_} ($db0->listPermissionLevelsWhere({
+				permission => { '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
+				user_id    => { not_like => 'set_id:%' }
+			}));
 
-			for my $user_id (@non_student_ids) {
-				next if $user_args{$user_id};
-				my @User            = $db0->getUsersWhere({ user_id => $user_id });
-				my @Password        = $db0->getPasswordsWhere({ user_id => $user_id });
-				my @PermissionLevel = $db0->getPermissionLevelsWhere({ user_id => $user_id });
-				push @users, [ $User[0], $Password[0], $PermissionLevel[0] ];
-			}
+		for my $user_id (@non_student_ids) {
+			next if $user_args{$user_id};
+			my @User            = $db0->getUsersWhere({ user_id => $user_id });
+			my @Password        = $db0->getPasswordsWhere({ user_id => $user_id });
+			my @PermissionLevel = $db0->getPermissionLevelsWhere({ user_id => $user_id });
+			push @users, [ $User[0], $Password[0], $PermissionLevel[0] ];
 		}
+	}
 
-		foreach my $userTriple (@users) {
-			my ($User, $Password, $PermissionLevel) = @$userTriple;
-			eval { $db->addUser($User) };
-			warn $@                              if $@;
-			eval { $db->addPassword($Password) } if $Password;
-			warn $@                              if $@;
-			eval { $db->addPermissionLevel($PermissionLevel) };
-			warn $@ if $@;
-		}
+	foreach my $userTriple (@users) {
+		my ($User, $Password, $PermissionLevel) = @$userTriple;
+		eval { $db->addUser($User) };
+		warn $@                              if $@;
+		eval { $db->addPassword($Password) } if $Password;
+		warn $@                              if $@;
+		eval { $db->addPermissionLevel($PermissionLevel) };
+		warn $@ if $@;
 	}
 
 	# add sets
 	if ($db0 && $options{copySets}) {
-		my @set_ids = $db0->listGlobalSets;
-		for my $set_id (@set_ids) {
-			eval { $db->addGlobalSet($db0->getGlobalSet($set_id)) };
+		my @sets = $db0->getGlobalSetsWhere;
+		for my $set (@sets) {
+			$set->lis_source_did(undef);
+			eval { $db->addGlobalSet($set) };
 			warn $@ if $@;
 
-			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set_id });
+			my @Problem = $db0->getGlobalProblemsWhere({ set_id => $set->set_id });
 			for my $problem (@Problem) {
 				eval { $db->addGlobalProblem($problem) };
 				warn $@ if $@;
 			}
 
-			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set_id });
+			my @Location = $db0->getGlobalSetLocationsWhere({ set_id => $set->set_id });
 			for my $location (@Location) {
 				eval { $db->addGlobalSetLocation($location) };
 				warn $@ if $@;
+			}
+
+			# Copy the set level proctor user for this set if there is one (despite the for loop there can only be one).
+			for my $setProctor ($db0->getUsersWhere({ user_id => 'set_id:' . $set->set_id })) {
+				eval { $db->addUser($setProctor) };
+				warn $@ if $@;
+
+				my $password = $db0->getPassword($setProctor->user_id);
+				eval { $db->addPassword($password) } if $password;
+				warn $@                              if $@;
+
+				my $permission = $db0->getPermissionLevel($setProctor->user_id);
+				eval { $db->addPermissionLevel($permission) } if $permission;
+				warn $@                                       if $@;
 			}
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
 				my $user_id = $userTriple->[0]{user_id};
-				next if $user_id eq $initialUser->[0]{user_id};    # Skip, will be assigned to all sets below.
+				next if $user_args{$user_id};    # Initial users will be assigned to everything below.
 				my @user_sets = $db0->listUserSets($user_id);
 				assignSetsToUsers($db, $ce, \@user_sets, [$user_id]);
 			}
 		}
-		assignSetsToUsers($db, $ce, \@set_ids, [ $initialUser->[0]{user_id} ]) if $initialUser;
+		assignSetsToUsers($db, $ce, [ map { $_->set_id } @sets ], [ map { $_->[0]{user_id} } @initialUsers ])
+			if @initialUsers;
 	}
 
 	# add achievements
 	if ($db0 && $options{copyAchievements}) {
-		my @achievement_ids = $db0->listAchievements;
-		for my $achievement_id (@achievement_ids) {
-			eval { $db->addAchievement($db0->getAchievement($achievement_id)) };
+		my @achievement = $db0->getAchievementsWhere;
+		for my $achievement (@achievement) {
+			eval { $db->addAchievement($achievement) };
 			warn $@ if $@;
-			if ($initialUser) {
+			for (@initialUsers) {
 				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($initialUser->[0]{user_id});
-				$userAchievement->achievement_id($achievement_id);
+				$userAchievement->user_id($_->[0]{user_id});
+				$userAchievement->achievement_id($achievement->achievement_id);
 				$db->addUserAchievement($userAchievement);
 			}
 		}
 		if ($options{copyNonStudents}) {
 			foreach my $userTriple (@users) {
 				my $user_id = $userTriple->[0]{user_id};
-				next if $user_id eq $initialUser->[0]{user_id};    # Skip, was assigned to all achievements above.
+				next if $user_args{$user_id};    # Initial users were assigned to all achievements above.
 				my @user_achievements = $db0->listUserAchievements($user_id);
 				for my $achievement_id (@user_achievements) {
 					my $userAchievement = $db->newUserAchievement();
@@ -450,7 +426,7 @@ sub addCourse {
 		}
 	}
 
-	##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
+##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
 
 	unless ($sourceCourse ne '' && $options{copyConfig}) {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
@@ -460,7 +436,7 @@ sub addCourse {
 		close $fh;
 	}
 
-	##### step 5: copy templates, html, simple.conf, course.conf if desired #####
+##### step 5: copy templates, html, simple.conf, course.conf if desired #####
 
 	if ($sourceCourse ne '') {
 		my $sourceCE = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
@@ -550,20 +526,10 @@ Any errors encountered while renaming the course are returned.
 sub renameCourse {
 	my (%options) = @_;
 
-	# renameCourseHelper needs:
-	#    $fromCourseID ($oldCourseID)
-	#    $fromCE ($oldCE)
-	#    $toCourseID ($newCourseID)
-	#    $toCE (construct from $oldCE)
-	#    $dbLayoutName ($oldCE->{dbLayoutName})
-
 	my $oldCourseID  = $options{courseID};
 	my $oldCE        = $options{ce};
 	my $newCourseID  = $options{newCourseID};
 	my $skipDBRename = $options{skipDBRename} || 0;
-
-	# get the database layout out of the options hash
-	my $dbLayoutName = $oldCE->{dbLayoutName};
 
 	# collect some data
 	my $coursesDir   = $oldCE->{webworkDirs}->{courses};
@@ -654,12 +620,12 @@ sub renameCourse {
 	##### step 2: rename database #####
 
 	unless ($skipDBRename) {
-		my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
+		my $oldDB = WeBWorK::DB->new($oldCE);
 
-		my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
+		my $rename_db_result = $oldDB->rename_tables($newCE);
 		die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
 		#update title and institution
-		my $newDB = new WeBWorK::DB($newCE->{dbLayouts}{$dbLayoutName});
+		my $newDB = WeBWorK::DB->new($newCE);
 		eval {
 			if (defined $options{courseTitle} && $options{courseTitle} ne '') {
 				$newDB->setSettingValue('courseTitle', $options{courseTitle});
@@ -691,18 +657,12 @@ Options may contain
 
 sub retitleCourse {
 	my %options = @_;
-	# renameCourseHelper needs:
-	#    $courseID ($oldCourseID)
-	#    $ce ($oldCE)
-	#    $dbLayoutName ($ce->{dbLayoutName})
-	#    courseTitle
-	#    courseInstitution
+
 	my $courseID = $options{courseID};
 	my $ce       = $options{ce};
 
 	# get the database layout out of the options hash
-	my $dbLayoutName = $ce->{dbLayoutName};
-	my $db           = new WeBWorK::DB($ce->{dbLayouts}{$dbLayoutName});
+	my $db = WeBWorK::DB->new($ce);
 	eval {
 		if (defined $options{courseTitle} && $options{courseTitle} ne '') {
 			$db->setSettingValue('courseTitle', $options{courseTitle});
@@ -769,8 +729,7 @@ sub deleteCourse {
 
 	##### step 1: delete course database (if necessary) #####
 
-	my $dbLayoutName     = $ce->{dbLayoutName};
-	my $db               = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $db               = WeBWorK::DB->new($ce);
 	my $create_db_result = $db->delete_tables;
 	die "$courseID: course database deletion failed.\n" unless $create_db_result;
 
@@ -895,7 +854,7 @@ sub archiveCourse {
 		croak "Failed to create course database dump directory '$dump_dir': $@" if $@;
 	}
 
-	my $db             = new WeBWorK::DB($ce->{dbLayout});
+	my $db             = WeBWorK::DB->new($ce);
 	my $dump_db_result = $db->dump_tables($dump_dir);
 	unless ($dump_db_result) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
@@ -907,7 +866,7 @@ sub archiveCourse {
 	my $parent_dir = $ce->{webworkDirs}{courses};
 	my $files      = path($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
 	my $tar        = Archive::Tar->new;
-	$tar->add_files(@$files);
+	$tar->add_files($course_dir, @$files);
 	for ($tar->get_files) {
 		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
 	}
@@ -1018,36 +977,20 @@ sub unarchiveCourse {
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
 	# pull out some useful stuff
-	my $course_dir    = $ce2->{courseDirs}{root};
-	my $data_dir      = $ce2->{courseDirs}{DATA};
-	my $dump_dir      = "$data_dir/mysqldump";
-	my $old_dump_file = "$data_dir/${currCourseID}_mysql.database";
+	my $course_dir = $ce2->{courseDirs}{root};
+	my $data_dir   = $ce2->{courseDirs}{DATA};
+	my $dump_dir   = "$data_dir/mysqldump";
 
 	##### step 4: restore the database tables #####
 
 	my $no_database;
 	my $restore_db_result = 1;
 	if (-e $dump_dir) {
-		my $db = new WeBWorK::DB($ce2->{dbLayout});
+		my $db = WeBWorK::DB->new($ce2);
 		$restore_db_result = $db->restore_tables($dump_dir);
-	} elsif (-e $old_dump_file) {
-		my $dbLayoutName = $ce2->{dbLayoutName};
-		if (ref getHelperRef("unarchiveCourseHelper", $dbLayoutName)) {
-			eval {
-				$restore_db_result =
-					unarchiveCourseHelper($currCourseID, $ce2, $dbLayoutName, unarchiveDatabasePath => $old_dump_file);
-			};
-			if ($@) {
-				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
-			}
-		} else {
-			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support "
-				. "restoring database tables. database tables will not be restored.\n";
-			$no_database = 1;
-		}
 	} else {
 		warn "course '$currCourseID' has no database dump in its data directory "
-			. "(checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+			. "(checked for $dump_dir). database tables will not be restored.\n";
 		$no_database = 1;
 	}
 
@@ -1055,18 +998,11 @@ sub unarchiveCourse {
 		warn "database restore of course '$currCourseID' failed: the course will probably not be usable.\n";
 	}
 
-	##### step 5: delete dump_dir and/or old_dump_file #####
+	##### step 5: delete dump_dir #####
 
-	if (-e $dump_dir) {
-		_archiveCourse_remove_dump_dir($ce, $dump_dir);
-	}
-	if (-e $old_dump_file) {
-		eval { path($old_dump_file)->remove };
-		warn "Failed to unlink course database dump file '$old_dump_file: $@" if $@;
-	}
+	_archiveCourse_remove_dump_dir($ce, $dump_dir) if -e $dump_dir;
 
-	# Create the html_temp folder (since it isn't included in the
-	# tarball
+	# Create the html_temp folder (since it isn't included in the tarball)
 	my $tmpDir = $ce2->{courseDirs}->{html_temp};
 	if (!-e $tmpDir) {
 		eval { path($tmpDir)->make_path };
@@ -1152,112 +1088,7 @@ sub _unarchiveCourse_move_back {
 
 ################################################################################
 
-=item dbLayoutSQLSources($dbLayout)
-
-Retrun a hash of database sources for the sql and sql_single database layouts.
-Each element of the hash takes this form:
-
- dbi_source => {
-     tables => [ 'table1', 'table2', ... ],
-     username => 'username',
-     password => 'password',
- }
-
-In the common case, there will only be one source returned.
-
-=cut
-
-sub dbLayoutSQLSources {
-	my ($dbLayout) = @_;
-
-	my %dbLayout = %$dbLayout;
-	my @tables   = keys %dbLayout;
-
-	my %sources;
-
-	foreach my $table (@tables) {
-		my %table  = %{ $dbLayout{$table} };
-		my %params = %{ $table{params} };
-
-		if ($params{non_native}) {
-			debug("$table: marked non-native, skipping\n");
-			next;
-		}
-
-		my $source   = $table{source};
-		my $username = $params{username};
-		my $password = $params{password};
-
-		push @{ $sources{$source}{tables} }, $table;
-
-		if (defined $sources{$source}{username}) {
-			if ($sources{$source}{username} ne $username) {
-				warn "conflicting usernames for source '$source':", " '$sources{$source}{username}', '$username'\n";
-			} else {
-				# it's all good
-			}
-		} else {
-			$sources{$source}{username} = $username;
-		}
-
-		if (defined $sources{$source}{password}) {
-			if ($sources{$source}{password} ne $password) {
-				warn "conflicting passwords for source '$source':", " '$sources{$source}{password}', '$password'\n";
-			} else {
-				# it's all good
-			}
-		} else {
-			$sources{$source}{password} = $password;
-		}
-	}
-
-	return %sources;
-}
-
-=back
-
-=cut
-
-################################################################################
-# database helpers
-################################################################################
-
-=head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
-
-These functions are used to perform database-layout specific operations.
-
-The implementations in this class do nothing, but if an appropriate function
-exists in a class with the name
-WeBWorK::Utils::CourseManagement::I<$dbLayoutName>, it will be used instead.
-
-=over
-
-=item archiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for archiving the data in a course.
-
-=cut
-
-sub archiveCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	my $result = callHelperIfExists("archiveCourseHelper", $dbLayoutName, @_);
-	return $result;
-}
-
-=item unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for unarchiving the data in a course
-and placing it in the database.
-
-=cut
-
-sub unarchiveCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	my $result = callHelperIfExists("unarchiveCourseHelper", $dbLayoutName, @_);
-	return $result;
-}
-
-=item initNonNativeTables($ce, $db, $dbLayoutName, %options)
+=item initNonNativeTables($ce, $db, %options)
 
 Perform database-layout specific operations for initializing non-native database tables
 that are not associated with a particular course
@@ -1267,54 +1098,39 @@ that are not associated with a particular course
 =cut
 
 sub initNonNativeTables {
-	my ($ce, $dbLayoutName, %options) = @_;
+	my ($ce, %options) = @_;
 	my @messages;
-	# Create a database handler
-	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 
-	# lock database
+	# Create a database handler
+	my $db = WeBWorK::DB->new($ce);
 
 	# Find the names of the non-native database tables
-	foreach my $table (sort keys %$db) {
-		next unless $db->{$table}{params}{non_native};    # only look at non-native tables
+	for my $table (sort keys %$db) {
+		next unless $db->{$table}{params}{non_native};    # Only look at non-native tables.
 
-		# hack: these two tables are virtual and don't need to be created
-		# for the admin course or in the database in general
-		# if they were created in earlier versions for the admin course
-		# you can use mysql to drop the field version_id manually
-		# this will get rid of a spurious error
+		# Hack: These two tables are virtual and don't need to be created.  If they were created in earlier versions for
+		# the admin course you can use mysql to drop the field version_id manually.
 		next if $table eq 'problem_version' or $table eq 'set_version';
 
 		my $database_table_name =
-			(exists $db->{$table}->{params}->{tableOverride}) ? $db->{$table}->{params}->{tableOverride} : $table;
-		#warn "table is $table";
-		#warn "checking $database_table_name";
-		my $database_table_exists = ($db->{$table}->tableExists) ? 1 : 0;
-		if (!$database_table_exists) {    # exists means the table can be described;
-			my $schema_obj = $db->{$table};
-			if ($schema_obj->can("create_table")) {
-				#warn "creating table $database_table_name  with object $schema_obj";
-				$schema_obj->create_table;
+			exists $db->{$table}{params}{tableOverride} ? $db->{$table}{params}{tableOverride} : $table;
+
+		if (!$db->{$table}->tableExists) {
+			if ($db->{$table}->can('create_table')) {
+				$db->{$table}->create_table;
 				push(@messages, "Table '$table' created as '$database_table_name' in database.");
-			} else {
-				# warn "Skipping creation of '$table' table: no create_table method\n";
 			}
-			#if table exists then we need to check its fields, we only check if it is missing
-			#fields in the schema.  Its not a huge issue if the database table has extra columns.
 		} else {
 			my %fieldStatus;
-			my $fields_ok                   = 1;
-			my @schema_field_names          = $db->{$table}->{record}->FIELDS;
-			my %schema_override_field_names = ();
-			foreach my $field (sort @schema_field_names) {
-				my $field_name = $db->{$table}->{params}->{fieldOverride}->{$field} || $field;
-				$schema_override_field_names{$field_name} = $field;
+			my $fields_ok          = 1;
+			my @schema_field_names = $db->{$table}->{record}->FIELDS;
+			foreach my $field_name (sort @schema_field_names) {
 				my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
 				#if the field doesn't exist then try to add it...
 				if (!$database_field_exists) {
 					$fields_ok = 0;
-					$fieldStatus{$field} = [ONLY_IN_A];
-					warn "$field from $database_table_name (aka |$table|) is only in schema, "
+					$fieldStatus{$field_name} = [ONLY_IN_A];
+					warn "$field_name from $database_table_name (aka |$table|) is only in schema, "
 						. "not in database, so adding it ... ";
 					if ($db->{$table}->can("add_column_field")) {
 						if ($db->{$table}->add_column_field($field_name)) {
@@ -1323,13 +1139,9 @@ sub initNonNativeTables {
 							warn "couldn't add column $field_name to table $database_table_name";
 						}
 					}
-
 				}
-
 			}
-
 		}
-
 	}
 
 	return @messages;
@@ -1345,61 +1157,6 @@ These functions are used by this class's public functions and should not be
 called directly.
 
 =over
-
-=item callHelperIfExists($helperName, $dbLayoutName, @args)
-
-Call a database-specific helper function, if a database-layout specific helper
-class exists and contains a function named "${helperName}Helper".
-
-=cut
-
-sub callHelperIfExists {
-	my ($helperName, $dbLayoutName, @args) = @_;
-
-	my $helperRef = getHelperRef($helperName, $dbLayoutName);
-	if (ref $helperRef) {
-		return $helperRef->(@args);
-	} else {
-		return $helperRef;
-	}
-}
-
-=item getHelperRef($helperName, $dbLayoutName)
-
-Call a database-specific helper function, if a database-layout specific helper
-class exists and contains a function named "${helperName}Helper".
-
-=cut
-
-sub getHelperRef {
-	my ($helperName, $dbLayoutName) = @_;
-
-	my $result;
-
-	my $package = __PACKAGE__ . "::$dbLayoutName";
-
-	eval { runtime_use $package };
-	if ($@) {
-		if ($@ =~ /^Can't locate/) {
-			debug("No database-layout specific library for layout '$dbLayoutName'.\n");
-			$result = 1;
-		} else {
-			warn "Failed to load database-layout specific library: $@\n";
-			$result = 0;
-		}
-	} else {
-		my %syms = do { no strict 'refs'; %{ $package . "::" } };
-		if (exists $syms{$helperName}) {
-			$result = do { no strict 'refs'; \&{ $package . "::" . $helperName } };
-		} else {
-			debug("No helper defined for operation '$helperName'.\n");
-			$result = 1;
-		}
-	}
-
-	#warn "getHelperRef = '$result'\n";
-	return $result;
-}
 
 =item protectQString($string)
 
@@ -1426,33 +1183,12 @@ the pairs accepted in %courseOptions by addCourse(), above.
 sub writeCourseConf {
 	my ($fh, $ce, %options) = @_;
 
-	# several options should be defined no matter what
-	$options{dbLayoutName} = $ce->{dbLayoutName} unless defined $options{dbLayoutName};
-
 	print $fh <<'EOF';
 #!perl
 
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
-
-	print $fh <<'EOF';
-# Database Layout (global value typically defined in defaults.config)
-# Several database are defined in the file conf/database.conf and stored in the
-# hash %dbLayouts.
-# The database layout is always set here, since one should be able to change the
-# default value in localOverrides.conf without disrupting existing courses.
-# defaults.config values:
-EOF
-
-	print $fh "# \t", '$dbLayoutName = \'', protectQString($ce->{dbLayoutName}), '\';', "\n";
-	print $fh "# \t", '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-
-	if (defined $options{dbLayoutName}) {
-		print $fh '$dbLayoutName = \'', protectQString($options{dbLayoutName}), '\';', "\n";
-		print $fh '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-	}
-	print $fh "\n";
 
 	print $fh <<'EOF';
 # Users for whom to label problems with the PG file name (global value typically "professor")

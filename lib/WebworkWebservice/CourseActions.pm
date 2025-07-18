@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 # Course manipulation functions for webwork webservices
 package WebworkWebservice::CourseActions;
 
@@ -24,11 +9,11 @@ use Date::Format;
 use Data::Structure::Util qw(unbless);
 
 use WeBWorK::DB;
-use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::DB::Utils               qw(initializeUserProblem);
+use WeBWorK::Utils                   qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
-use WeBWorK::Utils::Files qw(surePathToFile path_is_subdir);
-use WeBWorK::ConfigValues qw(getConfigValues);
+use WeBWorK::Utils::Files            qw(surePathToFile path_is_subdir);
+use WeBWorK::ConfigValues            qw(getConfigValues);
 use WeBWorK::Debug;
 
 sub createCourse {
@@ -62,10 +47,9 @@ sub createCourse {
 	# Try to actually create the course.
 	eval {
 		addCourse(
-			courseID      => $params->{name},
-			ce            => $ce,
-			courseOptions => { dbLayoutName => $ce->{dbLayoutName} },
-			users         => \@users
+			courseID => $params->{name},
+			ce       => $ce,
+			users    => \@users
 		);
 		addLog($ce, "New course created: $params->{name}");
 		return 1;
@@ -383,9 +367,7 @@ sub assignVisibleSets {
 		my $set_assigned = 0;
 		eval { $db->addUserSet($UserSet) };
 
-		if ($@ && !($@ =~ m/user set exists/)) {
-			return 0;
-		}
+		return 0 if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
 
 		# assign problem
 		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
@@ -397,9 +379,7 @@ sub assignVisibleSets {
 			$UserProblem->problem_id($GlobalProblem->problem_id);
 			initializeUserProblem($UserProblem, $seed);
 			eval { $db->addUserProblem($UserProblem) };
-			if ($@ && !($@ =~ m/user problem exists/)) {
-				return 0;
-			}
+			return 0 if $@ && !WeBWorK::DB::Ex::RecordExists->caught;
 		}
 	}
 
