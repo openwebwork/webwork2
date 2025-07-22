@@ -1,18 +1,3 @@
-###############################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::LTIAdvanced;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -20,14 +5,14 @@ use Net::OAuth;
 use UUID::Tiny ':std';
 use Mojo::JSON qw(encode_json);
 
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets             qw(format_set_name_display);
 use WeBWorK::Utils::CourseManagement qw(listCourses);
 use WeBWorK::DB;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 sub initializeRoute ($c, $routeCaptures) {
-	# If this is an LTI 1.1 content item request from an LMS course, then find the courseID of the course that that has
+	# If this is an LTI 1.1 content item request from an LMS course, then find the courseID of the course that has
 	# this LMS course name set in its course environment.  If this is a submission of the content selection form, then
 	# get it from the form parameter.
 	if ($c->current_route eq 'ltiadvanced_content_selection') {
@@ -37,7 +22,7 @@ sub initializeRoute ($c, $routeCaptures) {
 		if (!$courseID && $c->param('context_id')) {
 			# The database object used here is not associated to any course,
 			# and so the only has access to non-native tables.
-			my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})
+			my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new)
 				->getLTICourseMapsWhere({ lms_context_id => $c->param('context_id') });
 
 			if (@matchingCourses == 1) {

@@ -1,18 +1,3 @@
-%################################################################################
-%# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-%#
-%# This program is free software; you can redistribute it and/or modify it under
-%# the terms of either: (a) the GNU General Public License as published by the
-%# Free Software Foundation; either version 2, or (at your option) any later
-%# version, or (b) the "Artistic License" which comes with this package.
-%#
-%# This program is distributed in the hope that it will be useful, but WITHOUT
-%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-%# Artistic License for more details.
-%################################################################################
-%
 % layout 'help_macro';
 % title maketext('Add Course Help');
 %
@@ -22,13 +7,16 @@
 		. 'on the course home page.') =%>
 </p>
 <p>
-	<%= maketext('The WeBWorK administrators need to be added to the course in order for them to access the course.  '
-		. 'Unchecking this option will make it so WeBWorK administrators cannot directly login to the course.') =%>
+	<%= maketext('Select which users in the [_1] course to copy over to the newly created course. The WeBWorK '
+		. 'administrators need to be added to the course in order for them to access the course. Unselecting '
+		. 'them will make it so WeBWorK administrators cannot directly login to the course.',
+		$ce->{admin_course_id}) =%>
 </p>
 <p>
-	<%= maketext('Enter the details of the course instructor to be added when the course is created.  This user '
-		. 'will also be added to the admin course with the username "userID_courseID" so you can manage and '
-		. 'email the instructors of the courses on the server.') =%>
+	<%= maketext('Click the "Add Additional User" button to add additional users to the course. The only required '
+		. 'field is the user ID.  You can also add this user to the [_1] course, so you can copy this user when '
+		. 'creating future courses, or manage and email course users.  Note, by default these new users will be '
+		. '"Dropped" and unable to login to the [_1] course.', $ce->{admin_course_id}) =%>
 </p>
 <p class="mb-0">
 	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '

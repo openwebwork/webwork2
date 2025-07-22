@@ -1,0 +1,12 @@
+% layout 'help_macro';
+% title maketext('Achievements Leaderboard Help');
+%
+<p>
+	<%= maketext('The leaderboard orders the achievement points earned from the greatest to the least. '
+		. 'The rank of each user is determined by their position on the leader board. All users with the '
+		. 'same number of achievement points have the same rank.') %>
+</p>
+<p>
+	<%= maketext(q(Achievement badges are shown for each earned achievement. Mousing over the badge's )
+		. 'icon will give the name and description of the achievement.') %>
+</p>

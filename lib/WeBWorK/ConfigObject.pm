@@ -64,8 +64,9 @@ sub entry_widget ($self, $default, $is_secret = 0) {
 	);
 }
 
-sub help_title ($self) { return $self->{c}->maketext('Variable Documentation') }
-sub help_name  ($self) { return '$' . $self->{var} }
+sub help_title           ($self) { return $self->{c}->maketext('Variable Documentation') }
+sub help_name            ($self) { return '$' . $self->{var} }
+sub help_link_aria_label ($self) { return $self->{c}->maketext('Variable documentation for [_1]', $self->help_name) }
 
 # This produces the documentation string and modal containing detailed documentation.
 # It is the same for all config types.

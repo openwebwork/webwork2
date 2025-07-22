@@ -1,6 +1,6 @@
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
-% last unless $c->{is_pg};
+% last unless $c->{is_pg} && $c->{file_type} ne 'blank_problem' && $c->{file_type} ne 'sample_problem';
 %
 % my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];
 %

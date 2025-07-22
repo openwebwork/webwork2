@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 # Web service which manipulates problems and user problems.
 package WebworkWebservice::ProblemActions;
 
@@ -21,7 +6,7 @@ use warnings;
 
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::PG::Tidy qw(pgtidy);
+use WeBWorK::PG::Tidy          qw(pgtidy);
 use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
 
 sub getUserProblem {
@@ -60,7 +45,7 @@ sub putUserProblem {
 	}
 
 	# The status is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$userProblem->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
@@ -99,7 +84,7 @@ sub putProblemVersion {
 	}
 
 	# The status is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$problemVersion->{status} = $params->{status} if defined $params->{status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
@@ -137,7 +122,7 @@ sub putPastAnswer {
 	}
 
 	# The comment_string is the only thing that users with the problem_grader permission can change.
-	# This method can not be called without the problem_grader permission.
+	# This method cannot be called without the problem_grader permission.
 	$pastAnswer->{comment_string} = $params->{comment_string} if defined $params->{comment_string};
 
 	eval { $db->putPastAnswer($pastAnswer) };

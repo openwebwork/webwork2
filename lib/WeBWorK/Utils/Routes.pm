@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Utils::Routes;
 use parent qw(Exporter);
 
@@ -39,10 +24,16 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  ltiadvantage_keys                   /ltiadvantage/keys
  ltiadvantage_content_selection      /ltiadvantage/content_selection
 
+ saml2_acs                           /saml2/acs
+ saml2_metadata                      /saml2/metadata
+ saml2_error                         /saml2/error
+ saml2_logout                        /saml2/logout
+
  pod_index                           /pod
  pod_viewer                          /pod/$filePath
 
  sample_problem_index                /sampleproblems
+ sample_problem_search_data          /sampleproblems/search_data
  sample_problem_viewer               /sampleproblems/$filePath
 
  set_list                            /$courseID
@@ -51,6 +42,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  options                             /$courseID/options
  grades                              /$courseID/grades
  achievements                        /$courseID/achievements
+ achievements_leaderboard            /$courseID/achievements/leaderboard
  equation_display                    /$courseID/equation
  feedback                            /$courseID/feedback
  gateway_quiz                        /$courseID/test_mode/$setID
@@ -119,7 +111,7 @@ use strict;
 use warnings;
 
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(x);
+use WeBWorK::Utils       qw(x);
 use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 our @EXPORT_OK = qw(setup_content_generator_routes route_title route_navigation_is_restricted);
@@ -155,6 +147,10 @@ my %routeParameters = (
 			ltiadvantage_launch
 			ltiadvantage_keys
 			ltiadvantage_content_selection
+			saml2_acs
+			saml2_metadata
+			saml2_error
+			saml2_logout
 			pod_index
 			sample_problem_index
 			set_list
@@ -222,6 +218,33 @@ my %routeParameters = (
 		action => 'content_selection'
 	},
 
+	# This route also ends up at the login screen on failure, and the title is not used anywhere else.
+	saml2_acs => {
+		title   => x('Login'),
+		module  => 'Saml2',
+		path    => '/saml2/acs',
+		action  => 'assertionConsumerService',
+		methods => ['POST']
+	},
+	saml2_metadata => {
+		title  => 'metadata',
+		module => 'Saml2',
+		path   => '/saml2/metadata',
+		action => 'metadata'
+	},
+	saml2_error => {
+		title  => 'error',
+		module => 'Saml2',
+		path   => '/saml2/error',
+		action => 'errorResponse'
+	},
+	saml2_logout => {
+		title  => 'logout',
+		module => 'Saml2',
+		path   => '/saml2/logout',
+		action => 'logout'
+	},
+
 	pod_index => {
 		title    => x('POD Index'),
 		children => [qw(pod_viewer)],
@@ -239,10 +262,17 @@ my %routeParameters = (
 
 	sample_problem_index => {
 		title    => x('Sample Problem Index'),
-		children => [qw(sample_problem_viewer)],
+		children => [qw(sample_problem_search_data sample_problem_viewer)],
 		module   => 'SampleProblemViewer',
 		path     => '/sampleproblems',
 		action   => 'sampleProblemIndex'
+	},
+
+	sample_problem_search_data => {
+		title  => 'sample problem search data',
+		module => 'SampleProblemViewer',
+		path   => '/search_data',
+		action => 'searchData'
 	},
 
 	sample_problem_viewer => {
@@ -259,7 +289,7 @@ my %routeParameters = (
 				logout options instructor_tools problem_list)
 		],
 		module => 'ProblemSets',
-		path   => '/#courseID'
+		path   => { '/#courseID' => [ courseID => qr/[\w-]*/ ] }
 	},
 
 	logout => {
@@ -280,8 +310,15 @@ my %routeParameters = (
 	},
 	achievements => {
 		title        => x('Achievements'),
+		children     => [qw(achievements_leaderboard)],
 		module       => 'Achievements',
 		path         => '/achievements',
+		unrestricted => 1
+	},
+	achievements_leaderboard => {
+		title        => x('Achievements Leaderboard'),
+		module       => 'AchievementsLeaderboard',
+		path         => '/leaderboard',
 		unrestricted => 1
 	},
 	equation_display => {
@@ -385,7 +422,7 @@ my %routeParameters = (
 	instructor_problem_grader => {
 		title  => x('Manual Grader'),
 		module => 'Instructor::ProblemGrader',
-		path   => '/grader/#setID/#problemID'
+		path   => '/grader/#setID/<problemID:num>'
 	},
 	instructor_add_users => {
 		title  => x('Add Users'),
@@ -427,7 +464,7 @@ my %routeParameters = (
 	instructor_problem_editor_withset_withproblem => {
 		title  => '[_3]',
 		module => 'Instructor::PGProblemEditor',
-		path   => '/#problemID'
+		path   => '/<problemID:num>'
 	},
 	instructor_scoring => {
 		title  => x('Scoring Tools'),
@@ -459,7 +496,7 @@ my %routeParameters = (
 	instructor_problem_statistics => {
 		title  => '[_3]',
 		module => 'Instructor::Stats',
-		path   => '/#problemID'
+		path   => '/<problemID:num>'
 	},
 	instructor_user_statistics => {
 		title  => '[_1]',
@@ -526,7 +563,7 @@ my %routeParameters = (
 		title        => '[_3]',
 		children     => [qw(show_me_another)],
 		module       => 'Problem',
-		path         => '/#problemID',
+		path         => '/<problemID:num>',
 		unrestricted => 1
 	},
 	show_me_another => {
@@ -573,14 +610,22 @@ sub setup_content_generator_routes_recursive {
 	my $action = $routeParameters{$child}{action} // 'go';
 
 	if ($routeParameters{$child}{children}) {
-		my $child_route = $route->under($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])->name($child);
-		$child_route->any('/')->to("$routeParameters{$child}{module}#$action")->name($child);
+		my $child_route = $route->under(
+			ref($routeParameters{$child}{path}) eq 'HASH'
+			? %{ $routeParameters{$child}{path} }
+			: $routeParameters{$child}{path})->name($child);
+		$child_route->any($routeParameters{$child}{methods} // (), '/')->to("$routeParameters{$child}{module}#$action")
+			->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);
 		}
 	} else {
-		$route->any($routeParameters{$child}{path}, [ problemID => qr/\d+/ ])
-			->to("$routeParameters{$child}{module}#$action")->name($child);
+		$route->any(
+			$routeParameters{$child}{methods} // (),
+			ref($routeParameters{$child}{path}) eq 'HASH'
+			? %{ $routeParameters{$child}{path} }
+			: $routeParameters{$child}{path}
+		)->to("$routeParameters{$child}{module}#$action")->name($child);
 	}
 
 	return;

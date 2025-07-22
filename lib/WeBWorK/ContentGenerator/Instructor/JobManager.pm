@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::JobManager;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -203,7 +188,7 @@ sub delete_handler ($c) {
 	for my $jobID (keys %{ $c->stash->{selectedJobs} }) {
 		# If a job was inactive (not yet started) when the page was previously loaded, then it may be selected to be
 		# deleted.  By the time the delete form is submitted the job may have started and may now be active. In that
-		# case it can not be deleted.
+		# case it cannot be deleted.
 		if ($c->stash->{jobs}{$jobID}{state} eq 'active') {
 			$c->addbadmessage(
 				$c->maketext('Unable to delete job [_1] as it has transitioned to an active state.', $jobID));

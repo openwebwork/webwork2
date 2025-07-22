@@ -1,11 +1,12 @@
-% use WeBWorK::Utils::CourseIntegrityCheck;
+% use WeBWorK::Utils::CourseDBIntegrityCheck;
+% use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories checkCourseLinks);
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 % use WeBWorK::CourseEnvironment;
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
 %
 <h2><%= maketext('Upgrade Courses') %> <%= $c->helpMacro('AdminUpgradeCourses') %></h2>
-<div class="mb-2"><%= maketext('Update the checked directories?') %></div>
+<div class="mb-2"><%= maketext('Update the checked courses?') %></div>
 <%= form_for current_route, method => 'POST', id => 'courselist', name => 'courselist', begin =%>
 	<div class="mb-2">
 		<button type="button" class="select-all btn btn-sm btn-secondary" data-select-group="upgrade_courseIDs">
@@ -27,29 +28,33 @@
 			% if ($@) {
 				<%= maketext(q{Can't create course environment for [_1] because [_2]}, $courseID, $@) =%>
 			% }
-			% my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $tempCE);
-			% my ($tables_ok)      = $CIchecker->checkCourseTables($courseID);
-			% my ($directories_ok) = $CIchecker->checkCourseDirectories();
+			% my $CDBIchecker      = WeBWorK::Utils::CourseDBIntegrityCheck->new($tempCE);
+			% my ($tables_ok)      = $CDBIchecker->checkCourseTables($courseID);
+			% my ($directories_ok) = checkCourseDirectories($tempCE);
+			% my ($links_ok)       = checkCourseLinks($tempCE);
 			%
 			<li class="align-items-center">
-				% if (!$tables_ok || !$directories_ok) {
-					<div class="form-check form-check-inline me-1">
-						<label class="form-check-label">
-							<%= check_box upgrade_courseIDs => $courseID,
-								name => 'upgrade_courseIDs', checked => undef, class => 'form-check-input' %>
-							<%= maketext('Upgrade') %>
-						</label>
+				% if (!$tables_ok || !$directories_ok || !$links_ok) {
+					<div class="form-check form-check-inline me-0">
+						<%= check_box upgrade_courseIDs => $courseID, name => 'upgrade_courseIDs',
+							id => "upgrade_courseIDs_$courseID", checked => undef, class => 'form-check-input' %>
+						<%= label_for "upgrade_courseIDs_$courseID" => maketext('Upgrade'),
+							class => 'form-check-label' =%>
 					</div>
 				% }
-				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%>
-				<code><%= $tempCE->{dbLayoutName} %></code>
+				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%><span>:</span>
 				% if (!$directories_ok) {
-					<span class="alert alert-danger p-1 mb-0">
+					<span class="text-danger">
 						<%= maketext('Directory structure or permissions need to be repaired.') =%>
 					</span>
 				% }
+				% if (!$links_ok) {
+					<span class="text-danger">
+						<%= maketext('Link structure needs to be repaired.') =%>
+					</span>
+				% }
 				% if ($tables_ok) {
-					<span class="text-success"><%= maketext('Database tables ok') %></span>
+					<span class="text-success"><%= maketext('Database tables ok.') %></span>
 				% } else {
 					<span class="text-danger"><%= maketext('Database tables need updating.') %></span>
 				% }

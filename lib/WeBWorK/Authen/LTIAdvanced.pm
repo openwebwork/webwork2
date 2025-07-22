@@ -1,18 +1,3 @@
-###############################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authen::LTIAdvanced;
 use base qw/WeBWorK::Authen/;
 
@@ -33,35 +18,12 @@ use URI::Escape;
 use Net::OAuth;
 
 use WeBWorK::Debug;
-use WeBWorK::Utils::DateTime qw(formatDateTime);
+use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Localize;
 use WeBWorK::Authen::LTIAdvanced::Nonce;
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
-
-=head1 CONSTRUCTOR
-
-=over
-
-=item new($c)
-
-Instantiates a new WeBWorK::Authen object for the given WeBWorK::Controller ($c).
-
-=cut
-
-sub new {
-	my ($invocant, $c) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self  = { c => $c, };
-	#initialize
-	bless $self, $class;
-	return $self;
-}
-
-=back
-
-=cut
 
 ## this is only overridden for debug logging
 #sub verify {
@@ -238,7 +200,7 @@ sub get_credentials {
 			[ 'oauth_signature',    'oauth_signature' ],
 			[ 'oauth_nonce',        'oauth_nonce' ],
 			[ 'oauth_timestamp',    'oauth_timestamp' ],
-			[ 'section',            'custom_section' ],
+			[ 'section',            'context_label' ],
 			[ 'recitation',         'custom_recitation' ],
 		);
 

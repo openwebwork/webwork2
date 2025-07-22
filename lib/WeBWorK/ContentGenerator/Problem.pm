@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Problem;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
@@ -24,18 +9,18 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(decodeAnswers wwRound);
+use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
-use WeBWorK::Utils::Files qw(path_is_subdir);
-use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq is_jitar_problem_hidden is_jitar_problem_closed
+use WeBWorK::Utils::Files    qw(path_is_subdir);
+use WeBWorK::Utils::JITAR    qw(seq_to_jitar_id jitar_id_to_seq is_jitar_problem_hidden is_jitar_problem_closed
 	jitar_problem_finished jitar_problem_adjusted_status);
 use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
-use WeBWorK::Utils::ProblemProcessing qw(process_and_log_answer jitar_send_warning_email compute_reduced_score
+use WeBWorK::Utils::ProblemProcessing    qw(process_and_log_answer jitar_send_warning_email compute_reduced_score
 	compute_unreduced_score);
-use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
-use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
+use WeBWorK::Utils::Rendering     qw(getTranslatorDebuggingOptions renderPG);
+use WeBWorK::Utils::Sets          qw(is_restricted format_set_name_display);
 use WeBWorK::AchievementEvaluator qw(checkForAchievements);
-use WeBWorK::DB::Utils qw(global2user fake_set fake_problem);
+use WeBWorK::DB::Utils            qw(global2user fake_set fake_problem);
 use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
 
@@ -233,12 +218,12 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 			&& $c->authen->session->{showMeAnother}{problemID} eq $problem->problem_id
 			&& ($c->{checkAnswers} || $c->{previewAnswers});
 
-		# If the student has not attempted the original problem enough times yet, then showMeAnother can not be used.
+		# If the student has not attempted the original problem enough times yet, then showMeAnother cannot be used.
 		return 0
 			if $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) <
 			$c->{showMeAnother}{TriesNeeded};
 
-		# If the number of showMeAnother uses has been exceeded, then the user can not use it again.
+		# If the number of showMeAnother uses has been exceeded, then the user cannot use it again.
 		return 0 if $c->{showMeAnother}{Count} >= $c->{showMeAnother}{MaxReps} && $c->{showMeAnother}{MaxReps} > -1;
 
 		return 1;
@@ -385,7 +370,7 @@ async sub pre_header_initialize ($c) {
 		$c->{invalidProblem} =
 			!(defined $problem && ($c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
 
-		$c->addbadmessage($c->maketext('This problem will not count towards your grade.'))
+		$c->addbadmessage($c->maketext('This problem will not count toward your grade.'))
 			if $problem && !$problem->value && !$c->{invalidProblem};
 	}
 
@@ -602,7 +587,9 @@ async sub pre_header_initialize ($c) {
 				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
 				: 0
 			),
-			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID)
+			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
+			$can{checkAnswers}
+				&& defined $formFields->{problem_data} ? (problemData => $formFields->{problem_data}) : ()
 		}
 	);
 
@@ -797,9 +784,10 @@ sub siblings ($c) {
 			{
 				push(
 					@items,
-					$c->link_to(
-						$c->maketext('Problem [_1]', join('.', @seq)) => '#',
-						class                                         => $class . ' disabled-problem',
+					$c->tag(
+						'a',
+						class => $class . ' disabled',
+						$c->maketext('Problem [_1]', join('.', @seq))
 					)
 				);
 			} else {
@@ -1230,7 +1218,7 @@ sub output_score_summary ($c) {
 				$c->maketext(
 					'Your overall recorded score is [_1].  [_2]',
 					wwRound(0, $problem->status * 100) . '%',
-					$problem->value ? '' : $c->maketext('(This problem will not count towards your grade.)')
+					$problem->value ? '' : $c->maketext('(This problem will not count toward your grade.)')
 				),
 				$c->tag('br')
 				)
@@ -1349,16 +1337,13 @@ sub output_score_summary ($c) {
 				);
 			}
 		}
-		# Show information if this problem counts towards the grade of its parent.
+		# Show information if this problem counts toward the grade of its parent.
 		# If it doesn't (and its not a top level problem) then its grade doesnt matter.
 		if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 			pop @seq;
-			push(
-				@$output,
+			push(@$output,
 				$c->tag('br'),
-				$c->maketext(
-					'The score for this problem can count towards score of problem [_1].', join('.', @seq)
-				)
+				$c->maketext('The score for this problem can count toward score of problem [_1].', join('.', @seq))
 			);
 		} elsif (scalar(@seq) != 1) {
 			pop @seq;
@@ -1414,6 +1399,11 @@ sub output_misc ($c) {
 	# Make sure the student nav filter setting is preserved when the problem form is submitted.
 	push(@$output, $c->hidden_field(studentNavFilter => $c->param('studentNavFilter')))
 		if $c->param('studentNavFilter');
+
+	# If the user can check answers and a problem_data form parameter for
+	# this problem has been set then add a hidden input with that data.
+	push(@$output, $c->hidden_field(problem_data => $c->param('problem_data')))
+		if $c->{can}{checkAnswers} && defined $c->param('problem_data');
 
 	return $output->join('');
 }

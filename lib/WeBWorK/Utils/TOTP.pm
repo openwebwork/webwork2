@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use utf8;
 
-use Digest::SHA qw(hmac_sha512_hex hmac_sha256_hex hmac_sha1_hex);
-use MIME::Base32 qw(encode_base32);
+use Digest::SHA          qw(hmac_sha512_hex hmac_sha256_hex hmac_sha1_hex);
+use MIME::Base32         qw(encode_base32);
 use Math::Random::Secure qw(irand);
 
 sub new {

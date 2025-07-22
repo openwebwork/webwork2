@@ -1,4 +1,57 @@
 (() => {
+	const fileChooserForm = document.forms['pg-editor-file-chooser'];
+	if (fileChooserForm) {
+		const newProblemRadio = document.getElementById('new_problem');
+
+		const sourceFilePathInput = fileChooserForm.elements['sourceFilePath'];
+		const filePathRadio = document.getElementById('file_path');
+
+		const sampleProblemFileSelect = fileChooserForm.elements['sampleProblemFile'];
+		const sampleProblemRadio = document.getElementById('sample_problem');
+
+		newProblemRadio?.addEventListener('change', () => {
+			if (newProblemRadio.checked) {
+				sampleProblemFileSelect.required = false;
+				sourceFilePathInput.required = false;
+			}
+		});
+
+		if (filePathRadio && sourceFilePathInput) {
+			const filePathSelected = () => {
+				sampleProblemFileSelect.required = false;
+				sourceFilePathInput.required = true;
+				filePathRadio.checked = true;
+			};
+			filePathRadio.addEventListener('change', () => {
+				if (filePathRadio.checked) filePathSelected();
+			});
+			sourceFilePathInput.addEventListener('focusin', filePathSelected);
+		}
+		if (sampleProblemRadio && sampleProblemFileSelect) {
+			const sampleProblemSelected = () => {
+				sampleProblemFileSelect.required = true;
+				sourceFilePathInput.required = false;
+				sampleProblemRadio.checked = true;
+			};
+			sampleProblemRadio.addEventListener('change', () => {
+				if (sampleProblemRadio.checked) sampleProblemSelected();
+			});
+			sampleProblemFileSelect.addEventListener('change', sampleProblemSelected);
+			sampleProblemFileSelect.addEventListener('focusin', sampleProblemSelected);
+		}
+
+		fileChooserForm.addEventListener('submit', (e) => {
+			if (!fileChooserForm.checkValidity()) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+
+			fileChooserForm.classList.add('was-validated');
+		});
+
+		return;
+	}
+
 	// Add a container for message toasts.
 	const toastContainer = document.createElement('div');
 	toastContainer.classList.add('toast-container', 'position-fixed', 'bottom-0', 'end-0', 'p-3');
@@ -48,7 +101,7 @@
 		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
 		request_object.fileContents =
-			webworkConfig?.pgCodeMirror?.getValue() ?? document.getElementById('problemContents')?.value ?? '';
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
 		if (!request_object.outputFilePath) return;
 
@@ -119,11 +172,13 @@
 
 		request_object.rpc_command = 'tidyPGCode';
 		request_object.pgCode =
-			webworkConfig?.pgCodeMirror?.getValue() ?? document.getElementById('problemContents')?.value ?? '';
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
 				if (data.result_data.status) {
 					if (data.result_data.errors) {
 						renderArea.innerHTML =
@@ -141,7 +196,7 @@
 				if (request_object.pgCode === data.result_data.tidiedPGCode) {
 					showMessage('There were no changes to the code.', true);
 				} else {
-					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.tidiedPGCode);
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.tidiedPGCode;
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
 					showMessage('Successfuly perltidied code.', true);
@@ -161,15 +216,17 @@
 
 		request_object.rpc_command = 'convertCodeToPGML';
 		request_object.pgCode =
-			webworkConfig?.pgCodeMirror?.getValue() ?? document.getElementById('problemContents')?.value ?? '';
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
 		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
 				if (request_object.pgCode === data.result_data.pgmlCode) {
 					showMessage('There were no changes to the code.', true);
 				} else {
-					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setValue(data.result_data.pgmlCode);
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.pgmlCode;
 					else document.getElementById('problemContents').value = data.result_data.pgmlCode;
 					saveTempFile();
 					showMessage('Successfully converted code to PGML', true);
@@ -252,9 +309,9 @@
 	const renderArea = document.getElementById('pgedit-render-area');
 	const fileType = document.getElementsByName('file_type')[0]?.value;
 
-	// This is either the div created by the CodeMirror editor or the problemContents textarea in the case that
+	// This is either the div containing the CodeMirror editor or the problemContents textarea in the case that
 	// CodeMirror is disabled in localOverrides.conf.
-	const editorArea = document.querySelector('.CodeMirror') ?? document.getElementById('problemContents');
+	const editorArea = document.querySelector('.code-mirror-editor') ?? document.getElementById('problemContents');
 
 	// Add hot key, ctrl-enter, to render the problem
 	editorArea.addEventListener('keydown', async (e) => {
@@ -279,8 +336,7 @@
 					if (window.getComputedStyle(renderArea).getPropertyValue('height') !== `${height}px`)
 						renderArea.style.height = `${height}px`;
 					if (window.getComputedStyle(editorArea).getPropertyValue('height') !== `${height}px`) {
-						if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.setSize('100%', `${height}px`);
-						else editorArea.style.height = `${height}px`;
+						editorArea.style.height = `${height}px`;
 					}
 				}
 			}
@@ -321,7 +377,7 @@
 				const requestData = new URLSearchParams(new FormData(problemForm));
 				requestData.set(
 					'rawProblemSource',
-					webworkConfig?.pgCodeMirror?.getValue() ?? document.getElementById('problemContents')?.value ?? ''
+					webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? ''
 				);
 				requestData.set('send_pg_flags', 1);
 				requestData.set(button.name, button.value);
@@ -352,7 +408,7 @@
 			}
 
 			if (fileType === 'course_info') {
-				const contents = webworkConfig?.pgCodeMirror?.getValue();
+				const contents = webworkConfig?.pgCodeMirror?.source;
 				if (contents) renderArea.innerHTML = `<div class="overflow-auto p-2 bg-light h-100">${contents}</div>`;
 				else
 					renderArea.innerHTML =
@@ -370,7 +426,7 @@
 			}
 
 			if (fileType === 'hardcopy_theme') {
-				const contents = webworkConfig?.pgCodeMirror?.getValue();
+				const contents = webworkConfig?.pgCodeMirror?.source;
 				if (contents) {
 					renderArea.innerHTML = '<pre>' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
 				} else
@@ -396,10 +452,8 @@
 					problemSeed: document.getElementById('action_view_seed_id')?.value ?? 1,
 					sourceFilePath: document.getElementsByName('edit_file_path')[0]?.value,
 					rawProblemSource:
-						webworkConfig?.pgCodeMirror?.getValue() ??
-						document.getElementById('problemContents')?.value ??
-						'',
-					outputformat: 'simple',
+						webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '',
+					outputformat: 'debug',
 					showAnswerNumbers: 0,
 					// The set id is really only needed by set headers to get the correct dates for the set.
 					set_id: document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set',
@@ -508,9 +562,7 @@
 					problemSeed: document.getElementById('action_hardcopy_seed_id')?.value ?? 1,
 					sourceFilePath: document.getElementsByName('edit_file_path')[0]?.value,
 					rawProblemSource:
-						webworkConfig?.pgCodeMirror?.getValue() ??
-						document.getElementById('problemContents')?.value ??
-						'',
+						webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '',
 					outputformat: document.getElementById('action_hardcopy_format_id')?.value ?? 'pdf',
 					hardcopy_theme: document.getElementById('action_hardcopy_theme_id')?.value ?? 'oneColumn',
 					// The set id is really only needed by set headers to get the correct dates for the set.

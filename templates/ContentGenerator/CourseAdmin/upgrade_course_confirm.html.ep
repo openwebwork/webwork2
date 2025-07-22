@@ -19,6 +19,15 @@
 				</label>
 			</div>
 		% }
+		% if ($incorrect_type_database_fields_exist) {
+			<div class="form-check">
+				<label class="form-check-label">
+					<input type="checkbox" value="on" class="select-all form-check-input"
+						data-select-group="fix_type_fieldIDs">
+					<%= maketext('Select/unselect all fields with incorrect type.') %>
+				</label>
+			</div>
+		% }
 	<% end =%>
 	%
 	<div class="my-3">

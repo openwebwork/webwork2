@@ -43,7 +43,7 @@ sub new {
 		soap_fault_authen();
 	}
 	#Construct DB handle
-	my $db = eval { new WeBWorK::DB($ce->{dbLayout}); };
+	my $db = eval { WeBWorK::DB->new($ce); };
 	$@ and soap_fault_major("Failed to initialize database handle.<br>$@");
 	$self->{db} = $db;
 	$self->{ce} = $ce;
@@ -165,7 +165,7 @@ sub assign_set_to_user {
 	eval { $db->addUserSet($UserSet) };
 
 	if ($@) {
-		if ($@ =~ m/user set exists/) {
+		if (WeBWorK::DB::Ex::RecordExists->caught) {
 			push @results, "set $setID is already assigned to user $userID.";
 			$set_assigned = 1;
 		} else {

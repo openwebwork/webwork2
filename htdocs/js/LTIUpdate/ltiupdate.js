@@ -1,33 +1,52 @@
 (() => {
-	// Store select options in dictionary to rebuild the user/set menus from.
-	const userOptions = {};
+	// Store select options in dictionary to rebuild the set select from.
 	const setOptions = {};
 	const userMenu = document.getElementById('updateUserID');
 	const setMenu = document.getElementById('updateSetID');
-	for (let i = 1; i < userMenu.length; i++) {
-		userOptions[userMenu[i].value] = userMenu[i];
-	}
-	for (let i = 1; i < setMenu.length; i++) {
-		setOptions[setMenu[i].value] = setMenu[i];
+	const setSelectAll = document.getElementById('selectAllSets');
+	for (const option of setMenu.options) {
+		setOptions[option.value] = option;
 	}
 
-	// Update user and set drop down menus to only include valid user/set combinations.
-	document.getElementById('updateUserID')?.addEventListener('change', (e) => {
-		const setList = e.target.options[e.target.selectedIndex].dataset.sets.split(':');
-		const selectedSet = setMenu.value;
-		while (setMenu.length > 1) setMenu.lastChild.remove();
+	// Update set select to only include valid sets for the current selected user.
+	const updateSetMenu = () => {
+		const setList = userMenu.options[userMenu.selectedIndex].dataset.sets.split(':');
+		const selectedSets = {};
+		let allSelected = true;
+		for (const option of setMenu.options) {
+			if (option.selected) selectedSets[option.value] = true;
+		}
+		while (setMenu.length > 0) setMenu.lastChild.remove();
 		setList.forEach((set) => {
 			setMenu.append(setOptions[set]);
+			const option = setMenu.lastChild;
+			if (option.value in selectedSets) {
+				option.selected = true;
+			} else {
+				option.selected = false;
+				allSelected = false;
+			}
 		});
-		setMenu.value = selectedSet;
+		setSelectAll.checked = allSelected;
+	};
+
+	// Deal with the select all sets checkbox to either select all sets or uncheck if a set is unselected.
+	userMenu?.addEventListener('change', updateSetMenu);
+	setMenu?.addEventListener('change', (e) => {
+		let allSelected = true;
+		for (const option of setMenu.options) {
+			if (!option.selected) allSelected = false;
+		}
+		setSelectAll.checked = allSelected;
 	});
-	document.getElementById('updateSetID')?.addEventListener('change', (e) => {
-		const userList = e.target.options[e.target.selectedIndex].dataset.users.split(':');
-		const selectedUser = userMenu.value;
-		while (userMenu.length > 1) userMenu.lastChild.remove();
-		userList.forEach((user) => {
-			userMenu.append(userOptions[user]);
-		});
-		userMenu.value = selectedUser;
+	setSelectAll?.addEventListener('change', () => {
+		for (const option of setMenu.options) {
+			option.selected = setSelectAll.checked;
+		}
+	});
+
+	// Update the set list on page load.
+	window.addEventListener('load', () => {
+		if (userMenu.value !== '') updateSetMenu();
 	});
 })();

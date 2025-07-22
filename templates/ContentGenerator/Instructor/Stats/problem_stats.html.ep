@@ -11,20 +11,36 @@
 </div>
 %
 % # Histogram of total scores.
+% my $bucketLabels = [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ];
 <%= $c->build_bar_chart(
-	[ @$buckets ],
-	xAxisLabels => [ '90-100', '80-89', '70-79', '60-69', '50-59', '40-49', '30-39', '20-29', '10-19', '0-9' ],
+	$buckets,
+	xAxisLabels => $bucketLabels,
 	yMax        => 5 * $maxCount,
 	yAxisLabels => [ map { $_ * $maxCount } 0 .. 5 ],
 	mainTitle   => maketext('Active Students Problem [_1] Grades', $c->{prettyID}),
 	xTitle      => maketext('Percent Ranges'),
 	yTitle      => maketext('Number of Students'),
+	descText    => $isJitarSet && $topLevelJitar
+		? maketext(
+			'Histogram showing the percent grade of active students for problem [_1] and the adjusted '
+				. 'percent grade with review. The number of students in each percent range is: [_2]. '
+				. 'The number of students in each percent range after review is: [_3].',
+			$c->{prettyID},
+			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
+			join(', ', map { "$bucketLabels->[$_]:$jitarBars->[$_]" } 0 .. scalar(@$buckets) - 1)
+		)
+		: maketext(
+			'Histogram showing the grades of active students for problem [_1], where the number of '
+				. 'students in each percent range is: [_2]',
+			$c->{prettyID},
+			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
+		),
 	barWidth    => 35,
 	barSep      => 5,
 	isPercent   => 0,
 	leftMargin  => 40 + 5 * length(5 * $maxCount),
 	isJitarSet  => ($isJitarSet && $topLevelJitar),
-	jitarBars   => [ reverse(@$jitarBars) ],
+	jitarBars   => $jitarBars,
 ) =%>
 %
 % # Display overall statistics
@@ -41,8 +57,8 @@
 					data-bs-content="<%= maketext(
 						'Success index is the square of the average score divided by the average number of attempts.'
 					) %>">
-					<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true">
-					</i>
+					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 				</a>
 			</th>
 			<td><%= sprintf('%0.1f', 100 * $successIndex) %></td>
@@ -64,14 +80,15 @@
 % my @tableData    = ($problemScores);
 % if ($isJitarSet && $topLevelJitar) {
 	% push(@tableHeaders, maketext('% Score with Review'));
-	% push(@tableData,    [ map { sprintf('%0.0f', 100 * $_) } @$adjustedScores ]);
+	% push(@tableData,    [ map { sprintf('%0.0f', $_) } @$adjustedScores ]);
 % }
 % my $successIndexHeader = begin
 	<%= maketext('Success Index') =%>
 	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
 		data-bs-content="<%=
 			maketext('Success index is the square of the score divided by the number of attempts.') =%>">
-		<i class="icon fas fa-question-circle" data-alt="<%= maketext('Help Icon') %>" aria-hidden="true"></i>
+		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
 % end
 % push @tableHeaders, $successIndexHeader->();
@@ -86,7 +103,7 @@
 %
 % if ($c->{problemRecord}->source_file =~ /^group:/) {
 	<div class="alert alert-info">
-		<%= maketext('Problem source is drawn from a grouping set and can not be directly rendered or edited.') %>
+		<%= maketext('Problem source is drawn from a grouping set and cannot be directly rendered or edited.') %>
 	</div>
 	% last;
 % }

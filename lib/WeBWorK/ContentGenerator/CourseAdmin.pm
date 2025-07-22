@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::CourseAdmin;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -30,16 +15,29 @@ use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword trim_spaces);
-use WeBWorK::Utils::CourseIntegrityCheck;
-use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse
-	unarchiveCourse initNonNativeTables);
+use WeBWorK::Utils                   qw(cryptPassword trim_spaces);
+use WeBWorK::Utils::CourseManagement qw(
+	addCourse
+	renameCourse
+	retitleCourse
+	deleteCourse
+	listCourses
+	archiveCourse
+	unarchiveCourse
+	initNonNativeTables
+);
 use WeBWorK::Utils::Logs qw(writeLog);
+use WeBWorK::Utils::CourseDBIntegrityCheck;
+use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(
+	checkCourseDirectories
+	checkCourseLinks
+	updateCourseDirectories
+	updateCourseLinks
+);
 use WeBWorK::DB;
 
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
-	my $db    = $c->db;
 	my $authz = $c->authz;
 	my $user  = $c->param('user');
 
@@ -47,7 +45,7 @@ sub pre_header_initialize ($c) {
 
 	# Check that the non-native tables are present in the database.
 	# These are the tables which are not course specific.
-	my @table_update_messages = initNonNativeTables($ce, $ce->{dbLayoutName});
+	my @table_update_messages = initNonNativeTables($ce);
 	$c->addgoodmessage($c->c(@table_update_messages)->join($c->tag('br'))) if @table_update_messages;
 
 	my @errors;
@@ -83,7 +81,6 @@ sub pre_header_initialize ($c) {
 				}
 			} elsif (defined $c->param('confirm_retitle_course')) {
 				$method_to_call = 'do_retitle_course';
-
 			} elsif (defined $c->param('upgrade_course_tables')) {
 				@errors = $c->rename_course_validate;
 				if (@errors) {
@@ -214,6 +211,16 @@ sub pre_header_initialize ($c) {
 			} else {
 				$method_to_call = 'manage_lti_course_map_form';
 			}
+		} elsif ($subDisplay eq 'manage_otp_secrets') {
+			if (defined $c->param('take_action')) {
+				if ($c->param('action') eq 'reset') {
+					$method_to_call = 'reset_otp_secrets_confirm';
+				} else {
+					$method_to_call = 'copy_otp_secrets_confirm';
+				}
+			} else {
+				$method_to_call = 'manage_otp_secrets_form';
+			}
 		} elsif ($subDisplay eq 'registration') {
 			if (defined($c->param('register_site'))) {
 				$method_to_call = 'do_registration';
@@ -230,20 +237,17 @@ sub pre_header_initialize ($c) {
 }
 
 sub add_course_form ($c) {
+	$c->param('number_of_additional_users', ($c->param('number_of_additional_users') // 0) + 1)
+		if $c->param('add_another_instructor');
+
 	return $c->include('ContentGenerator/CourseAdmin/add_course_form');
 }
 
 sub add_course_validate ($c) {
 	my $ce = $c->ce;
 
-	my $add_courseID                = trim_spaces($c->param('new_courseID'))                || '';
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          || '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        || '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) || '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       || '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        || '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           || '';
-	my $add_dbLayout                = trim_spaces($c->param('add_dbLayout'))                || '';
+	my $add_courseID               = trim_spaces($c->param('new_courseID'))  || '';
+	my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
 
 	my @errors;
 
@@ -260,35 +264,16 @@ sub add_course_validate ($c) {
 		push @errors, $c->maketext('Course ID cannot exceed [_1] characters.', $ce->{maxCourseIdLength});
 	}
 
-	if ($add_initial_userID ne '') {
-		if ($add_initial_password eq '') {
-			push @errors, $c->maketext('You must specify a password for the initial instructor.');
-		}
-		if ($add_initial_confirmPassword eq '') {
-			push @errors, $c->maketext('You must confirm the password for the initial instructor.');
-		}
-		if ($add_initial_password ne $add_initial_confirmPassword) {
-			push @errors, $c->maketext('The password and password confirmation for the instructor must match.');
-		}
-		if ($add_initial_firstName eq '') {
-			push @errors, $c->maketext('You must specify a first name for the initial instructor.');
-		}
-		if ($add_initial_lastName eq '') {
-			push @errors, $c->maketext('You must specify a last name for the initial instructor.');
-		}
-		if ($add_initial_email eq '') {
-			push @errors, $c->maketext('You must specify an email address for the initial instructor.');
-		}
-	}
+	for (1 .. $number_of_additional_users) {
+		my $userID = trim_spaces($c->param("add_initial_userID_$_")) || '';
 
-	if ($add_dbLayout eq '') {
-		push @errors, 'You must select a database layout.';
-	} else {
-		if (exists $ce->{dbLayouts}{$add_dbLayout}) {
-			# we used to check for layout-specific fields here, but there aren't any layouts that require them
-			# anymore. (in the future, we'll probably deal with this in layout-specific modules.)
-		} else {
-			push @errors, "The database layout $add_dbLayout doesn't exist.";
+		unless ($userID =~ /^[\w.,-]*$/) {
+			push @errors,
+				$c->maketext(
+					'User ID number [_1] may only contain letters, numbers, hyphens, periods, commas, '
+					. 'and underscores.',
+					$_
+				);
 		}
 	}
 
@@ -300,71 +285,99 @@ sub do_add_course ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $add_courseID          = trim_spaces($c->param('new_courseID')) // '';
-	my $add_courseTitle       = ($c->param('add_courseTitle')       // '') =~ s/^\s*|\s*$//gr;
-	my $add_courseInstitution = ($c->param('add_courseInstitution') // '') =~ s/^\s*|\s\*$//gr;
-
-	my $add_initial_userID          = trim_spaces($c->param('add_initial_userID'))          // '';
-	my $add_initial_password        = trim_spaces($c->param('add_initial_password'))        // '';
-	my $add_initial_confirmPassword = trim_spaces($c->param('add_initial_confirmPassword')) // '';
-	my $add_initial_firstName       = trim_spaces($c->param('add_initial_firstName'))       // '';
-	my $add_initial_lastName        = trim_spaces($c->param('add_initial_lastName'))        // '';
-	my $add_initial_email           = trim_spaces($c->param('add_initial_email'))           // '';
+	my $add_courseID               = trim_spaces($c->param('new_courseID')) // '';
+	my $add_courseTitle            = ($c->param('add_courseTitle')       // '') =~ s/^\s*|\s*$//gr;
+	my $add_courseInstitution      = ($c->param('add_courseInstitution') // '') =~ s/^\s*|\s\*$//gr;
+	my $number_of_additional_users = $c->param('number_of_additional_users') || 0;
 
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
-	my $add_dbLayout = trim_spaces($c->param('add_dbLayout')) || '';
-
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
 
-	my %courseOptions = (dbLayoutName => $add_dbLayout);
+	my %courseOptions;
 
 	my @users;
 
 	# copy users from current (admin) course if desired
-	if ($c->param('add_admin_users')) {
-		for my $userID ($db->listUsers) {
+	for my $userID ($c->param('add-admin-users')) {
+		unless ($db->existsUser($userID)) {
+			$c->addbadmessage($c->maketext(
+				'User "[_1]" will not be copied from the [_2] course as it does not exist.', $userID,
+				$ce->{admin_course_id}
+			));
+			next;
+		}
+		for (1 .. $number_of_additional_users) {
+			my $add_initial_userID = trim_spaces($c->param("add_initial_userID_$_")) // '';
+
 			if ($userID eq $add_initial_userID) {
 				$c->addbadmessage($c->maketext(
-					'User "[_1]" will not be copied from [_2] course as it is the initial instructor.', $userID,
-					$ce->{admin_course_id}
+					'User "[_1]" will not be copied from the [_2] course as it is the same as additional user '
+						. 'number [_3].',
+					$userID, $ce->{admin_course_id}, $_
 				));
 				next;
 			}
-			my $PermissionLevel = $db->newPermissionLevel();
-			$PermissionLevel->user_id($userID);
-			$PermissionLevel->permission($ce->{userRoles}{admin});
-			my $User     = $db->getUser($userID);
-			my $Password = $db->getPassword($userID);
-			$User->status('O');    # Add admin user as an observer.
-
-			push @users, [ $User, $Password, $PermissionLevel ]
-				if $authz->hasPermissions($userID, 'create_and_delete_courses');
 		}
-	}
 
-	# add initial instructor if desired
-	if ($add_initial_userID =~ /\S/) {
-		my $User = $db->newUser(
-			user_id       => $add_initial_userID,
-			first_name    => $add_initial_firstName,
-			last_name     => $add_initial_lastName,
-			student_id    => $add_initial_userID,
-			email_address => $add_initial_email,
-			status        => 'O',
-		);
-		my $Password = $db->newPassword(
-			user_id  => $add_initial_userID,
-			password => cryptPassword($add_initial_password),
-		);
-		my $PermissionLevel = $db->newPermissionLevel(
-			user_id    => $add_initial_userID,
-			permission => '10',
-		);
+		my $PermissionLevel = $db->getPermissionLevel($userID);
+		my $User            = $db->getUser($userID);
+		my $Password        = $db->getPassword($userID);
+
+		# Enroll student users, and make all other users observers.
+		$User->status($PermissionLevel->permission == $ce->{userRoles}{student} ? 'C' : 'O');
+
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 
-	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} }, map { $_->[0]->user_id } @users;
+	# add additional instructors if desired
+	for (1 .. $number_of_additional_users) {
+		my $userID          = trim_spaces($c->param("add_initial_userID_$_"))    // '';
+		my $password        = trim_spaces($c->param("add_initial_password_$_"))  // '';
+		my $firstName       = trim_spaces($c->param("add_initial_firstName_$_")) // '';
+		my $lastName        = trim_spaces($c->param("add_initial_lastName_$_"))  // '';
+		my $email           = trim_spaces($c->param("add_initial_email_$_"))     // '';
+		my $permissionLevel = $c->param("add_initial_permission_$_");
+		my $add_user        = $c->param("add_initial_user_$_") // 0;
+
+		if ($userID =~ /\S/) {
+			my $User = $db->newUser(
+				user_id       => $userID,
+				first_name    => $firstName,
+				last_name     => $lastName,
+				email_address => $email,
+				status        => $permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O',
+			);
+			my $Password = $db->newPassword(
+				user_id  => $userID,
+				password => $password ? cryptPassword($password) : '',
+			);
+			my $PermissionLevel = $db->newPermissionLevel(
+				user_id    => $userID,
+				permission => $permissionLevel,
+			);
+			push @users, [ $User, $Password, $PermissionLevel ];
+
+			# Add initial user to admin course if asked.
+			if ($add_user) {
+				if ($db->existsUser($userID)) {
+					$c->addbadmessage($c->maketext(
+						'User "[_1]" will not be added to the [_2] course as it already exists.', $userID,
+						$ce->{admin_course_id}
+					));
+				} else {
+					$User->status('D');    # By default don't allow user to login.
+					$db->addUser($User);
+					$db->addPassword($Password);
+					$db->addPermissionLevel($PermissionLevel);
+					$User->status($permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O');
+				}
+			}
+		}
+	}
+
+	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} },
+		map { $_->[0]->user_id } grep { $_->[2]->permission >= $ce->{userRoles}{professor} } @users;
 
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
@@ -384,11 +397,10 @@ sub do_add_course ($c) {
 
 	eval {
 		addCourse(
-			courseID       => $add_courseID,
-			ce             => $ce2,
-			courseOptions  => \%courseOptions,
-			users          => \@users,
-			initial_userID => $add_initial_userID,
+			courseID      => $add_courseID,
+			ce            => $ce2,
+			courseOptions => \%courseOptions,
+			users         => \@users,
 			%optional_arguments,
 		);
 	};
@@ -417,53 +429,8 @@ sub do_add_course ($c) {
 				"\tAdded",
 				(defined $add_courseInstitution ? $add_courseInstitution : '(no institution specified)'),
 				(defined $add_courseTitle       ? $add_courseTitle       : '(no title specified)'),
-				$add_courseID,
-				$add_initial_firstName,
-				$add_initial_lastName,
-				$add_initial_email,
-			)
+				$add_courseID)
 		);
-		# Add contact to admin course as student?
-		# FIXME -- should we do this?
-		if ($add_initial_userID =~ /\S/) {
-			my $composite_id = "${add_initial_userID}_${add_courseID}";    # student id includes school name and contact
-			my $User         = $db->newUser(
-				user_id       => $composite_id,                            # student id includes school name and contact
-				first_name    => $add_initial_firstName,
-				last_name     => $add_initial_lastName,
-				student_id    => $add_initial_userID,
-				email_address => $add_initial_email,
-				status        => 'C',
-			);
-			my $Password = $db->newPassword(
-				user_id  => $composite_id,
-				password => cryptPassword($add_initial_password),
-			);
-			my $PermissionLevel = $db->newPermissionLevel(
-				user_id    => $composite_id,
-				permission => '0',
-			);
-			# add contact to admin course as student
-			# or if this contact and course already exist in a dropped status
-			# change the student's status to enrolled
-			if (my $oldUser = $db->getUser($composite_id)) {
-				push(
-					@$output,
-					$c->tag(
-						'div',
-						class => 'alert alert-danger p-1 mb-2',
-						$c->maketext('Replacing old data for [_1]: status: [_2]', $composite_id, $oldUser->status)
-					)
-				);
-				$db->deleteUser($composite_id);
-			}
-			eval { $db->addUser($User) };
-			warn $@ if $@;
-			eval { $db->addPassword($Password) };
-			warn $@ if $@;
-			eval { $db->addPermissionLevel($PermissionLevel) };
-			warn $@ if $@;
-		}
 		push(
 			@$output,
 			$c->tag(
@@ -503,9 +470,8 @@ sub rename_course_confirm ($c) {
 
 	# Create strings confirming title and institution change.
 	# Connect to the database to get old title and institution.
-	my $dbLayoutName                = $ce->{dbLayoutName};
-	my $db                          = WeBWorK::DB->new($ce->{dbLayouts}{$dbLayoutName});
-	my $oldDB                       = WeBWorK::DB->new($ce2->{dbLayouts}{$dbLayoutName});
+	my $db                          = WeBWorK::DB->new($ce);
+	my $oldDB                       = WeBWorK::DB->new($ce2);
 	my $rename_oldCourseTitle       = $oldDB->getSettingValue('courseTitle')       // '';
 	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution') // '';
 
@@ -529,49 +495,52 @@ sub rename_course_confirm ($c) {
 		rename_oldCourseID            => $rename_oldCourseID
 	) unless $c->param('rename_newCourseID_checkbox');
 
-	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+	my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
-		# Check database
-		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
+	# Check database
+	my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 
-		# Upgrade the database if requested.
-		my @upgrade_report;
-		if ($c->param('upgrade_course_tables')) {
-			my @schema_table_names = keys %$dbStatus;
-			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
-			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
-				@schema_table_names;
-			push(@upgrade_report, $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]));
-			for my $table_name (@tables_to_alter) {
-				push(@upgrade_report, $CIchecker->updateTableFields($rename_oldCourseID, $table_name));
-			}
-
-			($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
+	# Upgrade the database if requested.
+	my @upgrade_report;
+	if ($c->param('upgrade_course_tables')) {
+		my @schema_table_names = keys %$dbStatus;
+		my @tables_to_create =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
+		my @tables_to_alter =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
+		push(@upgrade_report, $CIchecker->updateCourseTables($rename_oldCourseID, [@tables_to_create]));
+		for my $table_name (@tables_to_alter) {
+			push(@upgrade_report, $CIchecker->updateTableFields($rename_oldCourseID, $table_name));
 		}
 
-		# Check directories
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
-
-		return $c->include(
-			'ContentGenerator/CourseAdmin/rename_course_confirm',
-			upgrade_report                => \@upgrade_report,
-			tables_ok                     => $tables_ok,
-			dbStatus                      => $dbStatus,
-			directory_report              => $directory_report,
-			directories_ok                => $directories_ok,
-			rename_oldCourseTitle         => $rename_oldCourseTitle,
-			change_course_title_str       => $change_course_title_str,
-			rename_oldCourseInstitution   => $rename_oldCourseInstitution,
-			change_course_institution_str => $change_course_institution_str,
-			rename_oldCourseID            => $rename_oldCourseID,
-			rename_newCourseID            => $rename_newCourseID
-		);
-	} else {
-		return $c->tag('p', class => 'text-danger fw-bold', "Unable to find database layout for $rename_oldCourseID");
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
 	}
+
+	# Update and check directories and links.
+	my $dir_update_messages  = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	my $link_update_messages = $c->param('upgrade_course_tables') ? updateCourseLinks($ce2)       : [];
+	my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+	my ($links_ok,       $link_report)      = checkCourseLinks($ce2);
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/rename_course_confirm',
+		upgrade_report                => \@upgrade_report,
+		tables_ok                     => $tables_ok,
+		dbStatus                      => $dbStatus,
+		directory_report              => $directory_report,
+		directories_ok                => $directories_ok,
+		dir_update_messages           => $dir_update_messages,
+		link_report                   => $link_report,
+		links_ok                      => $links_ok,
+		link_update_messages          => $link_update_messages,
+		rename_oldCourseTitle         => $rename_oldCourseTitle,
+		change_course_title_str       => $change_course_title_str,
+		rename_oldCourseInstitution   => $rename_oldCourseInstitution,
+		change_course_institution_str => $change_course_institution_str,
+		rename_oldCourseID            => $rename_oldCourseID,
+		rename_newCourseID            => $rename_newCourseID
+	);
 }
 
 sub rename_course_validate ($c) {
@@ -886,19 +855,6 @@ sub do_delete_course ($c) {
 				$c->tag('div', class => 'font-monospace', $error))->join('')
 		);
 	} else {
-		# Mark the contact person in the admin course as dropped.
-		# Find the contact person for the course by searching the admin classlist.
-		my @contacts = grep {/_$delete_courseID$/} $db->listUsers;
-		if (@contacts) {
-			die "Incorrect number of contacts for the course $delete_courseID: " . join(' ', @contacts)
-				if @contacts != 1;
-
-			# Mark the contact person as dropped.
-			my $User = $db->getUser($contacts[0]);
-			$User->status(($ce->status_name_to_abbrevs('Drop'))[0]);
-			$db->putUser($User);
-		}
-
 		writeLog($ce, 'hosted_courses', join("\t", "\tDeleted", '', '', $delete_courseID));
 
 		return $c->c(
@@ -1009,48 +965,49 @@ sub archive_course_confirm ($c) {
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
-	if ($ce2->{dbLayoutName}) {
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+	my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
-		# Check database
-		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
+	# Check database
+	my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 
-		# Upgrade the database if requested.
-		my @upgrade_report;
-		if ($c->param('upgrade_course_tables')) {
-			my @schema_table_names = keys %$dbStatus;
-			my @tables_to_create =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
-			my @tables_to_alter =
-				grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B }
-				@schema_table_names;
-			push(@upgrade_report, $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]));
-			for my $table_name (@tables_to_alter) {
-				push(@upgrade_report, $CIchecker->updateTableFields($archive_courseID, $table_name));
-			}
-
-			($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
+	# Upgrade the database if requested.
+	my @upgrade_report;
+	if ($c->param('upgrade_course_tables')) {
+		my @schema_table_names = keys %$dbStatus;
+		my @tables_to_create =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
+		my @tables_to_alter =
+			grep { $dbStatus->{$_}->[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
+		push(@upgrade_report, $CIchecker->updateCourseTables($archive_courseID, [@tables_to_create]));
+		for my $table_name (@tables_to_alter) {
+			push(@upgrade_report, $CIchecker->updateTableFields($archive_courseID, $table_name));
 		}
 
-		# Update and check directories.
-		my $dir_update_messages = $c->param('upgrade_course_tables') ? $CIchecker->updateCourseDirectories : [];
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories($ce2);
-
-		return $c->include(
-			'ContentGenerator/CourseAdmin/archive_course_confirm',
-			ce2                 => $ce2,
-			upgrade_report      => \@upgrade_report,
-			tables_ok           => $tables_ok,
-			dbStatus            => $dbStatus,
-			dir_update_messages => $dir_update_messages,
-			directory_report    => $directory_report,
-			directories_ok      => $directories_ok,
-			archive_courseID    => $archive_courseID,
-			archive_courseIDs   => \@archive_courseIDs
-		);
-	} else {
-		return $c->tag('p', class => 'text-danger fw-bold', "Unable to find database layout for $archive_courseID");
+		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
 	}
+
+	# Update and check directories and links.
+	my $dir_update_messages  = $c->param('upgrade_course_tables') ? updateCourseDirectories($ce2) : [];
+	my $link_update_messages = $c->param('upgrade_course_tables') ? updateCourseLinks($ce2)       : [];
+	my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+	my ($links_ok,       $link_report)      = checkCourseLinks($ce2);
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/archive_course_confirm',
+		ce2                  => $ce2,
+		upgrade_report       => \@upgrade_report,
+		tables_ok            => $tables_ok,
+		dbStatus             => $dbStatus,
+		dir_update_messages  => $dir_update_messages,
+		directory_report     => $directory_report,
+		directories_ok       => $directories_ok,
+		link_report          => $link_report,
+		links_ok             => $links_ok,
+		link_update_messages => $link_update_messages,
+		archive_courseID     => $archive_courseID,
+		archive_courseIDs    => \@archive_courseIDs
+	);
 }
 
 sub do_archive_course ($c) {
@@ -1118,21 +1075,6 @@ sub do_archive_course ($c) {
 					)
 				);
 			} else {
-				# Mark the contact person in the admin course as dropped.
-				# Find the contact person for the course by searching the admin classlist.
-				my @contacts = grep {/_$archive_courseID$/} $db->listUsers;
-				if (@contacts) {
-					die "Incorrect number of contacts for the course $archive_courseID" . join(' ', @contacts)
-						if @contacts != 1;
-					my $composite_id = $contacts[0];
-
-					my $User         = $db->getUser($composite_id);
-					my $status_name  = 'Drop';
-					my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
-					$User->status($status_value);
-					$db->putUser($User);
-				}
-
 				push(
 					@$output,
 					$c->tag(
@@ -1291,7 +1233,7 @@ sub do_unarchive_course ($c) {
 
 		if ($c->param('clean_up_course')) {
 			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
-			my $db_new = WeBWorK::DB->new($ce_new->{dbLayout});
+			my $db_new = WeBWorK::DB->new($ce_new);
 
 			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
 				$db_new->deleteUser($student_id->[0]);
@@ -1383,7 +1325,7 @@ sub upgrade_course_confirm ($c) {
 
 	my @upgrade_courseIDs = $c->param('upgrade_courseIDs');
 
-	my ($extra_database_tables_exist, $extra_database_fields_exist) = (0, 0);
+	my ($extra_database_tables_exist, $extra_database_fields_exist, $incorrect_type_database_fields_exist) = (0, 0, 0);
 
 	my $status_output = $c->c;
 
@@ -1394,12 +1336,13 @@ sub upgrade_course_confirm ($c) {
 		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
 
@@ -1472,8 +1415,26 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
-		# Report on directory status
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories;
+		if ($incorrect_type_database_fields) {
+			$incorrect_type_database_fields_exist = 1;
+			push(
+				@$course_output,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the field defined in the schema '
+							. 'for at least one table. Check the checkbox by the field to change its type when '
+							. 'upgrading the course. Warning: This can fail which may corrupt the table. If you have '
+							. 'not archived this course, then do that now before upgrading if you want to change the '
+							. 'type of any of these fields.'
+					)
+				)
+			);
+		}
+
+		# Report on directory and link status
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
 		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')));
 		push(
 			@$course_output,
@@ -1494,12 +1455,39 @@ sub upgrade_course_confirm ($c) {
 		push(
 			@$course_output,
 			$directories_ok
-			? $c->tag('p', class => 'text-success mb-0', $c->maketext('Directory structure is ok'))
+			? $c->tag('p', class => 'text-success', $c->maketext('Directory structure is ok'))
 			: $c->tag(
 				'p',
-				class => 'text-danger mb-0',
+				class => 'text-danger',
 				$c->maketext(
 					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+			)
+		);
+
+		my ($links_ok, $link_report) = checkCourseLinks($ce2);
+		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Link structure:')));
+		push(
+			@$course_output,
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->c("$_->[0]: ",
+								$c->tag('span', class => $_->[3] ? 'text-success' : 'text-danger', $_->[2]))
+								->join('')
+						)
+					} @$link_report
+				)->join('')
+			)
+		);
+		push(
+			@$course_output,
+			$links_ok ? $c->tag('p', class => 'text-success mb-0', $c->maketext('Link structure is ok')) : $c->tag(
+				'p',
+				class => 'text-danger mb-0',
+				$c->maketext('Link structure is missing links, or links point to the wrong place.')
 			)
 		);
 
@@ -1508,10 +1496,11 @@ sub upgrade_course_confirm ($c) {
 
 	return $c->include(
 		'ContentGenerator/CourseAdmin/upgrade_course_confirm',
-		upgrade_courseIDs           => \@upgrade_courseIDs,
-		extra_database_tables_exist => $extra_database_tables_exist,
-		extra_database_fields_exist => $extra_database_fields_exist,
-		status_output               => $status_output->join('')
+		upgrade_courseIDs                    => \@upgrade_courseIDs,
+		extra_database_tables_exist          => $extra_database_tables_exist,
+		extra_database_fields_exist          => $extra_database_fields_exist,
+		incorrect_type_database_fields_exist => $incorrect_type_database_fields_exist,
+		status_output                        => $status_output->join('')
 	);
 }
 
@@ -1525,15 +1514,16 @@ sub do_upgrade_course ($c) {
 		my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $upgrade_courseID });
 
 		# Create integrity checker
-		my $CIchecker = WeBWorK::Utils::CourseIntegrityCheck->new(ce => $ce2);
+		my $CIchecker = WeBWorK::Utils::CourseDBIntegrityCheck->new($ce2);
 
 		# Add missing tables and missing fields to existing tables
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 		my @schema_table_names = keys %$dbStatus;
 		my @tables_to_create =
-			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A } @schema_table_names;
+			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A } @schema_table_names;
 		my @tables_to_alter =
-			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B } @schema_table_names;
+			grep { $dbStatus->{$_}[0] == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B }
+			@schema_table_names;
 
 		my @upgrade_report;
 		push(
@@ -1546,8 +1536,10 @@ sub do_upgrade_course ($c) {
 			push(
 				@upgrade_report,
 				$CIchecker->updateTableFields(
-					$upgrade_courseID, $table_name,
-					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ]
+					$upgrade_courseID,
+					$table_name,
+					[ ($c->param("$upgrade_courseID.$table_name.delete_fieldIDs")) ],
+					[ ($c->param("$upgrade_courseID.$table_name.fix_type_fieldIDs")) ],
 				)
 			);
 		}
@@ -1555,8 +1547,9 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes, $db_report) =
-			$c->formatReportOnDatabaseTables($dbStatus);
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+			$incorrect_type_database_fields, $db_report)
+			= $c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
 		$db_report = $c->c($c->tag('div', class => 'mb-2', $c->maketext('Database:')), $db_report);
@@ -1584,9 +1577,25 @@ sub do_upgrade_course ($c) {
 			);
 		}
 
-		# Add missing directories and prepare report on directory status
-		my $dir_update_messages = $CIchecker->updateCourseDirectories;    # Needs more error messages
-		my ($directories_ok, $directory_report) = $CIchecker->checkCourseDirectories;
+		if ($incorrect_type_database_fields) {
+			push(
+				@$db_report,
+				$c->tag(
+					'p',
+					class => 'text-danger fw-bold',
+					$c->maketext(
+						'There are database fields that do not have the same type as the '
+							. 'field defined in the schema for at least one table.'
+					)
+				)
+			);
+		}
+
+		# Add missing directories/links and prepare report on directory/link status
+		my $dir_update_messages  = updateCourseDirectories($ce2);    # Needs more error messages
+		my $link_update_messages = updateCourseLinks($ce2);
+		my ($directories_ok, $directory_report) = checkCourseDirectories($ce2);
+		my ($links_ok, $link_report)            = checkCourseLinks($ce2);
 
 		# Show status
 		my $course_report = $c->c;
@@ -1597,7 +1606,7 @@ sub do_upgrade_course ($c) {
 
 		push(@$course_report, @$db_report);
 
-		# Show report on directory status
+		# Show report on directory and link status
 		push(
 			@$course_report,
 			$c->tag('div', class => 'mb-2', $c->maketext('Directory structure:')),
@@ -1630,12 +1639,52 @@ sub do_upgrade_course ($c) {
 				)->join('')
 			),
 			$directories_ok
-			? $c->tag('p', class => 'text-success mb-0', $c->maketext('Directory structure is ok'))
+			? $c->tag('p', class => 'text-success', $c->maketext('Directory structure is ok'))
 			: $c->tag(
+				'p',
+				class => 'text-danger',
+				$c->maketext(
+					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+			)
+		);
+		push(
+			@$course_report,
+			$c->tag('div', class => 'mb-2', $c->maketext('Link structure:')),
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->c("$_->[0]: ",
+								$c->tag('span', class => $_->[3] ? 'text-success' : 'text-danger', $_->[2]))
+								->join('')
+						)
+					} @$link_report
+				)->join('')
+			),
+			$c->tag(
+				'ul',
+				$c->c(
+					map {
+						$c->tag(
+							'li',
+							$c->tag(
+								'span',
+								class => $_->[1] ? 'text-success' : 'text-danger',
+								$_->[0]
+							)
+						)
+					} @$link_update_messages
+				)->join('')
+			),
+			$links_ok ? $c->tag('p', class => 'text-success mb-0', $c->maketext('Link structure is ok')) : $c->tag(
 				'p',
 				class => 'text-danger mb-0',
 				$c->maketext(
-					'Directory structure is missing directories or the webserver lacks sufficient privileges.')
+					'Link structure is missing links, or the webserver lacks sufficient privileges, '
+						. 'or links point to the wrong place.'
+				)
 			)
 		);
 		push(@$output, $c->tag('div', class => 'border border-dark rounded p-2 mb-2', $course_report->join('')));
@@ -2292,11 +2341,38 @@ sub do_unhide_inactive_course ($c) {
 # LTI Course Map Management
 
 sub manage_lti_course_map_form ($c) {
-	my $ce        = $c->ce;
+	my $ce = $c->ce;
+
 	my @courseIDs = listCourses($ce);
 	my %courseMap = map { $_->course_id => $_->lms_context_id } $c->db->getLTICourseMapsWhere;
 	for (@courseIDs) { $courseMap{$_} = '' unless defined $courseMap{$_} }
-	return $c->include('ContentGenerator/CourseAdmin/manage_lti_course_map_form', courseMap => \%courseMap);
+
+	my %ltiConfigs = map {
+		my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
+		$_ => $@
+			? undef
+			: {
+				LTIVersion => $ce->{LTIVersion},
+				$ce->{LTIVersion}
+				? (
+					$ce->{LTIVersion} eq 'v1p1'
+					? (ConsumerKey => $ce->{LTI}{v1p1}{ConsumerKey})
+					: $ce->{LTIVersion} eq 'v1p3' ? (
+						PlatformID   => $ce->{LTI}{v1p3}{PlatformID},
+						ClientID     => $ce->{LTI}{v1p3}{ClientID},
+						DeploymentID => $ce->{LTI}{v1p3}{DeploymentID}
+					)
+					: ()
+				)
+				: ()
+			}
+	} @courseIDs;
+
+	return $c->include(
+		'ContentGenerator/CourseAdmin/manage_lti_course_map_form',
+		courseMap  => \%courseMap,
+		ltiConfigs => \%ltiConfigs
+	);
 }
 
 sub save_lti_course_map_validate ($c) {
@@ -2419,6 +2495,230 @@ sub do_save_lti_course_map ($c) {
 	return $c->manage_lti_course_map_form;
 }
 
+# Form to copy or reset OTP secrets.
+sub manage_otp_secrets_form ($c) {
+	my $courses = {};
+	my $dbs     = {};
+
+	# Create course data first, since it is used in all cases and initializes course db references.
+	for my $courseID (listCourses($c->ce)) {
+		my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
+		$dbs->{$courseID}     = WeBWorK::DB->new($ce);
+		$courses->{$courseID} = [ $dbs->{$courseID}->listUsers ];
+	}
+
+	# Process the confirmed reset or copy actions here.
+	if ($c->param('otp_confirm_reset')) {
+		my $total    = 0;
+		my $courseID = $c->param('sourceResetCourseID');
+		for my $user ($c->param('otp_reset_row')) {
+			if ($courseID eq $c->ce->{courseName} && $user eq $c->param('user')) {
+				$c->addbadmessage($c->maketext('You may not reset your own OTP secret!'));
+				next;
+			}
+			my $password = $dbs->{$courseID}->getPassword($user);
+			if ($password && $password->otp_secret) {
+				$password->otp_secret('');
+				$dbs->{$courseID}->putPassword($password);
+				$total++;
+			}
+		}
+		if ($total) {
+			$c->addgoodmessage($c->maketext('[_1] OTP secrets reset.', $total));
+		} else {
+			$c->addbadmessage($c->maketext('No OTP secrets reset.'));
+		}
+	} elsif ($c->param('otp_confirm_copy')) {
+		my $total = 0;
+		for my $row ($c->param('otp_copy_row')) {
+			my ($s_course, $s_user, $d_course, $d_user) = split(':', $row);
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+				$c->addbadmessage(
+					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!'));
+				next;
+			}
+			my $s_password = $dbs->{$s_course}->getPassword($s_user);
+			if ($s_password && $s_password->otp_secret) {
+				# Password may not be defined if using external auth, so create new password record if not.
+				# Should we check $d_user is actually valid again (was checked on previous page)?
+				my $d_password = $dbs->{$d_course}->getPassword($d_user)
+					// $dbs->{$d_course}->newPassword(user_id => $d_user);
+				$d_password->otp_secret($s_password->otp_secret);
+				$dbs->{$d_course}->putPassword($d_password);
+				$total++;
+			}
+		}
+		if ($total) {
+			$c->addgoodmessage($c->maketext('[_1] OTP secrets copied.', $total));
+		} else {
+			$c->addbadmessage($c->maketext('No OTP secrets copied.'));
+		}
+	}
+
+	return $c->include('ContentGenerator/CourseAdmin/manage_otp_secrets_form', courses => $courses);
+}
+
+# Deals with both single and multiple copy confirmation.
+sub copy_otp_secrets_confirm ($c) {
+	my $action = $c->param('action');
+	my $source_course;
+	my @source_users;
+	my @dest_courses;
+	my $dest_user;
+
+	if ($action eq 'single') {
+		$source_course = $c->param('sourceSingleCourseID');
+		@source_users  = ($c->param('sourceSingleUserID'));
+		@dest_courses  = ($c->param('destSingleCourseID'));
+		$dest_user     = $c->param('destSingleUserID');
+	} elsif ($action eq 'multiple') {
+		$source_course = $c->param('sourceMultipleCourseID');
+		@source_users  = ($c->param('sourceMultipleUserID'));
+		@dest_courses  = ($c->param('destMultipleCourseID'));
+	} else {
+		$c->addbadmessage($c->maketext('Invalid action [_1].', $action));
+		return $c->manage_otp_secrets_form;
+	}
+
+	my @errors;
+	push(@errors, $c->maketext('Source course ID missing.')) unless (defined $source_course && $source_course ne '');
+	push(@errors, $c->maketext('Source user ID missing.'))   unless (@source_users          && $source_users[0] ne '');
+	push(@errors, $c->maketext('Destination course ID missing.')) unless (@dest_courses && $dest_courses[0] ne '');
+	push(@errors, $c->maketext('Destination user ID missing.'))
+		unless (
+			$action eq 'multiple'
+			|| (defined $dest_user
+				&& $dest_user ne '')
+		);
+	if (@errors) {
+		for (@errors) {
+			$c->addbadmessage($_);
+		}
+		return $c->manage_otp_secrets_form;
+	}
+	if ($action eq 'single' && $source_course eq $dest_courses[0] && $source_users[0] eq $dest_user) {
+		$c->addbadmessage(
+			$c->maketext('Destination user must be different than source user when copying from same course'));
+		return $c->manage_otp_secrets_form;
+	}
+	if ($action eq 'multiple' && @dest_courses == 1 && $source_course eq $dest_courses[0]) {
+		$c->addbadmessage($c->maketext('Destination course must be different than source course.'));
+		return $c->manage_otp_secrets_form;
+	}
+
+	my @rows;
+	my %dbs;
+	my $source_ce = WeBWorK::CourseEnvironment->new({ courseName => $source_course });
+	$dbs{$source_course} = WeBWorK::DB->new($source_ce);
+
+	for my $s_user (@source_users) {
+		my $s_user_password = $dbs{$source_course}->getPassword($s_user);
+		unless ($s_user_password && $s_user_password->otp_secret) {
+			push(
+				@rows,
+				{
+					source_course  => $source_course,
+					source_user    => $s_user,
+					source_message => $c->maketext('OTP secret is empty - Skipping'),
+					error          => 'warning',
+					skip           => 1,
+				}
+			);
+			next;
+		}
+
+		for my $d_course (@dest_courses) {
+			next if $action eq 'multiple' && $d_course eq $source_course;
+
+			my $d_user = $action eq 'single' ? $dest_user : $s_user;
+			my $skip   = 0;
+			my $error_message;
+			my $dest_error;
+
+			unless ($dbs{$d_course}) {
+				my $dest_ce = WeBWorK::CourseEnvironment->new({ courseName => $d_course });
+				$dbs{$d_course} = WeBWorK::DB->new($dest_ce);
+			}
+
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+				$dest_error = 'danger';
+				$error_message =
+					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!');
+				$skip = 1;
+			} else {
+				my $d_user_password = $dbs{$d_course}->getPassword($d_user);
+				if (!defined $d_user_password) {
+					# Just because there is no password record, the user could still exist when using external auth.
+					unless ($dbs{$d_course}->existsUser($d_user)) {
+						$dest_error    = 'warning';
+						$error_message = $c->maketext('User does not exist - Skipping');
+						$skip          = 1;
+					}
+				} elsif ($d_user_password->otp_secret) {
+					$dest_error    = 'danger';
+					$error_message = $c->maketext('OTP Secret is not empty - Overwritting');
+				}
+			}
+
+			push(
+				@rows,
+				{
+					source_course => $source_course,
+					source_user   => $s_user,
+					dest_course   => $d_course,
+					dest_user     => $d_user,
+					dest_message  => $error_message,
+					error         => $dest_error,
+					skip          => $skip
+				}
+			);
+		}
+	}
+
+	return $c->include('ContentGenerator/CourseAdmin/copy_otp_secrets_confirm', action_rows => \@rows);
+}
+
+sub reset_otp_secrets_confirm ($c) {
+	my $source_course = $c->param('sourceResetCourseID');
+	my @dest_users    = ($c->param('destResetUserID'));
+
+	my @errors;
+	push(@errors, $c->maketext('Source course ID missing.'))    unless (defined $source_course && $source_course ne '');
+	push(@errors, $c->maketext('Destination user ID missing.')) unless (@dest_users            && $dest_users[0] ne '');
+	if (@errors) {
+		for (@errors) {
+			$c->addbadmessage($_);
+		}
+		return $c->manage_otp_secrets_form;
+	}
+
+	my $ce = WeBWorK::CourseEnvironment->new({ courseName => $source_course });
+	my $db = WeBWorK::DB->new($ce);
+	my @rows;
+	for my $user (@dest_users) {
+		my $error = '';
+
+		if ($source_course eq $c->ce->{courseName} && $user eq $c->param('user')) {
+			$error = $c->maketext('You may not reset your own OTP secret!');
+		} else {
+			my $password = $db->getPassword($user);
+			$error = $c->maketext('OTP Secret is empty - Skipping') unless $password && $password->otp_secret;
+		}
+
+		push(
+			@rows,
+			{
+				user    => $user,
+				message => $error,
+				error   => $error ? 'warning' : '',
+				skip    => $error ? 1         : 0,
+			}
+		);
+	}
+
+	return $c->include('ContentGenerator/CourseAdmin/reset_otp_secrets_confirm', action_rows => \@rows);
+}
+
 sub do_registration ($c) {
 	my $ce = $c->ce;
 
@@ -2453,42 +2753,43 @@ sub do_registration ($c) {
 # Format a list of tables and fields in the database, and the status of each.
 sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	my %table_status_message = (
-		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::SAME_IN_A_AND_B =>
 			$c->tag('span', class => 'text-success me-2', $c->maketext('Table is ok')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Table defined in schema but missing in database')
 		),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Table defined in database but missing in schema')
 		),
-		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Schema and database table definitions do not agree')
 		)
 	);
 	my %field_status_message = (
-		WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::SAME_IN_A_AND_B =>
 			$c->tag('span', class => 'text-success me-2', $c->maketext('Field is ok')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A =>
 			$c->tag('span', class => 'text-danger me-2', $c->maketext('Field missing in database')),
-		WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B =>
+		WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B =>
 			$c->tag('span', class => 'text-danger me-2', $c->maketext('Field missing in schema')),
-		WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
+		WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B => $c->tag(
 			'span',
 			class => 'text-danger me-2',
 			$c->maketext('Schema and database field definitions do not agree')
 		)
 	);
 
-	my $all_tables_ok         = 1;
-	my $extra_database_tables = 0;
-	my $extra_database_fields = 0;
-	my $rebuild_table_indexes = 0;
+	my $all_tables_ok                  = 1;
+	my $extra_database_tables          = 0;
+	my $extra_database_fields          = 0;
+	my $rebuild_table_indexes          = 0;
+	my $incorrect_type_database_fields = 0;
 
 	my $db_report = $c->c;
 
@@ -2498,9 +2799,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 		my $table_status = $dbStatus->{$table}[0];
 		push(@$table_report, $table . ': ', $table_status_message{$table_status});
 
-		if ($table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
+		if ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
 			$all_tables_ok = 0;
-		} elsif ($table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
+		} elsif ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
 			$extra_database_tables = 1;
 			push(
 				@$table_report,
@@ -2515,7 +2816,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 					)
 				)
 			) if defined $courseID;
-		} elsif ($table_status == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B) {
+		} elsif ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
 			my %fieldInfo     = %{ $dbStatus->{$table}[1] };
 			my $fields_report = $c->c;
 
@@ -2523,7 +2824,7 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 				my $field_status = $fieldInfo{$key}[0];
 				my $field_report = $c->c("$key: $field_status_message{$field_status}");
 
-				if ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B) {
+				if ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
 					if ($fieldInfo{$key}[1]) {
 						$rebuild_table_indexes = 1;
 					} else {
@@ -2553,8 +2854,34 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 							);
 						}
 					}
-				} elsif ($field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A) {
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
 					$all_tables_ok = 0;
+				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
+					$incorrect_type_database_fields = 1;
+					if (defined $courseID) {
+						push(
+							@$field_report,
+							$c->tag(
+								'span',
+								class => 'form-check d-inline-block',
+								$c->tag(
+									'label',
+									class => 'form-check-label',
+									$c->c(
+										$c->check_box(
+											"$courseID.$table.fix_type_fieldIDs" => $key,
+											class                                => 'form-check-input'
+										),
+										$c->maketext(
+											'Change type of field from [_1] to [_2] when upgrading',
+											$fieldInfo{$key}[1],
+											$fieldInfo{$key}[2]
+										)
+									)->join('')
+								)
+							)
+						);
+					}
 				}
 				push(@$fields_report, $c->tag('li', $field_report->join('')));
 			}
@@ -2568,8 +2895,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
 
 	return (
-		$all_tables_ok,         $extra_database_tables, $extra_database_fields,
-		$rebuild_table_indexes, $db_report->join('')
+		$all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+		$incorrect_type_database_fields,
+		$db_report->join('')
 	);
 }
 

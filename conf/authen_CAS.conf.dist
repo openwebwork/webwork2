@@ -8,9 +8,7 @@
 ########################################################################################
 
 # Set CAS as the authentication module to use.
-$authen{user_module} = {
-  "*" => "WeBWorK::Authen::CAS",
-};
+$authen{user_module} = 'WeBWorK::Authen::CAS';
 
 # List of authentication modules that may be used to enter the admin course.
 # This is used instead of $authen{user_module} when logging into the admin course.

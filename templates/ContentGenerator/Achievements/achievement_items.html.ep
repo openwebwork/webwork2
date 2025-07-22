@@ -1,55 +1,23 @@
-% last unless $ce->{achievementItemsEnabled} && $c->{achievementItems};
+% last unless $ce->{achievementItemsEnabled};
 %
 % # Show any items the user may have.
 <h2 class="my-3"><%= maketext('Rewards') %></h2>
-% if (@$items) {
-	% my $itemNumber = 0;
-	% for my $item (@$items) {
-		<div class="achievement-item">
-			% # Show each item's name, count, and description
-			% if ($itemCounts->{ $item->id } > 1) {
-				<h3><%= maketext($item->name)
-					. ' (' . maketext('[_1] remaining', $itemCounts->{ $item->id }) . ')' %></h3>
-			% } elsif ($itemCounts->{ $item->id } < 0) {
-				<h3><%= maketext($item->name) . ' (' . maketext('unlimited reusability') . ')' %></h3>
-			% } else {
-				<h3><%= maketext($item->name) %></h3>
-			% }
-			<p><%= maketext($item->description) %></p>
-			% my $form = $item->print_form($sets, $setProblemIds, $c);
-			% # Print a modal popup for each item which contains the form necessary to get the data to use the item.
-			<%= link_to maketext('Use Reward') => '#modal_' . $item->id,
-					role  => 'button',
-					class => 'btn btn-secondary' . ($form ? '' : ' disabled'),
-					id    => 'popup_' . $item->id,
-					$form ? (data  => { bs_toggle => 'modal' }) : () =%>
-			% if ($form) {
-				<div id="<%= 'modal_' . $item->id %>" class="modal hide fade" tabindex="-1">
-					<div class="modal-dialog modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title"><%= maketext($item->name) %></h4>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"
-									aria-label="<%= maketext('close') %>"></button>
-							</div>
-							<%= form_for current_route, method => 'POST', name => "itemform_$itemNumber",
-								class => 'achievementitemform', begin =%>
-								<div class="modal-body">
-									<%= $form =%>
-									<%= hidden_field useditem => $itemNumber =%>
-									<%= $c->hidden_authen_fields("achievement_${itemNumber}_") =%>
-								</div>
-								<div class="modal-footer">
-									<%= submit_button maketext('Submit'), class => 'btn btn-primary' =%>
-								</div>
-							<%= end =%>
-						</div>
-					</div>
-				</div>
-			% }
-		</div>
-		% $itemNumber++;
+% if ($c->{achievementItems} && @{ $c->{achievementItems} }) {
+	<p class="mx-4">
+		<%= maketext(
+			'Achievement rewards can be used to modify assignments. To use a reward, go to the assignment you '
+				. 'wish to apply the reward to, then click the "Use Achievement Reward" button. You currently have '
+				. 'access to the following rewards:'
+		) %>
+	</p>
+	<dl class="mx-4">
+	% for my $item (@{ $c->{achievementItems} }) {
+		<dt>
+			<%= $item->remaining_title($c) %>
+		</dt>
+		<dd class="ms-3 mb-2"><%= maketext($item->description) %></dd>
 	% }
+	</dl>
 % } else {
 	<p><%= maketext(q{You don't have any rewards!}) %></p>
 % }

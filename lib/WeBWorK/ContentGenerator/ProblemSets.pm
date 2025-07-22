@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::ProblemSets;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -23,10 +8,10 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 =cut
 
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils           qw(sortByName);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files qw(readFile path_is_subdir);
-use WeBWorK::Utils::Sets qw(is_restricted format_set_name_display);
+use WeBWorK::Utils::Files    qw(readFile path_is_subdir);
+use WeBWorK::Utils::Sets     qw(is_restricted format_set_name_display);
 use WeBWorK::Localize;
 
 # The "default" data in the course_info.txt file.
@@ -191,12 +176,15 @@ sub getSetStatus ($c, $set) {
 			$link_is_active = 0 unless $canViewUnopened;
 			push(@$other_messages, $c->restricted_progression_msg(0, $set->restricted_status * 100, @restricted));
 		} elsif (!$canViewUnopened
+			&& $ce->{LTIVersion}
+			&& ($ce->{LTIVersion} ne 'v1p3' || !$ce->{LTI}{v1p3}{ignoreMissingSourcedID})
 			&& defined $ce->{LTIGradeMode}
 			&& $ce->{LTIGradeMode} eq 'homework'
 			&& !$set->lis_source_did)
 		{
 			# The set shouldn't be shown if LTI grade mode is set to homework and a
-			# sourced_id is not available to use to send back grades.
+			# sourced_id is not available to use to send back grades
+			# (unless we are using LTI 1.3 and $LTI{v1p3}{ignoreMissingSourcedID} is set)
 			push(
 				@$other_messages,
 				$c->maketext(

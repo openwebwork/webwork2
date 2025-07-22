@@ -1,17 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
 
 =head1 NAME
 
@@ -24,12 +10,12 @@ package FormatRenderedProblem;
 use strict;
 use warnings;
 
-use JSON;
 use Digest::SHA qw(sha1_base64);
-use Mojo::Util qw(xml_escape);
+use Mojo::Util  qw(xml_escape);
+use Mojo::JSON  qw(encode_json);
 use Mojo::DOM;
 
-use WeBWorK::Utils qw(getAssetURL);
+use WeBWorK::Utils                       qw(getAssetURL);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir get_problem_lang_and_dir);
 
 sub formatRenderedProblem {
@@ -187,8 +173,8 @@ sub formatRenderedProblem {
 			if $ws->c->current_route eq 'render_rpc' && ($ws->c->param('displayMode') // '') eq 'PTX';
 	}
 
-	# Make sure this is defined and is an array reference as saveGradeToLTI might add to it.
-	$rh_result->{debug_messages} = [] unless defined $rh_result && ref $rh_result eq 'ARRAY';
+	# Make sure $rh_result->{debug_messages} an array reference as saveGradeToLTI might add to it.
+	$rh_result->{debug_messages} = [] unless ref $rh_result->{debug_messages} eq 'ARRAY';
 
 	$forbidGradePassback = 1 if !$forbidGradePassback && !$submitMode;
 
@@ -227,7 +213,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		return $ws->c->render(data => JSON->new->utf8(1)->encode($output));
+		return $ws->c->render(data => encode_json($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
@@ -280,6 +266,7 @@ sub formatRenderedProblem {
 		showCorrectAnswersButton     => $ws->{inputs_ref}{showCorrectAnswersButton}     // '',
 		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
 		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
+		problem_data                 => encode_json($rh_result->{PERSISTENCE_HASH}),
 		pretty_print                 => \&pretty_print
 	);
 
@@ -429,7 +416,6 @@ sub pretty_print {
 			# certain internals of the CourseEnvironment in case one slips in.
 			next
 				if (($key =~ /database/)
-					|| ($key =~ /dbLayout/)
 					|| ($key eq "ConfigValues")
 					|| ($key eq "ENV")
 					|| ($key eq "externalPrograms")

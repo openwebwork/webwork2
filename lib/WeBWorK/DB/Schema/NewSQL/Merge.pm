@@ -1,20 +1,5 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::DB::Schema::NewSQL::Merge;
-use base qw(WeBWorK::DB::Schema::NewSQL);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL';
 
 =head1 NAME
 
@@ -23,11 +8,11 @@ an SQL database.
 
 =cut
 
-use strict;
-use warnings;
 use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
+use Scalar::Util qw(weaken);
+
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
 
@@ -121,6 +106,7 @@ sub merge_init {
 
 sub sql_init {
 	my $self = shift;
+	weaken $self;
 
 	# Transformation function for table names. This allows us to pass the WeBWorK table names to
 	# SQL::Abstract, and have it translate them to the SQL table names from tableOverride.
@@ -188,7 +174,7 @@ sub _get_fields_where_prepex {
 	my $stmt = $self->sql->select(\($self->{sql_tableexpr}), $sql_fields) . " $where_clause $order_by_clause";
 
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);    # 3: see DBI docs
-	$self->debug_stmt($sth, @bind_vals);
+	$self->dbh->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);
 	return $sth;
 }
@@ -236,6 +222,6 @@ sub keyparts_to_where {
 *sql_table_name = *WeBWorK::DB::Schema::NewSQL::Std::sql_table_name;
 *sql_field_name = *WeBWorK::DB::Schema::NewSQL::Std::sql_field_name;
 
-sub DESTROY {
-}
+sub DESTROY { }
+
 1;

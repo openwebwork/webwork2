@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::FileManager;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -28,12 +13,12 @@ use File::Copy;
 use File::Spec;
 use String::ShellQuote;
 use Archive::Tar;
-use Archive::Zip qw(:ERROR_CODES);
+use Archive::Zip            qw(:ERROR_CODES);
 use Archive::Zip::SimpleZip qw($SimpleZipError);
 
-use WeBWorK::Utils qw(sortByName min);
+use WeBWorK::Utils                   qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
-use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils::Files            qw(readFile path_is_subdir);
 use WeBWorK::Upload;
 
 use constant HOME => 'templates';
@@ -135,11 +120,11 @@ sub Init ($c) {
 
 sub HiddenFlags ($c) {
 	return $c->c(
-		$c->hidden_field(dates      => ''),
-		$c->hidden_field(overwrite  => ''),
-		$c->hidden_field(unpack     => ''),
-		$c->hidden_field(autodelete => ''),
-		$c->hidden_field(autodelete => 'Automatic'),
+		$c->hidden_field(dates      => $c->getFlag('dates')),
+		$c->hidden_field(format     => $c->getFlag('format', 'Automatic')),
+		$c->hidden_field(overwrite  => $c->getFlag('overwrite')),
+		$c->hidden_field(unpack     => $c->getFlag('unpack')),
+		$c->hidden_field(autodelete => $c->getFlag('autodelete')),
 	)->join('');
 }
 
@@ -311,7 +296,7 @@ sub Rename ($c) {
 
 	my $realpath = Mojo::File->new($oldfile)->realpath;
 	if (grep { $realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath } @{ $c->ce->{uneditableCourseFiles} }) {
-		$c->addbadmessage($c->maketext('The file "[_1]" is protected and can not be renamed.', $original));
+		$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be renamed.', $original));
 		return $c->Refresh();
 	}
 
@@ -530,8 +515,8 @@ sub unpack_archive ($c, $archive) {
 
 		@members = $zip->members;
 		for (@members) {
-			my $out_file = $dir->child($_->fileName)->realpath;
-			if ($out_file !~ /^$dir/) {
+			my $out_file = $dir->child($_->fileName);
+			if (!path_is_subdir($out_file, $dir)) {
 				push(@outside_files, $_->fileName);
 				next;
 			}
@@ -565,8 +550,8 @@ sub unpack_archive ($c, $archive) {
 
 		@members = $tar->list_files;
 		for (@members) {
-			my $out_file = $dir->child($_)->realpath;
-			if ($out_file !~ /^$dir/) {
+			my $out_file = $dir->child($_);
+			if (!path_is_subdir($out_file->to_string, $dir->to_string)) {
 				push(@outside_files, $_);
 				next;
 			}
@@ -601,7 +586,7 @@ sub unpack_archive ($c, $archive) {
 				'p',
 				$c->maketext(
 					'The following [plural,_1,file is,files are] outside the current working directory '
-						. 'and can not be safely unpacked.',
+						. 'and cannot be safely unpacked.',
 					scalar(@outside_files),
 				)
 				)
@@ -720,8 +705,7 @@ sub Upload ($c) {
 		return $c->Refresh;
 	}
 
-	my ($id, $hash) = split(/\s+/, $fileIDhash);
-	my $upload = WeBWorK::Upload->retrieve($id, $hash, dir => $c->{ce}{webworkDirs}{uploadCache});
+	my $upload = WeBWorK::Upload->retrieve(split(/\s+/, $fileIDhash), $c->{ce}{webworkDirs}{uploadCache});
 
 	my $name                     = $upload->filename;
 	my $invalidUploadFilenameMsg = $c->checkName($name);
@@ -794,21 +778,24 @@ sub Upload ($c) {
 	if ($type ne 'Binary') {
 		my $fh    = $upload->fileHandle;
 		my @lines = <$fh>;
+		$fh->close;
 		$data = join('', @lines);
 		if ($type eq 'Automatic') { $type = isText($data) ? 'Text' : 'Binary' }
 	}
 	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
+
+		my $backup_data = $data;
+		my $success     = utf8::decode($data);    # try to decode as utf8
+		unless ($success) {
+			warn "Trying to convert file $file from latin1? to UTF-8";
+			utf8::upgrade($backup_data);          # try to convert data from latin1 to utf8.
+			$data = $backup_data;
+		}
+
 		if (open(my $UPLOAD, '>:encoding(UTF-8)', $file)) {
-			my $backup_data = $data;
-			my $success     = utf8::decode($data);    # try to decode as utf8
-			unless ($success) {
-				warn "Trying to convert file $file from latin1? to UTF-8";
-				utf8::upgrade($backup_data);          # try to convert data from latin1 to utf8.
-				$data = $backup_data;
-			}
-			print $UPLOAD $data;                      # print massaged data to file.
+			print $UPLOAD $data;
 			close $UPLOAD;
 		} else {
 			$c->addbadmessage($c->maketext(q{Can't create file "[_1]": [_2]}, $name, $!));
@@ -899,11 +886,11 @@ sub directoryListing ($c, $pwd) {
 			my $file = "$dir/$name";
 
 			my $type = 0;
-			$type |= 1  if -l $file;                         # Symbolic link
-			$type |= 2  if !-l $file && -d $file;            # Directory
-			$type |= 4  if -f $file;                         # Regular file
-			$type |= 8  if -T $file;                         # Text file
-			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;    # Image file
+			$type |= 1  if $c->isSymLink($file);                 # Symbolic link
+			$type |= 2  if !$c->isSymLink($file) && -d $file;    # Directory
+			$type |= 4  if -f $file;                             # Regular file
+			$type |= 8  if -T $file;                             # Text file
+			$type |= 16 if $file =~ m/\.(gif|jpg|png)$/i;        # Image file
 
 			my $label = $name;
 			$label .= '@' if $type & 1;
@@ -988,7 +975,7 @@ sub checkPWD ($c, $pwd, $renameError = 0) {
 	my $original = $pwd;
 	$pwd =~ s!(^|/)\.!$1_!g;                  # don't enter hidden directories
 	$pwd =~ s!^/!!;                           # remove leading /
-	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi;          # no illegal characters
+	$pwd =~ s![^-_./A-Z0-9~,() ]!_!gi;        # no illegal characters
 	return if $renameError && $original ne $pwd;
 
 	$pwd = '.' if $pwd eq '';
@@ -1075,7 +1062,7 @@ sub verifyPath ($c, $path, $name) {
 					$c->addbadmessage($c->maketext('You have specified an illegal path'));
 				}
 			} else {
-				$c->addbadmessage($c->maketext('You can not specify an absolute path'));
+				$c->addbadmessage($c->maketext('You cannot specify an absolute path'));
 			}
 		} else {
 			$c->addbadmessage($c->maketext('Your file name contains illegal characters'));

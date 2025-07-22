@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authz;
 
 =head1 NAME
@@ -61,7 +46,7 @@ use warnings;
 use Carp qw/croak/;
 
 use WeBWorK::Utils::DateTime qw(before);
-use WeBWorK::Utils::Sets qw(is_restricted);
+use WeBWorK::Utils::Sets     qw(is_restricted);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
@@ -84,7 +69,7 @@ sub new {
 	my ($invocant, $c) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self  = { c => $c, };
-	#weaken $self->{c};
+	weaken $self->{c};
 
 	$c->{permission_retrieval_error} = 0;
 	bless $self, $class;
@@ -404,7 +389,7 @@ sub checkSet {
 		}
 		# Don't allow versioned sets to be viewed from the problem-list page.
 		if ($node_name eq 'problem_list') {
-			return $c->maketext("Requested version ([_1]) of set '[_2]' can not be directly accessed.", $verNum,
+			return $c->maketext("Requested version ([_1]) of set '[_2]' cannot be directly accessed.", $verNum,
 				$setName);
 		}
 	} else {
@@ -500,11 +485,12 @@ sub checkSet {
 			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
 			? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
 			: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
-		return $c->maketext(
+		return $c->b($c->maketext(
 			'You must use your Learning Management System ([_1]) to access this set.  '
 				. 'Try logging in to the Learning Management System and visiting the set from there.',
 			$LMS
-		) unless $set->lis_source_did;
+		))
+			unless $set->lis_source_did;
 	}
 
 	return 0;

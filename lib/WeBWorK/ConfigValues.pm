@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ConfigValues;
 use Mojo::Base 'Exporter', -signatures;
 
@@ -290,15 +275,24 @@ sub getConfigValues ($ce) {
 				var  => 'achievementsEnabled',
 				doc  => x('Enable Course Achievements'),
 				doc2 => x(
-					'Activiating this will enable Mathchievements for webwork. Mathchievements can be managed '
-						. 'by using the Achievements Manager link.'
+					"Achievements are a way to gamify WeBWorK. In parallel to a student's regular scores on "
+						. 'assignments, they earn "achievement points" for (a) answering an exercise correctly, and '
+						. '(b) earning badges. Badges can be for tasks like earning 100% on three assignments, '
+						. 'answering five questions correclty on the first attempt, etc. As students earn achivement '
+						. 'points, they can "level up" as well. An instructor can manage Achievents using the '
+						. 'Achievements Manager tool.'
 				),
 				type => 'boolean'
 			},
 			{
 				var  => 'achievementPointsPerProblem',
 				doc  => x('Achievement Points Per Problem'),
-				doc2 => x('This is the number of achievement points given to each user for completing a problem.'),
+				doc2 => x(
+					'This is the number of achievement points given to each user for completing a problem. The default '
+						. 'collection of achievements is designed for a course where a student who completes all the '
+						. 'exercises would earn 1000 points, not counting points from badges. It is recommended that '
+						. 'if you use the default collection and your course has N problems, set this value to 1000/N.'
+				),
 				type => 'number'
 			},
 			{
@@ -314,8 +308,16 @@ sub getConfigValues ($ce) {
 				var  => 'achievementItemsEnabled',
 				doc  => x('Enable Achievement Rewards'),
 				doc2 => x(
-					'Activating this will enable achievement rewards. This feature allows students to earn rewards by '
-						. 'completing achievements that allow them to affect their homework in a limited way.'
+					'Activating this will enable achievement reward items. This feature allows students to earn reward '
+						. 'items as they level up (if level achievements are being used). The default reward items:<ol>'
+						. '<li>award 50% score to one problem</li><li>reset the number of attempts allowed for one '
+						. 'problem</li><li>extend a close date (and the reduced credit date) by 24 hours on one set'
+						. '</li><li>double the weight of one problem within its set</li><li>replaces one problem in a '
+						. 'set with a copy of a different problem in that set</li><li>award 100% score to one problem'
+						. '</li><li>extend a close date (and the reduced credit date) by 48 hours on one set</li><li>'
+						. 'double the weight of all problems within a set</li><li>reopen a set that has past its close '
+						. 'date for 24 hours, with problems rerandomized</li><li>award 100% score to all problems in '
+						. 'one set.</li></ol>'
 				),
 				type => 'boolean'
 			},
@@ -358,7 +360,7 @@ sub getConfigValues ($ce) {
 						. 'to set the default length of the reduced scoring period and the value of work done in '
 						. 'the reduced scoring period below.</p><p>To use this, you also have to enable Reduced '
 						. 'Scoring for individual assignments and set their Reduced Scoring Dates by editing the '
-						. 'set data.</p><p>This works with the avg_problem_grader (which is the the default grader) '
+						. 'set data.</p><p>This works with the avg_problem_grader (which is the default grader) '
 						. 'and the std_problem_grader (the all or nothing grader). It will work with custom graders '
 						. 'if they are written appropriately.</p>'
 				),
@@ -374,7 +376,7 @@ sub getConfigValues ($ce) {
 						. 'will see the message "You are in the Reduced Scoring Period: All additional work done '
 						. 'counts 50% of the original." </p><p>To use this, you also have to enable Reduced Scoring '
 						. 'and set the Reduced Scoring Date for individual assignments by editing the set data '
-						. 'using the Sets Manager.</p><p>This works with the avg_problem_grader (which is the the '
+						. 'using the Sets Manager.</p><p>This works with the avg_problem_grader (which is the '
 						. 'default grader) and the std_problem_grader (the all or nothing grader). It will work '
 						. 'with custom graders if they are written appropriately.</p>'
 				),
@@ -457,7 +459,7 @@ sub getConfigValues ($ce) {
 						. 'answers.</li><li><b>SMAshowHints</b>: Show hints <i>for the new problem</i> (assuming '
 						. 'hints exist).</li></ul>Note: There is very little point enabling the Show Me Another '
 						. 'feature unless you check at least one of these options. Otherwise the students would '
-						. 'simply see a new version that can not be attempted or learned from.'
+						. 'simply see a new version that cannot be attempted or learned from.'
 				),
 				min    => 0,
 				values => [ 'SMAcheckAnswers', 'SMAshowSolutions', 'SMAshowCorrect', 'SMAshowHints' ],
@@ -529,7 +531,14 @@ sub getConfigValues ($ce) {
 				var  => 'permissionLevels{record_answers_when_acting_as_student}',
 				doc  => x('Can submit answers for a student'),
 				doc2 => x(
-					'When acting as a student, this permission level and higher can submit answers for that student.'),
+					'When acting as a student, this permission level and higher can submit answers for that student, '
+						. 'which includes starting and grading test versions.  This permission should only be turned '
+						. 'on temporarily and set back to "nobody" after you are done submitting answers for a '
+						. 'student.  Leaving this permission on is dangerous, as you could unintentionally submit '
+						. 'answers for a student, which can use up their total number of attempts.  Further, if you '
+						. 'are viewing an open test version, your answers on each page will be saved when you move '
+						. q/between pages, which will overwrite the student's saved answers./
+				),
 				type => 'permission'
 			},
 			{
@@ -538,6 +547,19 @@ sub getConfigValues ($ce) {
 				doc2 => x(
 					'Users with at least this permission level get a link in the left panel for reporting bugs to the '
 						. 'bug tracking system at bugs.webwork.maa.org.'
+				),
+				type => 'permission'
+			},
+			{
+				var  => 'permissionLevels{change_name}',
+				doc  => x('Allowed to change their name'),
+				doc2 => x(
+					'Users at this level and higher are allowed to change their first and last name. '
+						. 'Note that if WeBWorK is used with an LMS, it may be configured to allow the LMS to '
+						. 'manage user data such as user names. Then if a user changes their name in WeBWorK, '
+						. 'the LMS might override that later. This course might be configured to allow you to '
+						. 'control whether or not the LMS is allowed to manage user date in the LTI tab of the '
+						. 'Course Configuration page.'
 				),
 				type => 'permission'
 			},
@@ -602,6 +624,26 @@ sub getConfigValues ($ce) {
 						. 'authentication is used, and is most useful when LTIGradeMode is set to homework. In this case '
 						. 'the Assignments page is not useful and can even be confusing to students. To use this feature '
 						. 'set this permission to "login_proctor".'
+				),
+				type => 'permission'
+			},
+			{
+				var  => 'permissionLevels{view_leaderboard}',
+				doc  => x('Allowed to view achievements leaderboard'),
+				doc2 => x(
+					'The permission level to view the achievements leaderboard, if achievements are enabled. '
+						. 'Consider that achievement points can be closely tied to student grades before '
+						. 'showing the leaderboard to students.'
+				),
+				type => 'permission'
+			},
+			{
+				var  => 'permissionLevels{view_leaderboard_usernames}',
+				doc  => x('Allowed to view usernames on the achievements leaderboard'),
+				doc2 => x(
+					'The permission level to view usernames on the achievements leaderboard. '
+						. 'Consider that achievement points can be closely tied to student grades before '
+						. 'showing user names to students.'
 				),
 				type => 'permission'
 			},
@@ -808,9 +850,9 @@ sub getConfigValues ($ce) {
 						. '<li> Debug: as in Standard, plus the problem environment (debugging data)</li></ol>'
 				),
 				labels => {
-					'0' => 'Simple',
-					'1' => 'Standard',
-					'2' => 'Debug'
+					'0' => x('Simple'),
+					'1' => x('Standard'),
+					'2' => x('Debug')
 				},
 				values => [qw(0 1 2)],
 				type   => 'popuplist'
@@ -838,7 +880,7 @@ sub getConfigValues ($ce) {
 				var  => 'feedback_by_section',
 				doc  => x('Feedback by Section.'),
 				doc2 => x(
-					'By default, feedback is always sent to all users specified to recieve feedback. This '
+					'By default, feedback is always sent to all users specified to receive feedback. This '
 						. 'variable sets the system to only email feedback to users who have the same section as '
 						. 'the user initiating the feedback. I.e., feedback will only be sent to section leaders.'
 				),
@@ -861,7 +903,7 @@ sub getConfigValues ($ce) {
 		},
 		'LTI{v1p1}{LMS_url}' => {
 			var  => 'LTI{v1p1}{LMS_url}',
-			doc  => x('A URL for the LMS'),
+			doc  => x('URL for the LMS'),
 			doc2 => x(
 				'An address that can be used to log in to the LMS. This is used in messages to users '
 					. 'that direct them to go back to the LMS to access something in the WeBWorK course.'
@@ -896,25 +938,120 @@ sub getConfigValues ($ce) {
 					. 'of the LMS course.</dd></dl>'
 			),
 			values => [ '', qw(course homework) ],
-			labels => { '' => 'None', 'course' => 'Course', 'homework' => 'Homework' },
+			labels => { '' => x('None'), 'course' => x('Course'), 'homework' => x('Homework') },
 			type   => 'popuplist'
+		},
+		LTICheckPrior => {
+			var  => 'LTICheckPrior',
+			doc  => x('Check a score in the LMS actually needs updating before updating it'),
+			doc2 => x(
+				'<p>When this is true, any time WeBWorK is about to send a score to the LMS, it will first request '
+					. 'from the LMS what that score currently is. Then if there is no significant difference between '
+					. 'the LMS score and the WeBWorK score, WeBWorK will not follow through with updating the LMS '
+					. 'score. This is to avoid frequent insignificant updates to a student score in the LMS. With some '
+					. 'LMSs, students may receive notifications each time a score is updated, and setting this '
+					. 'variable will prevent too many notifications for them. This does create a two-step process, '
+					. 'first querying the current score from the LMS and then actually updating the score (if there is '
+					. 'a significant difference). Additional details:</p><ul><li>If the LMS score is not 100%, but the '
+					. 'WeBWorK score is, then even if the LMS score is only insignificantly less than 100%, it will be '
+					. 'updated anyway.</li><li>If the LMS score is not set and the WeBWorK score is 0, this is '
+					. 'considered a significant difference and the LMS score will updated to 0. However, the '
+					. 'constraints of the $LTISendScoresAfterDate and the $LTISendGradesEarlyThreshold variables '
+					. '(described below) might apply, and the score may still not be updated in this case.</li>'
+					. '<li>"Significant" means an absolute difference of 0.001, or 0.1%. At this time this is not '
+					. 'configurable.</li></ul>'
+			),
+			type => 'boolean'
 		},
 		LTIGradeOnSubmit => {
 			var  => 'LTIGradeOnSubmit',
-			doc  => x('Update LMS Grade Each Submit'),
+			doc  => x('Update LMS grade with each submission'),
 			doc2 => x(
-				'Sets if webwork sends grades back to the LMS every time a user submits an answer. '
-					. 'This keeps students grades up to date, but can cause additional server load.'
+				'If this is set to true, then  each time a user submits an answer or grades a test, that will trigger '
+					. 'WeBWorK possibly reporting a score to the LMS. However, several other configuration settings '
+					. 'might still prevent WeBWorK from actually submitting a score to the LMS. If this is set to '
+					. 'false, then grades will only be sent to the LMS with mass updates (either triggered by the '
+					. 'instructor using the LTI Grade Update tool, or at mass update intervals).'
 			),
 			type => 'boolean'
+		},
+		LTISendScoresAfterDate => {
+			var  => 'LTISendScoresAfterDate',
+			doc  => x('Date after which scores will be sent to the LMS'),
+			doc2 => x(
+				'<p>This can be set to one of the dates associated with assignments, or "Never". For each assignment, '
+					. 'if this setting is "After the ... " then if it is after the indicated date, WeBWorK will send '
+					. 'scores. If this setting is "Never" then there is no date that will force WeBWorK to send scores '
+					. 'and only the $LTISendGradesEarlyThreshold can cause scores to be sent. If scores are sent:</p> '
+					. "<ul><li>For 'course' grade passback mode, the assignment will be included in the overall course "
+					. "score calculation.</li><li>For 'homework' grade passback mode, the assignment's score itself "
+					. 'will be sent.</li></ul><p>If $LTISendScoresAfterDate is set to "After the reduced scoring date" '
+					. 'and an assignment has no reduced scoring date or reduced scoring is disabled, the fallback is '
+					. 'to use the close date.</p><p>For a given assignment, WeBWorK will still send a score to the LMS '
+					. 'if the $LTISendGradesEarlyThreshold has been met, regardless of how $LTISendScoresAfterDate is '
+					. 'set.</p>'
+			),
+			values => [qw(open_date reduced_scoring_date due_date answer_date never)],
+			labels => {
+				open_date            => x('After the open date'),
+				reduced_scoring_date => x('After the reduced scoring date'),
+				due_date             => x('After the close date'),
+				answer_date          => x('After the answer date'),
+				never                => x('Never')
+			},
+			type => 'popuplist'
+		},
+		LTISendGradesEarlyThreshold => {
+			var  => 'LTISendGradesEarlyThreshold',
+			doc  => x('Condition under which scores will be sent early to an LMS'),
+			doc2 => x(
+				"<p>This can either be set to a score or set to Attempted. When something triggers a potential grade "
+					. 'passback, if it is earlier than $LTISendScoresAfterDate, the condition described by this '
+					. 'variable must be met or else no score will be sent.</p><p>If this variable is a score, then the '
+					. 'set will need to have a score that reaches or exceeds this score for its score to be sent to '
+					. "the LMS (or included in the 'course' score calculation). If this variable is set to Attempted, "
+					. 'then the set needs to have been attempted for its score to be sent to the LMS (or included in '
+					. "the 'course' score calculation).</p><p>For a regular or jitar set, 'attempted' means that at "
+					. "least one exercise was attempted. For a test, 'attempted' means that either multiple versions "
+					. 'exist or there is one version with a graded submission.</p>'
+			),
+			values => [ qw(
+				attempted 0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1
+			) ],
+			labels => {
+				attempted => x('Attempted'),
+				0         => '0%',
+				0.05      => '5%',
+				0.1       => '10%',
+				0.15      => '15%',
+				0.2       => '20%',
+				0.25      => '25%',
+				0.3       => '30%',
+				0.35      => '35%',
+				0.4       => '40%',
+				0.45      => '45%',
+				0.5       => '50%',
+				0.55      => '55%',
+				0.6       => '60%',
+				0.65      => '65%',
+				0.7       => '70%',
+				0.75      => '75%',
+				0.8       => '80%',
+				0.85      => '85%',
+				0.9       => '90%',
+				0.95      => '95%',
+				1         => '100%',
+			},
+			type => 'popuplist'
 		},
 		LTIMassUpdateInterval => {
 			var  => 'LTIMassUpdateInterval',
 			doc  => x('Time in seconds to periodically update LMS grades (-1 to disable)'),
 			doc2 => x(
-				'Sets the time in seconds to periodically update the LMS grades. WeBWorK will update all grades on '
+				'Sets the time in seconds to periodically update the LMS scores. WeBWorK will update all scores on '
 					. 'the LMS if it has been longer than this time since the completion of the last update. This is '
-					. 'only an approximate time. 86400 seconds is one day. -1 disables periodic updates.'
+					. 'only an approximate time. Mass updates of this nature may put significant strain on the server, '
+					. 'and should not be set to happen too frequently. -1 disables these periodic updates.'
 			),
 			type => 'number'
 		},
@@ -922,11 +1059,13 @@ sub getConfigValues ($ce) {
 			var  => 'LMSManageUserData',
 			doc  => x('Allow the LMS to update user account data'),
 			doc2 => x(
-				'WeBWorK will automatically create users when logging in via the LMS for the first time. If '
-					. 'this flag is enabled then it will also keep the user account data (first name, last '
-					. 'name, section, recitation) up to date with the LMS. If a user\'s information changes '
-					. 'in the LMS then it will change in WeBWorK. However, any changes to the user data via '
-					. 'WeBWorK will be overwritten the next time the user logs in.'
+				'If this is set to true, then when a user enters WeBWorK using LTI from an LMS, their user account '
+					. 'data in WeBWorK will be updated to match the data from the LMS.  This applies to first name, '
+					. 'last name, section, recitation, and email address.  If a user\'s information changes in the LMS '
+					. 'then it will change in WeBWorK the next time the user enters WeBWorK from the LMS.  Any changes '
+					. 'to the user data that are made in WeBWorK will be overwritten.  So if this is set to true, you '
+					. 'may want to review the settings in the Permissions tab for who is allowed to change their own '
+					. 'name and email address.'
 			),
 			type => 'boolean'
 		},
@@ -1090,7 +1229,7 @@ sub getConfigValues ($ce) {
 			@$configValues,
 			[
 				x('LTI'),
-				map      { $LTIConfigValues->{$_} }
+				map { $LTIConfigValues->{$_} }
 					grep { defined $LTIConfigValues->{$_} } @{ $ce->{LTIConfigVariables} }
 			]
 		);

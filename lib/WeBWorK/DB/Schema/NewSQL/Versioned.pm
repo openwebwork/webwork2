@@ -1,20 +1,5 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::DB::Schema::NewSQL::Versioned;
-use base qw(WeBWorK::DB::Schema::NewSQL::Std);
+use Mojo::Base 'WeBWorK::DB::Schema::NewSQL::Std';
 
 =head1 NAME
 
@@ -22,12 +7,9 @@ WeBWorK::DB::Schema::NewSQL::Versioned - provide access to versioned sets.
 
 =cut
 
-use strict;
-use warnings;
-use WeBWorK::DB::Utils qw/make_vsetID make_vsetID_sql
-	grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql/;
+use WeBWorK::DB::Utils qw(make_vsetID make_vsetID_sql grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql);
 
-use constant TABLES => qw/set_version problem_version/;
+use constant TABLES => qw(set_version problem_version);
 
 ################################################################################
 # where clause
@@ -97,8 +79,6 @@ sub where_user_id_eq_set_id_eq_problem_id_eq {
 
 # FIXME the rest of the places in this class that generate field lists (basically
 # anywhere that calls grok_*_from_vsetID_sql), should call this method instead.
-# this method can handle if the set_id field has a fieldOverride set for it, and
-# the other methods can't.
 sub sql_field_expression {
 	my ($self, $field, $table) = @_;
 

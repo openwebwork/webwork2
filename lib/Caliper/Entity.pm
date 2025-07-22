@@ -372,7 +372,7 @@ sub problem_set_attempt {
 	my $extensions = { 'attempt_score' => $score, };
 
 	if ($version_id) {
-		$extensions->{'gateway_score'} = grade_gateway($db, $problem_set_user, $problem_set_user->set_id, $user_id);
+		$extensions->{'gateway_score'} = grade_gateway($db, $problem_set_user->set_id, $user_id);
 	}
 
 	my $problem_set_attempt = {

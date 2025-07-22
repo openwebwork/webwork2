@@ -3,8 +3,8 @@
                                    Version 2.*
                         Branch:  github.com/openwebwork
 
-             https://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.19
-                    Copyright 2000-2024, The WeBWorK Project
+             https://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.20
+                    Copyright 2000-2025, The WeBWorK Project
                              https://openwebwork.org/
                               All rights reserved.
 
@@ -25,8 +25,6 @@ New users interested in getting started with their own WeBWorK server, or instru
 *  [Frequently Asked Questions](https://github.com/openwebwork/webwork2/wiki/Frequently-Asked-Questions) - A list of frequently asked questions.
 
 ## Information for Downloading
-
-* The current version is WeBWorK-2.18 and its companion PG-2.18
 
 * Installation manuals can be found at https://webwork.maa.org/wiki/Category:Installation_Manuals
 

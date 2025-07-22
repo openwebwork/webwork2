@@ -1,26 +1,12 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::AchievementItems::ResurrectGW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 # Item to extend the due date on a gateway
 
-use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
+use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+
+use constant ONE_DAY => 86400;
 
 sub new ($class) {
 	return bless {
@@ -33,63 +19,43 @@ sub new ($class) {
 	}, $class;
 }
 
-sub print_form ($self, $sets, $setProblemIds, $c) {
-	my $db = $c->db;
-
-	my @closed_gateway_sets;
-
-	# Find the template sets of gateway quizzes.
-	for my $set (@$sets) {
-		push(@closed_gateway_sets, [ format_set_name_display($set->set_id) => $set->set_id ])
-			if $set->assignment_type =~ /gateway/
-			&& $set->set_id !~ /,v\d+$/
-			&& (after($set->due_date)
-				|| ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
-	}
-
-	return unless @closed_gateway_sets;
-
-	return $c->c(
-		$c->tag('p', $c->maketext('Resurrect which test?')),
-		WeBWorK::AchievementItems::form_popup_menu_row(
-			$c,
-			id         => 'resgw_gw_id',
-			label_text => $c->maketext('Test Name'),
-			values     => \@closed_gateway_sets,
-			menu_attr  => { dir => 'ltr' }
-		)
-	)->join('');
+sub can_use($self, $set, $records) {
+	return $set->assignment_type =~ /gateway/
+		&& (after($set->due_date) || ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
+	# TODO: Check if a new version can be created, and only allow using this reward in that case.
 }
 
-sub use_item ($self, $userName, $c) {
-	my $db = $c->db;
-	my $ce = $c->ce;
+sub print_form ($self, $set, $records, $c) {
+	return $c->tag(
+		'p',
+		$c->maketext(
+			'Reopen this test for the next 24 hours. This item does not allow you to take any additional '
+				. 'versions of the test.'
+		)
+	);
+}
 
-	# Validate data
-
-	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-	return 'No achievement data?!?!?!' unless $globalUserAchievement->frozen_hash;
-
-	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
-
-	my $setID = $c->param('resgw_gw_id');
-	return 'You need to input a Test Name' unless defined $setID;
-
-	my $set = $db->getUserSet($userName, $setID);
-	return q{Couldn't find that set!} unless $set;
+sub use_item ($self, $set, $records, $c) {
+	my $db      = $c->db;
+	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
 
 	# Add time to the reduced scoring date, due date, and answer date.
-	$set->reduced_scoring_date(time + 86400) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
-	$set->due_date(time + 86400);
-	$set->answer_date(time + 86400);
-	$db->putUserSet($set);
+	if ($set->reduced_scoring_date) {
+		$set->reduced_scoring_date(time + ONE_DAY);
+		$userSet->reduced_scoring_date($set->reduced_scoring_date);
+	}
+	$set->due_date(time + ONE_DAY);
+	$userSet->due_date($set->due_date);
+	if ($set->due_date > $set->answer_date) {
+		$set->answer_date(time + ONE_DAY);
+		$userSet->answer_date($set->answer_date);
+	}
+	$db->putUserSet($userSet);
 
-	$globalData->{ $self->{id} }--;
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
-	$db->putGlobalUserAchievement($globalUserAchievement);
-
-	return;
+	return $c->maketext(
+		'This assignment has been reopened and will now close on [_1].',
+		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
+	);
 }
 
 1;

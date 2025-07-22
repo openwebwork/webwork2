@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::DB::Schema;
 
 =head1 NAME
@@ -41,7 +26,7 @@ corresponding field is not used in the match. Some methods require all elements
 of C<@keyparts> to be defined. This is noted below.
 
 A "record key", as in the C<list> method, is a reference to a list containing
-values which correspond to the the fields returned by the C<KEYFIELDS> method
+values which correspond to the fields returned by the C<KEYFIELDS> method
 of the table's record class.
 
 =cut
@@ -69,33 +54,30 @@ use warnings;
 
 =over
 
-=item new($db, $driver, $table, $record, $params, $engine)
+=item new($db, $dbh, $table, $record, $params, $engine)
 
-Creates a schema interface for C<$table>, using the driver interface provided
-by C<$driver> and using the record class named in C<$record>. If the C<$driver>
-does not support the driver style needed by the schema, an exception is thrown.
-C<$params> contains extra information needed by the schema and is schema
-dependent. C<$db> is provided so that schemas can query other schemas.
+Creates a schema interface for C<$table>, using the database handle provided by
+C<$dbh> and using the record class named in C<$record>.  C<$params> contains
+extra information needed by the schema and is schema dependent. C<$db> is
+provided so that schemas can query other schemas.
 
 =back
 
 =cut
 
+use Scalar::Util qw(weaken);
+
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
+	my ($proto, $db, $dbh, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
 
 	my @supportedTables = $proto->TABLES();
 	die "unsupported table (schema supports: @supportedTables)"
 		unless grep { $_ eq "*" or $_ eq $table } @supportedTables;
 
-	my ($driverStyle, $schemaStyle) = ($driver->STYLE(), $proto->STYLE());
-	die "schema/driver style mismatch (driver provides $driverStyle, schema requires $schemaStyle)"
-		unless $driverStyle eq $schemaStyle;
-
 	my $self = {
 		db            => $db,
-		driver        => $driver,
+		dbh           => $dbh,
 		table         => $table,
 		record        => $record,
 		params        => $params,
@@ -103,6 +85,8 @@ sub new {
 		character_set => $character_set,
 	};
 	bless $self, $class;
+	weaken $self->{db};
+
 	return $self;
 }
 

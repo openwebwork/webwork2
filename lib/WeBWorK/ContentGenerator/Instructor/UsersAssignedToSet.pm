@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -25,13 +10,17 @@ users to which sets are assigned.
 
 use WeBWorK::Debug;
 use WeBWorK::Utils::Instructor qw(assignSetToAllUsers assignSetToGivenUsers);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets       qw(format_set_name_display);
 
 sub initialize ($c) {
 	my $authz = $c->authz;
 	my $db    = $c->db;
 	my $setID = $c->stash('setID');
 	my $user  = $c->param('user');
+
+	# Make sure these are defined for the template.
+	$c->stash->{user_records} = [];
+	$c->stash->{set_records}  = {};
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -62,7 +51,7 @@ sub initialize ($c) {
 	}
 
 	# Get all user records and cache them for later use.
-	$c->{user_records} =
+	$c->stash->{user_records} =
 		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
 
 	if ($doAssignToSelected) {
@@ -71,7 +60,7 @@ sub initialize ($c) {
 
 		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
 		my @usersToAdd;
-		for my $selectedUser (map { $_->user_id } @{ $c->{user_records} }) {
+		for my $selectedUser (map { $_->user_id } @{ $c->stash->{user_records} }) {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {    # skip users already in the set
 					debug("saving $selectedUser to be added to set later");
@@ -88,6 +77,8 @@ sub initialize ($c) {
 			debug("done assignSetToGivenUsers(...)");
 		}
 	}
+
+	$c->stash->{set_records} = { map { $_->user_id => $_ } $db->getUserSetsWhere({ set_id => $setID }) };
 
 	return;
 }

@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::StudentProgress;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -22,10 +7,10 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 =cut
 
-use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils                qw(wwRound);
 use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets qw(grade_set list_set_versions format_set_name_display);
+use WeBWorK::Utils::JITAR         qw(jitar_id_to_seq);
+use WeBWorK::Utils::Sets          qw(grade_set list_set_versions format_set_name_display);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -219,7 +204,7 @@ sub displaySets ($c) {
 				@user_set_list,
 				{
 					record             => $studentRecord,
-					score              => 0,
+					score              =>  0,
 					total              => -1,
 					date               => '',
 					testtime           => '',

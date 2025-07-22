@@ -1,18 +1,3 @@
-###############################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authen::LTIAdvantage;
 use parent qw(WeBWorK::Authen);
 
@@ -29,25 +14,9 @@ use experimental 'signatures';
 
 use WeBWorK::Debug;
 use WeBWorK::Localize;
-use WeBWorK::Utils::DateTime qw(formatDateTime);
+use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
-
-=head1 CONSTRUCTOR
-
-=over
-
-=item new($c)
-
-Instantiates a new WeBWorK::Authen object for the given WeBWorK::Controller ($c).
-
-=back
-
-=cut
-
-sub new ($invocant, $c) {
-	return bless { c => $c }, ref($invocant) || $invocant;
-}
 
 sub request_has_data_for_this_verification_module ($self) {
 	debug('LTIAdvantage has been called for data verification');
@@ -159,17 +128,26 @@ sub get_credentials ($self) {
 		return $value;
 	};
 
-	if (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_username})) {
-		$user_id_source  = $ce->{LTI}{v1p3}{preferred_source_of_username};
-		$type_of_source  = 'preferred_source_of_username';
-		$self->{user_id} = $user_id;
-	}
+	# First check if there is a user with the current LMS user id saved in the lis_source_did column.
+	if ($claims->{sub} && (my $user = ($c->db->getUsersWhere({ lis_source_did => $claims->{sub} }))[0])) {
+		$user_id_source  = 'database';
+		$type_of_source  = 'existing database user';
+		$self->{user_id} = $user->user_id;
+	} else {
+		if (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_username})) {
+			$user_id_source  = $ce->{LTI}{v1p3}{preferred_source_of_username};
+			$type_of_source  = "$user_id_source which was preferred_source_of_username";
+			$self->{user_id} = $user_id;
+		}
 
-	# Fallback if necessary
-	if (!defined $self->{user_id} && (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{fallback_source_of_username}))) {
-		$user_id_source  = $ce->{LTI}{v1p3}{fallback_source_of_username};
-		$type_of_source  = 'fallback_source_of_username';
-		$self->{user_id} = $user_id;
+		# Fallback if necessary
+		if (!defined $self->{user_id}
+			&& (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{fallback_source_of_username})))
+		{
+			$user_id_source  = $ce->{LTI}{v1p3}{fallback_source_of_username};
+			$type_of_source  = "$user_id_source which was fallback_source_of_username";
+			$self->{user_id} = $user_id;
+		}
 	}
 
 	if ($self->{user_id}) {
@@ -184,7 +162,7 @@ sub get_credentials ($self) {
 				[ roles      => 'https://purl.imsglobal.org/spec/lti/claim/roles' ],
 				[ last_name  => 'family_name' ],
 				[ first_name => 'given_name' ],
-				[ section    => 'https://purl.imsglobal.org/spec/lti/claim/custom#section' ],
+				[ section    => 'https://purl.imsglobal.org/spec/lti/claim/lis#course_section_sourcedid' ],
 				[ recitation => 'https://purl.imsglobal.org/spec/lti/claim/custom#recitation' ],
 			);
 
@@ -196,7 +174,7 @@ sub get_credentials ($self) {
 		# For setting up it is helpful to print out what is believed to be the user id and address is at this point.
 		if ($ce->{debug_lti_parameters}) {
 			warn "=========== SUMMARY ============\n";
-			warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
+			warn "User id is |$self->{user_id}| (obtained from $type_of_source)\n";
 			warn "User email address is |$self->{email}|\n";
 			warn "strip_domain_from_email is |", $ce->{LTI}{v1p3}{strip_domain_from_email} // 0, "|\n";
 			warn "Student id is |$self->{student_id}|\n";
@@ -213,7 +191,7 @@ sub get_credentials ($self) {
 		}
 
 		# Save these for later if they are available in the JWT.  It is important that the lti_lms_user_id be updated
-		# with the 'sub' value from the claim.  The value from the state can not entirely be trusted.  In addition, this
+		# with the 'sub' value from the claim.  The value from the state cannot entirely be trusted.  In addition, this
 		# may not be the same as the original login_hint (it is different for Canvas, but the same for Moodle).
 		$c->stash->{lti_lms_user_id} = $claims->{sub};
 		$c->stash->{lti_lms_lineitem} =
@@ -323,8 +301,7 @@ sub authenticate ($self) {
 				"Account creation blocked by block_lti_create_user setting. Did not create user $self->{user_id}.";
 			if ($ce->{debug_lti_parameters}) {
 				warn $c->maketext('Account creation is currently disabled in this course.  '
-						. 'Please speak to your instructor or system administrator.')
-					. "\n";
+						. 'Please speak to your instructor or system administrator.') . "\n";
 			}
 			return 0;
 		} else {
@@ -349,11 +326,9 @@ sub authenticate ($self) {
 		$self->{initial_login} = 1;
 	}
 
-	# If we are using grade passback then make sure the data we need to submit the grade is kept up to date.
-	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
-	if ($LTIGradeMode eq 'course' || $LTIGradeMode eq 'homework') {
-		WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
-	}
+	# In case we will use grade passback at some point,
+	# make sure the data we need to submit the grade is kept up to date.
+	WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
 
 	return 1;
 }
@@ -369,10 +344,15 @@ sub create_user ($self) {
 	# Determine the roles defined for this user defined in the LTI request and assign a permission level on that basis.
 	my @LTIroles = @{ $self->{roles} };
 
-	# Restrict to institution and context roles and remove the purl link portion (ignore system roles).
+	# Restrict to context roles and remove the purl link portion.  System roles are always ignored, but institution
+	# roles are also included if $LTI{v1p3}{AllowInstitutionRoles} = 1.
 	@LTIroles =
 		map {s|^[^#]*#||r}
-		grep {m!^http://purl.imsglobal.org/vocab/lis/v2/(membership|institution\/person)#!} @LTIroles;
+		grep {
+			m!^http://purl.imsglobal.org/vocab/lis/v2/membership#!
+			|| ($ce->{LTI}{v1p3}{AllowInstitutionRoles}
+				&& m!^http://purl.imsglobal.org/vocab/lis/v2/institution/person#!)
+		} @LTIroles;
 
 	if ($ce->{debug_lti_parameters}) {
 		warn "The adjusted LTI roles defined for this user are: \n-- " . join("\n-- ", @LTIroles),
@@ -415,6 +395,7 @@ sub create_user ($self) {
 	$newUser->recitation($self->{recitation} // '');
 	$newUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 	$newUser->student_id($self->{student_id} // '');
+	$newUser->lis_source_did($c->stash->{lti_lms_user_id}) if $c->stash->{lti_lms_user_id};
 
 	# Allow sites to customize the user.
 	$ce->{LTI}{v1p3}{modify_user}($self, $newUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
@@ -504,6 +485,7 @@ sub maybe_update_user ($self) {
 		$tempUser->section($self->{section}       // '');
 		$tempUser->recitation($self->{recitation} // '');
 		$tempUser->student_id($self->{student_id} // '');
+		$tempUser->lis_source_did($c->stash->{lti_lms_user_id}) if $c->stash->{lti_lms_user_id};
 
 		# Allow sites to customize the temp user
 		$ce->{LTI}{v1p3}{modify_user}($self, $tempUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';

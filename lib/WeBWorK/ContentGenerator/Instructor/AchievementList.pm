@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::AchievementList;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -47,7 +32,7 @@ links to edit the evaluator and the individual user data.
 use Mojo::File;
 use Text::CSV;
 
-use WeBWorK::Utils qw(sortAchievements x);
+use WeBWorK::Utils        qw(sortAchievements x);
 use WeBWorK::Utils::Files qw(surePathToFile);
 
 # Forms
@@ -196,50 +181,47 @@ sub edit_handler ($c) {
 # Handler for assigning achievements to users
 sub assign_handler ($c) {
 	my $db             = $c->db;
-	my @users          = $db->listUsers;
 	my $overwrite      = $c->param('action.assign.overwrite') eq 'everything';
 	my $scope          = $c->param('action.assign.scope');
 	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
-	# Enable all achievements
+	my @users        = $db->listUsers;
 	my @achievements = $db->getAchievements(@achievementIDs);
 
-	for my $achievement (@achievements) {
-		$achievement->enabled(1);
-		$db->putAchievement($achievement);
-	}
+	# Enable all achievements.
+	for my $achievement (@achievements) { $achievement->enabled(1); }
+	$db->Achievement->update_records(\@achievements) if @achievements;
 
-	# Assign globalUserAchievement data, overwriting if necc
-
+	# Assign globalUserAchievement data, overwriting if necessary.
+	my (@globalAchievementRecordsToAdd, @globalAchievementRecordsToPut);
+	my %existingGlobalUserAchievements = map { $_ => 1 } $db->listGlobalUserAchievements;
 	for my $user (@users) {
-		if (not $db->existsGlobalUserAchievement($user)) {
-			my $globalUserAchievement = $db->newGlobalUserAchievement();
-			$globalUserAchievement->user_id($user);
-			$db->addGlobalUserAchievement($globalUserAchievement);
+		my $globalUserAchievement = $db->newGlobalUserAchievement(user_id => $user);
+		if (!$existingGlobalUserAchievements{$user}) {
+			push(@globalAchievementRecordsToAdd, $globalUserAchievement);
 		} elsif ($overwrite) {
-			my $globalUserAchievement = $db->newGlobalUserAchievement();
-			$globalUserAchievement->user_id($user);
-			$db->putGlobalUserAchievement($globalUserAchievement);
+			push(@globalAchievementRecordsToPut, $globalUserAchievement);
 		}
 	}
+	$db->GlobalUserAchievement->insert_records(\@globalAchievementRecordsToAdd) if @globalAchievementRecordsToAdd;
+	$db->GlobalUserAchievement->update_records(\@globalAchievementRecordsToPut) if @globalAchievementRecordsToPut;
 
-	# Assign userAchievement data, overwriting if necc
-
+	# Assign userAchievement data, overwriting if necessary.
+	my (@userAchievementRecordsToAdd, @userAchievementRecordsToPut);
 	for my $achievementID (@achievementIDs) {
+		my %existingUserAchievements =
+			map { $_->[0] => 1 } $db->listUserAchievementsWhere({ achievement_id => $achievementID });
 		for my $user (@users) {
-			if (not $db->existsUserAchievement($user, $achievementID)) {
-				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($user);
-				$userAchievement->achievement_id($achievementID);
-				$db->addUserAchievement($userAchievement);
+			my $userAchievement = $db->newUserAchievement(user_id => $user, achievement_id => $achievementID);
+			if (!$existingUserAchievements{$user}) {
+				push(@userAchievementRecordsToAdd, $userAchievement);
 			} elsif ($overwrite) {
-				my $userAchievement = $db->newUserAchievement();
-				$userAchievement->user_id($user);
-				$userAchievement->achievement_id($achievementID);
-				$db->putUserAchievement($userAchievement);
+				push(@userAchievementRecordsToPut, $userAchievement);
 			}
 		}
 	}
+	$db->UserAchievement->insert_records(\@userAchievementRecordsToAdd) if @userAchievementRecordsToAdd;
+	$db->UserAchievement->update_records(\@userAchievementRecordsToPut) if @userAchievementRecordsToPut;
 
 	return (1, $c->maketext('Assigned achievements to users.'));
 }
@@ -252,8 +234,20 @@ sub score_handler ($c) {
 	my $scope               = $c->param('action.score.scope');
 	my @achievementsToScore = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : $c->param('selected_achievements');
 
+	# First get everything that is needed from the database.
+	my @achievements = sortAchievements($db->getAchievements(@achievementsToScore));
+	my @users        = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw(section last_name)]);
+
+	my %globalUserAchievements = map { $_->user_id => $_ } $db->getGlobalUserAchievementsWhere;
+
+	my %userAchievements;
+	for (@achievements) {
+		$userAchievements{ $_->user_id }{ $_->achievement_id } = $_
+			for $db->getUserAchievementsWhere({ achievement_id => $_->achievement_id });
+	}
+
 	# Define file name
-	my $scoreFileName = $courseName . "_achievement_scores.csv";
+	my $scoreFileName = $courseName . '_achievement_scores.csv';
 	my $scoreFilePath = $ce->{courseDirs}{scoring} . '/' . $scoreFileName;
 
 	# Back up existing file
@@ -265,60 +259,41 @@ sub score_handler ($c) {
 	# Check path and open the file
 	$scoreFilePath = surePathToFile($ce->{courseDirs}{scoring}, $scoreFilePath);
 
-	my $SCORE = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
-		or return (0, $c->maketext("Failed to open [_1]", $scoreFilePath));
+	my $scoreFile = Mojo::File->new($scoreFilePath)->open('>:encoding(UTF-8)')
+		or return (0, $c->maketext('Failed to open [_1]', $scoreFilePath));
 
 	# Print out header info
-	print $SCORE $c->maketext("username, last name, first name, section, achievement level, achievement score,");
-
-	my @achievements = $db->getAchievements(@achievementsToScore);
-	@achievements = sortAchievements(@achievements);
+	print $scoreFile $c->maketext('username, last name, first name, section, achievement level, achievement score,');
 
 	for my $achievement (@achievements) {
-		print $SCORE $achievement->achievement_id . ", ";
+		print $scoreFile $achievement->achievement_id . ', ';
 	}
-	print $SCORE "\n";
-
-	my @users = $db->listUsers;
-
-	# Get user records
-	my @userRecords = ();
-	for my $currentUser (@users) {
-		my $userObj = $db->getUser($currentUser);
-		die "Unable to find user object for $currentUser. " unless $userObj;
-		push(@userRecords, $userObj);
-	}
-
-	@userRecords =
-		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
+	print $scoreFile "\n";
 
 	# Print out achievement information for each user
-	for my $userRecord (@userRecords) {
+	for my $userRecord (@users) {
 		my $user_id = $userRecord->user_id;
-		next unless $db->existsGlobalUserAchievement($user_id);
-		next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
-		print $SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
-		my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
-		my $level_id              = $globalUserAchievement->level_achievement_id;
-		$level_id = ' ' unless $level_id;
-		my $points = $globalUserAchievement->achievement_points;
-		$points = 0 unless $points;
-		print $SCORE "$level_id, $points, ";
+		next if !$globalUserAchievements{$user_id} || $userRecord->{status} eq 'D' || $userRecord->{status} eq 'A';
+
+		print $scoreFile "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
+
+		my $level_id = $globalUserAchievements{$user_id}->level_achievement_id || ' ';
+		my $points   = $globalUserAchievements{$user_id}->achievement_points   || 0;
+		print $scoreFile "$level_id, $points, ";
 
 		for my $achievement (@achievements) {
 			my $achievement_id = $achievement->achievement_id;
-			if ($db->existsUserAchievement($user_id, $achievement_id)) {
-				my $userAchievement = $db->getUserAchievement($user_id, $achievement_id);
-				print $SCORE $userAchievement->earned ? "1, " : "0, ";
+			if ($userAchievements{$user_id}{$achievement_id}) {
+				print $scoreFile $userAchievements{$user_id}{$achievement_id}->earned ? '1, ' : '0, ';
 			} else {
-				print $SCORE ", ";
+				print $scoreFile ', ';
 			}
 		}
 
-		print $SCORE "\n";
+		print $scoreFile "\n";
 	}
 
-	$SCORE->close;
+	$scoreFile->close;
 
 	# Include a download link
 	return (
@@ -345,11 +320,13 @@ sub delete_handler ($c) {
 
 	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my %visibleAchievementIDs  = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
 	my %selectedAchievementIDs = map { $_ => 1 } @{ $c->{selectedAchievementIDs} };
 
 	# Iterate over selected achievements and delete.
 	for my $achievementID (@achievementIDsToDelete) {
 		delete $allAchievementIDs{$achievementID};
+		delete $visibleAchievementIDs{$achievementID};
 		delete $selectedAchievementIDs{$achievementID};
 
 		$db->deleteAchievement($achievementID);
@@ -357,12 +334,13 @@ sub delete_handler ($c) {
 
 	# Update local fields
 	$c->{allAchievementIDs}      = [ keys %allAchievementIDs ];
+	$c->{visibleAchievementIDs}  = [ keys %visibleAchievementIDs ];
 	$c->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	return (1, $c->maketext('Deleted [quant,_1,achievement].', scalar @achievementIDsToDelete));
 }
 
-# Handler for creating an ahcievement
+# Handler for creating an achievement
 sub create_handler ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
@@ -370,42 +348,48 @@ sub create_handler ($c) {
 
 	# Create achievement
 	my $newAchievementID = $c->param('action.create.id');
-	return (0, $c->maketext("Failed to create new achievement: no achievement ID specified!"))
+	return (0, $c->maketext('Failed to create new achievement: no achievement ID specified!'))
 		unless $newAchievementID =~ /\S/;
-	return (0, $c->maketext("Achievement [_1] exists.  No achievement created.", $newAchievementID))
+	return (0, $c->maketext('Achievement [_1] exists.  No achievement created.', $newAchievementID))
 		if $db->existsAchievement($newAchievementID);
-	my $newAchievementRecord = $db->newAchievement;
-	my $oldAchievementID     = $c->{selectedAchievementIDs}->[0];
 
 	my $type = $c->param('action.create.type');
 
 	# Either assign empty data or copy over existing data
-	if ($type eq "empty") {
-		$newAchievementRecord->achievement_id($newAchievementID);
-		$newAchievementRecord->enabled(0);
-		$newAchievementRecord->assignment_type('default');
-		$newAchievementRecord->test('blankachievement.at');
-		$db->addAchievement($newAchievementRecord);
-	} elsif ($type eq "copy") {
-		return (0, $c->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
+	if ($type eq 'empty') {
+		eval {
+			$db->addAchievement($db->newAchievement(
+				achievement_id  => $newAchievementID,
+				enabled         => 0,
+				assignment_type => 'default',
+				test            => 'blankachievement.at'
+			));
+		};
+		return (0, $c->maketext('Failed to create new achievement: [_1]', $@)) if $@;
+	} elsif ($type eq 'copy') {
+		my $oldAchievementID = $c->{selectedAchievementIDs}[0];
+		return (0, $c->maketext('Failed to duplicate achievement: no achievement selected for duplication!'))
 			unless $oldAchievementID =~ /\S/;
-		$newAchievementRecord = $db->getAchievement($oldAchievementID);
+		my $newAchievementRecord = $db->getAchievement($oldAchievementID);
+		return (0, $c->maketext('Failed to duplicate achievement: selected achievement does not exist!'))
+			unless $newAchievementRecord;
 		$newAchievementRecord->achievement_id($newAchievementID);
-		$db->addAchievement($newAchievementRecord);
-
+		eval { $db->addAchievement($newAchievementRecord) };
+		return (0, $c->maketext('Failed to create new achievement: [_1]', $@)) if $@;
 	}
-
-	# Assign achievement to current user
-	my $userAchievement = $db->newUserAchievement();
-	$userAchievement->user_id($user);
-	$userAchievement->achievement_id($newAchievementID);
-	$db->addUserAchievement($userAchievement);
 
 	# Add to local list of achievements
 	push @{ $c->{allAchievementIDs} },     $newAchievementID;
 	push @{ $c->{visibleAchievementIDs} }, $newAchievementID;
 
-	return (0, $c->maketext("Failed to create new achievement: [_1]", $@)) if $@;
+	# Assign achievement to current user
+	eval { $db->addUserAchievement($db->newUserAchievement(user_id => $user, achievement_id => $newAchievementID)) };
+	return (
+		0,
+		$c->maketext(
+			"Successfully created achievement, but failed to assign achievement to current user: [_1]", $@
+		)
+	) if $@;
 
 	return (1, $c->maketext('Successfully created new achievement [_1]', $newAchievementID));
 }
@@ -422,6 +406,8 @@ sub import_handler ($c) {
 	my %visibleAchievementIDs = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
 	my $filePath              = $ce->{courseDirs}{achievements} . '/' . $fileName;
 
+	my @userAchievementRecordsToAdd;
+
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
 		or return (0, $c->maketext("Failed to open [_1]", $filePath));
@@ -430,7 +416,6 @@ sub import_handler ($c) {
 	my $count = 0;
 	my $csv   = Text::CSV->new();
 	while (my $data = $csv->getline($fh)) {
-
 		my $achievement_id = $$data[0];
 
 		# Add imported achievement to visible list even if it already exists.
@@ -462,23 +447,34 @@ sub import_handler ($c) {
 		$count++;
 		$allAchievementIDs{$achievement_id} = 1;
 
-		# Assign to usesrs if neccessary
+		# Assign to users if necessary.
 		if ($assign eq "all") {
 			for my $user (@users) {
-				if (not $db->existsGlobalUserAchievement($user)) {
-					my $globalUserAchievement = $db->newGlobalUserAchievement();
-					$globalUserAchievement->user_id($user);
-					$db->addGlobalUserAchievement($globalUserAchievement);
-				}
 				my $userAchievement = $db->newUserAchievement();
 				$userAchievement->user_id($user);
 				$userAchievement->achievement_id($achievement_id);
-				$db->addUserAchievement($userAchievement);
+				push(@userAchievementRecordsToAdd, $userAchievement);
 			}
 		}
 	}
 
 	$fh->close;
+
+	# If achievements are going to be assigned, then add global user achievements
+	# for users for which they do not already exist.
+	if (@userAchievementRecordsToAdd) {
+		my @globalAchievementRecordsToAdd;
+		my %existingGlobalUserAchievements = map { $_ => 1 } $db->listGlobalUserAchievements;
+		for my $user (@users) {
+			next if $existingGlobalUserAchievements{$user};
+			my $globalUserAchievement = $db->newGlobalUserAchievement(user_id => $user);
+			push(@globalAchievementRecordsToAdd, $globalUserAchievement);
+		}
+		$db->GlobalUserAchievement->insert_records(\@globalAchievementRecordsToAdd) if @globalAchievementRecordsToAdd;
+	}
+
+	# Actually perform the assignments of the added achievements if there are any to assign.
+	$db->UserAchievement->insert_records(\@userAchievementRecordsToAdd) if @userAchievementRecordsToAdd;
 
 	$c->{allAchievementIDs}     = [ keys %allAchievementIDs ];
 	$c->{visibleAchievementIDs} = [ keys %visibleAchievementIDs ];

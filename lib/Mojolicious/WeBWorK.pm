@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package Mojolicious::WeBWorK;
 use Mojo::Base 'Mojolicious', -signatures, -async_await;
 
@@ -28,9 +13,9 @@ use Mojo::JSON qw(encode_json);
 
 use WeBWorK;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils::Logs qw(writeTimingLogEntry);
+use WeBWorK::Utils::Logs   qw(writeTimingLogEntry);
 use WeBWorK::Utils::Routes qw(setup_content_generator_routes);
-use WeBWorK::Utils::Files qw(path_is_subdir);
+use WeBWorK::Utils::Files  qw(path_is_subdir);
 
 sub startup ($app) {
 	# Set up logging.
@@ -171,15 +156,14 @@ sub startup ($app) {
 
 	$app->hook(
 		after_dispatch => sub ($c) {
-			$SIG{__WARN__} = $c->stash->{orig_sig_warn} if defined $c->stash->{orig_sig_warn};
+			$SIG{__WARN__} = ref($c->stash->{orig_sig_warn}) eq 'CODE' ? $c->stash->{orig_sig_warn} : 'DEFAULT';
 
 			if ($c->isa('WeBWorK::ContentGenerator') && $c->ce) {
 				$c->authen->store_session if $c->authen;
 				writeTimingLogEntry(
 					$c->ce,
 					'[' . $c->url_for . ']',
-					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering')) . ' '
-						. $c->ce->{dbLayoutName}
+					sprintf('runTime = %.3f sec', $c->timing->elapsed('content_generator_rendering'))
 				);
 			}
 		}

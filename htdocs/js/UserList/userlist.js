@@ -113,7 +113,10 @@
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['select_user_err_msg'], [export_select]);
-			} else if (export_select_target?.value === 'new' && export_filename.value === '') {
+			} else if (
+				export_select_target?.value === 'new' &&
+				(export_filename.value === '' || /\//.test(export_filename.value))
+			) {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['export_file_err_msg'], [export_filename, export_select_target]);

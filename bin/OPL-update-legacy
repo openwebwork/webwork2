@@ -28,7 +28,6 @@ use DBI;
 my $taxo={};
 #my $taxsubs = [];
 
-
 ### Data for creating the database tables
 
 my %OPLtables = (
@@ -539,8 +538,6 @@ if($canopenfile) {
 }
 #### End of taxonomy/taxonomy2
 
-use JSON;
-
 #### Save the official taxonomy in json format
 my $webwork_htdocs = $ce->{webworkDirs}{htdocs};
 my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
@@ -923,8 +920,5 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
   print "\nLoading global statistics (if possible).\n";
   do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 }
-
-# Generate set definition list files.
-do $ENV{WEBWORK_ROOT} . '/bin/generate-OPL-set-def-lists.pl';
 
 print "\nDone.\n";

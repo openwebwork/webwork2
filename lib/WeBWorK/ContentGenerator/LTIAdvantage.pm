@@ -1,31 +1,16 @@
-###############################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::LTIAdvantage;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use Mojo::UserAgent;
-use Mojo::JSON qw(decode_json);
-use Crypt::JWT qw(decode_jwt encode_jwt);
+use Mojo::JSON           qw(decode_json);
+use Crypt::JWT           qw(decode_jwt encode_jwt);
 use Math::Random::Secure qw(irand);
-use Digest::SHA qw(sha256_hex);
+use Digest::SHA          qw(sha256_hex);
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 use WeBWorK::Utils::CourseManagement qw(listCourses);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
+use WeBWorK::Utils::Sets             qw(format_set_name_display);
 
 sub initializeRoute ($c, $routeCaptures) {
 	# If this is the login phase of an LTI 1.3 login, then extract the courseID from the target_link_uri.  If this is a
@@ -76,11 +61,10 @@ sub initializeRoute ($c, $routeCaptures) {
 
 				# The database object used here is not associated to any course,
 				# and so the only has access to non-native tables.
-				my @matchingCourses =
-					WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout})->getLTICourseMapsWhere({
-						lms_context_id =>
+				my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new)->getLTICourseMapsWhere({
+					lms_context_id =>
 						$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
-					});
+				});
 
 				if (@matchingCourses == 1) {
 					$c->stash->{courseID} = $matchingCourses[0]->course_id;
@@ -323,7 +307,11 @@ sub get_lms_public_keyset ($c, $ce, $db, $renew = 0) {
 	}
 
 	# Get public keyset from the LMS.
-	my $response = Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result;
+	my $response = eval { Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result };
+	if ($@) {
+		$c->stash->{LTIAuthenError} = "Failed to obtain public key from LMS due to a network error: $@";
+		return;
+	}
 	unless ($response->is_success) {
 		$c->stash->{LTIAuthenError} = 'Failed to obtain public key from LMS: ' . $response->message;
 		return;
@@ -344,7 +332,7 @@ sub extract_jwt_claims ($c) {
 	return unless $c->param('state');
 
 	# The following database object is not associated to any course, and so the only has access to non-native tables.
-	my $db = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new->{dbLayout});
+	my $db = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new);
 
 	# Retrieve the launch data saved in the login phase, and then delete it from the database.  Note that this verifies
 	# the state in the request.  If there is no launch data saved in the database for the state in the request, then the
@@ -367,7 +355,7 @@ sub extract_jwt_claims ($c) {
 			'Failed to initialize course environment for ' . $c->stash->{LTILaunchData}->data->{courseID} . ": $@\n";
 		return;
 	}
-	$db = WeBWorK::DB->new($ce->{dbLayout});
+	$db = WeBWorK::DB->new($ce);
 
 	$c->purge_expired_lti_data($ce, $db);
 

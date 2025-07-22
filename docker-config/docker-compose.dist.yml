@@ -1,4 +1,3 @@
-version: '3.5'
 services:
   db:
     image: mariadb:10.4
@@ -97,7 +96,7 @@ services:
       # If you would like a 1 stage build process comment out the next line, and just run "docker-compose build".
       dockerfile: DockerfileStage2
       # For the 2 stage build process run
-      #     docker build --tag webwork-base:forWW219 -f DockerfileStage1 .
+      #     docker build --tag webwork-base:forWW220 -f DockerfileStage1 .
       # and then
       #     docker-compose build
       # When rebuilding to get updated images add the "--no-cache" option to both commands.
@@ -251,6 +250,29 @@ services:
     # The R server need not be available from outside the local Docker network.
     #ports:
     #  - "6311:6311"
+
+  # SimpleSAMLphp Saml2 identity provider for development use only. This is a separate profile from the other services
+  # so it doesn't start in normal usage. Use "docker compose --profile saml2dev up" to start, "docker compose --profile
+  # saml2dev stop" to stop services, and "docker compose --profile saml2dev down" to stop services and remove
+  # containers.
+  idp:
+    build:
+      context: ./docker-config/idp/
+    profiles:
+      - saml2dev
+    ports:
+      - '8180:80'
+    environment:
+      SP_METADATA_URL: 'http://app:8080/webwork2/saml2/metadata'
+    # The healthcheck url is SimpleSAMLphp's url for triggering cron jobs. The cron job it triggers will
+    # automatically fetch the webwork2 service provider's metadata.
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost/simplesaml/module.php/cron/run/metarefresh/webwork2']
+      start_period: 1m
+      start_interval: 15s
+      interval: 1h
+      retries: 1
+      timeout: 10s
 
 volumes:
   oplVolume:

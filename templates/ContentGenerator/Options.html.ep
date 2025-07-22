@@ -18,18 +18,56 @@
 %= form_for current_route, method => 'POST', begin
 	<%= $c->hidden_authen_fields =%>
 	%
+	% if ($authz->hasPermissions($userID, 'change_name')) {
+		<h2><%= maketext('Name') %></h2>
+		<div class="row mb-2">
+			<div class="col-lg-8 col-md-10">
+				<div class="row mb-2">
+					<%= label_for currFirstName => maketext("Current First Name"),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field currFirstName => $c->{effectiveUser}->first_name, readonly => undef,
+							id => 'currFirstName', class => 'form-control bg-light', dir => 'ltr' =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for currLastName => maketext("Current Last Name"),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field currLastName => $c->{effectiveUser}->last_name, readonly => undef,
+							id => 'currLastName', class => 'form-control bg-light', dir => 'ltr' =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for newFirstName => maketext("New First Name"),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field newFirstName => '', id => 'newFirstName', class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+				<div class="row mb-2">
+					<%= label_for newLastName => maketext("New Last Name"),
+						class => 'col-form-label col-sm-6' =%>
+					<div class="col-sm-6">
+						<%= text_field newLastName => '', id => 'newLastName', class => 'form-control', dir => 'ltr' =%>
+					</div>
+				</div>
+			</div>
+		</div>
+	% }
+	%
 	% if ($authz->hasPermissions($userID, 'change_password')) {
-		<h2><%= maketext('Change Password') %></h2>
+		<h2><%= maketext('Password') %></h2>
 		<div class="row mb-2">
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for 'currPassword', class => 'col-form-label col-sm-6', begin =%>
 						<%= maketext(
-							q{[_1]'s Current Password},
-							$c->{user}->first_name . ' ' . $c->{user}->last_name
+							q{[_1]'s Current Password}, $eUserName
 						) =%>
 					<% end =%>
 					<div class="col-sm-6">
+						<%= text_field dummyUsername => '', class => 'd-none' =%>
 						<%= password_field 'currPassword', id => 'currPassword', class => 'form-control', dir => 'ltr',
 							$c->{has_password} ? () : (disabled => 1) =%>
 					</div>
@@ -38,15 +76,16 @@
 					<%= label_for newPassword => maketext("[_1]'s New Password", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= password_field 'newPassword', id => 'newPassword', class => 'form-control', dir => 'ltr' =%>
+						<%= password_field 'newPassword', id => 'newPassword', class => 'form-control',
+							dir => 'ltr', autocomplete => 'new-password' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
 					<%= label_for confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= password_field 'confirmPassword', id => 'confirmPassword',
-							class => 'form-control', dir => 'ltr' =%>
+						<%= password_field 'confirmPassword', id => 'confirmPassword', class => 'form-control',
+							dir => 'ltr', autocomplete => 'new-password' =%>
 					</div>
 				</div>
 			</div>
@@ -54,15 +93,15 @@
 	% }
 	%
 	% if ($authz->hasPermissions($userID, 'change_email_address')) {
-		<h2><%= maketext('Change Email Address') %></h2>
+		<h2><%= maketext('Email Address') %></h2>
 		<div class="row mb-2">
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for currAddress => maketext("[_1]'s Current Address", $eUserName),
 						class => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field currAddress => $c->{effectiveUser}->email_address,
-							readonly => undef, id => 'currAddress', class => 'form-control', dir => 'ltr' =%>
+						<%= text_field currAddress => $c->{effectiveUser}->email_address, readonly => undef,
+							id => 'currAddress', class => 'form-control bg-light', dir => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
@@ -77,7 +116,7 @@
 	% }
 	%
 	% if ($authz->hasPermissions($userID, 'change_pg_display_settings')) {
-		<h2><%= maketext('Change Display Settings') %></h2>
+		<h2><%= maketext('Display Settings') %></h2>
 		%
 		% my $display_settings_block = begin
 			% my $curr_displayMode = $c->{effectiveUser}->displayMode || $ce->{pg}{options}{displayMode};
@@ -170,5 +209,5 @@
 		% }
 	% }
 	%
-	<%= submit_button maketext('Change Account Settings'), name => 'changeOptions', class => 'btn btn-primary' =%>
+	<%= submit_button maketext('Save Account Settings'), name => 'changeOptions', class => 'btn btn-primary' =%>
 % end

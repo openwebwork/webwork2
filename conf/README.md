@@ -16,8 +16,6 @@ Basic webwork2 configuration files.
 - `localOverrides.conf.dist` should be copied to `localOverrides.conf`. `localOverrides.conf` will be read after the
   `defaults.config` file is processed and will overwrite configurations in `defaults.config`. Use this file to make
   changes to the settings in `defaults.config`.
-- `database.conf.dist` contains database configuration parameters. It is included by `defaults.config`. This file
-  should not be copied or modified unless you really know what you are doing.
 
 Configuration extension files.
 

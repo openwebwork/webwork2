@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator;
 use Mojo::Base 'WeBWorK::Controller', -signatures, -async_await;
 
@@ -50,13 +35,13 @@ use Encode;
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(fetchEmailRecipients generateURLs getAssetURL);
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
+use WeBWorK::Utils                       qw(fetchEmailRecipients generateURLs getAssetURL);
+use WeBWorK::Utils::JITAR                qw(jitar_id_to_seq);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir);
-use WeBWorK::Utils::Logs qw(writeCourseLog);
-use WeBWorK::Utils::Routes qw(route_title route_navigation_is_restricted);
-use WeBWorK::Utils::Sets qw(format_set_name_display);
-use WeBWorK::Authen::LTI::MassUpdate qw(mass_update);
+use WeBWorK::Utils::Logs                 qw(writeCourseLog);
+use WeBWorK::Utils::Routes               qw(route_title route_navigation_is_restricted);
+use WeBWorK::Utils::Sets                 qw(format_set_name_display);
+use WeBWorK::Authen::LTI::GradePassback  qw(massUpdate);
 
 =head1 INVOCATION
 
@@ -111,7 +96,7 @@ async sub go ($c) {
 
 	# If grades are being passed back to the lti, then peroidically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
-	mass_update($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
+	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
 
 	# Check to determine if this is a problem set response.  Individual content generators must check
 	# $c->{invalidSet} and react appropriately.
@@ -377,7 +362,7 @@ sub header {
 Not defined in this package.
 
 May be defined by a subclass to perform any early processing that is needed.
-This method can not be used if responding with a file or redirect.
+This method cannot be used if responding with a file or redirect.
 
 This method may be asynchronous.
 
@@ -967,18 +952,13 @@ if defined.
 sub helpMacro ($c, $name, $args = {}) {
 	my $ce = $c->ce;
 	return '' unless -e "$ce->{webworkDirs}{root}/templates/HelpFiles/$name.html.ep";
-
-	my $label = $args->{label} // $c->tag(
-		'i',
-		class         => 'icon fa-solid fa-circle-question ' . ($args->{label_size} // ''),
-		'aria-hidden' => 'true',
-		data          => { alt => ' ? ' },
-		''
+	return $c->include(
+		"HelpFiles/$name",
+		name      => $name,
+		label     => delete $args->{label}      // '',
+		labelSize => delete $args->{label_size} // '',
+		args      => $args
 	);
-	delete $args->{label};
-	delete $args->{label_size};
-
-	return $c->include("HelpFiles/$name", name => $name, label => $label, args => $args);
 }
 
 =item feedbackMacro(%params)
@@ -993,8 +973,11 @@ sub feedbackMacro ($c, %params) {
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'submit_feedback');
 
 	if ($c->ce->{courseURLs}{feedbackURL}) {
-		return $c->link_to(($c->maketext($c->ce->{feedback_button_name}) || $c->maketext('Email instructor')) =>
-				$c->ce->{courseURLs}{feedbackURL});
+		return $c->link_to(
+			($c->maketext($c->ce->{feedback_button_name}) || $c->maketext('Email instructor')) =>
+				$c->ce->{courseURLs}{feedbackURL},
+			class => 'btn btn-primary'
+		);
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
 		$params{notifyAddresses} =
 			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->param('user'))));
@@ -1154,7 +1137,7 @@ C<effectiveUser>, and C<key>) are included with their default values.
 =item authen
 
 If set to a false value, the authentication parameters (C<user>,
-C<effectiveUser>, and C<key>) are included in the the generated link unless
+C<effectiveUser>, and C<key>) are included in the generated link unless
 explicitly listed in C<params>.
 
 =item use_abs_url
@@ -1201,7 +1184,8 @@ sub systemLink ($c, $urlpath, %options) {
 	my $url = $options{use_abs_url} ? $urlpath->to_abs : $urlpath;
 
 	for my $name (keys %params) {
-		$params{$name} = [ $c->param($name) ] if (!defined $params{$name} && defined $c->param($name));
+		$params{$name} = [ $c->param($name) ]
+			if (!defined $params{$name} && defined $c->param($name) && $c->param($name) ne '');
 	}
 
 	return %params ? $url->query(%params) : $url;

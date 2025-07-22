@@ -1,25 +1,10 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Utils;
 use Mojo::Base 'Exporter', -signatures;
 
 use Email::Sender::Transport::SMTP;
 use Mojo::JSON qw(from_json to_json);
 use Mojo::Util qw(b64_encode b64_decode encode decode);
-use Storable qw(nfreeze thaw);
+use Storable   qw(nfreeze thaw);
 
 our @EXPORT_OK = qw(
 	runtime_use
@@ -35,6 +20,7 @@ our @EXPORT_OK = qw(
 	max
 	wwRound
 	cryptPassword
+	utf8Crypt
 	undefstr
 	sortByName
 	sortAchievements
@@ -151,7 +137,16 @@ sub cryptPassword ($clearPassword) {
 		$salt .= ('.', '/', '0' .. '9', 'A' .. 'Z', 'a' .. 'z')[ rand 64 ];
 	}
 
-	return crypt(trim_spaces($clearPassword), $salt);
+	return utf8Crypt(trim_spaces($clearPassword), $salt);
+}
+
+sub utf8Crypt ($clearPassword, $hash) {
+	# Wrap crypt in an eval to catch any "Wide character in crypt" errors.
+	# If crypt fails due to a wide character, encode to UTF-8 before calling crypt.
+	my $cryptedPassword = '';
+	eval { $cryptedPassword = crypt($clearPassword, $hash); };
+	$cryptedPassword = crypt(encode('UTF-8', $clearPassword), $hash) if $@ && $@ =~ /Wide char/;
+	return $cryptedPassword;
 }
 
 sub undefstr ($default, @values) {
@@ -215,15 +210,21 @@ sub sortAchievements (@achievements) {
 	# Next sort by number.
 	@achievements = sort { ($a->number || 0) <=> ($b->number || 0) } @achievements;
 
-	# Finally sort by category.
+	# Finally sort by category. Always place level achievements last.
 	@achievements = sort {
-		if ($a->number && $b->number) {
+		if ($a->{category} eq 'level' && $b->{category} eq 'level') {
+			return 0;
+		} elsif ($a->{category} eq 'level') {
+			return 1;
+		} elsif ($b->{category} eq 'level') {
+			return -1;
+		} elsif ($a->number && $b->number) {
 			return $a->number <=> $b->number;
 		} elsif ($a->{category} eq $b->{category}) {
 			return 0;
-		} elsif ($a->{category} eq 'secret' or $b->{category} eq 'level') {
+		} elsif ($a->{category} eq 'secret') {
 			return -1;
-		} elsif ($a->{category} eq 'level' or $b->{category} eq 'secret') {
+		} elsif ($b->{category} eq 'secret') {
 			return 1;
 		} else {
 			return $a->{category} cmp $b->{category};
@@ -348,24 +349,23 @@ sub generateURLs ($c, %params) {
 
 	if ($userName) {
 		my $routePath;
-		my @args;
+		my %args;
 		if (defined $params{set_id} && $params{set_id} ne '') {
 			if ($params{problem_id}) {
 				$routePath = $c->url_for('problem_detail', setID => $params{set_id}, problemID => $params{problem_id});
-				@args      = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+				for my $name ('displayMode', 'showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
+					$args{$name} = [ $c->param($name) ] if defined $c->param($name) && $c->param($name) ne '';
+				}
+				$args{showProblemGrader} = 1;
 			} else {
 				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
 		} else {
 			$routePath = $c->url_for('set_list');
 		}
-		$emailableURL = $c->systemLink(
-			$routePath,
-			authen      => 0,
-			params      => [ 'effectiveUser', @args ],
-			use_abs_url => 1,
-		);
-		$returnURL = $c->systemLink($routePath, params => [@args]);
+		$args{effectiveUser} = [ $c->param('effectiveUser') ] if defined $c->param('effectiveUser');
+		$emailableURL        = $routePath->to_abs->query(map { $_ => $args{$_} } sort keys %args);
+		$returnURL           = $c->systemLink($routePath);
 	} else {
 		$emailableURL = '(not available)';
 		$returnURL    = '';
@@ -401,13 +401,13 @@ sub readJSON ($fileName) {
 sub getThirdPartyAssetURL ($file, $dependencies, $baseURL, $useCDN = 0) {
 	for (keys %$dependencies) {
 		if ($file =~ /^node_modules\/$_\/(.*)$/) {
-			if ($useCDN && $1 !~ /mathquill/) {
+			if ($useCDN) {
 				return
 					"https://cdn.jsdelivr.net/npm/$_\@"
 					. substr($dependencies->{$_}, 1) . '/'
 					. ($1 =~ s/(?:\.min)?\.(js|css)$/.min.$1/gr);
 			} else {
-				return "$baseURL/$file?version=" . ($dependencies->{$_} =~ s/#/@/gr);
+				return "$baseURL/$file?version=$dependencies->{$_}";
 			}
 		}
 	}
@@ -613,6 +613,16 @@ Usage: C<cryptPassword($clearPassword)>
 Returns the crypted form of C<$clearPassword> using a random 16 character
 salt.
 
+=head2 utf8Crypt
+
+Usage: C<utf8Crypt($clearPassword, $hash)>
+
+Attempts to call C<crypt> on C<$clearPassword>. If that fails, then C<crypt> is
+called on the UTF-8 encoded version of C<$clearPassword>.
+
+Note that C<$hash> can be a salt or a password hash generated by a previous call
+of this method with a salt..
+
 =head2 undefstr
 
 Usage: C<undefstr($default, @values)>
@@ -628,7 +638,7 @@ If C<$field> is a string naming a single field, then this returns the elements
 in C<@items> sorted by that field.
 
 If C<$field> is a reference to an array of strings each naming a field, then
-this returns a the entries of C<@items> sorted first by the first name field,
+this returns the entries of C<@items> sorted first by the first name field,
 then by second, etc.
 
 A natural sort algorithm is used for sorting, i.e., numeric parts are sorted

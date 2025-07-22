@@ -1,18 +1,3 @@
-%################################################################################
-%# WeBWorK Online Homework Delivery System
-%# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-%#
-%# This program is free software; you can redistribute it and/or modify it under
-%# the terms of either: (a) the GNU General Public License as published by the
-%# Free Software Foundation; either version 2, or (at your option) any later
-%# version, or (b) the "Artistic License" which comes with this package.
-%#
-%# This program is distributed in the hope that it will be useful, but WITHOUT
-%# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-%# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-%# Artistic License for more details.
-%################################################################################
-%
 % layout 'help_macro';
 % title maketext('PG Problem Editor Help');
 %
@@ -37,7 +22,7 @@
 				</a>
 			</dt>
 			<dd><%= maketext('This links to a page describing Math Object usage.') %></dd>
-			<dt><a href="https://webwork.maa.org/pod/" target="pod_docs"><%= maketext('POD') %></a></dt>
+			<dt><%= link_to maketext('POD') => url_for('pod_index'), target => 'pod_docs' =%></dt>
 			<dd>
 				<%= maketext('This link gives details for many macros. It links to documentation embedded in the '
 					. 'macro files themselves.') =%>
@@ -72,13 +57,55 @@
 			<dd><%= maketext('This links to problem authoring information on the WeBWorK wiki.') %></dd>
 		</dl>
 	</dd>
-	<dt><%= maketext('The large text window') %></dt>
+	<dt><%= maketext('Text Editor Window') %></dt>
 	<dd class="list-group-item">
-		<%= maketext('This is where you edit the text of the problem template. Type Ctrl-Enter while this '
-			. 'window has focus to re-render the problem. Code folding is enabled either by clicking on '
-			. 'the triangles in the gutter next to line numbers or using the shortcut Shift-Ctrl-~[.  Folding '
-			. 'all regions can be accomplished with Ctrl-Alt-~[ and unfold all regions with Ctrl-Alt-~]. '
-			. 'Comments can be toggled with Ctrl-/.') =%>
+		<%= maketext('This is where you edit the code of the problem. Type Ctrl-Enter while this window '
+			. 'has focus to re-render the problem. In addition, the following keyboard shortcuts are available.') =%>
+		<table class="table table-bordered table-sm align-middle w-auto mb-0 mx-auto">
+			<thead>
+				<tr>
+					<th class="text-nowrap"><%= maketext('Key Binding') %></th>
+					<th class="text-nowrap"><%= maketext('Mac alternate') %></th>
+					<th><%= maketext('Action') %></th>
+				</tr>
+			</thead>
+			<tbody class="table-group-divider">
+				<tr>
+					<td>Ctrl-m</td>
+					<td>Alt-Shift-m</td>
+					<td>
+						<%= maketext('Enable or disable tab-focus mode. When tab-focus mode is off, pressing Tab '
+							. 'inside the editor window indents the current line. When tab-focus mode is on '
+							. 'Tab and Shift-Tab move focus out of the editor window.') %>
+					</td>
+				<tr>
+					<td>Ctrl-Shift-[</td>
+					<td>Cmd-Shift-[</td>
+					<td>
+						<%= maketext('Fold the region that begins on the current line. Triangles in the gutter '
+						. 'next to line numbers indicate which regions can be folded.') %>
+					</td>
+				</tr>
+				<tr>
+					<td>Ctrl-Shift-]</td>
+					<td>Cmd-Shift-]</td>
+					<td><%= maketext('Unfold the region that begins on the current line.') %></td>
+				</tr>
+				<tr><td>Ctrl-Alt-[</td><td>Cmd-Alt-[</td><td><%= maketext('Fold all regions.') %></td></tr>
+				<tr><td>Cmd-Alt-]</td><td>Cmd-Alt-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
+				<tr><td>Ctrl-/</td><td>Cmd-/</td><td><%= maketext('Toggle comment.') %></td></tr>
+				<tr>
+					<td>Shift-Alt-a</td>
+					<td></td>
+					<td><%= maketext('Toggle block comment. (Only has effect inside PGML blocks.)') %></td>
+				</tr>
+				<tr>
+					<td>Ctrl-Space</td>
+					<td>Alt-`</td>
+					<td><%= maketext('Show available autocompletions at the current cursor location.') %></td>
+				</tr>
+			</tbody>
+		</table>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
 	<dd class="list-group-item">
@@ -89,13 +116,18 @@
 			<dd>
 				<%= maketext('The key maps that are available are "default", "emacs", "sublime", and "vim". The '
 					. '"default" key map has the standard behavior of a browser text area. You can use Ctrl-C to copy, '
-					. 'Ctrl-V to paste, Ctrl-F to search, etc. If you are more comfortable with the "emacs", '
-					. '"sublime", or "vim" text editors then you may choose to use one of those key maps instead.') =%>
+					. 'Ctrl-V to paste, Ctrl-F to search, etc. If you are more comfortable with the "emacs" '
+					. ' or "vim" text editors then you may choose to use one of those key maps instead.') =%>
 			</dd>
 			<dt><%= maketext('Enable Spell Checking') %></dt>
 			<dd>
 				<%= maketext('Spell check the text of the file that your are editing. Note that there will be many '
 					. 'spelling errors in the code parts of your file.') =%>
+			</dd>
+			<dt><%= maketext('Force RTL') %></dt>
+			<dd>
+				<%= maketext('Force the editor to display text from right-to-left. '
+					. '(Note that this does not persist when reloading the page.)') =%>
 			</dd>
 		</dl>
 	</dd>
@@ -164,7 +196,7 @@
 				. 'set detail page of the "Sets Manager".') =%>
 		</p>
 		<p>
-			<%= maketext('If the original problem can not be edited than the path name must be changed in order to be '
+			<%= maketext('If the original problem cannot be edited than the path name must be changed in order to be '
 				. 'allowed to save the problem. Adding "local/" to the beginning of the original path is the default '
 				. 'solution. All locally created and edited files will then appear in a subdirectory named '
 				. '"local".') =%>

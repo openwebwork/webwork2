@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Options;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -22,8 +7,12 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils qw(cryptPassword utf8Crypt);
 use WeBWorK::Localize;
+
+sub page_title ($c) {
+	return $c->maketext("Account settings for [_1]", $c->param('effectiveUser'));
+}
 
 sub initialize ($c) {
 	my $db    = $c->db;
@@ -52,7 +41,7 @@ sub initialize ($c) {
 				$userID ne $effectiveUserID ? eval { $db->getPassword($c->{effectiveUser}->user_id) } : $password;
 
 			# Check that either password is not defined or if it is defined then we have the right one.
-			if (!defined $password || crypt($currP // '', $password->password) eq $password->password) {
+			if (!defined $password || utf8Crypt($currP // '', $password->password) eq $password->password) {
 				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 				if ($newP eq $confirmP) {
 					if (!defined $effectiveUserPassword) {
@@ -103,6 +92,38 @@ sub initialize ($c) {
 			}
 		}
 		$c->{has_password} = defined $password;
+	}
+
+	my $newFN = $c->param('newFirstName');
+	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newFN) {
+		my $oldFN = $c->{effectiveUser}->first_name;
+		$c->{effectiveUser}->first_name($newFN);
+		eval { $db->putUser($c->{effectiveUser}) };
+		if ($@) {
+			$c->{effectiveUser}->first_name($oldFN);
+			$c->log->error("Unable to save new first name for $userID: $@");
+			$c->addbadmessage($c->maketext('Your first name has not been changed due to an internal error.'));
+		} else {
+			$c->param('currFirstName', $c->param('newFirstName'));
+			$c->param('newFirstName',  undef);
+			$c->addgoodmessage($c->maketext('Your first name has been changed.'));
+		}
+	}
+
+	my $newLN = $c->param('newLastName');
+	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newLN) {
+		my $oldLN = $c->{effectiveUser}->last_name;
+		$c->{effectiveUser}->last_name($newLN);
+		eval { $db->putUser($c->{effectiveUser}) };
+		if ($@) {
+			$c->{effectiveUser}->last_name($oldLN);
+			$c->log->error("Unable to save new last name for $userID: $@");
+			$c->addbadmessage($c->maketext('Your last name has not been changed due to an internal error.'));
+		} else {
+			$c->param('currLastName', $c->param('newLastName'));
+			$c->param('newLastName',  undef);
+			$c->addgoodmessage($c->maketext('Your last name has been changed.'));
+		}
 	}
 
 	my $newA = $c->param('newAddress');

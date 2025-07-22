@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::SendMail;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
@@ -113,8 +98,9 @@ sub initialize ($c) {
 		'user_id'
 	);
 
-	# Filter out users who don't get included in email
-	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
+	# Filter out users who don't get included in email unless in the admin course.
+	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users
+		unless $ce->{courseName} eq $ce->{admin_course_id};
 
 	# Cache the user records for later use.
 	$c->{ra_user_records} = \@Users;

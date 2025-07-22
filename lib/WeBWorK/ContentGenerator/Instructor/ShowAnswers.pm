@@ -1,18 +1,3 @@
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::ContentGenerator::Instructor::ShowAnswers;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
@@ -25,7 +10,7 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 use Text::CSV;
 use Mojo::File;
 
-use WeBWorK::Utils::JITAR qw(jitar_id_to_seq prob_id_sort);
+use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq prob_id_sort);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
