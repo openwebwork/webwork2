@@ -1,18 +1,3 @@
-###############################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2024 The WeBWorK Project, https://github.com/openwebwork
-#
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
 package WeBWorK::Authen::LTIAdvantage;
 use parent qw(WeBWorK::Authen);
 
@@ -341,11 +326,9 @@ sub authenticate ($self) {
 		$self->{initial_login} = 1;
 	}
 
-	# If we are using grade passback then make sure the data we need to submit the grade is kept up to date.
-	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
-	if ($LTIGradeMode eq 'course' || $LTIGradeMode eq 'homework') {
-		WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
-	}
+	# In case we will use grade passback at some point,
+	# make sure the data we need to submit the grade is kept up to date.
+	WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->update_passback_data($self->{user_id});
 
 	return 1;
 }

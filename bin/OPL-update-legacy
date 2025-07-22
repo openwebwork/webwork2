@@ -28,7 +28,6 @@ use DBI;
 my $taxo={};
 #my $taxsubs = [];
 
-
 ### Data for creating the database tables
 
 my %OPLtables = (
