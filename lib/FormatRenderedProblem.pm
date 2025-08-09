@@ -87,9 +87,9 @@ sub formatRenderedProblem {
 	# The second element of each array in the following is whether or not the file is a theme file.
 	# The third element is a hash containing the necessary attributes for the script tag.
 	my @third_party_js = map { [ getAssetURL($ce, $_->[0], $_->[1]), $_->[2] ] } (
-		[ 'node_modules/jquery/dist/jquery.min.js',                            0, {} ],
-		[ 'node_modules/jquery-ui-dist/jquery-ui.min.js',                      0, {} ],
-		[ 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', 0, {} ],
+		[ 'node_modules/jquery/dist/jquery.min.js',                 0, {} ],
+		[ 'node_modules/jquery-ui-dist/jquery-ui.min.js',           0, {} ],
+		[ 'node_modules/@iframe-resizer/child/index.umd.js',        0, {} ],
 		[ 'js/MathJaxConfig/mathjax-config.js',                     0, { defer => undef } ],
 		[ 'node_modules/mathjax/es5/tex-svg.js',                    0, { defer => undef, id => 'MathJax-script' } ],
 		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
