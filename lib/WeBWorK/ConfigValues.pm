@@ -1158,7 +1158,7 @@ sub getConfigValues ($ce) {
 	# Get the list of all site hardcopy theme files.
 	my $hardcopyThemesSite =
 		eval { path($ce->{webworkDirs}{hardcopyThemes})->list->grep(qr/\.xml$/)->map('basename')->sort };
-	die "Unabled to list files in  $ce->{webworkDirs}{hardcopyThemes}: $@" if $@;
+	die "Unable to list files in  $ce->{webworkDirs}{hardcopyThemes}: $@" if $@;
 
 	my $hardcopyThemesCourse = eval {
 		path($ce->{courseDirs}{hardcopyThemes})->list->grep(sub {
