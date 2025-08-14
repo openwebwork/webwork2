@@ -161,6 +161,8 @@ sub launch ($c) {
 					$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
 				]
 			];
+		} elsif ($c->stash->{LTIAuthenError}) {
+			debug($c->stash->{LTIAuthenError});
 		}
 		return $c->render(
 			'ContentGenerator/LTI/content_item_selection_error',
