@@ -116,6 +116,19 @@ $LTI{v1p3}{AuthReqURL}      = '';
 # don't pile up in the database.
 $LTI{v1p3}{StateKeyLifetime} = 60;    # in seconds
 
+# When a LTI 1.3 launch request occurs the JWT in the request is decoded and the exp and iat in
+# the token are validated.  The expectation is that the iat and exp values are before (less
+# than) the current time on the webwork2 server plus the JWTLeeway, and if they are greater than
+# the current time plus the JWTLeeway then the JWT fails to validate.  So the JWTLeeway is the
+# maximum allowed time in seconds that the exp and iat values in the token are allowed to be
+# after the current time.  If the JWTs in these launch requests are failing to validate, then
+# increase this value to allow for a larger difference between the exp and iat values in the JWT
+# and the current time. This is usually caused by the clock on the LMS server being ahead of the
+# clock on the webwork2 server.  Generally, a small leeway may be needed, but if the clock on
+# the LMS server is too far ahead of the clock on the webwork2 server, then steps should be
+# taken to synchronize the clocks.
+$LTI{v1p3}{JWTLeeway} = 0;    # in seconds
+
 ################################################################################################
 # LTI 1.3 LMS Roles Mapped to WeBWorK Roles
 ################################################################################################

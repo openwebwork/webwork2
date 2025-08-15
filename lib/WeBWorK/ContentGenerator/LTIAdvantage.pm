@@ -367,6 +367,7 @@ sub extract_jwt_claims ($c) {
 		verify_aud => $ce->{LTI}{v1p3}{ClientID},
 		verify_iat => 1,
 		verify_exp => 1,
+		leeway     => $ce->{LTI}{v1p3}{JWTLeeway} // 0,
 		# This just checks that this claim is present.
 		verify_sub => sub ($value) { return $value =~ /\S/ }
 	);
