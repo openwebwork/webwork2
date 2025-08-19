@@ -91,7 +91,8 @@
 						data        => {
 							'bs-placement' => 'top',
 							'bs-title'     => maketext(
-								'User ID may contain only numbers, letters, hyphens, periods, and underscores.'
+								'User ID may contain only numbers, letters, hyphens, periods, commas, at symbols, '
+								. 'and underscores.'
 							)
 						} =%>
 					<%= label_for "add_initial_userID_$_" => maketext('User ID') =%>
