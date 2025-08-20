@@ -25,7 +25,7 @@
 		defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'node_modules/sortablejs/Sortable.min.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'node_modules/iframe-resizer/js/iframeResizer.min.js') =%>
+	<%= javascript getAssetURL($ce, 'node_modules/@iframe-resizer/parent/index.umd.js') =%>
 	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ProblemSetDetail/problemsetdetail.js'), defer => undef =%>
 % end

@@ -250,7 +250,7 @@
 		() => {
 			document.querySelectorAll('.rpc_render_area').forEach((renderArea) => {
 				const iframe = renderArea.querySelector('[id^="psr_render_area_"][id$="_iframe"]');
-				if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.close();
+				if (iframe && iframe.iframeResizer) iframe.iframeResizer.close();
 			});
 		},
 		{ passive: true }
@@ -379,8 +379,8 @@
 				const id = renderButton.id.match(/^pdr_render_(\d+)/)[1];
 				const renderArea = document.getElementById(`psr_render_area_${id}`);
 				const iframe = document.getElementById(`psr_render_area_${id}_iframe`);
-				if (iframe && iframe.iFrameResizer) {
-					iframe.iFrameResizer.close();
+				if (iframe && iframe.iframeResizer) {
+					iframe.iframeResizer.close();
 					renderArea.innerHTML = '';
 				} else if (/\S/.test(renderArea.innerHTML)) {
 					renderArea.innerHTML = '';
