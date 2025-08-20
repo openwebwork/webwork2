@@ -267,11 +267,11 @@ sub add_course_validate ($c) {
 	for (1 .. $number_of_additional_users) {
 		my $userID = trim_spaces($c->param("add_initial_userID_$_")) || '';
 
-		unless ($userID =~ /^[\w.,-]*$/) {
+		unless ($userID =~ /^[\w.,-@]*$/) {
 			push @errors,
 				$c->maketext(
 					'User ID number [_1] may only contain letters, numbers, hyphens, periods, commas, '
-					. 'and underscores.',
+					. 'at symbols, and underscores.',
 					$_
 				);
 		}
