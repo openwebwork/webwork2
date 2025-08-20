@@ -74,7 +74,7 @@ sub checkCourseLinks {
 		# All links should actually be links, and should have the correct target.  Note that the link target may also be
 		# a link, and so the realpath of the configured link target and realpath of the course link path must be
 		# compared to check that the link target is correct.
-		my $good = -l $path && path($path)->realpath eq path($target)->realpath;
+		my $good = -l $path && (eval { path($path)->realpath } // '') eq path($target)->realpath;
 
 		$links_ok = 0 if !$good;
 		push @results, [ $link, $target, $path, $good ];
@@ -213,7 +213,7 @@ sub updateCourseLinks {
 		my $targetIsCorrect = 0;
 
 		if (-l $path) {
-			$targetIsCorrect = path($path)->realpath eq path($target)->realpath;
+			$targetIsCorrect = (eval { path($path)->realpath } // '') eq path($target)->realpath;
 			next if $targetIsCorrect;
 		}
 
