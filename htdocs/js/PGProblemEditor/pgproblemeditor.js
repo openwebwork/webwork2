@@ -516,6 +516,17 @@
 						container.innerHTML = data.pg_flags.comment;
 						iframe.after(container);
 					}
+					if (data.deprecated_macros?.length) {
+						const container = document.createElement('div');
+						container.classList.add('alert', 'alert-danger', 'mx-2', 'p-2');
+						container.innerHTML =
+							'Warning!! This problem uses the following deprecated macros:' +
+							'<ul class="my-1">' +
+							data.deprecated_macros.reduce((acc, item) => `${acc}<li>${item}</li>`, '') +
+							'</ul>If this is an OPL problem, please report this issue to the OPL. ' +
+							'If this is a custom problem, please update the problem to use modern macros.';
+						iframe.after(container);
+					}
 
 					iframe.addEventListener(
 						'load',

@@ -272,7 +272,12 @@ sub formatRenderedProblem {
 
 	return $ws->c->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
 	return $ws->c->render(
-		json => { html => $ws->c->render_to_string(%template_params)->to_string, pg_flags => $rh_result->{flags} });
+		json => {
+			html              => $ws->c->render_to_string(%template_params)->to_string,
+			pg_flags          => $rh_result->{flags},
+			deprecated_macros => $rh_result->{deprecated_macros}
+		}
+	);
 }
 
 sub saveGradeToLTI {

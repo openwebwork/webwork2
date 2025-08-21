@@ -264,8 +264,9 @@ async sub renderProblem {
 		psvn                    => $psvn,
 		problem_seed            => $problemSeed,
 		resource_list           => $pg->{resource_list},
-		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
-		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
+		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY'  ? $pg->{warning_messages}  : [],
+		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'    ? $pg->{debug_messages}    : [],
+		deprecated_macros       => ref $pg->{deprecated_macros} eq 'ARRAY' ? $pg->{deprecated_macros} : [],
 		internal_debug_messages => ref $pg->{internal_debug_messages} eq 'ARRAY'
 		? $pg->{internal_debug_messages}
 		: [],
