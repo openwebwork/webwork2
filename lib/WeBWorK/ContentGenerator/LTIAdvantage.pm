@@ -161,6 +161,8 @@ sub launch ($c) {
 					$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
 				]
 			];
+		} elsif ($c->stash->{LTIAuthenError}) {
+			debug($c->stash->{LTIAuthenError});
 		}
 		return $c->render(
 			'ContentGenerator/LTI/content_item_selection_error',
@@ -365,6 +367,7 @@ sub extract_jwt_claims ($c) {
 		verify_aud => $ce->{LTI}{v1p3}{ClientID},
 		verify_iat => 1,
 		verify_exp => 1,
+		leeway     => $ce->{LTI}{v1p3}{JWTLeeway} // 0,
 		# This just checks that this claim is present.
 		verify_sub => sub ($value) { return $value =~ /\S/ }
 	);
