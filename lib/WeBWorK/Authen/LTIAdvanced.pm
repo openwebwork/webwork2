@@ -117,10 +117,10 @@ sub get_credentials {
 	# Determine the WW user_id to use, if possible
 
 	if (!$ce->{LTI}{v1p1}{preferred_source_of_username}) {
-		warn
-			"LTI is not properly configured (no preferred_source_of_username). Please contact your instructor or system administrator.";
-		$self->{error} = $c->maketext(
-			"There was an error during the login process.  Please speak to your instructor or system administrator.");
+		warn "LTI is not properly configured (no preferred_source_of_username). "
+			. "Please contact your instructor or system administrator.";
+		$self->{error} = $c->maketext("There was an error during the login process.  "
+				. "Please speak to your instructor or system administrator.");
 		debug("No preferred_source_of_username in "
 				. $c->ce->{'courseName'}
 				. " so LTIAdvanced::get_credentials is returning a 0\n");
@@ -228,8 +228,8 @@ sub get_credentials {
 			warn "================================\n";
 		}
 		if (!defined($self->{user_id})) {
-			croak
-				"LTIAdvanced was unable to create a username from the data provided with the current settings. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
+			croak "LTIAdvanced was unable to create a username from the data provided with the current settings. "
+				. "Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
 		}
 
 		$self->{login_type}        = "normal";
@@ -237,8 +237,8 @@ sub get_credentials {
 		debug("LTIAdvanced::get_credentials is returning a 1\n");
 		return 1;
 	}
-	warn
-		"LTI is not properly configured (failed to set user_id from preferred_source_of_username or fallback_source_of_username). Please contact your instructor or system administrator.";
+	warn "LTI is not properly configured (failed to set user_id from preferred_source_of_username or "
+		. "fallback_source_of_username). Please contact your instructor or system administrator.";
 	$self->{error} = $c->maketext(
 		"There was an error during the login process.  Please speak to your instructor or system administrator.");
 	debug("LTIAdvanced::get_credentials is returning a 0\n");
@@ -285,9 +285,8 @@ sub check_user {
 
 		foreach my $key (keys(%options), ($use_lis_person_sourcedid_options ? @lis_person_sourcedid_options : ())) {
 			if (defined($c->param($key))) {
-				debug(
-					"User |$user_id| is unknown but may be an new user from an LSM via LTI. Saw a value for $key About to return a 1"
-				);
+				debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. "
+						. "Saw a value for $key About to return a 1");
 				return 1;    #This may be a new user coming in from a LMS via LTI.
 			}
 		}
@@ -299,13 +298,13 @@ sub check_user {
 	}
 
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
-		$self->{log_error} .= "LOGIN FAILED $user_id - course access denied";
+		$self->{log_error} .= "$user_id - course access denied";
 		$self->{error} = $c->maketext("Authentication failed.  Please speak to your instructor.");
 		return 0;
 	}
 
 	unless ($authz->hasPermissions($user_id, "login")) {
-		$self->{log_error} .= "LOGIN FAILED $user_id - no permission to login";
+		$self->{log_error} .= "$user_id - no permission to login";
 		$self->{error} = $c->maketext("Authentication failed.  Please speak to your instructor.");
 		return 0;
 	}
@@ -360,12 +359,10 @@ sub authenticate {
 	# Check nonce to see whether request is legitimate
 	debug("Nonce = |" . $self->{oauth_nonce} . "|");
 	my $nonce = WeBWorK::Authen::LTIAdvanced::Nonce->new($c, $self->{oauth_nonce}, $self->{oauth_timestamp});
-	if (!($nonce->ok)) {
-		$self->{error} .= $c->maketext(
-			"There was an error during the login process.  Please speak to your instructor or system administrator if this recurs."
-		);
+	if (!$nonce->ok) {
 		debug("Failed to verify nonce");
-		return 0;
+		return $c->maketext("There was an error during the login process.  "
+				. "Please speak to your instructor or system administrator if this recurs.");
 	}
 
 	debug("c->param(oauth_signature) = |" . $c->param("oauth_signature") . "|");
@@ -418,24 +415,21 @@ sub authenticate {
 		debug("construction of Net::OAuth object failed: $@");
 		debug("eval failed: ", $@, "<br /><br />");
 
-		$self->{error} .= $c->maketext(
-			"There was an error during the login process.  Please speak to your instructor or system administrator.");
 		$self->{log_error} .= "Construction of OAuth request record failed";
-		return 0;
+		return $c->maketext(
+			"There was an error during the login process.  Please speak to your instructor or system administrator.");
 	}
 
 	if (!$request->verify && !$altrequest->verify) {
-		debug("LTIAdvanced::authenticate request-> verify failed");
-		debug("OAuth verification Failed ");
+		debug("LTIAdvanced::authenticate request->verify failed");
+		debug("OAuth verification Failed");
 
-		$self->{error} .= $c->maketext(
-			"There was an error during the login process.  Please speak to your instructor or system administrator.");
-		$self->{log_error} .=
-			"OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.";
+		$self->{log_error} .= "OAuth verification failed.  "
+			. "Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.";
 		if ($ce->{debug_lti_parameters}) {
-			warn(
-				"OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf"
-			);
+			warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly "
+					. "matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the "
+					. "LMS url then you have https in \$server_root_url in site.conf");
 		}
 		return 0;
 	} else {
@@ -443,44 +437,34 @@ sub authenticate {
 
 		my $userID = $self->{user_id};
 
-		# Indentation of the internal blocks below was modified to follow
-		# the WW coding standard; however, the leading indentation of the
-		# if/elsif/closing '}' was kept as in the original code for now.
-		# Thus the apparenly overlarge indentation below.
 		if (!$db->existsUser($userID)) {    # New User. Create User record
 			if ($ce->{block_lti_create_user}) {
-# We don't yet have the next string in the PO/POT files - so the next line is disabled.
-# $c->maketext("Account creation is currently disabled in this course.  Please speak to your instructor or system administrator.");
 				$self->{log_error} .=
 					"Account creation blocked by block_lti_create_user setting. Did not create user $userID.";
-				if ($ce->{debug_lti_parameters}) {
-					warn(
-						"Account creation is currently disabled in this course.  Please speak to your instructor or system administrator."
-					);
-				}
-				return 0;
+				warn "Account creation is currently disabled in this course.  "
+					. "Please speak to your instructor or system administrator."
+					if $ce->{debug_lti_parameters};
+				return $c->maketext("Account creation is currently disabled in this course.  "
+						. "Please speak to your instructor or system administrator.");
 			} else {
 				# Attempt to create the user, and warn if that fails.
-				unless ($self->create_user()) {
-					$c->maketext(
-						"There was an error during the login process.  Please speak to your instructor or system administrator."
-					);
+				unless ($self->create_user) {
 					$self->{log_error} .= "Failed to create user $userID.";
-					if ($ce->{debug_lti_parameters}) {
-						warn("Failed to create user $userID.");
-					}
+					warn "Failed to create user $userID.\n" if $ce->{debug_lti_parameters};
+					return $c->maketext('Unable to create a WeBWorK user. '
+							. 'Please speak to your instructor or system administrator.');
 				}
 			}
 		} elsif ($ce->{LMSManageUserData}) {
-			$self->{initial_login} = 1
-				; # Set here so login gets logged, even for accounts which maybe_update_user() would not modify or when it fails to update
-				  # Existing user. Possibly modify demographic information and permission level.
+			# Set here so login gets logged, even for accounts which maybe_update_user()
+			# would not modify or when it fails to update.
+			$self->{initial_login} = 1;
+
+			# Existing user. Possibly modify demographic information and permission level.
 			unless ($self->maybe_update_user()) {
- # Do not fail the login if data update failed
- # FIXME - In the future we would like the message below (and other warn messages in this file) to be sent via maketext.
-				warn(
-					"The system failed to update some of your account information. Please speak to your instructor or system administrator."
-				);
+				# Do not fail the login if data update failed
+				warn("The system failed to update some of your account information. "
+						. "Please speak to your instructor or system administrator.");
 			}
 		} else {
 			# Set here so login gets logged when $ce->{LMSManageUserData} is false
@@ -501,9 +485,8 @@ sub authenticate {
 	}
 
 	debug("LTIAdvanced is returning a failed authentication");
-	$self->{error} = $c->maketext(
+	return $c->maketext(
 		"There was an error during the login process.  Please speak to your instructor or system administrator.");
-	return (0);
 }
 
 # create a new user trying to log in
@@ -515,32 +498,35 @@ sub create_user {
 	my $db         = $c->db;
 	my $courseName = $c->ce->{'courseName'};
 
-	############################################################
 	# Determine the roles defined for this user by the LTI request
 	# and assign a permission level on that basis.
-	############################################################
+
 	my $LTIrolesString = $c->param("roles");
 	my @LTIroles       = split /,/, $LTIrolesString;
 
-	#remove the urn string if its present
+	# Remove the urn string if its present.
 	s/^urn:lti:.*:ims\/lis\/// for @LTIroles;
 
 	if ($ce->{debug_lti_parameters}) {
 		warn "The adjusted LTI roles defined for this user are: \n--",
-			join("\n--", @LTIroles), "\n",
+			join("\n-- ", @LTIroles), "\n",
 			"Any initial ^urn:lti:.*:ims/lis/ segments have been stripped off.\n",
 			"The user will be assigned the highest role defined for them\n",
 			"========================\n";
 	}
 
-	my $nr = scalar(@LTIroles);
-	if (!defined($ce->{userRoles}->{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } })) {
-		croak("Cannot find a WeBWorK role that corresponds to the LMS role of " . $LTIroles[0] . ".");
+	if (!defined $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}{ $LTIroles[0] }
+		|| !defined $ce->{userRoles}{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } })
+	{
+		$self->{log_error} = "Cannot find a WeBWorK role that corresponds to the LMS role of $LTIroles[0].";
+		warn "Cannot find a WeBWorK role that corresponds to the LMS role of $LTIroles[0].\n"
+			if $ce->{debug_lti_parameters};
+		return 0;
 	}
 
-	my $LTI_webwork_permissionLevel = $ce->{userRoles}->{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[0] } };
-	if ($nr > 1) {
-		for (my $j = 1; $j < $nr; $j++) {
+	my $LTI_webwork_permissionLevel = $ce->{userRoles}{ $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } };
+	if (@LTIroles > 1) {
+		for (my $j = 1; $j < @LTIroles; $j++) {
 			my $wwRole = $ce->{LTI}{v1p1}{LMSrolesToWeBWorKroles}->{ $LTIroles[$j] };
 			next unless defined $wwRole;
 			if ($LTI_webwork_permissionLevel < $ce->{userRoles}->{$wwRole}) {
@@ -549,20 +535,26 @@ sub create_user {
 		}
 	}
 
-	####### End defining roles and $LTI_webwork_permissionLevel#######
+	# End defining roles and $LTI_webwork_permissionLevel
 
 	warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel."
-		if ($ce->{debug_lti_parameters});
+		if $ce->{debug_lti_parameters};
 
-	# We dont create users with too high of a permission level
-	# for security reasons.
+	# Don't create a user that does not have permission to login.
+	if ($LTI_webwork_permissionLevel < $ce->{userRoles}{ $ce->{permissionLevels}{login} }) {
+		$self->{log_error} .= "$userID - no permission to login";
+		return 0;
+	}
+
+	# We dont create users with too high of a permission level for security reasons.
 	if ($LTI_webwork_permissionLevel > $ce->{userRoles}->{ $ce->{LTIAccountCreationCutoff} }) {
 		$self->{log_error} .=
-			"userID: $userID -- Unknown instructor attempting to log in via LTI.  Instructor accounts must be created manually";
-		croak $c->maketext(
-			"The instructor account with user id [_1] does not exist.  Please create the account manually via WeBWorK.",
-			$userID
-		);
+			"The instructor account with user id $userID does not exist.  "
+			. 'Instructor accounts must be created manually.';
+		warn "The instructor account with user id $userID does not exist.  "
+			. "Instructor accounts must be created manually.\n"
+			if $ce->{debug_lti_parameters};
+		return 0;
 	}
 
 	my $newUser = $db->newUser();
