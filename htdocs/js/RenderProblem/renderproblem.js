@@ -8,7 +8,7 @@
 			if (!renderArea || !renderArea.id) return resolve();
 
 			let iframe = renderArea.querySelector(`#${renderArea.id}_iframe`);
-			if (iframe && iframe.iFrameResizer) iframe.contentDocument.location.replace('about:blank');
+			if (iframe && iframe.iframeResizer) iframe.contentDocument.location.replace('about:blank');
 
 			const ro = {
 				courseID: document.getElementsByName('hidden_course_id')[0]?.value,
@@ -65,7 +65,7 @@
 					)
 						throw 'There was an error rendering this problem!';
 
-					if (!(iframe && iframe.iFrameResizer)) {
+					if (!(iframe && iframe.iframeResizer)) {
 						iframe = document.createElement('iframe');
 						iframe.id = `${renderArea.id}_iframe`;
 						iframe.style.border = 'none';
@@ -77,12 +77,13 @@
 							container.innerHTML = data.pg_flags.comment;
 							iframe.after(container);
 						}
-						iFrameResize(
+						iframeResize(
 							{
 								checkOrigin: false,
 								warningTimeout: 20000,
 								scrolling: 'omit',
-								heightCalculationMethod: 'taggedElement'
+								heightCalculationMethod: 'taggedElement',
+								license: 'GPLv3'
 							},
 							iframe
 						);

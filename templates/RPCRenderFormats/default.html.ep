@@ -34,7 +34,7 @@
 	%== $extra_header_text
 </head>
 <body>
-	<div class="container-fluid" data-iframe-height="1">
+	<div class="container-fluid" data-iframe-size="1">
 		<div class="row g-0">
 			<div class="col-12 problem">
 				%== $resultSummary
@@ -193,7 +193,7 @@
 	</div>
 	% # Show the footer unless it is explicity disabled.
 	% if ($showFooter ne '0') {
-		<div id="footer" data-iframe-height="1">
+		<div id="footer" data-iframe-size="1">
 			WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 'unknown' %> |
 			host: <%= $SITE_URL %> |
 			course: <%= $courseID %> |

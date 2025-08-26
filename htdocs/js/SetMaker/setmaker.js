@@ -428,7 +428,7 @@
 			// Render any problems that were hidden that have not yet been rendered.
 			for (const area of unshownAreas) {
 				const iframe = area.querySelector('iframe[id^="problem_render_area_"][id$="_iframe"]');
-				if (iframe && iframe.iFrameResizer) iframe.iFrameResizer.resize();
+				if (iframe && iframe.iframeResizer) iframe.iframeResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
 			mltIcon.textContent = 'L';
