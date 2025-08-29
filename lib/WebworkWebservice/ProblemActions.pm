@@ -8,6 +8,7 @@ use Data::Structure::Util qw(unbless);
 
 use WeBWorK::PG::Tidy          qw(pgtidy);
 use WeBWorK::PG::ConvertToPGML qw(convertToPGML);
+use WeBWorK::PG::Critic        qw(critiquePGCode);
 
 sub getUserProblem {
 	my ($invocant, $self, $params) = @_;
@@ -163,6 +164,20 @@ sub convertCodeToPGML {
 		text   => 'Converted to PGML'
 	};
 
+}
+
+sub runPGCritic {
+	my ($invocant, $self, $params) = @_;
+
+	return {
+		ra_out => {
+			html => $self->c->render_to_string(
+				template   => 'ContentGenerator/Instructor/PGProblemEditor/pg_critic',
+				violations => [ critiquePGCode($params->{pgCode}) ]
+			)
+		},
+		text => 'The script pg-critic has been run successfully.'
+	};
 }
 
 1;

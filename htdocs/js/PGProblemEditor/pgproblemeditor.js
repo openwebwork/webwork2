@@ -161,6 +161,15 @@
 			?.addEventListener('change', () => (deleteBackupCheck.checked = true));
 	}
 
+	const renderArea = document.getElementById('pgedit-render-area');
+
+	const scrollToRenderArea = () => {
+		// Scroll to the top of the render window if the current scroll position is below that.
+		const renderAreaRect = renderArea.getBoundingClientRect();
+		const topBarHeight = document.querySelector('.webwork-logo')?.getBoundingClientRect().height ?? 0;
+		if (renderAreaRect.top < topBarHeight) window.scrollBy(0, renderAreaRect.top - topBarHeight);
+	};
+
 	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
 	const tidyPGCode = () => {
 		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
@@ -235,15 +244,43 @@
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
+	// Send a request to the server to run the PG critic in the CodeMirror editor.
+	const runPGCritic = () => {
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
+
+		request_object.rpc_command = 'runPGCritic';
+		request_object.pgCode =
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
+
+		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+			.then((response) => response.json())
+			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
+				renderArea.innerHTML = data.result_data.html;
+				scrollToRenderArea();
+			})
+			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
+	};
+
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
-		if (document.getElementById('current_action')?.value === 'format_code') {
+		if (document.getElementById('current_action')?.value === 'code_maintenance') {
 			e.preventDefault();
-			if (document.querySelector('input[name="action.format_code"]:checked').value == 'tidyPGCode') {
+			if (document.querySelector('input[name="action.code_maintenance"]:checked').value === 'tidyPGCode') {
 				tidyPGCode();
 			} else if (
-				document.querySelector('input[name="action.format_code"]:checked').value == 'convertCodeToPGML'
+				document.querySelector('input[name="action.code_maintenance"]:checked').value === 'convertCodeToPGML'
 			) {
 				convertCodeToPGML();
+			} else if (
+				document.querySelector('input[name="action.code_maintenance"]:checked').value === 'runPGCritic'
+			) {
+				runPGCritic();
 			}
 			return;
 		}
@@ -306,7 +343,6 @@
 	});
 
 	const renderURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
-	const renderArea = document.getElementById('pgedit-render-area');
 	const fileType = document.getElementsByName('file_type')[0]?.value;
 
 	// This is either the div containing the CodeMirror editor or the problemContents textarea in the case that
@@ -390,11 +426,7 @@
 		}
 
 		adjustIFrameHeight();
-
-		// Scroll to the top of the render window if the current scroll position is below that.
-		const renderAreaRect = renderArea.getBoundingClientRect();
-		const topBarHeight = document.querySelector('.webwork-logo')?.getBoundingClientRect().height ?? 0;
-		if (renderAreaRect.top < topBarHeight) window.scrollBy(0, renderAreaRect.top - topBarHeight);
+		scrollToRenderArea();
 	});
 
 	const render = () =>
