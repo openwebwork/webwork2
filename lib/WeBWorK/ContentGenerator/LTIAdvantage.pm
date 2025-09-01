@@ -1,11 +1,12 @@
 package WeBWorK::ContentGenerator::LTIAdvantage;
-use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 use Mojo::UserAgent;
 use Mojo::JSON           qw(decode_json);
 use Crypt::JWT           qw(decode_jwt encode_jwt);
 use Math::Random::Secure qw(irand);
 use Digest::SHA          qw(sha256_hex);
+use Mojo::File           qw(tempfile);
 
 use WeBWorK::Debug qw(debug);
 use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
@@ -423,6 +424,122 @@ sub purge_expired_lti_data ($c, $ce, $db) {
 	$db->deleteLTILaunchDataWhere({ state => [@dataToDelete] }) if @dataToDelete;
 
 	return;
+}
+
+async sub registration ($c) {
+	return $c->render(json => { error => 'invalid configuration request' }, status => 400)
+		unless defined $c->req->param('openid_configuration') && defined $c->req->param('registration_token');
+
+	# If we want to allow options in the configuration such as whether grade passback is enabled or to allow the LMS
+	# administrator to choose a tool name, then this should render a form that the LMS will be presented in an iframe
+	# allowing the LMS administrator to select the options. When that form is submitted, then the code below should be
+	# executed taking those options into consideration.  However, at this point this is a simplistic approach that will
+	# work in most cases.
+
+	$c->render_later;
+
+	my $configurationResult = (await Mojo::UserAgent->new->get_p($c->req->param('openid_configuration')))->result;
+	return $c->render(json => { error => 'unabled to obtain openid configuration' }, status => 400)
+		unless $configurationResult->is_success;
+	my $lmsConfiguration = $configurationResult->json;
+
+	return $c->render(json => { error => 'invalid openid configuration received' }, status => 400)
+		unless defined $lmsConfiguration->{registration_endpoint}
+		&& defined $lmsConfiguration->{issuer}
+		&& defined $lmsConfiguration->{jwks_uri}
+		&& defined $lmsConfiguration->{token_endpoint}
+		&& defined $lmsConfiguration->{authorization_endpoint}
+		&& defined $lmsConfiguration->{'https://purl.imsglobal.org/spec/lti-platform-configuration'}
+		{product_family_code};
+
+	# FIXME: This should also probably check that the token_endpoint_auth_method is private_key_jwt, the
+	# id_token_signing_alg_values_supported is RS256, and that the scopes_supported is an array and contains all of the
+	# scopes listed below. There are perhaps some other configuration values that should be checked as well.  However,
+	# most of the time these are all going to be fine.
+
+	my $rootURL = $c->url_for('root')->to_abs;
+
+	my $registrationResult = (await Mojo::UserAgent->new->post_p(
+		$lmsConfiguration->{registration_endpoint},
+		{
+			Authorization  => 'Bearer ' . $c->req->param('registration_token'),
+			'Content-Type' => 'application/json'
+		},
+		json => {
+			application_type           => 'web',
+			response_types             => ['id_token'],
+			grant_types                => [ 'implicit', 'client_credentials' ],
+			client_name                => 'WeBWorK at ' . $rootURL->host_port,
+			client_uri                 => $rootURL->to_string,
+			initiate_login_uri         => $c->url_for('ltiadvantage_login')->to_abs->to_string,
+			redirect_uris              => [ $c->url_for('ltiadvantage_launch')->to_abs->to_string ],
+			jwks_uri                   => $c->url_for('ltiadvantage_keys')->to_abs->to_string,
+			token_endpoint_auth_method => 'private_key_jwt',
+			scope                      => join(' ',
+				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
+				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
+				'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
+				'https://purl.imsglobal.org/spec/lti-ags/scope/score'),
+			'https://purl.imsglobal.org/spec/lti-tool-configuration' => {
+				domain          => $rootURL->host_port,
+				target_link_uri => $rootURL->to_string,
+				claims          => [ 'iss', 'sub', 'name', 'given_name', 'family_name', 'email' ],
+				messages        => [ {
+					type            => 'LtiDeepLinkingRequest',
+					target_link_uri => $c->url_for('ltiadvantage_content_selection')->to_abs->to_string,
+					# Placements are specific to the LMS.  The following placements are needed for Canavas, and Moodle
+					# completely ignores this parameter. Does D2L need any? What about Blackboard?
+					placements => [ 'assignment_selection', 'course_assignments_menu' ]
+				} ]
+			}
+		}
+	))->result;
+	unless ($registrationResult->is_success) {
+		$c->log->error('Invalid regististration response: ' . $registrationResult->message);
+		return $c->render(json => { error => 'invalid registration response' }, status => 400);
+	}
+	return $c->render(json => { error => 'invalid registration received' }, status => 400)
+		unless defined $registrationResult->json->{client_id};
+
+	my $configuration = <<~ "END_CONFIG";
+	\$LTI{v1p3}{PlatformID}      = '$lmsConfiguration->{issuer}';
+	\$LTI{v1p3}{ClientID}        = '${\($registrationResult->json->{client_id})}';
+	\$LTI{v1p3}{DeploymentID}    = '${
+		\($registrationResult->json->{'https://purl.imsglobal.org/spec/lti-tool-configuration'}{deployment_id}
+		// 'obtain from LMS administrator')
+	}';
+	\$LTI{v1p3}{PublicKeysetURL} = '$lmsConfiguration->{jwks_uri}';
+	\$LTI{v1p3}{AccessTokenURL}  = '$lmsConfiguration->{token_endpoint}';
+	\$LTI{v1p3}{AccessTokenAUD}  = '${
+		\($lmsConfiguration->{authorization_server}
+		// $lmsConfiguration->{token_endpoint})
+	}';
+	\$LTI{v1p3}{AuthReqURL}      = '$lmsConfiguration->{authorization_endpoint}';
+	END_CONFIG
+
+	my $registrationDir = Mojo::File->new($c->ce->{webworkDirs}{DATA})->child('LTIRegistrationRequests');
+	if (!-d $registrationDir) {
+		eval { $registrationDir->make_path };
+		if ($@) {
+			$c->log->error("Failed to create directory for saving LTI registrations: $@");
+			return $c->render(json => { error => 'internal server error' }, status => 400);
+		}
+	}
+
+	my $registrationFile = tempfile(
+		TEMPLATE =>
+			$lmsConfiguration->{'https://purl.imsglobal.org/spec/lti-platform-configuration'}{product_family_code}
+			. '-XXXX',
+		DIR    => $registrationDir,
+		SUFFIX => '.conf',
+		UNLINK => 0
+	);
+	$registrationFile->spew($configuration, 'UTF-8');
+
+	# This tells the LMS that registration is complete and it can close its dialog.
+	return $c->render(data => '<script>'
+			. q!(window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*');!
+			. '</script>');
 }
 
 1;
