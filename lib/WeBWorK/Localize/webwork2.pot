@@ -585,7 +585,7 @@ msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1483
-msgid "ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary)."
+msgid "ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if necessary)."
 msgstr ""
 
 #: /opt/webwork/webwork2/templates/ContentGenerator/Instructor/AchievementList/cancel_edit_form.html.ep:1 /opt/webwork/webwork2/templates/ContentGenerator/Instructor/ProblemSetList/cancel_edit_form.html.ep:1 /opt/webwork/webwork2/templates/ContentGenerator/Instructor/UserList/cancel_edit_form.html.ep:1
