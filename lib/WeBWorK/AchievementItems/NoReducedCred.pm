@@ -19,8 +19,8 @@ sub new ($class) {
 }
 
 sub can_use ($self, $set, $records) {
-	return 0
-		unless $set->assignment_type eq 'default'
+	return
+		$set->assignment_type eq 'default'
 		&& $set->enable_reduced_scoring
 		&& $set->reduced_scoring_date
 		&& $set->reduced_scoring_date < $set->due_date
