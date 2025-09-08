@@ -286,7 +286,7 @@ sub getDBListings ($c, $amcounter = 0) {
 	if ($amcounter) {
 		$selectwhat = "COUNT(DISTINCT $selectwhat)";
 	} else {
-		$selectwhat .= 'as filepath, pgf.morelt_id, pgf.pgfile_id, pgf.static, pgf.MO';
+		$selectwhat .= 'as filepath, MAX(pgf.morelt_id), MAX(pgf.pgfile_id), MAX(pgf.static), MAX(pgf.MO)';
 		$group_by = 'GROUP BY filepath';
 	}
 
