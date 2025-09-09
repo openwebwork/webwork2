@@ -2,6 +2,7 @@ package WeBWorK::ContentGenerator::LTIAdvantage;
 use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 use Mojo::UserAgent;
+use Mojo::URL;
 use Mojo::JSON           qw(decode_json);
 use Crypt::JWT           qw(decode_jwt encode_jwt);
 use Math::Random::Secure qw(irand);
@@ -175,9 +176,11 @@ sub launch ($c) {
 
 	return $c->redirect_to($c->systemLink(
 		$c->url_for($c->stash->{LTILaunchRedirect}),
-		$c->stash->{isContentSelection}
-		? (
-			params => {
+		params => {
+			%{ Mojo::URL->new($c->stash->{LTILaunchRedirect})->query->to_hash },
+			$c->stash->{isContentSelection}
+			? (
+
 				courseID        => $c->stash->{courseID},
 				initial_request => 1,
 				accept_multiple =>
@@ -191,9 +194,9 @@ sub launch ($c) {
 				? (data => $c->stash->{lti_jwt_claims}
 						{'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'}{data})
 				: ()
-			}
-			)
-		: ()
+				)
+			: ()
+		}
 	));
 }
 
