@@ -490,7 +490,7 @@ sub checkSet {
 				. 'Try logging in to the Learning Management System and visiting the set from there.',
 			$LMS
 		))
-			unless $set->lis_source_did;
+			unless $set->lis_source_did || ($ce->{LTIVersion} eq 'v1p3' && $ce->{LTI}{v1p3}{ignoreMissingSourcedID});
 	}
 
 	return 0;
