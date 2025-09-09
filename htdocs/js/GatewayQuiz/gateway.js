@@ -154,7 +154,7 @@
 		gracePeriod = parseInt(timerDiv.dataset.gracePeriod);
 
 		updateTimeDelta();
-		setInterval(updateTimeDelta, (parseInt(timerDiv.dataset.sessionTimeout) - 60) * 1000);
+		setInterval(updateTimeDelta, Math.min((parseInt(timerDiv.dataset.sessionTimeout) - 60) * 1000, 2147483646));
 
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
