@@ -156,19 +156,22 @@
 			. 'generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
-		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
-			. 'the templates/hardcopyThemes folder.') =%>
+		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved '
+			. 'to the templates/hardcopyThemes folder.') =%>
 		</p>
 	</dd>
 
-	<dt><%= maketext('Format Code') %></dt>
+	<dt><%= maketext('Code Maintenance') %></dt>
 	<dd>
-		<%= maketext('Reformat the code using perltidy or a conversion to PGML. Using perltidy will change the code '
-			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
-			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
-			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
-			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
-			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
+		<%= maketext('Three code maintenance tools can be utilized. First, the code can be reformatted using perltidy. '
+		. 'Using perltidy will change the code in the editor window, and save changes to the temporary file. In some '
+		. 'cases (if the code contains backslashes or double tildes) this can result in odd spacing in the code. '
+		. 'Second the code can be converted to PGML. This changes the code in text blocks to use PGML features. '
+		. 'Generally the conversion of much of the formatting and LaTeX is performed correctly. However, answer '
+		. 'blanks need attention. In any case, make sure to inspect the formatted code, and edit further or revert '
+		. 'if needed. Third, the code can be analyzed by the "PG Critic." This checks that the code does not use '
+		. 'old or deprecated features of PG and conforms to current best-practices in problem authoring, and offers '
+		. 'suggestions on how to fix issues that are found.') =%>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>
