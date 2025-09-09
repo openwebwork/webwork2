@@ -93,24 +93,26 @@ use constant SORT_SUBS => {
 };
 
 use constant FIELDS => [
-	'user_id', 'first_name', 'last_name', 'email_address', 'student_id', 'status',
-	'section', 'recitation', 'comment',   'permission',    'password'
+	'user_id',    'first_name', 'last_name',                 'email_address',
+	'student_id', 'status',     'accessibility_time_factor', 'section',
+	'recitation', 'comment',    'permission',                'password'
 ];
 
 # Note that only the editable fields need a type (i.e. all but user_id),
 # and only the text fields need a size.
 use constant FIELD_PROPERTIES => {
-	user_id       => { name => x('Login Name') },
-	first_name    => { name => x('First Name'),        type => 'text', size => 10 },
-	last_name     => { name => x('Last Name'),         type => 'text', size => 10 },
-	email_address => { name => x('Email Address'),     type => 'text', size => 20 },
-	student_id    => { name => x('Student ID'),        type => 'text', size => 11 },
-	status        => { name => x('Enrollment Status'), type => 'status' },
-	section       => { name => x('Section'),           type => 'text', size => 3 },
-	recitation    => { name => x('Recitation'),        type => 'text', size => 3 },
-	comment       => { name => x('Comment'),           type => 'text', size => 20 },
-	permission    => { name => x('Permission Level'),  type => 'permission' },
-	password      => { name => x('Password'),          type => 'password' },
+	user_id                   => { name => x('Login Name') },
+	first_name                => { name => x('First Name'),                type => 'text', size => 10 },
+	last_name                 => { name => x('Last Name'),                 type => 'text', size => 10 },
+	email_address             => { name => x('Email Address'),             type => 'text', size => 20 },
+	student_id                => { name => x('Student ID'),                type => 'text', size => 11 },
+	status                    => { name => x('Enrollment Status'),         type => 'status' },
+	accessibility_time_factor => { name => x('Accessibility Time Factor'), type => 'text', size => 5 },
+	section                   => { name => x('Section'),                   type => 'text', size => 3 },
+	recitation                => { name => x('Recitation'),                type => 'text', size => 3 },
+	comment                   => { name => x('Comment'),                   type => 'text', size => 20 },
+	permission                => { name => x('Permission Level'),          type => 'permission' },
+	password                  => { name => x('Password'),                  type => 'password' },
 };
 
 sub pre_header_initialize ($c) {

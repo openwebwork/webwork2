@@ -3,9 +3,9 @@
 %
 <p>
 	<%== maketext('From this page you can <strong>add new students</strong>, <strong>edit</strong> user data '
-		. '(name, email address, recitation, section, permission level, enrollment status, and password), '
-		. 'and <strong>export</strong> (save) class lists for back-up or use in another course. '
-		. 'You can also delete students from the class roster, but this cannot be undone.') =%>
+		. '(name, email address, student ID, enrollment status, accessibility time factor, section, recitation, '
+		. 'comment, permission level, and password), and <strong>export</strong> (save) class lists for back-up or use '
+		. 'in another course. You can also delete students from the class roster, but this cannot be undone.') =%>
 </p>
 <p>
 	<%= maketext('This page gives access to information about the student, independent of the assignments '
@@ -140,6 +140,15 @@
 		<%= maketext(q{Click first in the "Assigned Sets" column in the student's row. This will take you to a new }
 			. 'page where you will click on the link to the assignment where the grade change is to be made. (The '
 			. 'grade for each problem is listed as "status" on this third page).') =%>
+	</dd>
+
+	<dt><%= maketext('Give one student or several students additional time for all timed tests.') %></dt>
+	<dd>
+		<%= maketext('Click on the "Select" checkbox next to the names of the students that additional time is to be '
+			. 'assigned, click on the radio button for editing selected users and then click the "Edit" button .'
+			. 'Set the "Accesibility Time Factor" to the desired multiplier for each student selected. The time '
+			. 'that a student will have to complete a timed test will be the product of the "Test Time Limit" for the '
+			. 'test set in the "Sets Manager" and the "Accessibility Time Factor" set here.') =%>
 	</dd>
 
 	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>

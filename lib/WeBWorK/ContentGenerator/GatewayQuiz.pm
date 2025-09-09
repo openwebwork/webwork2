@@ -502,7 +502,6 @@ async sub pre_header_initialize ($c) {
 	my $maxAttemptsPerVersion = $tmplSet->attempts_per_version  || 0;
 	my $timeInterval          = $tmplSet->time_interval         || 0;
 	my $versionsPerInterval   = $tmplSet->versions_per_interval || 0;
-	my $timeLimit             = $tmplSet->version_time_limit    || 0;
 
 	# What happens if someone didn't set one of these?  Perhaps this can happen if we're handed a malformed set, where
 	# the values in the database are null.
@@ -588,7 +587,8 @@ async sub pre_header_initialize ($c) {
 					$set = $db->getMergedSetVersion($effectiveUserID, $setID, $setVersionNumber);
 					$set->visible(1);
 
-				# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+					# If there is a cap on problems per page, make sure that is respected
+					# in case something higher snuck in.
 					if (
 						$ce->{test}{maxProblemsPerPage}
 						&& ($tmplSet->problems_per_page == 0
@@ -602,6 +602,8 @@ async sub pre_header_initialize ($c) {
 
 					# Convert the floating point value from Time::HiRes to an integer for use below. Truncate toward 0.
 					my $timeNowInt = int($c->submitTime);
+
+					my $timeLimit = ($tmplSet->version_time_limit || 0) * $effectiveUser->accessibility_time_factor;
 
 					# Set up creation time, and open and due dates.
 					my $ansOffset = $set->answer_date - $set->due_date;
@@ -625,7 +627,7 @@ async sub pre_header_initialize ($c) {
 					$cleanSet->due_date($set->due_date);
 					$cleanSet->answer_date($set->answer_date);
 					$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
-					$cleanSet->version_time_limit($set->version_time_limit);
+					$cleanSet->version_time_limit($set->version_time_limit * $effectiveUser->accessibility_time_factor);
 					$cleanSet->attempts_per_version($set->attempts_per_version);
 					$cleanSet->assignment_type($set->assignment_type);
 					$db->putSetVersion($cleanSet);
