@@ -48,7 +48,7 @@ sub massUpdate ($c, $manual_update = 0, $userID = undef, $setIDs = undef) {
 
 	# Send warning if debug_lti_grade_passback is set.
 	if ($ce->{debug_lti_grade_passback}) {
-		if ($setIDs && $ce->{LITGradeMode} eq 'homework') {
+		if ($setIDs && $ce->{LTIGradeMode} eq 'homework') {
 			if (ref($setIDs) ne 'ARRAY') {
 				if ($userID) {
 					warn "LTI Mass Update: Queueing grade update for user $userID and set $setIDs.\n";
@@ -62,7 +62,7 @@ sub massUpdate ($c, $manual_update = 0, $userID = undef, $setIDs = undef) {
 					warn "LTI Mass Update: Queueing grade update for all users for " . scalar(@$setIDs) . " sets.\n";
 				}
 			}
-		} elsif ($ce->{LITGradeMode} eq 'homework') {
+		} elsif ($ce->{LTIGradeMode} eq 'homework') {
 			if ($userID) {
 				warn "LTI Mass Update: Queueing grade update of all sets assigned to user $userID.\n";
 			} else {
