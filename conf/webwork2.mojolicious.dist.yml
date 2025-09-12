@@ -15,7 +15,7 @@ pg_dir: /opt/webwork/pg
 
 # Setting MIN_HTML_ERRORS to 1 will minimize the data provided on HTML error
 # pages, which some security reviews request, as in particular the older output
-# provided backtrace information which could help idenfify the code and version
+# provided backtrace information which could help identify the code and version
 # of the code being used on the server.  The useful information will be in the
 # Mojolicious webwork2.log file, with a UID displayed also in the HTML error
 # page to help match up records.

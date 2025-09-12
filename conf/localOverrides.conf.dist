@@ -64,7 +64,7 @@ $mail{feedbackRecipients}    = [
 # Should the studentID be included in the feedback email when feedbackVerbosity > 0:
 # The default is yes. Uncomment the line below to block it from being included.
 # Blocking it from being included is recommended if the studentID is "personal"
-# informations whose privacy should be maintained (ex. a government issued ID number).
+# information whose privacy should be maintained (ex. a government issued ID number).
 # The setting can also be made in the course.conf file for specific courses.
 #$blockStudentIDinFeedback = 1;
 
@@ -348,7 +348,7 @@ $mail{feedbackRecipients}    = [
 # also not present, it will just activate the "Preview My Answers" button.
 # A third option is "conservative". In this case, the enter key behaves like "preview"
 # when the "Submit" button is available and there are only finitely many
-# attempts allowed. Otherise the enter key behaves like "submit".
+# attempts allowed. Otherwise the enter key behaves like "submit".
 #$pg{options}{enterKey} = 'conservative';
 
 ################################################################################
@@ -558,7 +558,7 @@ $mail{feedbackRecipients}    = [
 # database which is compared to the key stored in the session cookie. The
 # lifetime of the cookie is determined by the $sessionTimeout setting below.
 
-# Note that the key database method is less secure as the key must be embeded in
+# Note that the key database method is less secure as the key must be embedded in
 # the page and added as a url parameter in order to maintain the session. These
 # things can be accessed by malicious javascript. The session cookies are http
 # only cookies which can not be accessed via javascript.

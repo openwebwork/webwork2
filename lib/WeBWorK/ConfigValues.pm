@@ -213,7 +213,7 @@ sub getConfigValues ($ce) {
 			{
 				var     => 'hardcopyThemePGEditor',
 				doc     => x('Hardcopy Theme for Problem Editor'),
-				doc2    => x('Choose a layout/styling theme for PDF hardcopy production from the Prooblem Editor.'),
+				doc2    => x('Choose a layout/styling theme for PDF hardcopy production from the Problem Editor.'),
 				values  => [qw(empty.xml)],
 				type    => 'popuplist',
 				hashVar => '{hardcopyThemePGEditor}'
@@ -278,8 +278,8 @@ sub getConfigValues ($ce) {
 					"Achievements are a way to gamify WeBWorK. In parallel to a student's regular scores on "
 						. 'assignments, they earn "achievement points" for (a) answering an exercise correctly, and '
 						. '(b) earning badges. Badges can be for tasks like earning 100% on three assignments, '
-						. 'answering five questions correclty on the first attempt, etc. As students earn achivement '
-						. 'points, they can "level up" as well. An instructor can manage Achievents using the '
+						. 'answering five questions correctly on the first attempt, etc. As students earn achievement '
+						. 'points, they can "level up" as well. An instructor can manage Achievements using the '
 						. 'Achievements Manager tool.'
 				),
 				type => 'boolean'
@@ -796,7 +796,7 @@ sub getConfigValues ($ce) {
 						. 'the "Check Answers" button. Or if that button is also not present, it will activate '
 						. 'the "Preview My Answers" button. A third option is "conservative". In this case, the '
 						. 'enter key behaves like "preview" when the "Submit" button is available and there are '
-						. 'only finitely many attempts allowed. Otherise the enter key behaves like "submit". '
+						. 'only finitely many attempts allowed. Otherwise the enter key behaves like "submit". '
 						. 'Note that this is only affects homework problem pages, not test/quiz pages, and not '
 						. 'instructor pages like the PG Editor and the Library Browser.'
 				),
