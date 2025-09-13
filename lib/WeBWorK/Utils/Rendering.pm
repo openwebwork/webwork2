@@ -257,7 +257,8 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
 			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
 			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
-			$ret->{PG_ANSWERS_HASH}         = {
+
+			$ret->{PG_ANSWERS_HASH} = {
 				map {
 					$_ => {
 						response_obj => unbless($pg->{pgcore}{PG_ANSWERS_HASH}{$_}->response_obj),
@@ -271,6 +272,14 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
 			$ret->{PERSISTENCE_HASH} = $pg->{pgcore}{PERSISTENCE_HASH};
+
+			# Get a list of the deprecated macros used in the problem.
+			my @deprecated_macros;
+			for (keys %{ $pg->{pgcore}{PG_loadMacros}{macroFileList} }) {
+				my @dirs = split('/', $_);
+				push(@deprecated_macros, $dirs[-1]) if $dirs[-2] eq 'deprecated';
+			}
+			$ret->{deprecated_macros} = \@deprecated_macros;
 		}
 
 		# Save the problem source. This is used by Caliper::Entity. Why?
