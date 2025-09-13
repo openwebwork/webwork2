@@ -30,4 +30,18 @@
 			<span class="visually-hidden"><%= maketext('PGML Conversion Help') %></span>
 		</a>
 	</div>
+	<div class="form-check">
+		<%= radio_button 'action.format_code' => 'runPGCritic',
+			id => 'action_format_code_run_pgcritic', class => 'form-check-input'=%>
+		<%= label_for 'action_format_code_run_pgcritic', class => 'form-check-label', begin =%>
+			<%== maketext('Run the PG Critic Analyzer') =%>
+		<% end =%>
+		<a class="help-popup" data-bs-content="<%== maketext('This option runs the PG Critic '
+			. 'code analyzer, which gives suggestions on using more modern PG constructs and  '
+			. 'ensure that you include important features. ') =%>"
+		data-bs-placement="top" data-bs-toggle="popover" role="button">
+			<i aria-hidden="true" class="fas fa-question-circle"></i>
+			<span class="visually-hidden"><%= maketext('PG Critic Help') %></span>
+		</a>
+	</div>
 </div>
