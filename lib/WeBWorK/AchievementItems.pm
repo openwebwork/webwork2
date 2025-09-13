@@ -90,7 +90,7 @@ sub UserItems ($c, $userName, $set, $records) {
 				$achievementItem->{count}--;
 				$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
 				$db->putGlobalUserAchievement($globalUserAchievement);
-				$c->addgoodmessage($c->maketext('[_1] successfuly used. [_2]', $achievementItem->name, $message));
+				$c->addgoodmessage($c->maketext('[_1] successfully used. [_2]', $achievementItem->name, $message));
 			}
 		}
 

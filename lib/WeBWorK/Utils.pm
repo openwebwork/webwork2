@@ -566,7 +566,7 @@ appropriate method.
 
 Usage: C<encode_utf8_base64($in)>
 
-UTF-8 encodes, and then base 64 endcodes the input and returns the result.
+UTF-8 encodes, and then base 64 encodes the input and returns the result.
 
 =head2 decode_utf8_base64
 
@@ -610,7 +610,7 @@ Returns C<$float> rounded to C<$places> decimal places.
 
 Usage: C<cryptPassword($clearPassword)>
 
-Returns the crypted form of C<$clearPassword> using a random 16 character
+Returns the encrypted form of C<$clearPassword> using a random 16 character
 salt.
 
 =head2 utf8Crypt

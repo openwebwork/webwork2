@@ -201,7 +201,7 @@ sub check_modules {
 
 	if ($moduleNotFound) {
 		say '';
-		say 'Some requred modules were not found, could not be loaded, or were not at the sufficient version.';
+		say 'Some required modules were not found, could not be loaded, or were not at the sufficient version.';
 		say 'Exiting as this is required to check the database driver and programs.';
 		exit 0;
 	}

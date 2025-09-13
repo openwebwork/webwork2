@@ -1278,7 +1278,7 @@ sub save_as_handler ($c) {
 		$new_file_type = $file_type;
 	} else {
 		$c->addbadmessage($c->maketext(
-			'Please use radio buttons to choose the method for saving this file. Uknown saveMode: [_1].', $saveMode
+			'Please use radio buttons to choose the method for saving this file. Unknown saveMode: [_1].', $saveMode
 		));
 		return;
 	}

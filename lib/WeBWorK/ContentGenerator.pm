@@ -94,7 +94,7 @@ The method content() is called to send the page content to client.
 async sub go ($c) {
 	my $ce = $c->ce;
 
-	# If grades are being passed back to the lti, then peroidically update all of the
+	# If grades are being passed back to the lti, then periodically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
 	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
 
@@ -646,7 +646,7 @@ sub timestamp ($c) {
 Defined in this package.
 
 Print any messages (error or non-error) resulting from the last form submission.
-This could be used to give Sucess and Failure messages after an action is performed by a module.
+This could be used to give Success and Failure messages after an action is performed by a module.
 
 The implementation in this package outputs the value of the field
 $c->{status_message}, if it is present.
@@ -1122,7 +1122,7 @@ object from which the base path will be taken. %options can consist of:
 
 Can be either a reference to an array or a reference to a hash.
 
-If it is a reference to a hash, it maps parmaeter names to values. These
+If it is a reference to a hash, it maps parameter names to values. These
 parameters will be included in the generated link. If a value is an arrayref,
 the values of the array referenced will be used. If a value is undefined, the
 value from the current request will be used.
@@ -1238,7 +1238,7 @@ If C<$locale> is provided, the string returned will be in the format of that
 locale. If C<$locale> is not provided, Perl defaults to using C<en-US>.
 
 Note that the defaults for C<$timezone> and C<$locale> should almost never be
-overriden when this method is used.
+overridden when this method is used.
 
 =cut
 
