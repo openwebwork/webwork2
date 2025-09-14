@@ -592,7 +592,7 @@ sub byDescStudentID    { local ($b, $a) = ($a, $b); return byStudentID() }
 sub byDescStatus       { local ($b, $a) = ($a, $b); return byStatus() }
 sub byDescSection      { local ($b, $a) = ($a, $b); return bySection() }
 sub byDescRecitation   { local ($b, $a) = ($a, $b); return byRecitation() }
-sub byDescComment      { local ($b, $a) = ($a, $b); return byC mment() }
+sub byDescComment      { local ($b, $a) = ($a, $b); return byComment() }
 sub byDescPermission   { local ($b, $a) = ($a, $b); return byPermission() }
 
 # Utilities
