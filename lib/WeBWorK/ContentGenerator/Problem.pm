@@ -1480,7 +1480,7 @@ sub output_summary ($c) {
 			'div',
 			class => 'alert alert-danger d-inline-block mb-2 p-1',
 			$c->maketext(
-				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).')
+				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if necessary).')
 		)
 	) if $c->{resubmitDetected};
 

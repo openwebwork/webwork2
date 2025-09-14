@@ -2,7 +2,7 @@
 =head1 NAME
 
 HardcopyRenderedProblem.pm -- Generate a pdf file or zip file containing a tex
-file and the neccessary files to generate the pdf file from the result of the
+file and the necessary files to generate the pdf file from the result of the
 renderProblem method.
 
 =cut

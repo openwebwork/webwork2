@@ -4,7 +4,7 @@ package WebworkWebservice;
 
 WebworkWebservice
 
-=head1 SYNPOSIS
+=head1 SYNOPSIS
 
     my $rpc_service = WebworkWebservice->new($c);
     await $rpc_service->rpc_execute('command_to_execute');

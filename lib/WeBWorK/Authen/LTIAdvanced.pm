@@ -71,7 +71,7 @@ sub request_has_data_for_this_verification_module {
 		|| !(defined $c->param("oauth_nonce"))
 		|| !(defined $c->param("oauth_timestamp")))
 	{
-		debug("LTIAdvanced returning that it has insufficent data");
+		debug("LTIAdvanced returning that it has insufficient data");
 		return (0);
 	} else {
 		debug("LTIAdvanced returning that it has sufficient data");

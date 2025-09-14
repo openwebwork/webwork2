@@ -18,7 +18,7 @@ $PAR
 $BBOLD 1. Simple numerical problem. $EBOLD A simple problem requiring a numerical answer.  It illustrates how one can allow WeBWorK to calculate answers from formulas (e.g. an answer such as sqrt(3^2 +4^2) can be entered instead of the answer 5.).  It also shows
 an example of feedback on the correctness of each answer, rather than grading the entire problem.
 $PAR
-$BBOLD 2. Graphs and limits. $EBOLD The graph in this example is constructed on the fly.   From the graph a student is supposed to determine the values and limits of the function at various points.  The immediate feedback on this problem is particularly useful, since students often make unconcious mistakes.
+$BBOLD 2. Graphs and limits. $EBOLD The graph in this example is constructed on the fly.   From the graph a student is supposed to determine the values and limits of the function at various points.  The immediate feedback on this problem is particularly useful, since students often make unconscious mistakes.
 $PAR
 $BBOLD 3. Derivatives. $EBOLD An example of checking answers which are formulas, rather than numbers.
 $PAR
@@ -26,7 +26,7 @@ $BBOLD 4. Anti-derivatives. $EBOLD This example will accept any anti-derivative,
 $PAR
 $BBOLD 5. Answers with units.    $EBOLD  Try entering the answer to this question in meters (m)  and also centimeters (cm).
 $PAR
-$BBOLD 6. A physics example. $EBOLD Includes a static picture.  
+$BBOLD 6. A physics example. $EBOLD Includes a static picture.
 $PAR
 $BBOLD 7. More graphics. $EBOLD An example of on-the-fly graphics.  Select the graph of f, it's derivative and it's second derivatives.
 $PAR
@@ -65,12 +65,12 @@ For most problems when entering numerical answers, you can if you wish
 enter elementary expressions such as 2^3 instead of 8, sin(3*pi/2) instead
 of -1, e^(ln(2)) instead of 2,
 (2+tan(3))*(4-sin(5))^6-7/8 instead of 27620.3413, etc.
-$PAR 
- Here's the 
+$PAR
+ Here's the
 \{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"list of the functions") \}
- which WeBWorK understands. 
+ which WeBWorK understands.
 
-Along with the \{htmlLink(qq!http://webwork.maa.org/wiki/Units!, "list of units")\} which WeBWorK understands.  This can be useful in 
+Along with the \{htmlLink(qq!http://webwork.maa.org/wiki/Units!, "list of units")\} which WeBWorK understands.  This can be useful in
 physics problems.
 END_TEXT
 
