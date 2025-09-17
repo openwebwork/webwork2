@@ -480,7 +480,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	max_attempts => {
 		name     => x('Max Attempts'),
-		type     => [ -1, undef, 1 ],
+		type     => 'edit',
 		size     => 6,
 		override => 'any',
 		default  => '-1',
@@ -493,10 +493,10 @@ use constant FIELD_PROPERTIES => {
 	},
 	showMeAnother => {
 		name     => x('Show Me Another'),
-		type     => [ -2, undef, 1 ],
+		type     => 'edit',
 		size     => '6',
 		override => 'any',
-		default  => '-1',
+		default  => '-2',
 		labels   => {
 			'-1' => x('Never'),
 			'-2' => x('Course Default'),
@@ -509,7 +509,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	showHintsAfter => {
 		name     => x('Show Hints After'),
-		type     => [ -2, undef, 1 ],
+		type     => 'edit',
 		size     => '6',
 		override => 'any',
 		default  => '-2',
@@ -526,7 +526,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	prPeriod => {
 		name     => x('Rerandomize After'),
-		type     => [ -1, undef, 1 ],
+		type     => 'edit',
 		size     => '6',
 		override => 'any',
 		default  => '-1',
@@ -606,7 +606,7 @@ use constant FIELD_PROPERTIES => {
 	},
 	att_to_open_children => {
 		name     => x('Attempt Threshold for Children'),
-		type     => [ -1, undef, 1 ],
+		type     => 'edit',
 		size     => 6,
 		override => 'any',
 		default  => '0',
@@ -960,10 +960,9 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			} elsif ($number) {
 				$input = $c->number_field(
 					@field_args,
-					min         => ($properties{type}[0] || 0),
-					max         => ($properties{type}[1] || undef),
-					step        => ($properties{type}[2] || 1),
-					placeholder => $value,
+					min  => ($properties{type}[0] || 0),
+					max  => ($properties{type}[1] || undef),
+					step => ($properties{type}[2] || 1),
 					$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ()
 				);
 			} else {
