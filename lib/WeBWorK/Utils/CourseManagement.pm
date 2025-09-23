@@ -498,9 +498,9 @@ sub addCourse {
 %options may also contain:
 
  skipDBRename => $skipDBRename,
- courseTitle => $courseTitle
- courseInstitution => $courseInstitution
-
+ courseTitle => $courseTitle,
+ courseInstitution => $courseInstitution,
+ updateLTICourseMap => $updateLTICourseMap
 
 Rename the course named $courseID to $newCourseID.
 
@@ -509,15 +509,15 @@ environment.
 
 The name of the course's directory is changed to $newCourseID.
 
-If the course's database layout is C<sql_single> or C<sql_moodle>, new tables
-are created in the current database, course data is copied from the old tables
-to the new tables, and the old tables are deleted.
-
-If the course's database layout is something else, no database changes are made.
+New tables are created in the current database, course data is copied from the
+old tables to the new tables, and the old tables are deleted.
 
 If $skipDBRename is true, no database changes are made. This is useful if a
 course is being unarchived and no database was found, or for renaming the
 modelCourse.
+
+If $updateLTICourseMap is true, then the LTI course map is updated to associate
+the LMS context id to the new course name.
 
 Any errors encountered while renaming the course are returned.
 
@@ -635,6 +635,16 @@ sub renameCourse {
 			}
 		};
 		warn "Problems from resetting course title and institution = $@" if $@;
+
+		# Remap the LTI course mapping for the renamed course to the new course if that is requested.
+		if ($options{updateLTICourseMap}) {
+			my @ltiCourseMaps = $newDB->getLTICourseMapsWhere({ course_id => $oldCE->{courseName} });
+			$newDB->deleteLTICourseMapWhere({ course_id => $oldCE->{courseName} });
+			for (@ltiCourseMaps) {
+				$newDB->setLTICourseMap($newCE->{courseName}, $_->lms_context_id);
+				last;
+			}
+		}
 	}
 }
 
