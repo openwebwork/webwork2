@@ -55,7 +55,7 @@ $saml2{twoFAOnlyWithBypass} = 0;
 # prevents users from attempting to login in to WeBWorK directly.
 $external_auth = 0;
 
-# The $saml2{idps} hash contains names of identity proviers and their SAML2
+# The $saml2{idps} hash contains names of identity providers and their SAML2
 # metadata URLs that are used by this server.  Webwork will request the identity
 # provider's metadata from the URL of the $saml2{active_idp} during the
 # authentication process. Additional identity providers can also be added for a

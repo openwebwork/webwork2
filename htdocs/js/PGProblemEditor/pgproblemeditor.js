@@ -199,7 +199,7 @@
 					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.tidiedPGCode;
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
-					showMessage('Successfuly perltidied code.', true);
+					showMessage('Successfully perltidied code.', true);
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));

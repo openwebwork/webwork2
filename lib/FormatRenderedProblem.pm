@@ -63,7 +63,7 @@ sub formatRenderedProblem {
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
-	# which can be set in course.conf (the value should be an anonomous array).
+	# which can be set in course.conf (the value should be an anonymous array).
 	my @cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
@@ -368,7 +368,7 @@ EOS
 				$LTIGradeMessage = $ws->c->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
 				push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
 			} else {
-				$LTIGradeMessage = $ws->c->tag('p', 'Grade sucessfully saved.')->to_string;
+				$LTIGradeMessage = $ws->c->tag('p', 'Grade successfully saved.')->to_string;
 			}
 		} else {
 			$LTIGradeMessage = $ws->c->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;

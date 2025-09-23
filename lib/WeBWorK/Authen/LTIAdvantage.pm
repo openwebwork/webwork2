@@ -34,7 +34,7 @@ sub request_has_data_for_this_verification_module ($self) {
 		return 1;
 	}
 
-	debug('LTIAdvantage returning that it has insufficent data');
+	debug('LTIAdvantage returning that it has insufficient data');
 	return 0;
 }
 

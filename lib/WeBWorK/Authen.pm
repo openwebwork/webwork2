@@ -327,7 +327,7 @@ sub get_credentials {
 			$self->{login_type}        = "normal";
 			$self->{credential_source} = "params_and_cookie";
 			debug(
-				'credential soure: "cookie (password from params)", user: "',
+				'credential source: "cookie (password from params)", user: "',
 				$self->{user_id}, '", key: "', $self->{session_key},
 				'", timestamp = "',
 				$self->{cookie_timestamp}, '"'
@@ -844,7 +844,7 @@ sub store_session {
 		}
 	}
 
-	# The session parameters need to be set again, because another request may have occured during this
+	# The session parameters need to be set again, because another request may have occurred during this
 	# request in which case the session parameters for the app will now be set for that request.
 	$self->{c}->setSessionParams;
 

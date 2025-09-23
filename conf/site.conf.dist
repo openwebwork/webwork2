@@ -178,7 +178,7 @@ if ( $database_host eq "localhost" ) {
 	$database_dsn="DBI:$database_driver:database=$database_name;host=$database_host;port=$database_port";
 }
 
-# The default storange engine to use is set here:
+# The default storage engine to use is set here:
 $database_storage_engine = 'myisam';
 
 #########################
@@ -290,7 +290,7 @@ $mail{tls_allowed} = 0;
 # Set maxAttachmentSize to the maximum number of megabytes to allow for the size of
 # files attached to feedback emails.  Note that this should be set to match the
 # limitations of the email server chosen above, and should be set to a value greater
-# than zero or no attatchments will work.  This is not intended to be a configuration
+# than zero or no attachments will work.  This is not intended to be a configuration
 # option to disable attachments.
 
 $mail{maxAttachmentSize} = 10;
@@ -301,7 +301,7 @@ $mail{maxAttachmentSize} = 10;
 
 # This is the Minion backend that will be used by the job queue.
 # The corresponding perl package for this backend must be installed.
-# Some availabled backends are:
+# Some available backends are:
 # Minion::Backend::Pg (use 'Pg' below)
 # Minion::Backend::mysql (use 'mysql' below)
 # Minion::Backend::SQLite (use 'SQLite' below)

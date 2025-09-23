@@ -65,8 +65,8 @@ for (@ARGV) {
 # Validate options that were passed.
 my %options;
 my $err = Perl::Tidy::perltidy(argv => \@args, dump_options => \%options);
-exit $err                                               if $err;
-die "The -pro option is not suppored by this script.\n" if defined $options{profile};
+exit $err                                                if $err;
+die "The -pro option is not supported by this script.\n" if defined $options{profile};
 
 unshift(@args, '-bext=/') unless defined $options{'backup-file-extension'};
 

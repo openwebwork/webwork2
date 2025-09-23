@@ -81,7 +81,7 @@ this conversion is done the database automatically enlarges text datatypes.  If
 this option is enabled then the second pass will change those back to the
 smaller text datatypes as defined in the webwork database schema.
 
-This second pass is not strictly neccessary.  The larger text datatypes should
+This second pass is not strictly necessary.  The larger text datatypes should
 still work with WeBWorK.
 
 This pass is not run by default.  Note that running this script again will also
