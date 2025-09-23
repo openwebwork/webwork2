@@ -611,7 +611,7 @@ sub checkPassword {
 		my $possibleCryptPassword = utf8Crypt($possibleClearPassword, $Password->password);
 		my $dbPassword            = $Password->password;
 		# This next line explicitly insures that blank or null passwords from the database can never succeed in matching
-		# an entered password.  This also rejects cases when the database has an encrypted password which matches a
+		# an entered password.  This also rejects cases when the database has a crypted password which matches a
 		# submitted all white-space or null password by requiring that the $possibleClearPassword contain some non-space
 		# character.  Since several authentication modules fall back to calling this function without trimming the
 		# possibleClearPassword as is done during get_credentials in this module, we do not assume that an all-white
