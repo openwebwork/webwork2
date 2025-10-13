@@ -90,12 +90,12 @@ sub formatRenderedProblem {
 		[ 'node_modules/jquery/dist/jquery.min.js',                            0, {} ],
 		[ 'node_modules/jquery-ui-dist/jquery-ui.min.js',                      0, {} ],
 		[ 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', 0, {} ],
-		[ 'js/MathJaxConfig/mathjax-config.js',                     0, { defer => undef } ],
-		[ 'node_modules/mathjax/es5/tex-svg.js',                    0, { defer => undef, id => 'MathJax-script' } ],
-		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
-		[ 'js/Problem/problem.js',                                  0, { defer => undef } ],
-		[ 'js/System/system.js',                                    0, { defer => undef } ],
-		[ 'math4-overrides.js',                                     1, { defer => undef } ]
+		[ 'js/MathJaxConfig/mathjax-config.js',                                0, { defer => undef } ],
+		[ 'node_modules/mathjax/tex-svg.js',                                   0, { defer => undef } ],
+		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js',            0, { defer => undef } ],
+		[ 'js/Problem/problem.js',                                             0, { defer => undef } ],
+		[ 'js/System/system.js',                                               0, { defer => undef } ],
+		[ 'math4-overrides.js',                                                1, { defer => undef } ]
 	);
 
 	# Get the requested format.
