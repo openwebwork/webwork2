@@ -298,7 +298,7 @@ sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
 	my @past_answers_order;
 	my @last_answer_order;
 
-	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} };
+	my %pg_answers_hash = %{ $pg->{PG_ANSWERS_HASH} // {} };
 	for my $ans_id (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
 		$scores_string .= ($pg_answers_hash{$ans_id}{rh_ans}{score} // 0) >= 1 ? '1' : '0';
 		push @answerTypes, $pg_answers_hash{$ans_id}{rh_ans}{type} // '';
@@ -326,7 +326,7 @@ sub create_ans_str_from_responses ($formFields, $pg, $needed_grading = 0) {
 	# KEPT_EXTRA_ANSWERS needs to be stored in last_answer in order to preserve persistence items.
 	# The persistence items do not need to be stored in past_answers_string.
 	# Don't add _ext_data items.  Those are stored elsewhere.
-	for my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} }) {
+	for my $entry_id (@{ $pg->{flags}{KEPT_EXTRA_ANSWERS} // [] }) {
 		next if exists($answers_to_store{$entry_id}) || $entry_id =~ /^_ext_data/;
 		$answers_to_store{$entry_id} = $formFields->{$entry_id};
 		push @last_answer_order, $entry_id;

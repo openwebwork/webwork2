@@ -16,7 +16,7 @@ use WeBWorK::WWSafe;
 
 our @EXPORT_OK = qw(checkForAchievements);
 
-sub checkForAchievements ($problem_in, $pg, $c, %options) {
+sub checkForAchievements ($problem_in, $c, %options) {
 	my $db = $c->db;
 	my $ce = $c->ce;
 

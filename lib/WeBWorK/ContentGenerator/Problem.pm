@@ -1549,7 +1549,7 @@ sub output_achievement_message ($c) {
 		&& $c->{submitAnswers}
 		&& $c->{problem}->set_id ne 'Undefined_Set')
 	{
-		return checkForAchievements($c->{problem}, $c->{pg}, $c);
+		return checkForAchievements($c->{problem}, $c);
 	}
 
 	return '';
