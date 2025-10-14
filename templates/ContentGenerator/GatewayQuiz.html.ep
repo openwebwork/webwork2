@@ -459,7 +459,9 @@
 			% end
 			% for my $i (1 .. $numPages) {
 				% content_for 'gw-navigation-pages' => begin
-					<td colspan="<%= $i == $numPages ? (@$problem_numbers % $numProbPerPage) : $numProbPerPage %>"
+					<td colspan="<%= $i == $numPages && (@$problem_numbers % $numProbPerPage)
+						? (@$problem_numbers % $numProbPerPage)
+						: $numProbPerPage %>"
 						class="<%= $i == $pageNumber ? 'page active' : 'page' %>">
 						% if ($i == $pageNumber) {
 							<%= $i =%>
