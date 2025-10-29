@@ -267,6 +267,7 @@ sub formatRenderedProblem {
 		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
 		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
 		problem_data                 => encode_json($rh_result->{PERSISTENCE_HASH}),
+		showMathJaxErrors            => $ws->{inputs_ref}{showMathJaxErrors} // 0,
 		pretty_print                 => \&pretty_print
 	);
 
