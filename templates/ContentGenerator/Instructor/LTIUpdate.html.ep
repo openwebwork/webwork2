@@ -47,6 +47,7 @@
 %
 <h2><%= maketext('Start LTI Grade Update') %></h2>
 <%= form_for current_route, method => 'POST', id => 'updateLTIForm', name => 'updateLTIForm', begin =%>
+	<%= $c->hidden_authen_fields =%>
 	<div class="row mb-3">
 		<%= label_for updateUserID => maketext('Update user:'), class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
