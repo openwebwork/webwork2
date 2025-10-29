@@ -1,6 +1,6 @@
 if (!window.MathJax) {
 	window.MathJax = {
-		tex: { packages: { '[+]': ['noerrors'] } },
+		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
 		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
 		startup: {
 			ready() {

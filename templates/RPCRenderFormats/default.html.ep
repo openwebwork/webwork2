@@ -19,6 +19,7 @@
 	% for (@$extra_css_files) {
 		%= stylesheet $_->{file}
 	% }
+	<script>const webworkConfig = <%== $c->webwork_js_config %>;</script>
 	% for (@$third_party_js) {
 		%= javascript $_->[0], %{ $_->[1] // {} }
 	% }
