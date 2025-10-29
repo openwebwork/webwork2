@@ -1,7 +1,6 @@
 if (!window.MathJax) {
 	window.MathJax = {
-		tex: { packages: { '[+]': ['noerrors'] } },
-		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
+		loader: { load: ['input/asciimath'] },
 		startup: {
 			ready() {
 				const AM = MathJax.InputJax.AsciiMath.AM;
