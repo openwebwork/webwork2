@@ -887,9 +887,6 @@ async sub pre_header_initialize ($c) {
 	my @problems;
 	my @pg_results;
 
-	# pg errors are stored here.
-	$c->{errors} = [];
-
 	# Process the problems as needed.
 	my @mergedProblems;
 	if ($setID eq 'Undefined_Set') {
@@ -1510,17 +1507,6 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
 	# So rewarn them and let the global warning handler take care of it.
 	warn $pg->{warnings} if $pg->{warnings};
-
-	if ($pg->{flags}{error_flag}) {
-		push @{ $c->{errors} },
-			{
-				set     => $set->set_id . ',v' . $set->version_id,
-				problem => $mergedProblem->problem_id,
-				message => $pg->{errors},
-				context => $pg->{body_text},
-			};
-		$pg->{body_text} = undef;
-	}
 
 	# If the user can check answers and either this is not an answer submission or the problem_data form
 	# parameter was previously set, then set or update the problem_data form parameter.

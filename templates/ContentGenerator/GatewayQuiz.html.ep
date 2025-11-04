@@ -108,25 +108,6 @@
 	% last;
 % }
 %
-% # If there were translation errors, then show those and exit.
-% if (@{ $c->{errors} }) {
-	% my $errorNum = 1;
-	% my ($message, $context) = (c, c);
-	% for (@{ $c->{errors} }) {
-		% push(@$message, "$errorNum. ") if (@{ $c->{errors} } > 1);
-		% push(@$message, $_->{message}, tag('br'));
-		%
-		% my $line = begin
-			<p><%= (@{ $c->{errors} } > 1 ? "$errorNum." : '') %><%== $_->{context} %></p>
-			<div class="gwDivider"></div>
-		% end
-		% push @$context, $line->();
-	% }
-	<%= include 'ContentGenerator/Base/error_output', error => $message->join(''), details => $context->join('') =%>
-	%
-	% last;
-% }
-%
 % my $setID          = $c->{set}->set_id;
 % my $setVersionID   = $c->{set}->version_id;
 % my $numProbPerPage = $c->{set}->problems_per_page;
@@ -405,7 +386,7 @@
 	% # Problems can be shown, so output the main form and the problems.
 	% my $startTime = param('startTime') || time;
 	%
-	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form', begin =%>
+	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form mt-0', begin =%>
 		<%= $c->hidden_authen_fields =%>
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
@@ -603,11 +584,21 @@
 						</div>
 					% }
 					%
-					<div class="problem-content col-lg-10" <%== get_problem_lang_and_dir(
-							$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
-						) %>>
-						<%== $pg->{body_text} =%>
-					</div>
+					% # If there were translation errors, then show those instead of the problem.
+					% if ($pg->{flags}{error_flag}) {
+						% stash->{briefErrorOutput} = 1;
+						<%= include 'ContentGenerator/Base/error_output',
+							error => $pg->{errors},
+							details => $pg->{body_text} =%>
+						%
+						% delete stash->{briefErrorOutput};
+					% } else {
+						<div class="problem-content col-lg-10" <%== get_problem_lang_and_dir(
+								$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
+							) %>>
+							<%== $pg->{body_text} =%>
+						</div>
+					% }
 					% if ($pg->{result}{msg}) {
 						<div class="mb-2"><b><%== maketext('Note: [_1]', tag('i', $pg->{result}{msg})) %></b></div>
 					% }
@@ -651,7 +642,7 @@
 					% }
 					%
 					% # Initialize the problem graders for the problem.
-					% if ($c->{will}{showProblemGrader}) {
+					% if ($c->{will}{showProblemGrader} && !$pg->{flags}{error_flag}) {
 						<%= WeBWorK::HTML::SingleProblemGrader->new($c, $pg, $problems->[ $probOrder->[$i] ])
 							->insertGrader =%>
 					% }
@@ -785,5 +776,5 @@
 % # If achievements enabled, check to see if there are new ones and output them.  Use the first
 % # problem to seed the data. However, all of the problems will be provided to the achievement evaluator.
 % if ($ce->{achievementsEnabled} && $c->{will}{recordAnswers} && $c->{submitAnswers} && $setID ne 'Undefined_Set') {
-	<%= checkForAchievements($problems->[0], $pg_results->[0], $c, setVersion => $setVersionID) =%>
+	<%= checkForAchievements($problems->[0], $c, setVersion => $setVersionID) =%>
 % }
