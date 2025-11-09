@@ -467,4 +467,26 @@
 		const input = document.getElementById(btn.dataset.seedInput);
 		if (input) btn.addEventListener('click', () => (input.value = Math.floor(Math.random() * 10000)));
 	}
+
+	// Handle mixed select/number input fields.
+	for (const numericSelect of document.querySelectorAll('.mixed-numeric-select')) {
+		const select = numericSelect.querySelector('select');
+		const numberInput = numericSelect.querySelector('input');
+		let currentNumberValue = numberInput.value;
+
+		const setNumericState = () => {
+			if (select.value === 'numeric') {
+				numberInput.value = currentNumberValue;
+				numberInput.disabled = false;
+				numberInput.required = true;
+			} else {
+				currentNumberValue = numberInput.value;
+				numberInput.value = '';
+				numberInput.disabled = true;
+				numberInput.required = false;
+			}
+		};
+		select.addEventListener('change', setNumericState);
+		setNumericState();
+	}
 })();
