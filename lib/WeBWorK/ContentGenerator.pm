@@ -32,7 +32,6 @@ use MIME::Base64;
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use Encode;
-use Mojo::JSON qw(encode_json);
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
@@ -683,15 +682,20 @@ sub page_title ($c) {
 	return route_title($c, $c->current_route, 1);
 }
 
-=item webwork_js_config
+=item webwork_url
 
-Outputs the webwork2 JavaScript configuration.  This configuration can be
-accessed by JavaScript files to obtain various webwork2 settings.
+Defined in this package.
+
+Outputs the $webwork_url defined in site.conf, unless $webwork_url is equal to
+"/", in which case this outputs the empty string.
+
+This is used to set a value in a global webworkConfig javascript variable,
+that can be accessed in javascript files.
 
 =cut
 
-sub webwork_js_config ($c) {
-	return encode_json({ webwork_url => $c->location });
+sub webwork_url ($c) {
+	return $c->location;
 }
 
 =item warnings()
