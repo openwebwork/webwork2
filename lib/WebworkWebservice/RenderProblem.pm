@@ -26,6 +26,14 @@ async sub renderProblem {
 	# is enabled.  That is an expensive method to always call here.
 	debug(pretty_print_rh($rh)) if $WeBWorK::Debug::Enabled;
 
+	# If the problem source is provided, check user is allow to render problem source.
+	if (!$ws->authz->hasPermissions($rh->{user}, 'webservice_render_source')
+		&& ($rh->{problemSource} || $rh->{rawProblemSource} || $rh->{uriEncodedProblemSource}))
+	{
+		$ws->error_string(__PACKAGE__ . ": User $rh->{user} does not have permission to render problem source.");
+		return {};
+	}
+
 	my $problemSeed = $rh->{problemSeed} // '1234';
 
 	my $beginTime = Benchmark->new;
