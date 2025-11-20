@@ -108,25 +108,6 @@
 	% last;
 % }
 %
-% # If there were translation errors, then show those and exit.
-% if (@{ $c->{errors} }) {
-	% my $errorNum = 1;
-	% my ($message, $context) = (c, c);
-	% for (@{ $c->{errors} }) {
-		% push(@$message, "$errorNum. ") if (@{ $c->{errors} } > 1);
-		% push(@$message, $_->{message}, tag('br'));
-		%
-		% my $line = begin
-			<p><%= (@{ $c->{errors} } > 1 ? "$errorNum." : '') %><%== $_->{context} %></p>
-			<div class="gwDivider"></div>
-		% end
-		% push @$context, $line->();
-	% }
-	<%= include 'ContentGenerator/Base/error_output', error => $message->join(''), details => $context->join('') =%>
-	%
-	% last;
-% }
-%
 % my $setID          = $c->{set}->set_id;
 % my $setVersionID   = $c->{set}->version_id;
 % my $numProbPerPage = $c->{set}->problems_per_page;
@@ -405,7 +386,7 @@
 	% # Problems can be shown, so output the main form and the problems.
 	% my $startTime = param('startTime') || time;
 	%
-	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form', begin =%>
+	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form mt-0', begin =%>
 		<%= $c->hidden_authen_fields =%>
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
@@ -448,9 +429,10 @@
 		% end
 		% if ($numProbPerPage && $numPages > 1) {
 			% content_for 'gw-navigation-cols' => begin
-				% for (1 .. $numPages) {
+				% for my $pageNum (1 .. $numPages) {
 					<colgroup class="page">
 						% for (1 .. $numProbPerPage) {
+							% last if $_ * $pageNum > @$problem_numbers;
 							<col class="problem">
 						% }
 					</colgroup>
@@ -458,7 +440,9 @@
 			% end
 			% for my $i (1 .. $numPages) {
 				% content_for 'gw-navigation-pages' => begin
-					<td colspan="<%= $numProbPerPage %>"
+					<td colspan="<%= $i == $numPages && (@$problem_numbers % $numProbPerPage)
+						? (@$problem_numbers % $numProbPerPage)
+						: $numProbPerPage %>"
 						class="<%= $i == $pageNumber ? 'page active' : 'page' %>">
 						% if ($i == $pageNumber) {
 							<%= $i =%>
@@ -485,6 +469,24 @@
 					</tr>
 				% }
 			% end
+			% content_for 'gw-previous-next-buttons' => begin
+				<div class="submit-buttons-container mb-3">
+					% my $prevText = $numProbPerPage == 1 ? maketext('Previous Problem') : maketext('Previous Page');
+					% if ($pageNumber > 1) {
+						<%= link_to $prevText => '#',
+							class => 'btn btn-primary page-change-link', data => { page_number => $pageNumber - 1 } =%>
+					% } else {
+						<a class="btn btn-primary disabled" role="button" aria-disabled="true"><%= $prevText =%></a>
+					% }
+					% my $nextText = $numProbPerPage == 1 ? maketext('Next Problem') : maketext('Next Page');
+					% if ($pageNumber < $numPages) {
+						<%= link_to $nextText => '#',
+							class => 'btn btn-primary page-change-link', data => { page_number => $pageNumber + 1 } =%>
+					% } else {
+						<a class="btn btn-primary disabled" role="button" aria-disabled="true"><%= $nextText =%></a>
+					% }
+				</div>
+			% end
 		% } else {
 			% content_for 'gw-navigation-cols' => begin
 				<colgroup class="page"><% for (0 .. $#$pg_results) { =%><col class="problem"><% } =%></colgroup>
@@ -508,6 +510,7 @@
 					<%= content 'gw-navigation-table-rows' =%>
 				</table>
 			</div>
+			<%= content 'gw-previous-next-buttons' =%>
 		% end
 		<%= $jumpLinks->() =%>
 		%
@@ -581,11 +584,21 @@
 						</div>
 					% }
 					%
-					<div class="problem-content col-lg-10" <%== get_problem_lang_and_dir(
-							$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
-						) %>>
-						<%== $pg->{body_text} =%>
-					</div>
+					% # If there were translation errors, then show those instead of the problem.
+					% if ($pg->{flags}{error_flag}) {
+						% stash->{briefErrorOutput} = 1;
+						<%= include 'ContentGenerator/Base/error_output',
+							error => $pg->{errors},
+							details => $pg->{body_text} =%>
+						%
+						% delete stash->{briefErrorOutput};
+					% } else {
+						<div class="problem-content col-lg-10" <%== get_problem_lang_and_dir(
+								$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
+							) %>>
+							<%== $pg->{body_text} =%>
+						</div>
+					% }
 					% if ($pg->{result}{msg}) {
 						<div class="mb-2"><b><%== maketext('Note: [_1]', tag('i', $pg->{result}{msg})) %></b></div>
 					% }
@@ -621,7 +634,7 @@
 					<div class="text-end mb-2">
 						<%= link_to maketext('preview answers') => '#',
 							class => 'gateway-preview-btn btn btn-secondary',
-							($numProbPerPage && $numPages > 1) ? (data_page_number => $pageNumber) : () =%>
+							($numProbPerPage && $numPages > 1) ? (data => { page_number => $pageNumber }) : () =%>
 					</div>
 					%
 					% if ($resultsTable) {
@@ -629,7 +642,7 @@
 					% }
 					%
 					% # Initialize the problem graders for the problem.
-					% if ($c->{will}{showProblemGrader}) {
+					% if ($c->{will}{showProblemGrader} && !$pg->{flags}{error_flag}) {
 						<%= WeBWorK::HTML::SingleProblemGrader->new($c, $pg, $problems->[ $probOrder->[$i] ])
 							->insertGrader =%>
 					% }
@@ -763,5 +776,5 @@
 % # If achievements enabled, check to see if there are new ones and output them.  Use the first
 % # problem to seed the data. However, all of the problems will be provided to the achievement evaluator.
 % if ($ce->{achievementsEnabled} && $c->{will}{recordAnswers} && $c->{submitAnswers} && $setID ne 'Undefined_Set') {
-	<%= checkForAchievements($problems->[0], $pg_results->[0], $c, setVersion => $setVersionID) =%>
+	<%= checkForAchievements($problems->[0], $c, setVersion => $setVersionID) =%>
 % }

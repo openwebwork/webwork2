@@ -257,7 +257,7 @@ sub command_permission {
 		convertCodeToPGML => 'access_instructor_tools',
 
 		# WebworkWebservice::RenderProblem
-		renderProblem => 'proctor_quiz_login',
+		renderProblem => 'webservice_render_problem',
 
 		# WebworkWebservice::SetActions
 		listGlobalSets        => 'access_instructor_tools',
