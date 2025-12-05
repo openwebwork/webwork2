@@ -588,8 +588,11 @@ async sub pre_header_initialize ($c) {
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
-			$can{checkAnswers}
-				&& defined $formFields->{problem_data} ? (problemData => $formFields->{problem_data}) : ()
+			$prEnabled && !$problem->{prCount}
+			? (problemData => '{}')
+			: ($can{checkAnswers} && defined $formFields->{problem_data})
+			? (problemData => $formFields->{problem_data})
+			: ()
 		}
 	);
 

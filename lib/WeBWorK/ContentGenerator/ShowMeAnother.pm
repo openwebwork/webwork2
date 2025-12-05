@@ -78,6 +78,7 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
+			problemData              => '{}'
 		},
 	);
 
@@ -116,6 +117,7 @@ async sub pre_header_initialize ($c) {
 					effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 					useMathQuill             => $c->{will}{useMathQuill},
 					useMathView              => $c->{will}{useMathView},
+					problemData              => '{}'
 				},
 			);
 
@@ -206,7 +208,8 @@ async sub pre_header_initialize ($c) {
 			showMessages             => !$showOnlyCorrectAnswers,
 			showCorrectAnswers       => $showOnlyCorrectAnswers
 				|| ($c->{will}{checkAnswers} && $c->{will}{showCorrectAnswers}) ? 1 : 0,
-			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID}),
+			problemData      => $c->{formFields}{problem_data} || '{}'
 		}
 	);
 
