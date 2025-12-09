@@ -251,8 +251,21 @@ hardcopy:
   preserve_temp_files: 0
 
 # Set this to 1 to allow the html2xml and render_rpc endpoints to disable
-# cookies and thus skip two factor authentication. This should never be enabled
-# for a typical webwork server.  This should only be enabled if you want to
-# allow serving content via these endpoints to links in external websites with
-# usernames and passwords embedded in them such as for PreTeXt textbooks.
+# cookies and thus skip two factor authentication for all courses. To disable
+# cookies for a single course, set this to a hash whose keys are the course
+# IDs with a value of 1. Further to only disable cookies for specific users
+# in a course, set the course ID to a hash whose keys are user IDs with a
+# value of 1. For example:
+# allow_unsecured_rpc:
+#   # Disable cookies for full PreTeXt course.
+#   PreTeXt: 1
+#   # Disable cookies for specific users in a course.
+#   courseID:
+#     user1ID: 1
+#     user2ID: 1
+#
+# This should never be enabled for a typical webwork server.  This should only be
+# enabled if you want to allow serving content via these endpoints to links in
+# external websites with usernames and passwords embedded in them such as for
+# PreTeXt textbooks.
 allow_unsecured_rpc: 0
