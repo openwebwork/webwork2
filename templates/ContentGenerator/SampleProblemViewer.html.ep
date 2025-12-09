@@ -14,7 +14,7 @@
 	<%= javascript $c->url({
 		type => 'webwork', name => 'htdocs', file => 'node_modules/minisearch/dist/umd/index.js'
 	}), defer => undef =%>
-	<script>const webworkConfig = { webwork_url: '<%= $c->webwork_url %>' };</script>
+	<script>const webworkConfig = <%== $c->webwork_js_config %>;</script>
 	<%= javascript $c->url({
 		type => 'webwork', name => 'htdocs', file => 'js/SampleProblemViewer/documentation-search.js'
 	}), defer => undef =%>
