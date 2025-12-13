@@ -59,9 +59,6 @@ sub UserItems ($c, $userName, $set, $records) {
 	# Return unless achievement items are enabled.
 	return unless $ce->{achievementsEnabled} && $ce->{achievementItemsEnabled};
 
-	# When acting as another user, achievement items can be listed but not used.
-	return if $set && $userName ne $c->param('user');
-
 	# Return unless the user has global achievement data.
 	my $globalUserAchievement = $c->{globalData} // $db->getGlobalUserAchievement($userName);
 	return unless $globalUserAchievement && $globalUserAchievement->frozen_hash;
@@ -69,6 +66,9 @@ sub UserItems ($c, $userName, $set, $records) {
 	my $globalData  = thaw_base64($globalUserAchievement->frozen_hash);
 	my $use_item_id = $c->param('use_achievement_item_id') // '';
 	my @items;
+
+	# When acting as another user, achievement items can be listed but not used.
+	$use_item_id = '' if $userName ne $c->param('user');
 
 	for my $item (@{ +ITEMS }) {
 		next unless $globalData->{$item};
