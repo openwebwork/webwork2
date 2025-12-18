@@ -15,7 +15,8 @@
 			problemSeed: selectedUser.dataset.problemSeed,
 			set_id: document.getElementsByName('hidden_set_id')[0]?.value,
 			probNum: document.getElementsByName('hidden_problem_id')[0]?.value,
-			processAnswers: 1
+			processAnswers: 1,
+			WWcorrectAns: 1
 		};
 
 		if (selectedUser.dataset.versionId) ro.version_id = selectedUser.dataset.versionId;
