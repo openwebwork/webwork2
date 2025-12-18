@@ -435,6 +435,21 @@ $mail{feedbackRecipients}    = [
 #$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};
 
 ################################################################################
+# Usa a custom Sage cell server.
+################################################################################
+
+# By default the AskSage method of PG uses the public sagecell service located
+# at https://sagecell.sagemath.org/service. However, the server at that address
+# is no longer accepting public requests. So in order for problems that use the
+# AskSage method to work a different sagecell server must be used.  Uncomment
+# the line below and set the value to a custom sagecell server address to use
+# with the AskSage method. If using the docker container built with the
+# instructions and files in the sagecell-docker directory the PG repository, the
+# use the line below as is.
+
+#$pg{URLs}{sagecellService} = 'http://localhost:3500/service';
+
+################################################################################
 # Authentication
 ################################################################################
 
