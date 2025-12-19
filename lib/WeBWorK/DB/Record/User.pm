@@ -18,7 +18,7 @@ BEGIN {
 		email_address             => { type => "TEXT" },
 		student_id                => { type => "TEXT" },
 		status                    => { type => "TEXT" },
-		accessibility_time_factor => { type => "FLOAT NOT NULL DEFAULT 1" },
+		accommodation_time_factor => { type => "FLOAT NOT NULL DEFAULT 1" },
 		section                   => { type => "TEXT" },
 		recitation                => { type => "TEXT" },
 		comment                   => { type => "TEXT" },

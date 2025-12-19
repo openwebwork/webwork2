@@ -187,7 +187,7 @@ sub gateway_body ($c) {
 	my $effectiveUser = $db->getUser($effectiveUserID);
 
 	my $timeNow   = time;
-	my $timeLimit = ($set->version_time_limit || 0) * $effectiveUser->accessibility_time_factor;
+	my $timeLimit = ($set->version_time_limit || 0) * $effectiveUser->accommodation_time_factor;
 
 	# Compute how many versions have been launched within timeInterval to determine if a new version can be created,
 	# if a version can be continued, and the date a next version can be started.  If there is an open version that

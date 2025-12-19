@@ -3,7 +3,7 @@
 %
 <p>
 	<%== maketext('From this page you can <strong>add new students</strong>, <strong>edit</strong> user data '
-		. '(name, email address, student ID, enrollment status, accessibility time factor, section, recitation, '
+		. '(name, email address, student ID, enrollment status, accommodation time factor, section, recitation, '
 		. 'comment, permission level, and password), and <strong>export</strong> (save) class lists for back-up or use '
 		. 'in another course. You can also delete students from the class roster, but this cannot be undone.') =%>
 </p>
@@ -148,7 +148,7 @@
 			. 'assigned, click on the radio button for editing selected users and then click the "Edit" button .'
 			. 'Set the "Accesibility Time Factor" to the desired multiplier for each student selected. The time '
 			. 'that a student will have to complete a timed test will be the product of the "Test Time Limit" for the '
-			. 'test set in the "Sets Manager" and the "Accessibility Time Factor" set here.') =%>
+			. 'test set in the "Sets Manager" and the "Accommodation Time Factor" set here.') =%>
 	</dd>
 
 	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>

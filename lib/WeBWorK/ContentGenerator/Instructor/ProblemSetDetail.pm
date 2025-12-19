@@ -291,7 +291,7 @@ use constant FIELD_PROPERTIES => {
 				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
 				. 'test on the main "Assignments" page.  Additionally the student will be sent to a confirmation '
 				. 'page before they can begin. Note that the actual time a student will have to complete a timed test '
-				. 'is the product of this time limit and the accessibility time factor set for the student in the '
+				. 'is the product of this time limit and the accommodation time factor set for the student in the '
 				. 'accounts manager.'
 		)
 	},

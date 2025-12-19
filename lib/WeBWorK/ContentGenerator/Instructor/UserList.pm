@@ -94,7 +94,7 @@ use constant SORT_SUBS => {
 
 use constant FIELDS => [
 	'user_id',    'first_name', 'last_name',                 'email_address',
-	'student_id', 'status',     'accessibility_time_factor', 'section',
+	'student_id', 'status',     'accommodation_time_factor', 'section',
 	'recitation', 'comment',    'permission',                'password'
 ];
 
@@ -107,7 +107,7 @@ use constant FIELD_PROPERTIES => {
 	email_address             => { name => x('Email Address'),             type => 'text', size => 20 },
 	student_id                => { name => x('Student ID'),                type => 'text', size => 11 },
 	status                    => { name => x('Enrollment Status'),         type => 'status' },
-	accessibility_time_factor => { name => x('Accessibility Time Factor'), type => 'text', size => 5 },
+	accommodation_time_factor => { name => x('Accommodation Time Factor'), type => 'text', size => 5 },
 	section                   => { name => x('Section'),                   type => 'text', size => 3 },
 	recitation                => { name => x('Recitation'),                type => 'text', size => 3 },
 	comment                   => { name => x('Comment'),                   type => 'text', size => 20 },
