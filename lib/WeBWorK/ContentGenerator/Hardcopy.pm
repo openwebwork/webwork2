@@ -674,7 +674,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 			);
 		}
 	}
-	for (qw{pg.sty PGML.tex CAPA.tex}) {
+	for (qw{pg.sty PGML.tex}) {
 		eval { Mojo::File->new("$ce->{pg}{directories}{assetsTex}/$_")->copy_to($bundle_path) };
 		if ($@) {
 			$c->add_error(

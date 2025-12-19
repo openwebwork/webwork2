@@ -120,7 +120,7 @@ sub generate_hardcopy_tex {
 			if $@;
 	}
 	my $pgAssetsTex_dir = path($ce->{pg}{directories}{assetsTex});
-	for (qw{pg.sty PGML.tex CAPA.tex}) {
+	for (qw{pg.sty PGML.tex}) {
 		eval { $pgAssetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;
