@@ -79,6 +79,17 @@
 
 	const countLine = document.getElementById('library_count_line');
 
+	const settingStoreID = `WW.${document.getElementsByName('hidden_course_id')[0]?.value ?? 'unknownCourse'}.${
+		document.getElementsByName('user')[0]?.value ?? 'unknownUser'
+	}.setmaker`;
+	const includeOPLInitialStatus = includeOPL?.checked;
+	const includeContribInitialStatus = includeContrib?.checked;
+	if (includeOPL)
+		includeOPL.checked = localStorage.getItem(`${settingStoreID}.includeOPLChecked`) !== 'false' ? true : false;
+	if (includeContrib)
+		includeContrib.checked =
+			localStorage.getItem(`${settingStoreID}.includeContribChecked`) !== 'false' ? true : false;
+
 	const lib_update = async (who, what) => {
 		const child = { subject: 'chapter', chapter: 'section', section: 'count' };
 
@@ -200,10 +211,21 @@
 	libraryChapter?.addEventListener('change', () => lib_update('section', 'get'));
 	librarySubject?.addEventListener('change', () => lib_update('chapter', 'get'));
 	librarySection?.addEventListener('change', () => lib_update('count', 'clear'));
-	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
-	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeOPL?.addEventListener('change', () => {
+		localStorage.setItem(`${settingStoreID}.includeOPLChecked`, includeOPL.checked);
+		lib_update('count', 'clear');
+	});
+	includeContrib?.addEventListener('change', () => {
+		localStorage.setItem(`${settingStoreID}.includeContribChecked`, includeContrib.checked);
+		lib_update('count', 'clear');
+	});
 	levels.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
 	libraryKeywords?.addEventListener('change', () => lib_update('count', 'clear'));
+
+	// If the local storage status of the checks are different than what they
+	// were when the page loaded, then the count needs to be updated.
+	if (includeOPL?.checked !== includeOPLInitialStatus || includeContrib?.checked !== includeContribInitialStatus)
+		lib_update('count', 'clear');
 
 	// Set up the advanced view selects to submit the form when changed.
 	const libraryBrowserForm = document.forms['library_browser_form'];
