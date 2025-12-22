@@ -13,7 +13,7 @@ use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils                      qw(encodeAnswers createEmailSenderTransportSMTP);
+use WeBWorK::Utils                      qw(encodeAnswers createEmailSenderTransportSMTP formatEmailSubject);
 use WeBWorK::Utils::DateTime            qw(before after);
 use WeBWorK::Utils::JITAR               qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Utils::Logs                qw(writeLog writeCourseLog);
@@ -383,19 +383,12 @@ sub jitar_send_warning_email ($c, $userProblem) {
 
 	$problemID = join('.', jitar_id_to_seq($problemID));
 
-	my %subject_map = (
-		'c' => $courseID,
-		'u' => $userID,
-		's' => $setID,
-		'p' => $problemID,
-		'x' => $user->section,
-		'r' => $user->recitation,
-		'%' => '%',
+	my $subject = formatEmailSubject(
+		$ce->{mail}{feedbackSubjectFormat},
+		$courseID, $userID, $setID, $problemID,
+		$user ? $user->section    : '',
+		$user ? $user->recitation : ''
 	);
-	my $chars   = join('', keys %subject_map);
-	my $subject = $ce->{mail}{feedbackSubjectFormat}
-		|| 'WeBWorK question from %c: %u set %s/prob %p';    # default if not entered
-	$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 
 	my $full_name     = $user->full_name;
 	my $email_address = $user->email_address;

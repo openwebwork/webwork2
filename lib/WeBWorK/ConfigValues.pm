@@ -829,13 +829,15 @@ sub getConfigValues ($ce) {
 			x('E-Mail'),
 			{
 				var  => 'mail{feedbackSubjectFormat}',
-				doc  => x('Format for the subject line in feedback emails'),
+				doc  => x('Format for the subject of feedback emails'),
 				doc2 => x(
-					'When students click the <em>Email Instructor</em> button to send feedback, WeBWorK fills in the '
-						. 'subject line. Here you can set the subject line. In it, you can have various bits of '
-						. 'information filled in with the following escape sequences.<p><ul><li>%c = course ID</li>'
+					'<p>When students click the <em>Email Instructor</em> button to send feedback, WeBWorK fills in '
+						. 'the subject line. Here you can set the subject line. In it, you can have various bits of '
+						. 'information filled in with the following escape sequences.</p><ul><li>%c = course ID</li>'
 						. '<li>%u = user ID</li><li>%s = set ID</li><li>%p = problem ID</li><li>%x = section</li>'
-						. '<li>%r = recitation</li><li>%% = literal percent sign</li></ul>'
+						. '<li>%r = recitation</li><li>%% = literal percent sign</li></ul><p>If content is between '
+						. "a brace pair, like '{ rec:%r}', then it will only be included in the subject line if all "
+						. 'substitutions within the double brace pair are defined and nonempty.'
 				),
 				width => 45,
 				type  => 'text'

@@ -12,7 +12,7 @@ use Email::Stuffer;
 use Try::Tiny;
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients);
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients formatEmailSubject);
 
 # request paramaters used
 #
@@ -108,18 +108,15 @@ sub initialize ($c) {
 			}
 		}
 
-		my %subject_map = (
-			'c' => $courseID,
-			'u' => $user    ? $user->user_id       : undef,
-			's' => $set     ? $set->set_id         : undef,
-			'p' => $problem ? $problem->problem_id : undef,
-			'x' => $user    ? $user->section       : undef,
-			'r' => $user    ? $user->recitation    : undef,
-			'%' => '%',
+		my $subject = formatEmailSubject(
+			$ce->{mail}{feedbackSubjectFormat},
+			$courseID,
+			$user    ? $user->user_id       : '',
+			$set     ? $set->set_id         : '',
+			$problem ? $problem->problem_id : '',
+			$user    ? $user->section       : '',
+			$user    ? $user->recitation    : ''
 		);
-		my $chars   = join('', keys %subject_map);
-		my $subject = $ce->{mail}{feedbackSubjectFormat} || 'WeBWorK question from %c: %u set %s/prob %p';
-		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ''/eg;
 
 		my %data = (
 			user         => $user,
