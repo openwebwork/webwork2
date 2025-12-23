@@ -308,7 +308,7 @@ sub getDBListings ($c, $amcounter = 0) {
 				ts.chapter_id = tc.chapter_id AND
 				prob.section_id = ts.section_id AND
 				p.path_id = pgf.path_id
-				$extrawhere $textextrawhere $kw_where $group_by";
+				$extrawhere $textextrawhere $kw_where $group_by ORDER BY FIELD('pgf.libraryroot', 'Library')";
 
 		$pg_file_ref =
 			$dbh->selectall_arrayref($query, {}, @select_parameters, @textInfo_parameters, @keyword_parameters);
@@ -319,7 +319,7 @@ sub getDBListings ($c, $amcounter = 0) {
 				dbc.DBchapter_id = dbsc.DBchapter_id AND
 				dbsc.DBsection_id = pgf.DBsection_id AND
 				p.path_id = pgf.path_id
-				$extrawhere $kw_where $group_by";
+				$extrawhere $kw_where $group_by ORDER BY FIELD('pgf.libraryroot', 'Library')";
 
 		$pg_file_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @keyword_parameters);
 	}

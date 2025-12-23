@@ -72,6 +72,16 @@ JSON_ERROR_LOG: 0
 #  /pg_files:
 #    Access-Control-Allow-Origin: '*'
 
+# The extra_ssl_headers option is much like the extra_headers option above,
+# except that these headers are only added to responses to secure SSL requests.
+# The example below adds the Strict-Transport-Security header to responses to
+# all SSL requests. Note that like the extra_headers option above, headers can
+# be added to only specific paths as well (but only if the request is secure).
+
+#extra_ssl_headers:
+#  '.*':
+#    Strict-Transport-Security: 'max-age=31536000; includeSubDomains; preload'
+
 # The user and group to run the server as.  These are only used when the
 # webwork2 app is in production mode and run as the root user.  This means that
 # these settings are not used when proxying via another web server like apache2
