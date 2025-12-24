@@ -1,3 +1,22 @@
+% # If viewing a restricted set, only show the email instructor button.
+% if ($c->{viewSetCheck}) {
+	<div class="submit-buttons-container mb-3">
+		<div class="d-inline-block">
+			<%= $c->feedbackMacro(
+				route              => current_route,
+				set                => $c->{set}->set_id,
+				problem            => '',
+				displayMode        => $c->{displayMode},
+				showOldAnswers     => '',
+				showCorrectAnswers => '',
+				showHints          => '',
+				showSolutions      => '',
+			) =%>
+		</div>
+	</div>
+	% last;
+% }
+%
 <div class="submit-buttons-container mb-3">
 	<div class="d-inline-block">
 		<%= $c->feedbackMacro(

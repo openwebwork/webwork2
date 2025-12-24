@@ -11,7 +11,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils           qw(sortByName);
 use WeBWorK::Utils::DateTime qw(after);
 use WeBWorK::Utils::Files    qw(readFile path_is_subdir);
-use WeBWorK::Utils::Sets     qw(is_restricted format_set_name_display);
+use WeBWorK::Utils::Sets     qw(restricted_set_message);
 use WeBWorK::Localize;
 
 # The "default" data in the course_info.txt file.
@@ -114,15 +114,11 @@ sub info ($c) {
 }
 
 sub getSetStatus ($c, $set) {
-	my $ce              = $c->ce;
-	my $db              = $c->db;
-	my $authz           = $c->authz;
-	my $effectiveUser   = $c->param('effectiveUser') || $c->param('user');
-	my $canViewUnopened = $authz->hasPermissions($c->param('user'), 'view_unopened_sets');
-
-	my @restricted = $ce->{options}{enableConditionalRelease} ? is_restricted($db, $set, $effectiveUser) : ();
-
-	my $link_is_active = 1;
+	my $ce             = $c->ce;
+	my $db             = $c->db;
+	my $authz          = $c->authz;
+	my $effectiveUser  = $c->param('effectiveUser')                      || $c->param('user');
+	my $restricted_msg = restricted_set_message($c, $set, 'conditional') || restricted_set_message($c, $set, 'lti');
 
 	# Determine set status.
 	my $status_msg;
@@ -132,11 +128,7 @@ sub getSetStatus ($c, $set) {
 		$status = 'not-open';
 		$status_msg =
 			$c->maketext('Will open on [_1].', $c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat}));
-		push(@$other_messages, $c->restricted_progression_msg(1, $set->restricted_status * 100, @restricted))
-			if @restricted;
-		$link_is_active = 0
-			unless $canViewUnopened
-			|| ($set->assignment_type =~ /gateway/ && $db->countSetVersions($effectiveUser, $set->set_id));
+		push(@$other_messages, $restricted_msg) if $restricted_msg;
 	} elsif ($c->submitTime < $set->due_date) {
 		$status = 'open';
 
@@ -172,31 +164,8 @@ sub getSetStatus ($c, $set) {
 				$c->maketext('Open. Due [_1].', $c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat}));
 		}
 
-		if (@restricted) {
-			$link_is_active = 0 unless $canViewUnopened;
-			push(@$other_messages, $c->restricted_progression_msg(0, $set->restricted_status * 100, @restricted));
-		} elsif (!$canViewUnopened
-			&& $ce->{LTIVersion}
-			&& ($ce->{LTIVersion} ne 'v1p3' || !$ce->{LTI}{v1p3}{ignoreMissingSourcedID})
-			&& defined $ce->{LTIGradeMode}
-			&& $ce->{LTIGradeMode} eq 'homework'
-			&& !$set->lis_source_did)
-		{
-			# The set shouldn't be shown if LTI grade mode is set to homework and a
-			# sourced_id is not available to use to send back grades
-			# (unless we are using LTI 1.3 and $LTI{v1p3}{ignoreMissingSourcedID} is set)
-			push(
-				@$other_messages,
-				$c->maketext(
-					'You must log into this set via your Learning Management System ([_1]).',
-					$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
-					? $c->link_to(
-						$ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
-						)
-					: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}
-				)
-			);
-			$link_is_active = 0;
+		if ($restricted_msg) {
+			push(@$other_messages, $restricted_msg);
 		}
 	} elsif ($c->submitTime < $set->answer_date) {
 		$status_msg = $c->maketext('Answers available for review on [_1].',
@@ -209,8 +178,7 @@ sub getSetStatus ($c, $set) {
 		status         => $status,
 		status_msg     => $status_msg,
 		other_messages => $other_messages,
-		link_is_active => $link_is_active,
-		is_restricted  => scalar(@restricted)
+		is_restricted  => $restricted_msg ? 1 : 0
 	);
 }
 
@@ -230,22 +198,6 @@ sub byUrgency {
 		if (my $returnIt = (shift @a_parts) <=> (shift @b_parts)) { return $returnIt; }
 	}
 	return $a->set_id cmp $b->set_id;
-}
-
-sub restricted_progression_msg ($c, $open, $restriction, @restricted) {
-	if (@restricted == 1) {
-		return $c->maketext(
-			'To access this set you must score at least [_1]% on set [_2].',
-			sprintf('%.0f', $restriction),
-			$c->tag('span', dir => 'ltr', format_set_name_display($restricted[0]))
-		);
-	} else {
-		return $c->maketext(
-			'To access this set you must score at least [_1]% on the following sets: [_2].',
-			sprintf('%.0f', $restriction),
-			join(', ', map { $c->tag('span', dir => 'ltr', format_set_name_display($_)) } @restricted)
-		);
-	}
 }
 
 1;

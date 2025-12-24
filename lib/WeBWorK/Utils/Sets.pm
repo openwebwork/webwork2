@@ -17,6 +17,7 @@ our @EXPORT_OK = qw(
 	is_restricted
 	get_test_problem_position
 	list_set_versions
+	restricted_set_message
 );
 
 sub format_set_name_internal ($set_name) {
@@ -255,6 +256,53 @@ sub list_set_versions ($db, $studentName, $setName, $setIsVersioned = 0) {
 	return (\@allSetNames, $notAssignedSet);
 }
 
+sub restricted_set_message($c, $set, $status) {
+	my $ce    = $c->ce;
+	my $db    = $c->db;
+	my $authz = $c->authz;
+
+	if ($status eq 'conditional') {
+		my $user       = $c->param('effectiveUser') || $c->param('user');
+		my @restricted = $ce->{options}{enableConditionalRelease} ? is_restricted($db, $set, $user) : ();
+		return '' unless @restricted;
+
+		if (@restricted == 1) {
+			return $c->maketext(
+				'To access this set you must score at least [_1]% on set [_2].',
+				sprintf('%.0f', $set->restricted_status * 100),
+				$c->tag('span', dir => 'ltr', format_set_name_display($restricted[0]))
+			);
+		} else {
+			return $c->maketext(
+				'To access this set you must score at least [_1]% on the following sets: [_2].',
+				sprintf('%.0f', $set->restricted_status * 100),
+				join(', ', map { $c->tag('span', dir => 'ltr', format_set_name_display($_)) } @restricted)
+			);
+		}
+	}
+
+	if ($status eq 'lti') {
+		# Only show this message if unable to view unopened sets or acting as another user.
+		return ''
+			if $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
+			&& (!$c->param('effectiveUser') || $c->param('effectiveUser') eq $c->param('user'));
+
+		if ($ce->{LTIVersion}
+			&& ($ce->{LTIVersion} ne 'v1p3' || !$ce->{LTI}{v1p3}{ignoreMissingSourcedID})
+			&& $ce->{LTIGradeMode} eq 'homework'
+			&& !$set->lis_source_did)
+		{
+			return $c->maketext(
+				'You must access this assignment from [_1] before you can start.',
+				$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+				? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+				: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}
+			);
+		}
+		return '';
+	}
+}
+
 1;
 
 =head1 NAME
@@ -353,5 +401,13 @@ reference to an array of names of set versions and whether or not the user is
 assigned to the set.  The list of names will be a list of set versions if the
 set is versioned (i.e., if C<setIsVersioned> is true), and a list containing
 only the original set id otherwise.
+
+=head2 restricted_set_message
+
+Usage: C<restricted_set_message($c, $set, $status)>
+
+Checks for and returns any restricted messages for the given set and status.
+C<$status> can be either 'conditional' for conditional release, or 'lti' to
+check for lis_source_did when using homework grade passback.
 
 =cut
