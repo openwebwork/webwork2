@@ -11,6 +11,10 @@ Feedback sent from <%= format_set_name_display($set->set_id) %>:
 Feedback sent from:
 % }
 <%== $emailableURL %>
+% if ($numRecipients > 1) {
+
+<%= maketext('Message delivered to multiple recipients. Consider using reply-all.') %>
+% }
 
 % if ($feedback) {
 <%== $user->full_name %> (<%== $user->user_id %>) wrote:

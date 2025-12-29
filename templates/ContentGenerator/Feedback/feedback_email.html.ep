@@ -11,12 +11,15 @@
 			% } elsif ($set) {
 				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
 				<%= $ce->{institutionName} %>
-			   	(sent from <%= link_to format_set_name_display($set->set_id) => $emailableURL %>)
+				(sent from <%= link_to format_set_name_display($set->set_id) => $emailableURL %>).
 			% } else {
 				Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at
 				<%= $ce->{institutionName} %> (sent from <%= link_to 'this page' => $emailableURL %>).
 			% }
 		</p>
+		% if ($numRecipients > 1) {
+			<p><%= maketext('Message delivered to multiple recipients. Consider using reply-all.') =%></p>
+		% }
 		% if ($feedback) {
 			<div style="border: 1px solid lightgray; padding: 1rem; margin-bottom: 1rem; border-radius: 0.375rem">
 				% for (split /\n\r?/, $feedback) {
