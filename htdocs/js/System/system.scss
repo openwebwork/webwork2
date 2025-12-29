@@ -1018,6 +1018,17 @@ td.alt-source {
 	}
 }
 
+.problem-grader.accordion {
+	.accordion-header {
+		.accordion-button {
+			--bs-accordion-btn-padding-x: 0.75rem;
+			--bs-accordion-btn-padding-y: 0.375rem;
+			--bs-accordion-btn-bg: var(--bs-primary, #038);
+			--bs-accordion-btn-color: var(--ww-primary-foreground-color, white);
+		}
+	}
+}
+
 .problem-grader-table {
 	.col-fixed {
 		width: 11rem;

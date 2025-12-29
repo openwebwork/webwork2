@@ -216,4 +216,141 @@
 			}
 		});
 	}
+
+	const settingStoreID = `WW.${document.getElementsByName('courseID')[0]?.value ?? 'unknownCourse'}.${
+		document.getElementsByName('user')[0]?.value ?? 'unknownUser'
+	}.problem_grader`;
+	let gradersOpen = localStorage.getItem(`${settingStoreID}.open`) === 'true';
+
+	const graderCollapses = [];
+
+	for (const grader of document.querySelectorAll('.problem-grader')) {
+		const problemId = grader.id.replace('problem-grader-');
+
+		grader.classList.add('accordion');
+
+		const accordionItem = document.createElement('div');
+		accordionItem.classList.add('accordion-item');
+
+		const accordionHeader = document.createElement('h2');
+		accordionHeader.classList.add('accordion-header');
+
+		const accordionButton = document.createElement('button');
+		accordionButton.classList.add('accordion-button');
+		accordionButton.type = 'button';
+		accordionButton.textContent = grader.dataset.graderTitle ?? 'Problem Grader';
+		accordionButton.dataset.bsToggle = 'collapse';
+		accordionButton.dataset.bsTarget = `#problem-grader-collapse-${problemId}`;
+		accordionButton.setAttribute('aria-controls', `#problem-grader-collapse-${problemId}`);
+		accordionButton.setAttribute('aria-expanded', gradersOpen);
+		if (!gradersOpen) accordionButton.classList.add('collapsed');
+
+		accordionHeader.append(accordionButton);
+
+		const accordionCollapse = document.createElement('div');
+		accordionCollapse.classList.add('accordion-collapse', 'collapse');
+		accordionCollapse.id = `problem-grader-collapse-${problemId}`;
+		accordionCollapse.dataset.bsParent = `problem-grader-${problemId}`;
+		if (gradersOpen) accordionCollapse.classList.add('show');
+
+		const accordionBody = grader.querySelector('.problem-grader-table');
+		accordionBody.classList.add('accordion-body');
+		accordionCollapse.append(accordionBody);
+
+		accordionItem.append(accordionHeader, accordionCollapse);
+		grader.append(accordionItem);
+
+		const graderCollapse = new bootstrap.Collapse(accordionCollapse, { toggle: false });
+		graderCollapses.push(graderCollapse);
+
+		grader.classList.remove('d-none');
+
+		// Expand or collapse all problem graders on the page when any one of them is expanded or collapsed.
+		let transitioning = false;
+		accordionCollapse.addEventListener('show.bs.collapse', () => {
+			if (transitioning) return;
+			transitioning = true;
+			for (const grader of graderCollapses) {
+				if (grader !== graderCollapse) grader.show();
+			}
+			transitioning = false;
+		});
+		accordionCollapse.addEventListener('hide.bs.collapse', () => {
+			if (transitioning) return;
+			transitioning = true;
+			for (const grader of graderCollapses) {
+				if (grader !== graderCollapse) grader.hide();
+			}
+			transitioning = false;
+		});
+
+		// Make sure that the "Reveal" button in feedback is not shown if a feedback button is used while the problem
+		// grader is open.  However, also make sure that the "Reveal" button is shown for any feedback button that is
+		// not used while the problem grader is open.
+
+		const unrevealedFeedbackBtns = [];
+
+		for (const feedbackBtn of document.querySelectorAll('.ww-feedback-btn')) {
+			const container = document.createElement('div');
+			container.innerHTML = feedbackBtn.dataset.bsContent;
+			const button = container.querySelector('.reveal-correct-btn');
+			if (!button) continue;
+
+			button.nextElementSibling?.classList.remove('d-none');
+			button.remove();
+
+			const fragment = new DocumentFragment();
+			fragment.append(container);
+
+			unrevealedFeedbackBtns.push([feedbackBtn, fragment.firstElementChild.innerHTML]);
+
+			const handler = () => {
+				const index = unrevealedFeedbackBtns.findIndex((data) => data[0] === feedbackBtn);
+				if (index !== -1) {
+					if (gradersOpen) {
+						unrevealedFeedbackBtns.splice(index, 1);
+						feedbackBtn.removeEventListener('shown.bs.popover', handler);
+					} else {
+						bootstrap.Popover.getInstance(feedbackBtn)
+							?.tip?.querySelector('.reveal-correct-btn')
+							?.addEventListener(
+								'click',
+								() => {
+									unrevealedFeedbackBtns.splice(index, 1);
+									feedbackBtn.removeEventListener('shown.bs.popover', handler);
+								},
+								{ once: true }
+							);
+					}
+				}
+			};
+
+			feedbackBtn.addEventListener('shown.bs.popover', handler);
+		}
+
+		const removeRevealButtons = () => {
+			for (const data of unrevealedFeedbackBtns) {
+				const feedbackPopover = bootstrap.Popover.getInstance(data[0]);
+				feedbackPopover?.setContent({ '.popover-body': data[1] });
+			}
+		};
+
+		if (gradersOpen) removeRevealButtons();
+
+		// In addition to removing and putting back the feedback "Reveal" buttons as needed,
+		// preserve the collapsed/expanded status of the problem graders in local storage.
+		accordionCollapse.addEventListener('shown.bs.collapse', () => {
+			localStorage.setItem(`${settingStoreID}.open`, 'true');
+			gradersOpen = true;
+			removeRevealButtons();
+		});
+		accordionCollapse.addEventListener('hidden.bs.collapse', () => {
+			gradersOpen = false;
+			localStorage.setItem(`${settingStoreID}.open`, 'false');
+			for (const data of unrevealedFeedbackBtns) {
+				const feedbackPopover = bootstrap.Popover.getInstance(data[0]);
+				feedbackPopover?.setContent({ '.popover-body': data[0].dataset.bsContent });
+			}
+		});
+	}
 })();

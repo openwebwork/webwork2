@@ -13,9 +13,8 @@
 				<%= link_to $c->systemLink(
 						url_for('gateway_quiz', setID => "$setID,v$prevTest->{setVersion}"),
 						params => {
-							effectiveUser     => $prevTest->user_id,
-							currentPage       => $pageNumber,
-							showProblemGrader => $c->{will}{showProblemGrader},
+							effectiveUser => $prevTest->user_id,
+							currentPage   => $pageNumber,
 							$filter ? (studentNavFilter => $filter) : ()
 						}
 					),
@@ -42,9 +41,8 @@
 							<%= link_to "$_->{displayName} (version $_->{setVersion})" => $c->systemLink(
 									url_for('gateway_quiz', setID => "$setID,v$_->{setVersion}"),
 									params => {
-										effectiveUser     => $_->user_id,
-										currentPage       => $pageNumber,
-										showProblemGrader => $c->{will}{showProblemGrader},
+										effectiveUser => $_->user_id,
+										currentPage   => $pageNumber,
 										$filter ? (studentNavFilter => $filter) : ()
 									}
 								),
@@ -59,9 +57,8 @@
 				<%= link_to $c->systemLink(
 						url_for('gateway_quiz', setID => "$setID,v$nextTest->{setVersion}"),
 						params => {
-							effectiveUser     => $nextTest->user_id,
-							currentPage       => $pageNumber,
-							showProblemGrader => $c->{will}{showProblemGrader},
+							effectiveUser => $nextTest->user_id,
+							currentPage   => $pageNumber,
 							$filter ? (studentNavFilter => $filter) : ()
 						}
 					),
@@ -90,11 +87,7 @@
 						<li>
 							<%= link_to maketext('Show all tests') => $c->systemLink(
 									url_for('gateway_quiz', setID => "$setID,v$setVersion"),
-									params => {
-										effectiveUser     => param('effectiveUser'),
-										currentPage       => $pageNumber,
-										showProblemGrader => $c->{will}{showProblemGrader}
-									}
+									params => { effectiveUser => param('effectiveUser'), currentPage => $pageNumber }
 								),
 								class => 'dropdown-item' =%>
 						</li>
@@ -104,10 +97,9 @@
 							<%= link_to $filters->{$_}[0] => $c->systemLink(
 									url_for('gateway_quiz', setID => "$setID,v$filters->{$_}[2]"),
 									params => {
-										effectiveUser     => $filters->{$_}[1],
-										currentPage       => $pageNumber,
-										showProblemGrader => $c->{will}{showProblemGrader},
-										studentNavFilter  => $_
+										effectiveUser    => $filters->{$_}[1],
+										currentPage      => $pageNumber,
+										studentNavFilter => $_
 									}
 								),
 								class => 'dropdown-item',

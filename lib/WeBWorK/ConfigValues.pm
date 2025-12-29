@@ -820,7 +820,8 @@ sub getConfigValues ($ce) {
 				doc2 => x(
 					'A "Reveal" button must be clicked to make a correct answer visible any time that correct '
 						. 'answers for a problem are shown. Note that this is always the case for instructors '
-						. 'before answers are available to students, and in "Show Me Another" problems.'
+						. 'before answers are available to students (except when the problem grader is open), and '
+						. 'in "Show Me Another" problems.'
 				),
 				type => 'boolean'
 			}

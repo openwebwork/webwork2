@@ -780,14 +780,11 @@ async sub pre_header_initialize ($c) {
 		return;
 	}
 
-	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
-	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
-
 	# What does the user want to do?
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		showCorrectAnswers => 1,
-		showProblemGrader  => $c->param('showProblemGrader') || 0,
+		showProblemGrader  => $userID ne $effectiveUserID,
 		showHints          => 0,    # Hints are not yet implemented in gateway quzzes.
 		showSolutions      => 1,
 		recordAnswers      => $c->{submitAnswers} && !$authz->hasPermissions($userID, 'avoid_recording_answers'),
@@ -1491,10 +1488,9 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 					&& $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})),
 			showMessages       => !$showOnlyCorrectAnswers,
 			showCorrectAnswers => (
-				$c->{will}{showProblemGrader} ? 2
-				: !$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
+				!$c->{previewAnswers} && $c->can_showCorrectAnswersForAll($set, $c->{problem}, $c->{tmplSet})
 				? ($c->ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
-				: !$c->{previewAnswers} && $c->{will}{showCorrectAnswers} ? 1
+				: $c->{will}{showProblemGrader} || (!$c->{previewAnswers} && $c->{will}{showCorrectAnswers}) ? 1
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID}),

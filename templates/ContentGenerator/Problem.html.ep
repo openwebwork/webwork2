@@ -71,23 +71,19 @@
 	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>
 </div>
 <div class="row"><div id="output_comments" class="col-lg-10"><%= $c->output_comments %></div></div>
-<div class="row"><div id="output_grader" class="col-lg-10"><%= $c->output_grader %></div></div>
 <div class="row">
 	<div class="col-lg-10">
 		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
 			id => 'problemMainForm', class => 'problem-main-form', begin =%>
 			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field(startTime => param('startTime') || time) =%>
-			<% if ($c->can('output_hidden_info')) {
-				<%= $c->output_hidden_info =%>
-			% }
-			<div class="problem">
-				<div id="problem_body" class="problem-content"
-					<%== $c->output_problem_lang_and_dir %>>
-					<%= $c->output_problem_body =%>
-				</div>
-				<%= $c->output_message =%>
+			<%= hidden_field(courseID => $c->ce->{courseName}) =%>
+			<div id="problem_body" class="problem-content"
+				<%== $c->output_problem_lang_and_dir %>>
+				<%= $c->output_problem_body =%>
 			</div>
+			<%= $c->output_message =%>
+			<%= $c->output_grader %>
 			<%= $c->output_checkboxes %>
 			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
 			<%= include 'ContentGenerator/Problem/instructor_buttons' %>
