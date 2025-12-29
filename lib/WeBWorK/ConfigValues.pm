@@ -888,6 +888,17 @@ sub getConfigValues ($ce) {
 				),
 				type => 'boolean'
 			},
+			{
+				var  => 'mail{linksOpenProblemGrader}',
+				doc  => x('Feedback links open problem grader'),
+				doc2 => x(
+					'If this is true, then the links included in feedback emails sent from a problem will have the '
+						. 'problem grader open when followed. If this is false, then the problem grader will not '
+						. 'be open when those links are followed. The problem grader may still be opened in any '
+						. 'case by using the "Show Problem Grader" button.'
+				),
+				type => 'boolean'
+			},
 		],
 	];
 

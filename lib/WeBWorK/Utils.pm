@@ -357,7 +357,7 @@ sub generateURLs ($c, %params) {
 				for my $name ('displayMode', 'showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
 					$args{$name} = [ $c->param($name) ] if defined $c->param($name) && $c->param($name) ne '';
 				}
-				$args{showProblemGrader} = 1;
+				$args{showProblemGrader} = 1 if $c->ce->{mail}{linksOpenProblemGrader};
 			} else {
 				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
