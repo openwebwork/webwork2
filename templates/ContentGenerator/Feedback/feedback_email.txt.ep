@@ -1,14 +1,15 @@
 % use WeBWorK::Utils qw(decodeAnswers);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
-Message from <%= $user->full_name %> (<%= $user->user_id %>) via WeBWorK at <%= $ce->{institutionName} %>.
+<%= maketext('Message from [_1] ([_2]) via WeBWorK at [_3].',
+	$user->full_name, $user->user_id, $ce->{institutionName}) %>
 
 % if ($problem) {
-Feedback sent from <%= format_set_name_display($set->set_id) . ', #' . $problem->problem_id %>:
+<%= maketext('Feedback sent from [_1]:', format_set_name_display($set->set_id) . ', #' . $problem->problem_id) %>
 % } elsif ($set) {
-Feedback sent from <%= format_set_name_display($set->set_id) %>:
+<%= maketext('Feedback sent from [_1]:', format_set_name_display($set->set_id)) %>
 % } else {
-Feedback sent from:
+<%= maketext('Feedback sent from:') %>
 % }
 <%== $emailableURL %>
 % if ($numRecipients > 1) {
@@ -17,92 +18,92 @@ Feedback sent from:
 % }
 
 % if ($feedback) {
-<%== $user->full_name %> (<%== $user->user_id %>) wrote:
+<%= maketext('[_1] ([_2]) wrote:', $user->full_name, $user->user_id) %>
 
 <%== $feedback %>
 
 % }
 % if ($problem && $verbosity >= 1) {
 
-***** Data about the problem: *****
+***** <%= maketext('Data about the problem:') %> *****
 
-Problem ID:                   <%== $problem->problem_id %>
-Source file:                  <%== $problem->source_file %>
-Value:                        <%== $problem->value %>
-Max attempts                  <%== $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts %>
-Random seed:                  <%== $problem->problem_seed %>
-Status:                       <%== $problem->status %>
-Attempted:                    <%== $problem->attempted ? 'yes' : 'no' %>
-Number of correct attempts:   <%== $problem->num_correct %>
-Number of incorrect attempts: <%== $problem->num_incorrect %>
+<%= maketext('Problem ID:') %>                   <%== $problem->problem_id %>
+<%= maketext('Source file:') %>                  <%== $problem->source_file %>
+<%= maketext('Value:') %>                        <%== $problem->value %>
+<%= maketext('Max attempts') %>                  <%== $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts %>
+<%= maketext('Random seed:') %>                  <%== $problem->problem_seed %>
+<%= maketext('Status:') %>                       <%== $problem->status %>
+<%= maketext('Attempted:') %>                    <%== $problem->attempted ? 'yes' : 'no' %>
+<%= maketext('Number of correct attempts:') %>   <%== $problem->num_correct %>
+<%= maketext('Number of incorrect attempts:') %> <%== $problem->num_incorrect %>
 	% my %last_answer = decodeAnswers($problem->last_answer);
 	% if (%last_answer) {
-Last submission:
-	% for my $key (sort keys %last_answer) {
-		% if ($last_answer{$key}) {
+<%= maketext('Last submission:') %>
+		% for my $key (sort keys %last_answer) {
+			% if ($last_answer{$key}) {
 	<%== $key %>: <%== $last_answer{$key} %>
+			% }
 		% }
-	% }
 	% } else {
-Last submission:              none
+<%= maketext('Last submission:') =%>              <%= maketext('none') %>
 	% }
 % }
 % if ($set && $verbosity >= 1) {
 
-***** Data about the assignment: *****
+***** <%= maketext('Data about the assignment:') %> *****
 
-Set ID:                    <%== $set->set_id %>
-Set header file:           <%== $set->set_header %>
-Hardcopy header file:      <%== $set->hardcopy_header %>
-Open date:                 <%== $c->formatDateTime($set->open_date) %>
-Due date:                  <%== $c->formatDateTime($set->due_date) %>
-Answer date:               <%== $c->formatDateTime($set->answer_date) %>
-Visible:                   <%== $set->visible ? 'yes' : 'no' %>
-Assignment type:           <%== $set->assignment_type %>
+<%= maketext('Set ID:') %>                    <%== $set->set_id %>
+<%= maketext('Set header file:') %>           <%== $set->set_header %>
+<%= maketext('Hardcopy header file:') %>      <%== $set->hardcopy_header %>
+<%= maketext('Open date:') %>                 <%== $c->formatDateTime($set->open_date) %>
+<%= maketext('Due date:') %>                  <%== $c->formatDateTime($set->due_date) %>
+<%= maketext('Answer date:') %>               <%== $c->formatDateTime($set->answer_date) %>
+<%= maketext('Visible:') %>                   <%== $set->visible ? 'yes' : 'no' %>
+<%= maketext('Assignment type:') %>           <%== $set->assignment_type %>
 	% if ($set->assignment_type =~ /gateway/) {
-Attempts per version:      <%== $set->attempts_per_version %>
-Time interval:             <%== $set->time_interval %>
-Versions per interval:     <%== $set->versions_per_interval %>
-Version time limit:        <%== $set->version_time_limit %>
-Version creation time:     <%== $c->formatDateTime($set->version_creation_time) %>
-Problem randorder:         <%== $set->problem_randorder %>
-Version last attempt time: <%== $set->version_last_attempt_time %>
+<%= maketext('Attempts per version:') %>      <%== $set->attempts_per_version %>
+<%= maketext('Time interval:') %>             <%== $set->time_interval %>
+<%= maketext('Versions per interval:') %>     <%== $set->versions_per_interval %>
+<%= maketext('Version time limit:') %>        <%== $set->version_time_limit %>
+<%= maketext('Version creation time:') %>     <%== $c->formatDateTime($set->version_creation_time) %>
+<%= maketext('Problem randorder:') %>         <%== $set->problem_randorder %>
+<%= maketext('Version last attempt time:') %> <%== $set->version_last_attempt_time %>
 	% }
 % }
 % if ($problem && $verbosity >= 1) {
 
-***** Data about the problem processor: *****
+***** <%= maketext('Data about the problem processor:') %> *****
 
-Display Mode:         <%== param('displayMode') %>
-Show Old Answers:     <%== param('showOldAnswers') ? 'yes' : 'no' %>
-Show Correct Answers: <%== param('showCorrectAnswers') ? 'yes' : 'no' %>
-Show Hints:           <%== param('showHints') ? 'yes' : 'no' %>
-Show Solutions:       <%== param('showSolutions') ? 'yes' : 'no' %>
+<%= maketext('Display Mode:') %>         <%== param('displayMode') %>
+<%= maketext('Show Old Answers:') %>     <%== param('showOldAnswers') ? 'yes' : 'no' %>
+<%= maketext('Show Correct Answers:') %> <%== param('showCorrectAnswers') ? 'yes' : 'no' %>
+<%= maketext('Show Hints:') %>           <%== param('showHints') ? 'yes' : 'no' %>
+<%= maketext('Show Solutions:') %>       <%== param('showSolutions') ? 'yes' : 'no' %>
 % }
 % if ($user && $verbosity >= 1) {
 
-***** Data about the user: *****
+***** <%= maketext('Data about the user:') %> *****
 
-User ID:    <%== $user->user_id %>
-Name:       <%== $user->full_name %>
-Email:      <%== $user->email_address %>
+<%= maketext('User ID:') %>    <%== $user->user_id %>
+<%= maketext('Name:') %>       <%== $user->full_name %>
+<%= maketext('Email:') %>      <%== $user->email_address %>
 	% unless ($ce->{blockStudentIDinFeedback}) {
-Student ID: <%== $user->student_id %>
+<%= maketext('Student ID:') %> <%== $user->student_id %>
 	% }
 % my $status_name = $ce->status_abbrev_to_name($user->status);
 	%my $status_string =
 		% defined $status_name
 			% ? "$status_name ('" . $user->status . q{')}
-			% : $user->status . ' (unknown status abbreviation)';
-Status:     <%== $status_string %>
-Section:    <%== $user->section %>
-Recitation: <%== $user->recitation %>
-Comment:    <%== $user->comment %>
-IP Address: <%== $remote_host %>:<%== $c->tx->remote_port || 'UNKNOWN' %>
+			% : maketext('[_1] (unknown status abbreviation)', $user->status);
+<%= maketext('Status:') %>     <%== $status_string %>
+<%= maketext('Section:') %>    <%== $user->section %>
+<%= maketext('Recitation:') %> <%== $user->recitation %>
+<%= maketext('Comment:') %>    <%== $user->comment %>
+<%= maketext('IP Address:') %> <%== $remote_host %>:<%== $c->tx->remote_port || 'UNKNOWN' %>
 % }
 % if ($verbosity >= 2) {
 
-Data about the environment
+<%= maketext('Data about the environment') %>
 
 <%== dumper($ce) %>
 % }
