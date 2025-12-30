@@ -125,6 +125,7 @@
 						version_id: saveData.versionId,
 						problem_id: saveData.problemId,
 						status: parseInt(scoreInput.value) / 100,
+						...(saveData.saveSubStatus === '1' ? { sub_status: parseInt(scoreInput.value) / 100 } : {}),
 						mark_graded: true
 					}),
 					signal: controller.signal
