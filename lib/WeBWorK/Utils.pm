@@ -400,11 +400,9 @@ sub formatEmailSubject ($formatString, $courseID, $userID, $setID, $problemID, $
 	if (@braces) {
 		# for each brace pair, do substitutions, but leave %c etc when variable is empty
 		my %braces = map { $_ => $_ =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : "%$1"/egr } @braces;
-		# if there is an instance of %c, etc, nullify the whole thing
-		%braces = map { $_ => $braces{$_} =~ /%[$chars]/ ? '' : $braces{$_} } keys %braces;
-		# remove outer braces
-		%braces = map { $_ => $braces{$_} =~ s/\{(.*)\}/$1/egr } keys %braces;
-		my $regex = join('|', keys %braces);
+		# If there is an instance of %c, etc, nullify the whole thing. Remove outer braces.
+		%braces = map { $_ => $braces{$_} =~ /%[$chars]/ ? '' : substr($braces{$_}, 1, -1) } keys %braces;
+		my $regex = join('|', map {"\Q$_\E"} keys %braces);
 		$regex = qr/$regex/;
 		$subject =~ s/($regex)/$braces{$1}/g;
 	}
