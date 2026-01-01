@@ -21,14 +21,34 @@ use WebworkWebservice;
 
 sub initializeRoute ($c, $routeCaptures) {
 	$c->{rpc} = 1;
+	my $allow_unsecured_rpc = $c->config('allow_unsecured_rpc');
+	my $disable_cookies     = 0;
+
+	if ($allow_unsecured_rpc) {
+		if (ref($allow_unsecured_rpc) eq 'HASH') {
+			my $courseID = $c->param('courseID');
+			if ($courseID && $allow_unsecured_rpc->{$courseID}) {
+				if (ref($allow_unsecured_rpc->{$courseID}) eq 'HASH') {
+					my $userID = $c->param('user');
+					if ($userID && $allow_unsecured_rpc->{$courseID}{$userID}) {
+						$disable_cookies = 1;
+					}
+				} else {
+					$disable_cookies = 1;
+				}
+			}
+		} else {
+			$disable_cookies = 1;
+		}
+	}
 
 	$c->stash(disable_cookies => 1)
-		if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $c->config('allow_unsecured_rpc');
+		if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $disable_cookies;
 
 	# This provides compatibility for legacy html2xml parameters.
 	# This should be deleted when the html2xml endpoint is removed.
 	if ($c->current_route eq 'html2xml') {
-		$c->stash(disable_cookies => 1) if $c->config('allow_unsecured_rpc');
+		$c->stash(disable_cookies => 1) if $disable_cookies;
 		for ([ 'userID', 'user' ], [ 'course_password', 'passwd' ], [ 'session_key', 'key' ]) {
 			$c->param($_->[1], $c->param($_->[0])) if defined $c->param($_->[0]) && !defined $c->param($_->[1]);
 		}
