@@ -90,7 +90,7 @@ the submit button pressed (the action).
     Requested actions and aliases
         View/Reload                action = view
         Generate Hardcopy:         action = hardcopy
-        Format Code:               action = format_code
+        Code Maintenance:          action = code_maintenance
         Save:                      action = save
         Save as:                   action = save_as
         Append:                    action = add_problem
@@ -118,15 +118,15 @@ use SampleProblemParser        qw(getSampleProblemCode generateMetadata);
 use constant DEFAULT_SEED => 123456;
 
 # Editor tabs
-use constant ACTION_FORMS => [qw(view hardcopy format_code save save_as add_problem revert)];
+use constant ACTION_FORMS => [qw(view hardcopy code_maintenance save save_as add_problem revert)];
 use constant ACTION_FORM_TITLES => {
-	view        => x('View/Reload'),
-	hardcopy    => x('Generate Hardcopy'),
-	format_code => x('Format Code'),
-	save        => x('Save'),
-	save_as     => x('Save As'),
-	add_problem => x('Append'),
-	revert      => x('Revert'),
+	view             => x('View/Reload'),
+	hardcopy         => x('Generate Hardcopy'),
+	code_maintenance => x('Code Maintenance'),
+	save             => x('Save'),
+	save_as          => x('Save As'),
+	add_problem      => x('Append'),
+	revert           => x('Revert'),
 };
 
 my $BLANKPROBLEM = 'newProblem.pg';
@@ -847,9 +847,9 @@ sub view_handler ($c) {
 	return;
 }
 
-# The format_code action is handled by javascript.  This is provided just in case
+# The code_maintenance action is handled by javascript.  This is provided just in case
 # something goes wrong and the handler is called.
-sub format_code_handler { }
+sub code_maintenance_handler { }
 
 sub hardcopy_handler ($c) {
 	# Redirect to problem editor page.
