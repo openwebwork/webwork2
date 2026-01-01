@@ -30,6 +30,7 @@ our @EXPORT_OK = qw(
 	processEmailMessage
 	createEmailSenderTransportSMTP
 	generateURLs
+	formatEmailSubject
 	getAssetURL
 	x
 );
@@ -380,6 +381,33 @@ sub generateURLs ($c, %params) {
 	} else {
 		return ($emailableURL, $returnURL);
 	}
+}
+
+sub formatEmailSubject ($formatString, $courseID, $userID, $setID, $problemID, $section, $recitation) {
+	my %subject_map = (
+		c   => $courseID,
+		u   => $userID,
+		s   => $setID,
+		p   => $problemID,
+		x   => $section,
+		r   => $recitation,
+		'%' => '%',
+	);
+	my $chars   = join('', keys %subject_map);
+	my $subject = $formatString;
+	# extract the brace pairs
+	my @braces = $formatString =~ /(\{(?:[^{}]*|(?0))*\})/xg;
+	if (@braces) {
+		# for each brace pair, do substitutions, but leave %c etc when variable is empty
+		my %braces = map { $_ => $_ =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : "%$1"/egr } @braces;
+		# If there is an instance of %c, etc, nullify the whole thing. Remove outer braces.
+		%braces = map { $_ => $braces{$_} =~ /%[$chars]/ ? '' : substr($braces{$_}, 1, -1) } keys %braces;
+		my $regex = join('|', map {"\Q$_\E"} keys %braces);
+		$regex = qr/$regex/;
+		$subject =~ s/($regex)/$braces{$1}/g;
+	}
+	$subject =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : ''/eg;
+	return $subject;
 }
 
 my $staticWWAssets;
