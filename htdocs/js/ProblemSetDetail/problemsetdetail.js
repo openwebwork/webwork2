@@ -472,7 +472,7 @@
 	for (const numericSelect of document.querySelectorAll('.mixed-numeric-select')) {
 		const select = numericSelect.querySelector('select');
 		const numberInput = numericSelect.querySelector('input');
-		let currentNumberValue = numberInput.value;
+		let currentNumberValue = numberInput.value !== '' ? numberInput.value : numberInput.min;
 
 		const setNumericState = () => {
 			if (select.value === 'numeric') {
@@ -480,7 +480,7 @@
 				numberInput.disabled = false;
 				numberInput.required = true;
 			} else {
-				currentNumberValue = numberInput.value;
+				if (numberInput.value !== '') currentNumberValue = numberInput.value;
 				numberInput.value = '';
 				numberInput.disabled = true;
 				numberInput.required = false;
