@@ -254,14 +254,10 @@
 
 			const modalBody = document.createElement('div');
 			modalBody.classList.add('modal-body');
-			const modalBodyContent = document.createElement('div');
-
-			modalBodyContent.textContent = submitAnswers.dataset.confirmDialogMessage;
-			modalBody.append(modalBodyContent);
 
 			if (numProblemsWithUnanswered) {
 				const modalSecondaryContent = document.createElement('div');
-				modalSecondaryContent.classList.add('mt-3');
+				modalSecondaryContent.classList.add('mb-3');
 				modalSecondaryContent.textContent =
 					(numProblemsWithUnanswered > 1
 						? submitAnswers.dataset.unansweredQuestionsMessage
@@ -275,6 +271,10 @@
 							'Select "No" if you would like to return to the test to enter more answers.');
 				modalBody.append(modalSecondaryContent);
 			}
+
+			const modalBodyContent = document.createElement('div');
+			modalBodyContent.textContent = submitAnswers.dataset.confirmDialogMessage;
+			modalBody.append(modalBodyContent);
 
 			const modalFooter = document.createElement('div');
 			modalFooter.classList.add('modal-footer');
