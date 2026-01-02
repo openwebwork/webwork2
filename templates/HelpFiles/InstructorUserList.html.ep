@@ -145,10 +145,11 @@
 	<dt><%= maketext('Give one student or several students additional time for all timed tests.') %></dt>
 	<dd>
 		<%= maketext('Click on the "Select" checkbox next to the names of the students that additional time is to be '
-			. 'assigned, click on the radio button for editing selected users and then click the "Edit" button .'
-			. 'Set the "Accesibility Time Factor" to the desired multiplier for each student selected. The time '
-			. 'that a student will have to complete a timed test will be the product of the "Test Time Limit" for the '
-			. 'test set in the "Sets Manager" and the "Accommodation Time Factor" set here.') =%>
+			. 'assigned, click on the radio button for editing selected users, and then click the "Edit" button. '
+			. 'Set the "Accommodation Time Factor" to the desired multiplier for each student selected (this must be a '
+			. 'decimal number that is greater than or equal to 1). The time that a student will have to complete a '
+			. 'timed test will be the product of the "Test Time Limit" for the test set in the "Sets Manager" and '
+			. 'the "Accommodation Time Factor" set here.') =%>
 	</dd>
 
 	<dt><%= maketext('Extend the number of attempts allowed a student on a given problem.') %></dt>

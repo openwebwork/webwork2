@@ -58,7 +58,7 @@
 					}
 				} else {
 					element?.classList.remove('is-invalid');
-					if (element.id in event_listeners) {
+					if (element && element.id in event_listeners) {
 						element?.removeEventListener('change', event_listeners[element.id]);
 						delete event_listeners[element.id];
 					}

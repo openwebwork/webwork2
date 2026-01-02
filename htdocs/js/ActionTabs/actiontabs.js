@@ -6,6 +6,7 @@
 		actionLink.addEventListener('show.bs.tab', () => {
 			if (takeAction) takeAction.value = actionLink.textContent;
 			if (currentAction) currentAction.value = actionLink.dataset.action;
+			takeAction.formNoValidate = actionLink.dataset.noValidate ? true : false;
 		});
 	});
 
