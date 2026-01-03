@@ -2,7 +2,11 @@
 %
 <div class="m-3 overflow-auto">
 	<h2><%= maketext('PG Critic Violations') %></h2>
-	% my @pgCriticViolations = grep { $_->policy =~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% my @pgCriticViolations   = grep { $_->policy =~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% my @perlCriticViolations = grep { $_->policy !~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% unless (@pgCriticViolations || @perlCriticViolations) {
+		<p><%= maketext('Congratulations! No PG critic violations found.') %></p>
+	% }
 	% if (@pgCriticViolations) {
 		<h3 class="mt-2"><%= maketext('The following PG issues should be fixed:') %></h3>
 		<ul class="list-group">
@@ -35,8 +39,7 @@
 				</li>
 			% }
 		</ul>
-	%}
-	% my @perlCriticViolations = grep { $_->policy !~ /^Perl::Critic::Policy::PG::/ } @$violations;
+	% }
 	% if (@perlCriticViolations) {
 		<h3 class="mt-2"><%= maketext('The following general Perl issues should be fixed:') %></h3>
 		<ul class="list-group">
@@ -52,5 +55,5 @@
 				</li>
 			% }
 		</ul>
-	%}
+	% }
 </div>
