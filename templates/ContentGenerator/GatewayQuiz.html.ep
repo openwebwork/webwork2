@@ -718,6 +718,15 @@
 							: maketext(
 							'This is your only submission.  If you say yes, then your answers will be final, '
 								. 'and you will not be able to continue to work this test version.'
+							),
+							# This is always a plural form. JavaScript replaces %d with the
+							# number of unanswered questions which will be greater than one.
+							unanswered_questions_message =>
+								maketext('There are [_1] problems with unanswered questions.', '%d'),
+							unanswered_question_message => maketext('There is a problem with unanswered questions.'),
+							return_to_test_message => maketext(
+								'Are you sure you want to grade the test? '
+								. 'Select "No" if you would like to return to the test to enter more answers.'
 							)
 						}
 						)
