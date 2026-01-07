@@ -251,6 +251,10 @@
 
 				// Make the alternate input left-to-right even for right-to-left languages.
 				this.altInput.dir = 'ltr';
+
+				// Move the id of the now hidden input onto the added input so the labels still work.
+				this.altInput.id = this.input.id;
+				this.input.removeAttribute('id');
 			},
 			parseDate(datestr, format) {
 				// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
