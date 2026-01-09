@@ -236,14 +236,14 @@ sub check_user ($self) {
 		return 0;
 	}
 
-	my $User = $db->getUser($user_id);
+	$self->{user} = $db->getUser($user_id);
 
-	if (!$User) {
-		debug("User |$user_id| is unknown but may be an new user from an LMS via LTI.");
+	if (!$self->{user}) {
+		debug("User |$user_id| is unknown but may be a new user from an LMS via LTI.");
 		return 1;
 	}
 
-	unless ($ce->status_abbrev_has_behavior($User->status, 'allow_course_access')) {
+	unless ($ce->status_abbrev_has_behavior($self->{user}->status, 'allow_course_access')) {
 		$self->{log_error} .= "$user_id - course access denied";
 		$self->{error} = $c->maketext('Authentication failed.  Please speak to your instructor.');
 		return 0;
@@ -291,11 +291,9 @@ sub authenticate ($self) {
 
 	# The actual authentication for this module has already been done.  This just creates and updates users if needed.
 
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->ce->{courseName};
+	my $ce = $c->ce;
 
-	if (!$db->existsUser($self->{user_id})) {
+	if (!$self->{user}) {
 		# New User. Create User record.
 		if ($ce->{block_lti_create_user}) {
 			$self->{log_error} .=
@@ -416,6 +414,7 @@ sub create_user ($self) {
 	$ce->{LTI}{v1p3}{modify_user}($self, $newUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
 
 	$db->addUser($newUser);
+	$self->{user} = $newUser;
 	$self->write_log_entry("New user $userID added via LTIAdvantange login");
 
 	# Set permission level.
@@ -481,7 +480,6 @@ sub maybe_update_user ($self) {
 	my $userID     = $self->{user_id};
 	my $courseName = $ce->{courseName};
 
-	my $user            = $db->getUser($userID);
 	my $permissionLevel = $db->getPermissionLevel($userID);
 
 	# We don't alter records of users with too high a permission.
@@ -507,10 +505,10 @@ sub maybe_update_user ($self) {
 
 		my $change_made = 0;
 		for my $element (qw(last_name first_name email_address status section recitation student_id)) {
-			if ($user->$element ne $tempUser->$element) {
+			if ($self->{user}->$element ne $tempUser->$element) {
 				$change_made = 1;
 				warn "WeBWorK User has $element: "
-					. $user->$element
+					. $self->{user}->$element
 					. " but LMS user has $element "
 					. $tempUser->$element . "\n"
 					if ($ce->{debug_lti_parameters});
