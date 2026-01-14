@@ -1,7 +1,10 @@
 if (!window.MathJax) {
 	window.MathJax = {
 		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
-		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
+		loader: {
+			load: ['input/asciimath', '[tex]/noerrors', '[no-dark-mode]'],
+			paths: { 'no-dark-mode': webworkConfig?.mathJaxDarkModeUrl ?? './no-dark-mode.js' }
+		},
 		startup: {
 			ready() {
 				const AM = MathJax.InputJax.AsciiMath.AM;

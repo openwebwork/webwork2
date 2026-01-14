@@ -32,7 +32,7 @@ use MIME::Base64;
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use Encode;
-use Mojo::JSON qw(encode_json);
+use Mojo::JSON qw(encode_json true);
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
@@ -690,8 +690,12 @@ accessed by JavaScript files to obtain various webwork2 settings.
 
 =cut
 
-sub webwork_js_config ($c) {
-	return encode_json({ webwork_url => $c->location });
+sub webwork_js_config ($c, $showMathJaxErrors = 0) {
+	return encode_json({
+		webwork_url        => $c->location,
+		mathJaxDarkModeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/no-dark-mode.js'),
+		$showMathJaxErrors ? (showMathJaxErrors => true) : ()
+	});
 }
 
 =item warnings()
