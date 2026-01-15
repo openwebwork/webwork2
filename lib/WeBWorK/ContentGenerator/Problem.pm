@@ -7,7 +7,6 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
 
-use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
 use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
@@ -23,6 +22,8 @@ use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 use WeBWorK::DB::Utils            qw(global2user fake_set fake_problem);
 use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
+use WeBWorK::HTML::SingleProblemGrader;
+use WeBWorK::HTML::StudentNav qw(studentNav);
 
 # GET/POST Parameters for this module
 #
@@ -839,74 +840,6 @@ sub nav ($c, $args) {
 	my $mergedSet = $db->getMergedSet($eUserID, $setID);
 	return '' if !$mergedSet;
 
-	# Set up a student navigation for those that have permission to act as a student.
-	my $userNav = '';
-	if ($authz->hasPermissions($userID, 'become_student') && $eUserID ne $userID) {
-		# Find all users for this set (except the current user) sorted by last_name, then first_name, then user_id.
-		my @allUserRecords = $db->getUsersWhere(
-			{
-				user_id => [
-					map { $_->[0] } $db->listUserSetsWhere({ set_id => $setID, user_id => { not_like => $userID } })
-				]
-			},
-			[qw/last_name first_name user_id/]
-		);
-
-		my $filter = $c->param('studentNavFilter');
-
-		# Find the previous, current, and next users, and format the student names for display.
-		# Also create a hash of sections and recitations if there are any for the course.
-		my @userRecords;
-		my $currentUserIndex = 0;
-		my %filters;
-		for (@allUserRecords) {
-			# Add to the sections and recitations if defined.  Also store the first user found in that section or
-			# recitation.  This user will be switched to when the filter is selected.
-			my $section = $_->section;
-			$filters{"section:$section"} = [ $c->maketext('Filter by section [_1]', $section), $_->user_id ]
-				if $section && !$filters{"section:$section"};
-			my $recitation = $_->recitation;
-			$filters{"recitation:$recitation"} = [ $c->maketext('Filter by recitation [_1]', $recitation), $_->user_id ]
-				if $recitation && !$filters{"recitation:$recitation"};
-
-			# Only keep this user if it satisfies the selected filter if a filter was selected.
-			next
-				unless !$filter
-				|| ($filter =~ /^section:(.*)$/    && $_->section eq $1)
-				|| ($filter =~ /^recitation:(.*)$/ && $_->recitation eq $1);
-
-			my $addRecord = $_;
-			$currentUserIndex = @userRecords if $addRecord->user_id eq $eUserID;
-			push @userRecords, $addRecord;
-
-			# Construct a display name.
-			$addRecord->{displayName} =
-				($addRecord->last_name || $addRecord->first_name
-					? $addRecord->last_name . ', ' . $addRecord->first_name
-					: $addRecord->user_id);
-		}
-		my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
-		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;
-
-		# Mark the current user.
-		$userRecords[$currentUserIndex]{currentUser} = 1;
-
-		my $problemPage = $c->url_for('problem_detail', setID => $setID, problemID => $problemID);
-
-		# Set up the student nav.
-		$userNav = $c->include(
-			'ContentGenerator/Problem/student_nav',
-			eUserID          => $eUserID,
-			problemPage      => $problemPage,
-			userRecords      => \@userRecords,
-			currentUserIndex => $currentUserIndex,
-			prevUser         => $prevUser,
-			nextUser         => $nextUser,
-			filter           => $filter,
-			filters          => \%filters
-		);
-	}
-
 	my $isJitarSet = $mergedSet->assignment_type eq 'jitar';
 
 	my ($prevID, $nextID);
@@ -977,7 +910,7 @@ sub nav ($c, $args) {
 		role         => 'navigation',
 		'aria-label' => 'problem navigation',
 		$c->c($c->tag('div', class => 'd-flex submit-buttons-container', $c->navMacro($args, \%tail, @links)),
-			$userNav)->join('')
+			studentNav($c, $setID))->join('')
 	);
 }
 

@@ -17,6 +17,7 @@ use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display
 use WeBWorK::DB::Utils        qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
 use WeBWorK::AchievementItems;
+use WeBWorK::HTML::StudentNav qw(studentNav);
 
 async sub initialize ($c) {
 	my $db    = $c->db;
@@ -113,17 +114,24 @@ sub nav ($c, $args) {
 	# Don't show the nav if the user does not have unrestricted navigation permissions.
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
-	my @links = (
-		$c->maketext('Assignments'),
-		$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
-		$c->maketext('Assignments')
-	);
 	return $c->tag(
 		'div',
 		class        => 'row sticky-nav',
 		role         => 'navigation',
-		'aria-label' => 'problem navigation',
-		$c->tag('div', $c->navMacro($args, {}, @links))
+		'aria-label' => 'set navigation',
+		$c->c(
+			$c->tag(
+				'div',
+				class => 'd-flex submit-buttons-container',
+				$c->navMacro(
+					$args, {},
+					$c->maketext('Assignments'),
+					$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
+					$c->maketext('Assignments')
+				)
+			),
+			$c->{set} ? studentNav($c, $c->{set}->set_id) : ''
+		)->join('')
 	);
 }
 
