@@ -1155,7 +1155,9 @@ sub getConfigValues ($ce) {
 	};
 
 	# Get the list of theme folders in the theme directory.
-	my $themes = eval { path($ce->{webworkDirs}{themes})->list({ dir => 1 })->map('basename')->sort; };
+	my $themes = eval {
+		path($ce->{webworkDirs}{themes})->list({ dir => 1 })->grep(sub {-d})->map('basename')->sort;
+	};
 	die "can't opendir $ce->{webworkDirs}{themes}: $@" if $@;
 
 	# Get the list of all site hardcopy theme files.

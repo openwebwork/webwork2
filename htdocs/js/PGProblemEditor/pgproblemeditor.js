@@ -423,6 +423,7 @@
 	const iframe = document.createElement('iframe');
 	iframe.title = 'Rendered content';
 	iframe.id = 'pgedit-render-iframe';
+	iframe.style.colorScheme = 'light';
 
 	// Adjust the height of the iframe when the window is resized and when the iframe loads.
 	const adjustIFrameHeight = () => {

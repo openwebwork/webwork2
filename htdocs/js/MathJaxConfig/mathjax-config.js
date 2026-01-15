@@ -2,8 +2,8 @@ if (!window.MathJax) {
 	window.MathJax = {
 		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
 		loader: {
-			load: ['input/asciimath', '[tex]/noerrors', '[no-dark-mode]'],
-			paths: { 'no-dark-mode': webworkConfig?.mathJaxDarkModeUrl ?? './no-dark-mode.js' }
+			load: ['input/asciimath', '[tex]/noerrors', '[bs-color-scheme]'],
+			paths: { 'bs-color-scheme': webworkConfig?.mathJaxBSColorSchemeUrl ?? './bs-color-scheme.js' }
 		},
 		startup: {
 			ready() {

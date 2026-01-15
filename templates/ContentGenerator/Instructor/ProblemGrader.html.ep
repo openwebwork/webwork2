@@ -168,11 +168,14 @@
 									% my @answers = split(/\t/, $_->{past_answer}->answer_string);
 									%
 									% for (my $i = 0; $i <= $#answers; $i++) {
-										% # Color the answer if it is not an essay answer.
-										<div class="past-answer"
-											 style="<%= $answerTypes[$i] && $answerTypes[$i] eq 'essay'
-													? ''
-													: $scores[$i] ? 'color:#060' : 'color:#600' %>">
+										<div class="<%= join(
+											' ',
+											'past-answer',
+											# Color the answer if it is not an essay answer.
+											$answerTypes[$i] && $answerTypes[$i] eq 'essay'
+												? ()
+												: $scores[$i] ? 'correct' : 'incorrect'
+										) %>">
 											% if ($answerTypes[$i] && $answerTypes[$i] eq 'essay') {
 												% # If the answer is an essay answer then display it line by line.
 												<div class="past-answer">
@@ -223,13 +226,13 @@
 			</tbody>
 		</table>
 		% if ($problemNeedsGrading) {
-			<div class='mb-3'>
+			<div class='problem-grader-legend-key mb-3'>
 				<span class='needs-grading fw-bold p-2'><%= maketext('Name') %></span>
 				\( = \)
 				<%= maketext('Problem has an essay answer that needs to be graded.') =%>
 			</div>
 		% }
-		<div id="alt-source-key" class='mb-3 d-none'>
+		<div id="alt-source-key" class='problem-grader-legend-key mb-3 d-none'>
 			<span class='alt-source p-2'><%= maketext('Latest Answers') %></span>
 			\( = \)
 			<%= maketext('Problem has a different source file than the currently rendered problem.') =%>

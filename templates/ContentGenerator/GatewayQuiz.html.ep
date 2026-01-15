@@ -169,7 +169,7 @@
 		% && $c->{can}{showScore}
 	% )
 	% {
-		<div class="gwMessage">
+		<div class="alert alert-warning p-1">
 			<%== maketext(
 				'Your recorded score for this version is [_1]/[_2] ([_3]%).',
 				'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
@@ -182,7 +182,7 @@
 	% }
 % } elsif ($c->{will}{checkAnswers}) {
 	% if ($c->{can}{showScore}) {
-		<div class="gwMessage">
+		<div class="alert alert-warning p-1">
 			<strong>
 				<%= maketext('Your score on this (checked, not recorded) submission is [_1]/[_2].',
 					$c->{attemptScore}, $c->{totalPossible}) =%>
@@ -207,7 +207,7 @@
 	% && before($c->{set}->due_date, $submitTime)
 	% && ($c->{can}{recordAnswersNextTime} || $c->{submitAnswers}))
 % {
-	<div class="gwMessage">
+	<div class="alert alert-warning p-1">
 		<strong>
 			% my $text = maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
 				% $ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100);
@@ -309,7 +309,7 @@
 	% }
 % } else {
 	% if (!$c->{checkAnswers} && !$c->{submitAnswers} && $c->{can}{showScore}) {
-		<div class="gwMessage">
+		<div class="alert alert-warning p-1">
 			<strong>
 				<%== maketext(
 						'Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).',
@@ -331,12 +331,12 @@
 	% }
 	%
 	% if ($c->{set}->version_last_attempt_time) {
-		<div class="gwMessage">
+		<div class="alert alert-warning p-1">
 			<%= maketext('Time taken on test: [_1] min ([_2] min allowed).',
 				$c->{elapsedTime}, sprintf('%.0f', 10 * ($c->{set}->due_date - $c->{set}->open_date) / 6) / 100) %>
 		</div>
 	% } elsif ($c->{exceededAllowedTime} && $c->{recordedScore} != 0) {
-		<div class="gwMessage">
+		<div class="alert alert-warning p-1">
 			<%= maketext('(This test is overtime because it was not submitted in the allowed time.)') %>
 		</div>
 	% }
@@ -594,9 +594,9 @@
 						%
 						% delete stash->{briefErrorOutput};
 					% } else {
-						<div class="problem-content col-lg-10" <%== get_problem_lang_and_dir(
+						<div class="problem-content text-dark col-lg-10" <%== get_problem_lang_and_dir(
 								$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
-							) %>>
+							) %>  data-bs-theme="light">
 							<%== $pg->{body_text} =%>
 						</div>
 					% }

@@ -196,11 +196,12 @@ sub formatRenderedProblem {
 		$output->{input}      = $ws->{input};
 
 		# The following could be constructed from the above, but this is a convenience
-		$output->{resultSummary}   = $resultSummary->to_string if $resultSummary;
-		$output->{lang}            = $PROBLEM_LANG_AND_DIR{lang};
-		$output->{dir}             = $PROBLEM_LANG_AND_DIR{dir};
-		$output->{extra_css_files} = \@extra_css_files;
-		$output->{extra_js_files}  = \@extra_js_files;
+		$output->{resultSummary}     = $resultSummary->to_string if $resultSummary;
+		$output->{lang}              = $PROBLEM_LANG_AND_DIR{lang};
+		$output->{dir}               = $PROBLEM_LANG_AND_DIR{dir};
+		$output->{extra_css_files}   = \@extra_css_files;
+		$output->{extra_js_files}    = \@extra_js_files;
+		$output->{webwork_js_config} = $ws->c->webwork_js_config($ws->{inputs_ref}{showMathJaxErrors} // 0);
 
 		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
 		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.

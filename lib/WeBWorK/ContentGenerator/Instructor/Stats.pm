@@ -567,6 +567,7 @@ sub build_bar_chart ($c, $data, %options) {
 		viewbox           => '-2 -2 ' . ($imageWidth + 3) . ' ' . ($imageHeight + 3),
 		'aria-labelledby' => "bar_graph_title_$id",
 		role              => 'img',
+		class             => 'stats-image',
 		-nocredits        => 1
 	);
 

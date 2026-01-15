@@ -692,8 +692,8 @@ accessed by JavaScript files to obtain various webwork2 settings.
 
 sub webwork_js_config ($c, $showMathJaxErrors = 0) {
 	return encode_json({
-		webwork_url        => $c->location,
-		mathJaxDarkModeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/no-dark-mode.js'),
+		webwork_url             => $c->location,
+		mathJaxBSColorSchemeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/bs-color-scheme.js'),
 		$showMathJaxErrors ? (showMathJaxErrors => true) : ()
 	});
 }
