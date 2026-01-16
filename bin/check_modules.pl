@@ -353,18 +353,18 @@ sub check_modules {
 			} else {
 				say "** $module found, but failed to load: $@";
 			}
-		} elsif (defined($moduleVersion{$module})
-			&& version->parse(${ $module . '::VERSION' }) < version->parse($moduleVersion{$module}))
+		} elsif (defined($modulesList{$module}{'minversion'})
+			&& version->parse(${ $module . '::VERSION' }) < version->parse($modulesList{$module}{'minversion'}))
 		{
 			$moduleNotFound = 1;
-			say "** $module found, but not version $moduleVersion{$module} or better";
+			say "** $module found, but not version $modulesList{$module}{'minversion'} or better";
 		} else {
 			say "   $module found and loaded";
 		}
 		use strict 'refs';
 	};
 
-	for my $module (keys(%modulesList)) {
+	for my $module (sort keys(%modulesList)) {
 		$checkModule->($module);
 	}
 
