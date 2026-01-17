@@ -38,7 +38,7 @@ my %modulesList = (
 		package => { deb => 'libarchive-zip-perl', },
 	},
 	'Archive::Zip::SimpleZip' => {},
-	'Benchmark' => {
+	'Benchmark'               => {
 		package => { deb => 'perl-modules', },
 	},
 	'Carp' => {
@@ -126,7 +126,7 @@ my %modulesList = (
 		package => { deb => 'perl-modules', },
 	},
 	'Future::AsyncAwait' => {
-		package => { deb => 'libfuture-asyncawait-perl', },
+		package    => { deb => 'libfuture-asyncawait-perl', },
 		minversion => 0.52,
 	},
 	'GD' => {
@@ -163,7 +163,7 @@ my %modulesList = (
 		package => { deb => 'perl-modules', },
 	},
 	'LWP::Protocol::https' => {
-		package => { deb => 'liblwp-protocol-https-perl', },
+		package    => { deb => 'liblwp-protocol-https-perl', },
 		minversion => 6.06,
 	},
 	'MIME::Base32' => {
@@ -182,7 +182,7 @@ my %modulesList = (
 		package => { deb => 'libminion-backend-sqlite-perl', },
 	},
 	'Mojolicious' => {
-		package => { deb => 'libmojolicious-perl', },
+		package    => { deb => 'libmojolicious-perl', },
 		minversion => 9.34,
 	},
 	'Mojolicious::Plugin::NotYAMLConfig' => {
@@ -234,7 +234,7 @@ my %modulesList = (
 		package => { deb => 'perl-base', },
 	},
 	'SQL::Abstract' => {
-		package => { deb => 'libsql-abstract-perl', },
+		package    => { deb => 'libsql-abstract-perl', },
 		minversion => 2.000000,
 	},
 	'String::ShellQuote' => {
