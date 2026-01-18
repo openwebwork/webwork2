@@ -36,7 +36,7 @@ levels. The definitive list of activities is contained in the default version of
 
 A user is able to engage in an activity if their permission level is greater
 than or equal to the level associated with the activity. If the level associated
-with an activity is undefiend, then no user is permitted to perform the
+with an activity is undefined, then no user is permitted to perform the
 activity, regardless of their permission level.
 
 =cut
@@ -165,7 +165,7 @@ sub setCachedUser {
 
 Checks the %permissionLevels hash in the course environment to determine if the
 user $userID has permission to engage in the activity $activity. If the user's
-permission level is greater than or equal to the level associated with $activty,
+permission level is greater than or equal to the level associated with $activity,
 a true value is returned. Otherwise, a false value is returned.
 
 If $userID has been cached using the setCachedUser() call, the cached data is

@@ -3,7 +3,7 @@ use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achevement evaluator file
+WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achievement evaluator file
 
 =cut
 

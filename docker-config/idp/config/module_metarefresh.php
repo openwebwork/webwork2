@@ -3,7 +3,7 @@
 $metadataURL = getenv('SP_METADATA_URL');
 
 if ($metadataURL === False) {
-	exit("Set the environment varable SP_METADATA_URL to the webwork2 service provider's metadata url.");
+	exit("Set the environment variable SP_METADATA_URL to the webwork2 service provider's metadata url.");
 }
 
 $config = [

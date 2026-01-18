@@ -104,7 +104,7 @@ sub pre_header_initialize ($c) {
 					$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : () }); };
 
 			if ($@) {
-				$c->log->error('The following error occured while attempting to send the one-time password '
+				$c->log->error('The following error occurred while attempting to send the one-time password '
 						. 'generation setup email for "'
 						. $c->authen->{user_id} . '":'
 						. ref($@) ? $@->message : $@);
