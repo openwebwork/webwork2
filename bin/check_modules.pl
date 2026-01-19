@@ -12,6 +12,9 @@ check_modules.pl [options]
  Options:
    -m|--modules          Check that the perl modules needed by webwork2 can be loaded.
    -p|--programs         Check that the programs needed by webwork2 exist.
+   -k|--packagetype      Specify what type of packages your system uses.
+                           For debian-based systems (e.g. Ubuntu), use 'deb'
+                           For Red Hat-based systems (e.g. RHEL, Oracle), use 'rpm'
 
 Both programs and modules are checked if no options are given.
 
@@ -518,14 +521,6 @@ my %modulesList = (
 	}
 );
 
-my %moduleVersion = (
-	'Future::AsyncAwait'   => 0.52,
-	'IO::Socket::SSL'      => 2.007,
-	'LWP::Protocol::https' => 6.06,
-	'Mojolicious'          => 9.34,
-	'SQL::Abstract'        => 2.000000
-);
-
 my @programList = qw(
 	convert
 	curl
@@ -544,18 +539,28 @@ my @programList = qw(
 	dvipng
 );
 
-my ($test_modules, $test_programs, $show_help);
+my ($test_modules, $test_programs, $packagetype, $show_help);
 
 GetOptions(
-	'm|modules'  => \$test_modules,
-	'p|programs' => \$test_programs,
-	'h|help'     => \$show_help,
+	'm|modules'       => \$test_modules,
+	'p|programs'      => \$test_programs,
+	'k|packagetype=s' => \$packagetype,
+	'h|help'          => \$show_help,
 );
+
 pod2usage(2) if $show_help;
+
+if ($packagetype && $packagetype ne 'rpm' && $packagetype ne 'deb') {
+	die 'packagetype must be one of \'deb\' or \'rpm\'';
+}
+
+my %packagemgrcommand = ('deb' => 'sudo apt install ', 'rpm' => 'sudo dnf install ');
 
 $test_modules = $test_programs = 1 unless $test_programs || $test_modules;
 
 my @PATH = split(/:/, $ENV{PATH});
+
+my (@missing_packages, @missing_modules);
 
 check_modules() if $test_modules;
 say ''          if $test_modules && $test_programs;
@@ -584,6 +589,13 @@ sub check_modules {
 			my $file = ($module =~ s|::|/|gr) . '.pm';
 			if ($@ =~ /Can't locate $file in \@INC/) {
 				say "** $module not found in \@INC";
+				if ($packagetype) {
+					if ($modulesList{$module}{package}{$packagetype}) {
+						push(@missing_packages, $modulesList{$module}{package}{$packagetype});
+					} else {
+						push(@missing_modules, $module);
+					}
+				}
 			} else {
 				say "** $module found, but failed to load: $@";
 			}
@@ -605,6 +617,15 @@ sub check_modules {
 	if ($moduleNotFound) {
 		say '';
 		say 'Some required modules were not found, could not be loaded, or were not at the sufficient version.';
+		if (@missing_modules || @missing_packages) {
+			say 'You can try to install the missing modules with the following command(s)';
+			if (@missing_modules) {
+				say 'sudo cpanm ' . join(' ', @missing_modules);
+			}
+			if (@missing_packages) {
+				say $packagemgrcommand{$packagetype} . join(' ', @missing_packages);
+			}
+		}
 		say 'Exiting as this is required to check the database driver and programs.';
 		exit 0;
 	}
