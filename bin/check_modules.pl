@@ -32,256 +32,490 @@ use Pod::Usage;
 
 my %modulesList = (
 	'Archive::Tar' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Archive-Tar'
+		}
 	},
 	'Archive::Zip' => {
-		package => { deb => 'libarchive-zip-perl', },
+		'package' => {
+			'deb' => 'libarchive-zip-perl',
+			'rpm' => 'perl-Archive-Zip'
+		}
 	},
-	'Archive::Zip::SimpleZip' => {},
-	'Benchmark'               => {
-		package => { deb => 'perl-modules', },
+	'Archive::Zip::SimpleZip' => {
+		'package' => {
+			'rpm' => 'perl-Archive-Zip-SimpleZip'
+		}
+	},
+	'Benchmark' => {
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Benchmark'
+		}
 	},
 	'Carp' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Carp'
+		}
 	},
 	'Class::Accessor' => {
-		package => { deb => 'libclass-accessor-perl', },
+		'package' => {
+			'deb' => 'libclass-accessor-perl',
+			'rpm' => 'perl-Class-Accessor'
+		}
 	},
 	'Crypt::JWT' => {
-		package => { deb => 'libcrypt-jwt-perl', },
+		'package' => {
+			'deb' => 'libcrypt-jwt-perl',
+			'rpm' => 'perl-Crypt-JWT'
+		}
 	},
 	'Crypt::PK::RSA' => {
-		package => { deb => 'libcryptx-perl', },
-	},
-	'Data::Dump' => {
-		package => { deb => 'libdata-dump-perl', },
-	},
-	'Data::Dumper' => {
-		package => { deb => 'libperl', },
-	},
-	'Data::Structure::Util' => {
-		package => { deb => 'libdata-structure-util-perl', },
-	},
-	'Data::UUID' => {
-		package => { deb => 'libossp-uuid-perl', },
-	},
-	'Date::Format' => {
-		package => { deb => 'libtimedate-perl', },
-	},
-	'Date::Parse' => {
-		package => { deb => 'libtimedate-perl', },
-	},
-	'DateTime' => {
-		package => { deb => 'libdatetime-perl', },
+		'package' => {
+			'deb' => 'libcryptx-perl',
+			'rpm' => 'perl-CryptX'
+		}
 	},
 	'DBI' => {
-		package => { deb => 'libdbi-perl', },
+		'package' => {
+			'deb' => 'libdbi-perl',
+			'rpm' => 'perl-DBI'
+		}
+	},
+	'Data::Dump' => {
+		'package' => {
+			'deb' => 'libdata-dump-perl',
+			'rpm' => 'perl-Data-Dump'
+		}
+	},
+	'Data::Dumper' => {
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Data-Dumper'
+		}
+	},
+	'Data::Structure::Util' => {
+		'package' => {
+			'deb' => 'libdata-structure-util-perl'
+		}
+	},
+	'Data::UUID' => {
+		'package' => {
+			'deb' => 'libossp-uuid-perl',
+			'rpm' => 'perl-Data-UUID'
+		}
+	},
+	'Date::Format' => {
+		'package' => {
+			'deb' => 'libtimedate-perl',
+			'rpm' => 'perl-TimeDate'
+		}
+	},
+	'Date::Parse' => {
+		'package' => {
+			'deb' => 'libtimedate-perl',
+			'rpm' => 'perl-TimeDate'
+		}
+	},
+	'DateTime' => {
+		'package' => {
+			'deb' => 'libdatetime-perl',
+			'rpm' => 'perl-DateTime'
+		}
 	},
 	'Digest::MD5' => {
-		package => { deb => 'libperl', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Digest-MD5'
+		}
 	},
 	'Digest::SHA' => {
-		package => { deb => 'libperl', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Digest-SHA'
+		}
 	},
 	'Email::Address::XS' => {
-		package => { deb => 'libemail-address-xs-perl', },
+		'package' => {
+			'deb' => 'libemail-address-xs-perl',
+			'rpm' => 'perl-Email-Address-XS'
+		}
 	},
 	'Email::Sender::Transport::SMTP' => {
-		package => { deb => 'libemail-sender-perl', },
+		'package' => {
+			'deb' => 'libemail-sender-perl',
+			'rpm' => 'perl-Email-Sender'
+		}
 	},
 	'Email::Stuffer' => {
-		package => { deb => 'libemail-stuffer-perl', },
+		'package' => {
+			'deb' => 'libemail-stuffer-perl'
+		}
 	},
 	'Errno' => {
-		package => { deb => 'libperl', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Errno'
+		}
 	},
 	'Exception::Class' => {
-		package => { deb => 'libexception-class-perl', },
+		'package' => {
+			'deb' => 'libexception-class-perl',
+			'rpm' => 'perl-Exception-Class'
+		}
 	},
 	'File::Copy' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-Copy'
+		}
 	},
 	'File::Copy::Recursive' => {
-		package => { deb => 'libfile-copy-recursive-perl', },
+		'package' => {
+			'deb' => 'libfile-copy-recursive-perl',
+			'rpm' => 'perl-File-Copy-Recursive'
+		}
 	},
 	'File::Fetch' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-Fetch'
+		}
 	},
 	'File::Find' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-Find'
+		}
 	},
 	'File::Find::Rule' => {
-		package => { deb => 'libfile-find-rule-perl', },
+		'package' => {
+			'deb' => 'libfile-find-rule-perl',
+			'rpm' => 'perl-File-Find-Rule'
+		}
 	},
 	'File::Path' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-Path'
+		}
 	},
 	'File::Spec' => {
-		package => { deb => 'perl-base', },
-	},
-	'File::stat' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-base',
+			'rpm' => 'perl-PathTools'
+		}
 	},
 	'File::Temp' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-Temp'
+		}
+	},
+	'File::stat' => {
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-File-stat'
+		}
 	},
 	'Future::AsyncAwait' => {
-		package    => { deb => 'libfuture-asyncawait-perl', },
-		minversion => 0.52,
+		'minversion' => '0.52',
+		'package'    => {
+			'deb' => 'libfuture-asyncawait-perl'
+		}
 	},
 	'GD' => {
-		package => { deb => 'libgd-perl', },
+		'package' => {
+			'deb' => 'libgd-perl',
+			'rpm' => 'perl-GD'
+		}
 	},
 	'GD::Barcode::QRcode' => {
-		package => { deb => 'libgd-barcode-perl', },
+		'package' => {
+			'deb' => 'libgd-barcode-perl'
+		}
 	},
 	'Getopt::Long' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Getopt-Long'
+		}
 	},
 	'Getopt::Std' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Getopt-Std'
+		}
 	},
 	'HTML::Entities' => {
-		package => { deb => 'libhtml-parser-perl', },
+		'package' => {
+			'deb' => 'libhtml-parser-perl',
+			'rpm' => 'perl-HTML-Parser'
+		}
 	},
 	'HTTP::Async' => {
-		package => { deb => 'libhttp-async-perl', },
+		'package' => {
+			'deb' => 'libhttp-async-perl'
+		}
 	},
 	'IO::File' => {
-		package => { deb => 'perl-base', },
+		'package' => {
+			'deb' => 'perl-base',
+			'rpm' => 'perl-IO'
+		}
 	},
 	'Iterator' => {
-		package => { deb => 'libiterator-perl', },
+		'package' => {
+			'deb' => 'libiterator-perl',
+		}
 	},
 	'Iterator::Util' => {
-		package => { deb => 'libiterator-util-perl', },
-	},
-	'Locale::Maketext::Lexicon' => {
-		package => { deb => 'liblocale-maketext-lexicon-perl', },
-	},
-	'Locale::Maketext::Simple' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'libiterator-util-perl'
+		}
 	},
 	'LWP::Protocol::https' => {
-		package    => { deb => 'liblwp-protocol-https-perl', },
-		minversion => 6.06,
+		'minversion' => '6.06',
+		'package'    => {
+			'deb' => 'liblwp-protocol-https-perl',
+			'rpm' => 'perl-LWP-Protocol-https'
+		}
+	},
+	'Locale::Maketext::Lexicon' => {
+		'package' => {
+			'deb' => 'liblocale-maketext-lexicon-perl'
+		}
+	},
+	'Locale::Maketext::Simple' => {
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Locale-Maketext-Simple'
+		}
 	},
 	'MIME::Base32' => {
-		package => { deb => 'libmime-base32-perl', },
+		'package' => {
+			'deb' => 'libmime-base32-perl'
+		}
 	},
 	'MIME::Base64' => {
-		package => { deb => 'libperl', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-MIME-Base64'
+		}
 	},
 	'Math::Random::Secure' => {
-		package => { deb => 'libmath-random-secure-perl', },
+		'package' => {
+			'deb' => 'libmath-random-secure-perl',
+			'rpm' => 'perl-Math-Random-Secure'
+		}
 	},
 	'Minion' => {
-		package => { deb => 'libminion-perl', },
+		'package' => {
+			'deb' => 'libminion-perl'
+		}
 	},
 	'Minion::Backend::SQLite' => {
-		package => { deb => 'libminion-backend-sqlite-perl', },
+		'package' => {
+			'deb' => 'libminion-backend-sqlite-perl'
+		}
 	},
 	'Mojolicious' => {
-		package    => { deb => 'libmojolicious-perl', },
-		minversion => 9.34,
+		'minversion' => '9.34',
+		'package'    => {
+			'deb' => 'libmojolicious-perl',
+			'rpm' => 'perl-Mojolicious'
+		}
 	},
 	'Mojolicious::Plugin::NotYAMLConfig' => {
-		package => { deb => 'libmojolicious-perl', },
+		'package' => {
+			'deb' => 'libmojolicious-perl',
+			'rpm' => 'perl-Mojolicious'
+		}
 	},
 	'Mojolicious::Plugin::RenderFile' => {
-		package => { deb => 'libmojolicious-plugin-renderfile-perl', },
+		'package' => {
+			'deb' => 'libmojolicious-plugin-renderfile-perl'
+		}
 	},
 	'Net::IP' => {
-		package => { deb => 'libnet-ip-perl', },
+		'package' => {
+			'deb' => 'libnet-ip-perl',
+			'rpm' => 'perl-Net-IP'
+		}
 	},
 	'Net::OAuth' => {
-		package => { deb => 'libnet-oauth-perl', },
+		'package' => {
+			'deb' => 'libnet-oauth-perl',
+			'rpm' => 'perl-Net-OAuth'
+		}
 	},
 	'Opcode' => {
-		package => { deb => 'libperl', },
-	},
-	'Pandoc' => {
-		package => { deb => 'libpandoc-wrapper-perl', },
-	},
-	'Perl::Critic' => {
-		package => { deb => 'libperl-critic-perl', },
-	},
-	'Perl::Tidy' => {
-		package => { deb => 'perltidy', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Opcode'
+		}
 	},
 	'PHP::Serialization' => {
-		package => { deb => 'libphp-serialization-perl', },
+		'package' => {
+			'deb' => 'libphp-serialization-perl',
+			'rpm' => 'perl-PHP-Serialization'
+		}
+	},
+	'Pandoc' => {
+		'package' => {
+			'deb' => 'libpandoc-wrapper-perl'
+		}
+	},
+	'Perl::Critic' => {
+		'package' => {
+			'deb' => 'libperl-critic-perl',
+			'rpm' => 'perl-Perl-Critic'
+		}
+	},
+	'Perl::Tidy' => {
+		'package' => {
+			'deb' => 'perltidy',
+			'rpm' => 'perltidy'
+		}
 	},
 	'Pod::Simple::Search' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Pod-Simple'
+		}
 	},
 	'Pod::Simple::XHTML' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Pod-Simple'
+		}
 	},
 	'Pod::Usage' => {
-		package => { deb => 'perl-modules', },
+		'package' => {
+			'deb' => 'perl-modules',
+			'rpm' => 'perl-Pod-Usage'
+		}
 	},
 	'Pod::WSDL' => {
-		package => { deb => 'libpod-wsdl-perl', },
-	},
-	'Scalar::Util' => {
-		package => { deb => 'perl-base', },
+		'package' => {
+			'deb' => 'libpod-wsdl-perl'
+		}
 	},
 	'SOAP::Lite' => {
-		package => { deb => 'libsoap-lite-perl', },
-	},
-	'Socket' => {
-		package => { deb => 'perl-base', },
+		'package' => {
+			'deb' => 'libsoap-lite-perl',
+			'rpm' => 'perl-SOAP-Lite'
+		}
 	},
 	'SQL::Abstract' => {
-		package    => { deb => 'libsql-abstract-perl', },
-		minversion => 2.000000,
-	},
-	'String::ShellQuote' => {
-		package => { deb => 'libstring-shellquote-perl', },
+		'minversion' => '2',
+		'package'    => {
+			'deb' => 'libsql-abstract-perl',
+			'rpm' => 'perl-SQL-Abstract'
+		}
 	},
 	'SVG' => {
-		package => { deb => 'libsvg-perl', },
+		'package' => {
+			'deb' => 'libsvg-perl',
+		}
+	},
+	'Scalar::Util' => {
+		'package' => {
+			'deb' => 'perl-base',
+			'rpm' => 'perl-Scalar-List-Utils'
+		}
+	},
+	'Socket' => {
+		'package' => {
+			'deb' => 'perl-base',
+			'rpm' => 'perl-Socket'
+		}
+	},
+	'String::ShellQuote' => {
+		'package' => {
+			'deb' => 'libstring-shellquote-perl',
+			'rpm' => 'perl-String-ShellQuote'
+		}
 	},
 	'Text::CSV' => {
-		package => { deb => 'libtext-csv-perl', },
+		'package' => {
+			'deb' => 'libtext-csv-perl',
+			'rpm' => 'perl-Text-CSV'
+		}
 	},
 	'Text::Wrap' => {
-		package => { deb => 'perl-base', },
+		'package' => {
+			'deb' => 'perl-base',
+			'rpm' => 'perl-Text-Tabs+Wrap'
+		}
 	},
 	'Tie::IxHash' => {
-		package => { deb => 'libtie-ixhash-perl', },
+		'package' => {
+			'deb' => 'libtie-ixhash-perl',
+			'rpm' => 'perl-Tie-IxHash'
+		}
 	},
 	'Time::HiRes' => {
-		package => { deb => 'libperl', },
+		'package' => {
+			'deb' => 'libperl',
+			'rpm' => 'perl-Time-HiRes'
+		}
 	},
 	'Time::Zone' => {
-		package => { deb => 'libtimedate-perl', },
+		'package' => {
+			'deb' => 'libtimedate-perl',
+			'rpm' => 'perl-TimeDate'
+		}
 	},
 	'Types::Serialiser' => {
-		package => { deb => 'libtypes-serialiser-perl', },
+		'package' => {
+			'deb' => 'libtypes-serialiser-perl',
+			'rpm' => 'perl-Types-Serialiser'
+		}
 	},
 	'URI::Escape' => {
-		package => { deb => 'liburi-perl', },
+		'package' => {
+			'deb' => 'liburi-perl',
+			'rpm' => 'perl-URI'
+		}
 	},
 	'UUID::Tiny' => {
-		package => { deb => 'libuuid-tiny-perl', },
+		'package' => {
+			'deb' => 'libuuid-tiny-perl',
+			'rpm' => 'perl-UUID-Tiny'
+		}
 	},
 	'XML::LibXML' => {
-		package => { deb => 'libxml-libxml-perl', },
+		'package' => {
+			'deb' => 'libxml-libxml-perl',
+			'rpm' => 'perl-XML-LibXML'
+		}
 	},
 	'XML::Parser' => {
-		package => { deb => 'libxml-parser-perl', },
+		'package' => {
+			'deb' => 'libxml-parser-perl',
+			'rpm' => 'perl-XML-Parser'
+		}
 	},
 	'XML::Parser::EasyTree' => {
-		package => { deb => 'libxml-parser-easytree-perl', },
+		'package' => {
+			'deb' => 'libxml-parser-easytree-perl'
+		}
 	},
 	'XML::Writer' => {
-		package => { deb => 'libxml-writer-perl', },
+		'package' => {
+			'deb' => 'libxml-writer-perl',
+			'rpm' => 'perl-XML-Writer'
+		}
 	},
 	'YAML::XS' => {
-		package => { deb => 'libyaml-libyaml-perl', },
-	},
+		'package' => {
+			'deb' => 'libyaml-libyaml-perl',
+			'rpm' => 'perl-YAML-LibYAML'
+		}
+	}
 );
 
 my %moduleVersion = (
