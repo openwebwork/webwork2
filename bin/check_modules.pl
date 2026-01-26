@@ -40,13 +40,13 @@ my %modulesList = (
 	'Archive::Tar' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Archive-Tar'
+			'rhel'   => 'perl-Archive-Tar'
 		}
 	},
 	'Archive::Zip' => {
 		'package' => {
 			'ubuntu' => 'libarchive-zip-perl',
-			'rhel' => 'perl-Archive-Zip'
+			'rhel'   => 'perl-Archive-Zip'
 		}
 	},
 	'Archive::Zip::SimpleZip' => {
@@ -57,49 +57,49 @@ my %modulesList = (
 	'Benchmark' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Benchmark'
+			'rhel'   => 'perl-Benchmark'
 		}
 	},
 	'Carp' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Carp'
+			'rhel'   => 'perl-Carp'
 		}
 	},
 	'Class::Accessor' => {
 		'package' => {
 			'ubuntu' => 'libclass-accessor-perl',
-			'rhel' => 'perl-Class-Accessor'
+			'rhel'   => 'perl-Class-Accessor'
 		}
 	},
 	'Crypt::JWT' => {
 		'package' => {
 			'ubuntu' => 'libcrypt-jwt-perl',
-			'rhel' => 'perl-Crypt-JWT'
+			'rhel'   => 'perl-Crypt-JWT'
 		}
 	},
 	'Crypt::PK::RSA' => {
 		'package' => {
 			'ubuntu' => 'libcryptx-perl',
-			'rhel' => 'perl-CryptX'
+			'rhel'   => 'perl-CryptX'
 		}
 	},
 	'DBI' => {
 		'package' => {
 			'ubuntu' => 'libdbi-perl',
-			'rhel' => 'perl-DBI'
+			'rhel'   => 'perl-DBI'
 		}
 	},
 	'Data::Dump' => {
 		'package' => {
 			'ubuntu' => 'libdata-dump-perl',
-			'rhel' => 'perl-Data-Dump'
+			'rhel'   => 'perl-Data-Dump'
 		}
 	},
 	'Data::Dumper' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Data-Dumper'
+			'rhel'   => 'perl-Data-Dumper'
 		}
 	},
 	'Data::Structure::Util' => {
@@ -110,49 +110,49 @@ my %modulesList = (
 	'Data::UUID' => {
 		'package' => {
 			'ubuntu' => 'libossp-uuid-perl',
-			'rhel' => 'perl-Data-UUID'
+			'rhel'   => 'perl-Data-UUID'
 		}
 	},
 	'Date::Format' => {
 		'package' => {
 			'ubuntu' => 'libtimedate-perl',
-			'rhel' => 'perl-TimeDate'
+			'rhel'   => 'perl-TimeDate'
 		}
 	},
 	'Date::Parse' => {
 		'package' => {
 			'ubuntu' => 'libtimedate-perl',
-			'rhel' => 'perl-TimeDate'
+			'rhel'   => 'perl-TimeDate'
 		}
 	},
 	'DateTime' => {
 		'package' => {
 			'ubuntu' => 'libdatetime-perl',
-			'rhel' => 'perl-DateTime'
+			'rhel'   => 'perl-DateTime'
 		}
 	},
 	'Digest::MD5' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Digest-MD5'
+			'rhel'   => 'perl-Digest-MD5'
 		}
 	},
 	'Digest::SHA' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Digest-SHA'
+			'rhel'   => 'perl-Digest-SHA'
 		}
 	},
 	'Email::Address::XS' => {
 		'package' => {
 			'ubuntu' => 'libemail-address-xs-perl',
-			'rhel' => 'perl-Email-Address-XS'
+			'rhel'   => 'perl-Email-Address-XS'
 		}
 	},
 	'Email::Sender::Transport::SMTP' => {
 		'package' => {
 			'ubuntu' => 'libemail-sender-perl',
-			'rhel' => 'perl-Email-Sender'
+			'rhel'   => 'perl-Email-Sender'
 		}
 	},
 	'Email::Stuffer' => {
@@ -163,67 +163,67 @@ my %modulesList = (
 	'Errno' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Errno'
+			'rhel'   => 'perl-Errno'
 		}
 	},
 	'Exception::Class' => {
 		'package' => {
 			'ubuntu' => 'libexception-class-perl',
-			'rhel' => 'perl-Exception-Class'
+			'rhel'   => 'perl-Exception-Class'
 		}
 	},
 	'File::Copy' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-Copy'
+			'rhel'   => 'perl-File-Copy'
 		}
 	},
 	'File::Copy::Recursive' => {
 		'package' => {
 			'ubuntu' => 'libfile-copy-recursive-perl',
-			'rhel' => 'perl-File-Copy-Recursive'
+			'rhel'   => 'perl-File-Copy-Recursive'
 		}
 	},
 	'File::Fetch' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-Fetch'
+			'rhel'   => 'perl-File-Fetch'
 		}
 	},
 	'File::Find' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-Find'
+			'rhel'   => 'perl-File-Find'
 		}
 	},
 	'File::Find::Rule' => {
 		'package' => {
 			'ubuntu' => 'libfile-find-rule-perl',
-			'rhel' => 'perl-File-Find-Rule'
+			'rhel'   => 'perl-File-Find-Rule'
 		}
 	},
 	'File::Path' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-Path'
+			'rhel'   => 'perl-File-Path'
 		}
 	},
 	'File::Spec' => {
 		'package' => {
 			'ubuntu' => 'perl-base',
-			'rhel' => 'perl-PathTools'
+			'rhel'   => 'perl-PathTools'
 		}
 	},
 	'File::Temp' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-Temp'
+			'rhel'   => 'perl-File-Temp'
 		}
 	},
 	'File::stat' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-File-stat'
+			'rhel'   => 'perl-File-stat'
 		}
 	},
 	'Future::AsyncAwait' => {
@@ -235,7 +235,7 @@ my %modulesList = (
 	'GD' => {
 		'package' => {
 			'ubuntu' => 'libgd-perl',
-			'rhel' => 'perl-GD'
+			'rhel'   => 'perl-GD'
 		}
 	},
 	'GD::Barcode::QRcode' => {
@@ -246,19 +246,19 @@ my %modulesList = (
 	'Getopt::Long' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Getopt-Long'
+			'rhel'   => 'perl-Getopt-Long'
 		}
 	},
 	'Getopt::Std' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Getopt-Std'
+			'rhel'   => 'perl-Getopt-Std'
 		}
 	},
 	'HTML::Entities' => {
 		'package' => {
 			'ubuntu' => 'libhtml-parser-perl',
-			'rhel' => 'perl-HTML-Parser'
+			'rhel'   => 'perl-HTML-Parser'
 		}
 	},
 	'HTTP::Async' => {
@@ -269,7 +269,7 @@ my %modulesList = (
 	'IO::File' => {
 		'package' => {
 			'ubuntu' => 'perl-base',
-			'rhel' => 'perl-IO'
+			'rhel'   => 'perl-IO'
 		}
 	},
 	'Iterator' => {
@@ -286,7 +286,7 @@ my %modulesList = (
 		'minversion' => '6.06',
 		'package'    => {
 			'ubuntu' => 'liblwp-protocol-https-perl',
-			'rhel' => 'perl-LWP-Protocol-https'
+			'rhel'   => 'perl-LWP-Protocol-https'
 		}
 	},
 	'Locale::Maketext::Lexicon' => {
@@ -297,7 +297,7 @@ my %modulesList = (
 	'Locale::Maketext::Simple' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Locale-Maketext-Simple'
+			'rhel'   => 'perl-Locale-Maketext-Simple'
 		}
 	},
 	'MIME::Base32' => {
@@ -308,13 +308,13 @@ my %modulesList = (
 	'MIME::Base64' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-MIME-Base64'
+			'rhel'   => 'perl-MIME-Base64'
 		}
 	},
 	'Math::Random::Secure' => {
 		'package' => {
 			'ubuntu' => 'libmath-random-secure-perl',
-			'rhel' => 'perl-Math-Random-Secure'
+			'rhel'   => 'perl-Math-Random-Secure'
 		}
 	},
 	'Minion' => {
@@ -331,13 +331,13 @@ my %modulesList = (
 		'minversion' => '9.34',
 		'package'    => {
 			'ubuntu' => 'libmojolicious-perl',
-			'rhel' => 'perl-Mojolicious'
+			'rhel'   => 'perl-Mojolicious'
 		}
 	},
 	'Mojolicious::Plugin::NotYAMLConfig' => {
 		'package' => {
 			'ubuntu' => 'libmojolicious-perl',
-			'rhel' => 'perl-Mojolicious'
+			'rhel'   => 'perl-Mojolicious'
 		}
 	},
 	'Mojolicious::Plugin::RenderFile' => {
@@ -348,25 +348,25 @@ my %modulesList = (
 	'Net::IP' => {
 		'package' => {
 			'ubuntu' => 'libnet-ip-perl',
-			'rhel' => 'perl-Net-IP'
+			'rhel'   => 'perl-Net-IP'
 		}
 	},
 	'Net::OAuth' => {
 		'package' => {
 			'ubuntu' => 'libnet-oauth-perl',
-			'rhel' => 'perl-Net-OAuth'
+			'rhel'   => 'perl-Net-OAuth'
 		}
 	},
 	'Opcode' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Opcode'
+			'rhel'   => 'perl-Opcode'
 		}
 	},
 	'PHP::Serialization' => {
 		'package' => {
 			'ubuntu' => 'libphp-serialization-perl',
-			'rhel' => 'perl-PHP-Serialization'
+			'rhel'   => 'perl-PHP-Serialization'
 		}
 	},
 	'Pandoc' => {
@@ -377,31 +377,31 @@ my %modulesList = (
 	'Perl::Critic' => {
 		'package' => {
 			'ubuntu' => 'libperl-critic-perl',
-			'rhel' => 'perl-Perl-Critic'
+			'rhel'   => 'perl-Perl-Critic'
 		}
 	},
 	'Perl::Tidy' => {
 		'package' => {
 			'ubuntu' => 'perltidy',
-			'rhel' => 'perltidy'
+			'rhel'   => 'perltidy'
 		}
 	},
 	'Pod::Simple::Search' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Pod-Simple'
+			'rhel'   => 'perl-Pod-Simple'
 		}
 	},
 	'Pod::Simple::XHTML' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Pod-Simple'
+			'rhel'   => 'perl-Pod-Simple'
 		}
 	},
 	'Pod::Usage' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Pod-Usage'
+			'rhel'   => 'perl-Pod-Usage'
 		}
 	},
 	'Pod::WSDL' => {
@@ -412,14 +412,14 @@ my %modulesList = (
 	'SOAP::Lite' => {
 		'package' => {
 			'ubuntu' => 'libsoap-lite-perl',
-			'rhel' => 'perl-SOAP-Lite'
+			'rhel'   => 'perl-SOAP-Lite'
 		}
 	},
 	'SQL::Abstract' => {
 		'minversion' => '2',
 		'package'    => {
 			'ubuntu' => 'libsql-abstract-perl',
-			'rhel' => 'perl-SQL-Abstract'
+			'rhel'   => 'perl-SQL-Abstract'
 		}
 	},
 	'SVG' => {
@@ -430,79 +430,79 @@ my %modulesList = (
 	'Scalar::Util' => {
 		'package' => {
 			'ubuntu' => 'perl-base',
-			'rhel' => 'perl-Scalar-List-Utils'
+			'rhel'   => 'perl-Scalar-List-Utils'
 		}
 	},
 	'Socket' => {
 		'package' => {
 			'ubuntu' => 'perl-base',
-			'rhel' => 'perl-Socket'
+			'rhel'   => 'perl-Socket'
 		}
 	},
 	'String::ShellQuote' => {
 		'package' => {
 			'ubuntu' => 'libstring-shellquote-perl',
-			'rhel' => 'perl-String-ShellQuote'
+			'rhel'   => 'perl-String-ShellQuote'
 		}
 	},
 	'Text::CSV' => {
 		'package' => {
 			'ubuntu' => 'libtext-csv-perl',
-			'rhel' => 'perl-Text-CSV'
+			'rhel'   => 'perl-Text-CSV'
 		}
 	},
 	'Text::Wrap' => {
 		'package' => {
 			'ubuntu' => 'perl-base',
-			'rhel' => 'perl-Text-Tabs+Wrap'
+			'rhel'   => 'perl-Text-Tabs+Wrap'
 		}
 	},
 	'Tie::IxHash' => {
 		'package' => {
 			'ubuntu' => 'libtie-ixhash-perl',
-			'rhel' => 'perl-Tie-IxHash'
+			'rhel'   => 'perl-Tie-IxHash'
 		}
 	},
 	'Time::HiRes' => {
 		'package' => {
 			'ubuntu' => 'perl',
-			'rhel' => 'perl-Time-HiRes'
+			'rhel'   => 'perl-Time-HiRes'
 		}
 	},
 	'Time::Zone' => {
 		'package' => {
 			'ubuntu' => 'libtimedate-perl',
-			'rhel' => 'perl-TimeDate'
+			'rhel'   => 'perl-TimeDate'
 		}
 	},
 	'Types::Serialiser' => {
 		'package' => {
 			'ubuntu' => 'libtypes-serialiser-perl',
-			'rhel' => 'perl-Types-Serialiser'
+			'rhel'   => 'perl-Types-Serialiser'
 		}
 	},
 	'URI::Escape' => {
 		'package' => {
 			'ubuntu' => 'liburi-perl',
-			'rhel' => 'perl-URI'
+			'rhel'   => 'perl-URI'
 		}
 	},
 	'UUID::Tiny' => {
 		'package' => {
 			'ubuntu' => 'libuuid-tiny-perl',
-			'rhel' => 'perl-UUID-Tiny'
+			'rhel'   => 'perl-UUID-Tiny'
 		}
 	},
 	'XML::LibXML' => {
 		'package' => {
 			'ubuntu' => 'libxml-libxml-perl',
-			'rhel' => 'perl-XML-LibXML'
+			'rhel'   => 'perl-XML-LibXML'
 		}
 	},
 	'XML::Parser' => {
 		'package' => {
 			'ubuntu' => 'libxml-parser-perl',
-			'rhel' => 'perl-XML-Parser'
+			'rhel'   => 'perl-XML-Parser'
 		}
 	},
 	'XML::Parser::EasyTree' => {
@@ -513,13 +513,13 @@ my %modulesList = (
 	'XML::Writer' => {
 		'package' => {
 			'ubuntu' => 'libxml-writer-perl',
-			'rhel' => 'perl-XML-Writer'
+			'rhel'   => 'perl-XML-Writer'
 		}
 	},
 	'YAML::XS' => {
 		'package' => {
 			'ubuntu' => 'libyaml-libyaml-perl',
-			'rhel' => 'perl-YAML-LibYAML'
+			'rhel'   => 'perl-YAML-LibYAML'
 		}
 	}
 );
@@ -545,10 +545,10 @@ my @programList = qw(
 my ($test_modules, $test_programs, $packagetype, $show_help);
 
 GetOptions(
-	'm|modules'       => \$test_modules,
-	'p|programs'      => \$test_programs,
+	'm|modules'        => \$test_modules,
+	'p|programs'       => \$test_programs,
 	'd|distribution=s' => \$packagetype,
-	'h|help'          => \$show_help,
+	'h|help'           => \$show_help,
 );
 
 pod2usage(2) if $show_help;
@@ -621,7 +621,7 @@ sub check_modules {
 		say '';
 		say 'Some required modules were not found, could not be loaded, or were not at the sufficient version.';
 		if (@missing_modules || @missing_packages) {
-			say 'You can try to install the missing modules with the following command(s):'."\n";
+			say 'You can try to install the missing modules with the following command(s):' . "\n";
 			if (@missing_modules) {
 				say 'sudo cpanm ' . join(' ', @missing_modules) . "\n";
 			}
