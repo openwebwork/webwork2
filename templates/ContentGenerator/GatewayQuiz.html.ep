@@ -334,6 +334,8 @@
 		<div class="alert alert-warning p-1">
 			<%= maketext('Time taken on test: [_1] min ([_2] min allowed).',
 				$c->{elapsedTime}, sprintf('%.0f', 10 * ($c->{set}->due_date - $c->{set}->open_date) / 6) / 100) %>
+			<br>
+			<%= maketext('Test completed on [_1].', $c->{completedTime}) %>
 		</div>
 	% } elsif ($c->{exceededAllowedTime} && $c->{recordedScore} != 0) {
 		<div class="alert alert-warning p-1">
