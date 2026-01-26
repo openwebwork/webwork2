@@ -182,7 +182,7 @@ sub filterRecords {
 	my @filteredRecords = $intersect ? @records : ();
 	if ($intersect) {
 		for my $filter (@filtersToUse) {
-			my ($name, $value) = split(/:/, $filter);
+			my ($name, $value) = split(/:/, $filter, 2);
 			# permission level is handled differently
 			if ($name eq 'permission') {
 				@filteredRecords =
@@ -194,7 +194,7 @@ sub filterRecords {
 	} else {
 		for my $record (@records) {
 			for my $filter (@filtersToUse) {
-				my ($name, $value) = split(/:/, $filter);
+				my ($name, $value) = split(/:/, $filter, 2);
 				# permission level is handled differently
 				if ($name eq 'permission' && $permissionName{ $permissionLevels{ $record->user_id } } eq $value) {
 					push @filteredRecords, $record;
