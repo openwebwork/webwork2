@@ -29,20 +29,15 @@ use constant SET_FIELDS => [
 ];
 use constant PROBLEM_FIELDS =>
 	[qw(source_file value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children counts_parent_grade)];
-use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
+use constant USER_PROBLEM_FIELDS => [qw(problem_seed status)];
 
 # These constants determine what order those fields should be displayed in.
-use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [
-	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod attempted last_answer num_correct
-		num_incorrect)
-];
-# For gateway sets, don't allow changing max_attempts on a per problem basis.
-use constant GATEWAY_PROBLEM_FIELD_ORDER =>
-	[qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
+use constant HEADER_ORDER        => [qw(set_header hardcopy_header)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod)];
+use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value)];
 use constant JITAR_PROBLEM_FIELD_ORDER => [
 	qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod att_to_open_children
-		counts_parent_grade attempted last_answer num_correct num_incorrect)
+		counts_parent_grade)
 ];
 
 # Exclude the gateway set fields from the set field order, because they are only displayed for sets that are gateways.
@@ -70,14 +65,28 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 #                                     [min, max, step] will introduce validation, so should not be used on just any
 #                                     input where we expect numbers
 #     size      => "50",            # size of the edit box (if any)
-#     override  => "none",          # none, one, any, all - defines for whom this data can/must be overidden
+#     override  => "all",           # none, one, any, all - defines for whom this data can be overidden
 #     module    => "problem_list",  # WeBWorK module
 #     default   => 0                # if a field cannot default to undefined/empty what should it default to
-#     labels    => {                # special values can be hashed to display labels
-#       1 => x('Yes'),
-#       0 => x('No'),
+#     labels    => {                # Display labels for type "choose" or type "[min, max, step]".
+#       1 => x('Yes'),              # This is required for type "choose", is optional for type "[min, max, step]",
+#       0 => x('No'),               # and should never be used for any other type.
 #     },
+#     choices   => [ qw(0 1) ]      # Order of the labels above. This must be given if labels is.
 #     convertby => 60,              # divide incoming database field values by this, and multiply when saving
+#
+# Note that if "type" is "[min, max, step]" and "labels" is defined, then a select will be shown before the numeric
+# input with the labels as options.  The label values must not overlap with the numeric values (i.e., min must be
+# greater than all defined label values), and must be numeric. The labels must also include a "numeric" label.  This
+# label will be shown when the number input value is used. It is impomrtant that the choices should not include the
+# special "numeric" value, and that all other choices have numeric values.
+
+# FIXME: The override "none" case needs to be revisited if it is ever used again.  It is definitely not implemented
+# correctly, or it is pointless. If override "none" is to mean it can't be changed at all, then why have it? But then
+# again, with the current implementation fields set to override "none" are not shown when editing for more than one
+# user, but are shown when editing for one user (although they still can't be edited).  That doesn't make sense.  The
+# previous fields that used it were also of type "hidden", and it turns out that type "hidden" and override "none"
+# really means don't use at all, and so listing them was pointless.
 
 use constant BLANKPROBLEM => 'newProblem.pg';
 
@@ -479,65 +488,57 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	max_attempts => {
-		name     => x('Max Attempts'),
-		type     => 'edit',
-		size     => 6,
-		override => 'any',
-		default  => '-1',
-		labels   => {
-			'-1' => x('Unlimited'),
-		},
+		name      => x('Max Attempts'),
+		type      => [ 0, undef, 1 ],
+		size      => 6,
+		override  => 'any',
+		default   => '-1',
+		choices   => [qw(-1)],
+		labels    => { '-1' => x('Unlimited'), numeric => x('Limit to') },
 		help_text => x(
-			'You may cap the number of attempts a student can use for the problem. Use -1 to indicate unlimited attempts.'
+			'You may cap the number of attempts a student can use for the problem. '
+				. 'Select "Unlimited" to allow an unlimited number of attempts.'
 		)
 	},
 	showMeAnother => {
-		name     => x('Show Me Another'),
-		type     => 'edit',
-		size     => '6',
-		override => 'any',
-		default  => '-2',
-		labels   => {
-			'-1' => x('Never'),
-			'-2' => x('Course Default'),
-		},
+		name      => x('Show Me Another'),
+		type      => [ 0, undef, 1 ],
+		size      => '6',
+		override  => 'any',
+		default   => '-2',
+		choices   => [qw(-2 -1)],
+		labels    => { '-2' => x('Course Default'), '-1' => x('Never'), numeric => x('After number of attempts is') },
 		help_text => x(
 			'When a student has more attempts than is specified here they will be able to view another '
-				. 'version of this problem.  If set to -1 the feature is disabled and if set to -2 '
-				. 'the course default is used.'
+				. 'version of this problem.  The "Show Me Another" feature is is disabled if "Never" is selected.'
 		)
 	},
 	showHintsAfter => {
-		name     => x('Show Hints After'),
-		type     => 'edit',
-		size     => '6',
-		override => 'any',
-		default  => '-2',
-		labels   => {
-			'-2' => x('Course Default'),
-			'-1' => x('Never'),
-		},
+		name      => x('Show Hints'),
+		type      => [ 0, undef, 1 ],
+		size      => '6',
+		override  => 'any',
+		default   => '-2',
+		choices   => [qw(-2 -1)],
+		labels    => { '-2' => x('Course Default'), '-1' => x('Never'), numeric => x('After number of attempts is') },
 		help_text => x(
 			'This specifies the number of attempts before hints are shown to students. '
-				. 'The value of -2 uses the default from course configuration. '
-				. 'The value of -1 disables hints. '
+				. 'If "Never" is selected, then hints are disabled. '
 				. 'Note that this will only have an effect if the problem has a hint.'
 		),
 	},
 	prPeriod => {
-		name     => x('Rerandomize After'),
-		type     => 'edit',
-		size     => '6',
-		override => 'any',
-		default  => '-1',
-		labels   => {
-			'-1' => x('Course Default'),
-			'0'  => x('Never'),
-		},
+		name      => x('Rerandomize'),
+		type      => [ 1, undef, 1 ],
+		size      => '6',
+		override  => 'any',
+		default   => '-1',
+		choices   => [qw(-1 0)],
+		labels    => { '-1' => x('Course Default'), '0' => x('Never'), numeric => x('After number of attempts is') },
 		help_text => x(
 			'This specifies the rerandomization period: the number of attempts before a new version of '
-				. 'the problem is generated by changing the Seed value. The value of -1 uses the '
-				. 'default from course configuration. The value of 0 disables rerandomization.'
+				. 'the problem is generated by changing the Seed value. '
+				. 'Randomization is disabled if "Never" is selected.'
 		),
 	},
 	problem_seed => {
@@ -561,34 +562,6 @@ use constant FIELD_PROPERTIES => {
 				. 'to 1 to manually award full credit on this problem.'
 		)
 	},
-	attempted => {
-		name     => x('Attempted'),
-		type     => 'hidden',
-		override => 'none',
-		choices  => [qw(0 1)],
-		labels   => {
-			1 => x('Yes'),
-			0 => x('No'),
-		},
-		default => '0',
-	},
-	last_answer => {
-		name     => x('Last Answer'),
-		type     => 'hidden',
-		override => 'none',
-	},
-	num_correct => {
-		name     => x('Correct'),
-		type     => 'hidden',
-		override => 'none',
-		default  => '0',
-	},
-	num_incorrect => {
-		name     => x('Incorrect'),
-		type     => 'hidden',
-		override => 'none',
-		default  => '0',
-	},
 	hide_hint => {
 		name     => x('Hide Hints from Students'),
 		type     => 'choose',
@@ -605,19 +578,18 @@ use constant FIELD_PROPERTIES => {
 		)
 	},
 	att_to_open_children => {
-		name     => x('Attempt Threshold for Children'),
-		type     => 'edit',
-		size     => 6,
-		override => 'any',
-		default  => '0',
-		labels   => {
-			'-1' => x('max'),
-		},
+		name      => x('Attempt Threshold for Children'),
+		type      => [ 0, undef, 1 ],
+		size      => 6,
+		override  => 'any',
+		default   => '0',
+		choices   => [qw(-1)],
+		labels    => { '-1' => x('No Attempts Remaining'), numeric => x('Number incorrect is') },
 		help_text => x(
 			'The child problems for this problem will become visible to the student when they either have more '
 				. 'incorrect attempts than is specified here, or when they run out of attempts, whichever comes '
-				. 'first.  Use -1 to indicate that child problems should only be available after a student '
-				. 'runs out of attempts.'
+				. 'first.  Select "No Attempts Remaining" to indicate that child problems should only be available '
+				. 'after a student runs out of attempts.'
 		),
 	},
 	counts_parent_grade => {
@@ -636,13 +608,6 @@ use constant FIELD_PROPERTIES => {
 				. 'average of the status of its child problems which have this flag enabled.'
 		),
 	},
-};
-
-use constant FIELD_PROPERTIES_GWQUIZ => {
-	max_attempts => {
-		type     => 'hidden',
-		override => 'any',
-	}
 };
 
 # Create a table of fields for the given parameters, one row for each db field.
@@ -724,13 +689,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	}
 
 	for my $field (@fieldOrder) {
-		my %properties;
-
-		if ($isGWset && defined(FIELD_PROPERTIES_GWQUIZ->{$field})) {
-			%properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
-		} else {
-			%properties = %{ FIELD_PROPERTIES()->{$field} };
-		}
+		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 
 		# Don't show fields if that option isn't enabled.
 		if (!$ce->{options}{enableConditionalRelease}
@@ -822,9 +781,8 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	if ($field eq 'problems_per_page') {
-		if ($c->ce->{test}{maxProblemsPerPage} == 1) {
-			$properties{override} = 'none';
-		} elsif ($c->ce->{test}{maxProblemsPerPage} > 1) {
+		return '' if $c->ce->{test}{maxProblemsPerPage} == 1;
+		if ($c->ce->{test}{maxProblemsPerPage} > 1) {
 			my $max = $c->ce->{test}{maxProblemsPerPage};
 			$properties{type} = [ 1, $max, 1 ];
 			$properties{help_text} =
@@ -840,10 +798,6 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 	return '' if $properties{override} eq 'one'  && !$forOneUser;
 	return '' if $properties{override} eq 'none' && !$forOneUser;
 	return '' if $properties{override} eq 'all'  && $forUsers;
-
-	my $edit   = $properties{type} eq 'edit'       && $properties{override} ne 'none';
-	my $number = ref($properties{type}) eq 'ARRAY' && $properties{override} ne 'none';
-	my $choose = $properties{type} eq 'choose'     && $properties{override} ne 'none';
 
 	my ($globalValue, $userValue, $blankField) = (undef, undef, '');
 	if ($field =~ /:/) {
@@ -882,106 +836,141 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 	# Determine if this is a set record or problem record.
 	my ($recordType, $recordID) = defined $problemID ? ('problem', $problemID) : ('set', $setID);
 
-	my %labels = (map { $_ => $c->maketext($properties{labels}{$_}) } keys %{ $properties{labels} });
+	my %labels = map { $_ => $c->maketext($properties{labels}{$_}) } keys %{ $properties{labels} // {} };
 
 	# This contains either a text input or a select for changing a given database field.
 	my $input = '';
 
-	if ($edit || $number) {
-		if ($field =~ /_date/) {
-			$input = $c->tag(
-				'div',
-				class => 'input-group input-group-sm flatpickr',
-				$c->c(
-					$c->text_field(
-						"$recordType.$recordID.$field",
-						$forUsers ? $userValue : $globalValue,
-						id    => "$recordType.$recordID.${field}_id",
-						class => 'form-control form-control-sm'
-							. ($field eq 'open_date' ? ' datepicker-group' : ''),
-						placeholder => (
-							$forUsers && $canOverride ? $c->maketext('Set Default') : $c->maketext('None Specified')
-						),
-						data => {
-							input      => undef,
-							done_text  => $c->maketext('Done'),
-							today_text => $c->maketext('Today'),
-							now_text   => $c->maketext('Now'),
-							locale     => $c->ce->{language},
-							timezone   => $c->ce->{siteDefaults}{timezone}
-						}
-					),
-					$c->tag(
-						'a',
-						class        => 'btn btn-secondary btn-sm',
-						data         => { toggle => undef },
-						role         => 'button',
-						tabindex     => 0,
-						'aria-label' => $c->maketext('Pick date and time'),
-						$c->tag('i', class => 'fas fa-calendar-alt', 'aria-hidden' => 'true', '')
-					)
-				)->join('')
-			);
-		} else {
-			my $value = $forUsers ? ($labels{$userValue} || $userValue) : ($labels{$globalValue} || $globalValue);
-			$value = $c->ce->{test}{maxProblemsPerPage}
-				if ($field eq 'problems_per_page'
-					&& $c->ce->{test}{maxProblemsPerPage}
-					&& ($value == 0 || $value > $c->ce->{test}{maxProblemsPerPage}));
-			$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
-
-			my @field_args = (
-				"$recordType.$recordID.$field", $value,
-				id    => "$recordType.$recordID.${field}_id",
-				class => 'form-control form-control-sm',
-				$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
-			);
-			if ($field eq 'problem_seed') {
-				# Insert a randomization button
+	if ($properties{override} ne 'none') {
+		if ($properties{type} eq 'edit' || ref($properties{type}) eq 'ARRAY') {
+			if ($field =~ /_date/) {
 				$input = $c->tag(
 					'div',
-					class => 'input-group input-group-sm',
-					style => 'min-width: 7rem',
+					class => 'input-group input-group-sm flatpickr',
 					$c->c(
-						$c->number_field(@field_args, min => 0),
+						$c->text_field(
+							"$recordType.$recordID.$field",
+							$forUsers ? $userValue : $globalValue,
+							id    => "$recordType.$recordID.${field}_id",
+							class => 'form-control form-control-sm'
+								. ($field eq 'open_date' ? ' datepicker-group' : ''),
+							placeholder => (
+								$forUsers
+									&& $canOverride ? $c->maketext('Set Default') : $c->maketext('None Specified')
+							),
+							data => {
+								input      => undef,
+								done_text  => $c->maketext('Done'),
+								today_text => $c->maketext('Today'),
+								now_text   => $c->maketext('Now'),
+								locale     => $c->ce->{language},
+								timezone   => $c->ce->{siteDefaults}{timezone}
+							}
+						),
 						$c->tag(
-							'button',
-							type  => 'button',
-							class => 'randomize-seed-btn btn btn-sm btn-secondary',
-							title => 'randomize',
-							data  => {
-								seed_input   => "$recordType.$recordID.problem_seed_id",
-								status_input => "$recordType.$recordID.status_id"
-							},
-							$c->tag('i', class => 'fa-solid fa-shuffle')
+							'a',
+							class        => 'btn btn-secondary btn-sm',
+							data         => { toggle => undef },
+							role         => 'button',
+							tabindex     => 0,
+							'aria-label' => $c->maketext('Pick date and time'),
+							$c->tag('i', class => 'fas fa-calendar-alt', 'aria-hidden' => 'true', '')
 						)
 					)->join('')
 				);
-			} elsif ($number) {
-				$input = $c->number_field(
-					@field_args,
-					min  => ($properties{type}[0] || 0),
-					max  => ($properties{type}[1] || undef),
-					step => ($properties{type}[2] || 1),
-					$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ()
-				);
 			} else {
-				$input = $c->text_field(@field_args,
-					$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ());
-			}
-		}
-	} elsif ($choose) {
-		my $value = $forUsers ? $userValue : $globalValue;
+				my $value = $forUsers ? $userValue : $globalValue;
+				$value = $c->ce->{test}{maxProblemsPerPage}
+					if ($field eq 'problems_per_page'
+						&& $c->ce->{test}{maxProblemsPerPage}
+						&& ($value == 0 || $value > $c->ce->{test}{maxProblemsPerPage}));
+				$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
-		$input = $c->select_field(
-			"$recordType.$recordID.$field",
-			[
-				$forUsers && $userRecord ? [ $c->maketext('Set Default') => '' ] : (),
-				map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] } @{ $properties{choices} }
-			],
-			id    => "$recordType.$recordID.${field}_id",
-			class => 'form-select form-select-sm'
-		);
+				my @field_args = (
+					id    => "$recordType.$recordID.${field}_id",
+					class => 'form-control form-control-sm',
+					$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
+				);
+				if ($field eq 'problem_seed') {
+					# Insert a randomization button
+					$input = $c->tag(
+						'div',
+						class => 'input-group input-group-sm',
+						style => 'min-width: 7rem',
+						$c->c(
+							$c->number_field("$recordType.$recordID.$field", $value, @field_args, min => 0),
+							$c->tag(
+								'button',
+								type  => 'button',
+								class => 'randomize-seed-btn btn btn-sm btn-secondary',
+								title => 'randomize',
+								data  => {
+									seed_input   => "$recordType.$recordID.problem_seed_id",
+									status_input => "$recordType.$recordID.status_id"
+								},
+								$c->tag('i', class => 'fa-solid fa-shuffle')
+							)
+						)->join('')
+					);
+				} elsif (ref($properties{type}) eq 'ARRAY') {
+					if (ref $properties{labels} eq 'HASH') {
+						$input = $c->tag(
+							'div',
+							class => 'input-group input-group-sm mixed-numeric-select',
+							style => 'min-width: 7rem',
+							$c->c(
+								$c->select_field(
+									"$recordType.$recordID.$field",
+									[
+										$forUsers && $canOverride ? [ $c->maketext('Set Default') => '' ] : (),
+										[
+											$labels{numeric} => 'numeric',
+											$value ne '' && !defined $labels{$value} ? (selected => undef) : ()
+										],
+										map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] }
+											@{ $properties{choices} }
+									],
+									class => 'form-select form-select-sm'
+								),
+								$c->number_field(
+									"$recordType.$recordID.$field", defined $labels{$value} ? '' : $value,
+									@field_args,
+									min => $properties{type}[0],
+									$properties{type}[1] ? (max => $properties{type}[1]) : (),
+									step  => $properties{type}[2] || 1,
+									style => 'max-width: 4rem'
+								)
+							)->join('')
+						);
+					} else {
+						$input = $c->number_field(
+							"$recordType.$recordID.$field", $value,
+							@field_args,
+							min => $properties{type}[0],
+							$properties{type}[1] ? (max => $properties{type}[1]) : (),
+							step => $properties{type}[2] || 1,
+							$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : (),
+						);
+					}
+				} else {
+					$input = $c->text_field("$recordType.$recordID.$field",
+						$value, @field_args,
+						$forUsers && $canOverride ? (placeholder => $c->maketext('Set Default')) : ());
+				}
+			}
+		} elsif ($properties{type} eq 'choose') {
+			my $value = $forUsers ? $userValue : $globalValue;
+
+			$input = $c->select_field(
+				"$recordType.$recordID.$field",
+				[
+					$forUsers && $userRecord ? [ $c->maketext('Set Default') => '' ] : (),
+					map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] } @{ $properties{choices} }
+				],
+				id    => "$recordType.$recordID.${field}_id",
+				class => 'form-select form-select-sm'
+			);
+		}
 	}
 
 	my $globalDisplayValue =
@@ -1342,17 +1331,10 @@ sub initialize ($c) {
 	my $forOneUser = $forUsers == 1;
 	$c->stash->{forOneUser} = $forOneUser;
 
-	# If editing a versioned set, it only makes sense edit it for one user.
+	# If editing a versioned set, it only makes sense to edit it for one user.
 	return if ($editingSetVersion && !$forOneUser);
 
 	my %properties = %{ FIELD_PROPERTIES() };
-
-	# Invert the labels hashes.
-	my %undoLabels;
-	for my $key (keys %properties) {
-		%{ $undoLabels{$key} } =
-			map { $c->maketext($properties{$key}{labels}{$_}) => $_ } keys %{ $properties{$key}{labels} };
-	}
 
 	my $error = 0;
 	if ($c->param('submit_changes')) {
@@ -1405,7 +1387,6 @@ sub initialize ($c) {
 	$c->addbadmessage($c->maketext('No changes were saved!')) if $error;
 
 	if ($c->param('submit_changes') && !$error) {
-
 		my $oldAssignmentType = $setRecord->assignment_type();
 
 		# Save general set information (including headers)
@@ -1428,9 +1409,9 @@ sub initialize ($c) {
 				for my $field (@{ SET_FIELDS() }) {
 					next unless canChange($forUsers, $field);
 
-					my $param = $c->param("set.$setID.$field");
+					my @paramValues = $c->param("set.$setID.$field");
+					my $param = @paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
 					if ($param && $param ne '') {
-						$param = $undoLabels{$field}{$param}               if defined $undoLabels{$field}{$param};
 						$param = $param * $properties{$field}->{convertby} if $properties{$field}{convertby};
 
 						# Special case: Does field fill in multiple values?
@@ -1502,11 +1483,10 @@ sub initialize ($c) {
 			foreach my $field (@{ SET_FIELDS() }) {
 				next unless canChange($forUsers, $field);
 
-				my $param = $c->param("set.$setID.$field");
-				$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-					unless defined $param && $param ne "";
-				my $unlabel = $undoLabels{$field}->{$param};
-				$param = $unlabel if defined $unlabel;
+				my @paramValues = $c->param("set.$setID.$field");
+				my $param       = @paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+				$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
+					unless defined $param && $param ne '';
 				if ($field =~ /restricted_release/ && $param) {
 					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
 					$c->check_sets($db, $param);
@@ -1655,10 +1635,10 @@ sub initialize ($c) {
 					for my $field (@{ PROBLEM_FIELDS() }) {
 						next unless canChange($forUsers, $field);
 
-						my $param = $c->param("problem.$problemID.$field");
+						my @paramValues = $c->param("problem.$problemID.$field");
+						my $param =
+							@paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
 						if (defined $param && $param ne '') {
-							$param = $undoLabels{$field}{$param} if defined $undoLabels{$field}{$param};
-
 							# Protect exploits with source_file
 							if ($field eq 'source_file') {
 								if ($param =~ /\.\./ || $param =~ /^\//) {
@@ -1682,11 +1662,12 @@ sub initialize ($c) {
 					for my $field (@{ USER_PROBLEM_FIELDS() }) {
 						next unless canChange($forUsers, $field);
 
-						my $param = $c->param("problem.$problemID.$field");
-						$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-							unless defined $param && $param ne "";
-						my $unlabel = $undoLabels{$field}->{$param};
-						$param = $unlabel if defined $unlabel;
+						my @paramValues = $c->param("problem.$problemID.$field");
+						my $param =
+							@paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+						$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
+							unless defined $param && $param ne '';
+
 						# Protect exploits with source_file
 						if ($field eq 'source_file') {
 							if ($param =~ /\.\./ || $param =~ /^\//) {
@@ -1719,11 +1700,10 @@ sub initialize ($c) {
 				foreach my $field (@{ PROBLEM_FIELDS() }) {
 					next unless canChange($forUsers, $field);
 
-					my $param = $c->param("problem.$problemID.$field");
-					$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-						unless defined $param && $param ne "";
-					my $unlabel = $undoLabels{$field}->{$param};
-					$param = $unlabel if defined $unlabel;
+					my @paramValues = $c->param("problem.$problemID.$field");
+					my $param = @paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+					$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
+						unless defined $param && $param ne '';
 
 					# Protect exploits with source_file
 					if ($field eq 'source_file') {
@@ -1759,11 +1739,11 @@ sub initialize ($c) {
 						foreach my $field (keys %useful) {
 							next unless canChange($forUsers, $field);
 
-							my $param = $c->param("problem.$problemID.$field");
-							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : ""
-								unless defined $param && $param ne "";
-							my $unlabel = $undoLabels{$field}->{$param};
-							$param = $unlabel if defined $unlabel;
+							my @paramValues = $c->param("problem.$problemID.$field");
+							my $param =
+								@paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+							$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
+								unless defined $param && $param ne '';
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
 						}
@@ -2048,13 +2028,11 @@ sub initialize ($c) {
 }
 
 # Helper method for checking if two values are different.
-# The return values will usually be thrown away, but they could be useful for debugging.
 sub changed ($first, $second) {
-	return "def/undef" if defined $first  && !defined $second;
-	return "undef/def" if !defined $first && defined $second;
-	return ""          if !defined $first && !defined $second;
-	return "ne"        if $first ne $second;
-	return "";
+	return 0 if !defined $first && !defined $second;
+	return 1 if !defined $first || !defined $second;
+	return 1 if $first ne $second;
+	return 0;
 }
 
 # Helper method that determines for how many users at a time a field can be changed.
@@ -2071,7 +2049,7 @@ sub canChange ($forUsers, $field) {
 	return 1 if $howManyCan eq "any";
 	return 1 if $howManyCan eq "one" && $forOneUser;
 	return 1 if $howManyCan eq "all" && !$forUsers;
-	return 0;    # FIXME: maybe it should default to 1?
+	return 0;
 }
 
 # Helper method that determines if a file is valid and returns a pretty error message.

@@ -621,7 +621,7 @@
 								% }
 							</div>
 							<div class="row">
-								<div class="col-md-5">
+								<div class="col-lg-5">
 									<%= $c->fieldTable(
 										$userToShow, $setID, $problemID,
 										$globalProblems->{$problemID},
@@ -629,7 +629,7 @@
 										$setRecord->assignment_type
 									) =%>
 								</div>
-								<div class="font-sm col-md-7">
+								<div class="font-sm col-lg-7">
 									% if ($repeatFile) {
 										<div class="alert alert-danger p-1 mb-2 fw-bold"><%= $repeatFile %></div>
 									% }
