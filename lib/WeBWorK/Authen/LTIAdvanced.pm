@@ -262,9 +262,9 @@ sub check_user {
 		return 0;
 	}
 
-	my $User = $db->getUser($user_id);
+	$self->{user} = $db->getUser($user_id);
 
-	if (!$User) {
+	if (!$self->{user}) {
 		my %options;
 		$options{ $ce->{LTI}{v1p1}{preferred_source_of_username} } = 1
 			if ($ce->{LTI}{v1p1}{preferred_source_of_username});
@@ -285,7 +285,7 @@ sub check_user {
 
 		foreach my $key (keys(%options), ($use_lis_person_sourcedid_options ? @lis_person_sourcedid_options : ())) {
 			if (defined($c->param($key))) {
-				debug("User |$user_id| is unknown but may be an new user from an LMS via LTI. "
+				debug("User |$user_id| is unknown but may be a new user from an LMS via LTI. "
 						. "Saw a value for $key About to return a 1");
 				return 1;    #This may be a new user coming in from a LMS via LTI.
 			}
@@ -297,7 +297,7 @@ sub check_user {
 		return 0;
 	}
 
-	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
+	unless ($ce->status_abbrev_has_behavior($self->{user}->status, "allow_course_access")) {
 		$self->{log_error} .= "$user_id - course access denied";
 		$self->{error} = $c->maketext("Authentication failed.  Please speak to your instructor.");
 		return 0;
@@ -352,9 +352,7 @@ sub authenticate {
 	debug("LTIAdvanced::authenticate called for user |$user|");
 	debug "ref(c) = |" . ref($c) . "|";
 
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->ce->{'courseName'};
+	my $ce = $c->ce;
 
 	# Check nonce to see whether request is legitimate
 	debug("Nonce = |" . $self->{oauth_nonce} . "|");
@@ -437,7 +435,7 @@ sub authenticate {
 
 		my $userID = $self->{user_id};
 
-		if (!$db->existsUser($userID)) {    # New User. Create User record
+		if (!$self->{user}) {    # New User. Create User record
 			if ($ce->{block_lti_create_user}) {
 				$self->{log_error} .=
 					"Account creation blocked by block_lti_create_user setting. Did not create user $userID.";
@@ -576,6 +574,7 @@ sub create_user {
 	}
 
 	$db->addUser($newUser);
+	$self->{user} = $newUser;
 	$self->write_log_entry("New user $userID added via LTIAdvanced login");
 
 	# Assign permssion level
@@ -641,7 +640,6 @@ sub maybe_update_user {
 	my $db         = $c->db;
 	my $courseName = $c->ce->{'courseName'};
 
-	my $user            = $db->getUser($userID);
 	my $permissionLevel = $db->getPermissionLevel($userID);
 	# We don't alter records of users with too high a permission
 	if (defined($permissionLevel->permission)
@@ -676,10 +674,10 @@ sub maybe_update_user {
 		my $change_made = 0;
 
 		for my $element (@elements) {
-			if ($user->$element ne $tempUser->$element) {
+			if ($self->{user}->$element ne $tempUser->$element) {
 				$change_made = 1;
 				warn "WeBWorK User has $element: "
-					. $user->$element
+					. $self->{user}->$element
 					. " but LMS user has $element "
 					. $tempUser->$element . "\n"
 					if ($ce->{debug_lti_parameters});

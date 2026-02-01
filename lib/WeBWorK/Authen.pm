@@ -377,11 +377,34 @@ sub check_user {
 		return 0;
 	}
 
-	my $User = $db->getUser($user_id);
+	$self->{user} = $db->getUser($user_id);
 
-	unless ($User) {
+	unless ($self->{user}) {
 		$self->{log_error} = "user unknown";
 		$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
+		return 0;
+	}
+
+	return 1;
+}
+
+sub validate_user {
+	my $self = shift;
+	my $c    = $self->{c};
+
+	# Deny access for certain roles (dropped students, proctor roles).
+	unless ($self->{login_type} =~ /^proctor/
+		|| $c->ce->status_abbrev_has_behavior($self->{user}->status, 'allow_course_access'))
+	{
+		$self->{log_error} = 'user not allowed course access';
+		$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
+		return 0;
+	}
+
+	# Deny access for permission levels below 'login' permission level.
+	unless ($c->authz->hasPermissions($self->{user_id}, 'login')) {
+		$self->{log_error} = 'user not permitted to login';
+		$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
 		return 0;
 	}
 
@@ -485,6 +508,7 @@ sub verify_normal_user {
 				$c->stash(authen_error => $c->maketext('The security code is required.'));
 			}
 		}
+		return 0 unless $self->validate_user;
 		return 1;
 	} else {
 		my $auth_result = $self->authenticate;
@@ -494,20 +518,7 @@ sub verify_normal_user {
 		delete $self->session->{two_factor_verification_needed};
 
 		if ($auth_result > 0) {
-			# Deny certain roles (dropped students, proctor roles).
-			unless ($self->{login_type} =~ /^proctor/
-				|| $c->ce->status_abbrev_has_behavior($c->db->getUser($user_id)->status, "allow_course_access"))
-			{
-				$self->{log_error} = "user not allowed course access";
-				$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
-				return 0;
-			}
-			# Deny permission levels below "login" permission level.
-			unless ($c->authz->hasPermissions($user_id, "login")) {
-				$self->{log_error} = "user not permitted to login";
-				$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
-				return 0;
-			}
+			return 0 unless $self->validate_user;
 			$self->{session_key}   = $self->create_session($user_id);
 			$self->{initial_login} = 1;
 			return 1;
