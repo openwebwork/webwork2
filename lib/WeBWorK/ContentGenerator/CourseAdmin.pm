@@ -707,9 +707,10 @@ sub do_rename_course ($c) {
 
 	eval {
 		renameCourse(
-			courseID    => $rename_oldCourseID,
-			ce          => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
-			newCourseID => $rename_newCourseID,
+			courseID           => $rename_oldCourseID,
+			ce                 => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
+			newCourseID        => $rename_newCourseID,
+			updateLTICourseMap => 1,
 			%optional_arguments
 		);
 	};
