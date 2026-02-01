@@ -15,7 +15,7 @@
 		<label class="col-auto col-form-label col-form-label-sm" for="set-date-choice">Set</label>
 		<div class="col-auto">
 			<select class="form-select form-select-sm" id="set-date-choice">
-				<option value="" selected><%= maketext('Choose set date type') %></option>
+				<option value="" selected disabled><%= maketext('Choose set date type') %></option>
 				<option value="open_date"><%= maketext('Open Date') %></option>
 				% if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
 					<option value="reduced_scoring_date"><%= maketext('Reduced Scoring Date') %></option>
