@@ -15,11 +15,15 @@
 			class => 'col-form-label col-form-label-sm col-md-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.import.source' => [
-					[ maketext('Select filenames below') => '', selected => undef, disabled => undef ],
+					[ maketext('Select filename below') => '', selected => undef, disabled => undef ],
 					@$setDefList
 				],
 				id => 'import_source_select', class => 'form-select form-select-sm', dir => 'ltr',
 				size => param('action.import.number') || 1,
+				data => {
+					select_multiple_text => maketext('Select filenames below'),
+					select_single_text => maketext('Select filename below')
+				},
 				defined param('action.import.number') && param('action.import.number') ne '1'
 				? (multiple => undef)
 				: () =%>
@@ -30,7 +34,7 @@
 			class => 'col-form-label col-form-label-sm col-md-auto' =%>
 		<div class="col-auto">
 			<%= text_field 'action.import.name' => '', id => 'import_text', class => 'form-control form-control-sm',
-				dir => 'ltr' =%>
+				dir => 'ltr', data => { multiple_files_text => maketext('(taken from filenames)') } =%>
 		</div>
 	</div>
 	<div class="row mb-2">

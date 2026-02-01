@@ -145,14 +145,23 @@
 			const number = parseInt(numSelect.options[numSelect.selectedIndex]?.value ?? '1');
 			const importSourceSelect = document.problemsetlist['action.import.source'];
 			if (importSourceSelect) {
-				if (number === 1 && !importSourceSelect.value) importSourceSelect.options[0].selected = true;
 				importSourceSelect.size = number;
-				importSourceSelect.multiple = number > 1 ? true : false;
-				if (number > 1) importSourceSelect.options[0].selected = false;
+				if (number === 1) {
+					if (!importSourceSelect.value) importSourceSelect.options[0].selected = true;
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectSingleText ?? 'Select filename below';
+					importSourceSelect.multiple = false;
+				} else {
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectMultipleText ?? 'Select filename below';
+					importSourceSelect.multiple = true;
+					importSourceSelect.options[0].selected = false;
+				}
 			}
 			const importNameInput = document.problemsetlist['action.import.name'];
 			if (importNameInput) {
-				importNameInput.value = number > 1 ? '(taken from filenames)' : '';
+				importNameInput.value =
+					number > 1 ? (importNameInput.dataset.multipleFilesText ?? '(taken from filenames)') : '';
 				importNameInput.readOnly = number > 1 ? true : false;
 				importNameInput.disabled = number > 1 ? true : false;
 			}
