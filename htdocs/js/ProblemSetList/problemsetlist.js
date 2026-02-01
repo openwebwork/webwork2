@@ -7,12 +7,12 @@
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
 			if (element?.id.endsWith('_err_msg')) {
-				element?.classList.remove('d-none');
-			} else {
-				element?.classList.add('is-invalid');
+				element.classList.remove('d-none');
+			} else if (element) {
+				element.classList.add('is-invalid');
 				if (!(element.id in event_listeners)) {
 					event_listeners[element.id] = hide_errors([], elements);
-					element?.addEventListener('change', event_listeners[element.id]);
+					element.addEventListener('change', event_listeners[element.id]);
 				}
 			}
 		}
@@ -23,17 +23,17 @@
 			for (const id of ids) elements.push(document.getElementById(id));
 			for (const element of elements) {
 				if (element?.id.endsWith('_err_msg')) {
-					element?.classList.add('d-none');
+					element.classList.add('d-none');
 					if (element.id === 'select_set_err_msg' && 'set_table_id' in event_listeners) {
 						document
 							.getElementById('set_table_id')
 							?.removeEventListener('change', event_listeners.set_table_id);
 						delete event_listeners.set_table_id;
 					}
-				} else {
-					element?.classList.remove('is-invalid');
+				} else if (element) {
+					element.classList.remove('is-invalid');
 					if (element.id in event_listeners) {
-						element?.removeEventListener('change', event_listeners[element.id]);
+						element.removeEventListener('change', event_listeners[element.id]);
 						delete event_listeners[element.id];
 					}
 				}
@@ -174,10 +174,15 @@
 		'zh-HK': 'yyyy/L/d ah:mm'
 	};
 
-	// Initialize the date/time picker for the import form.
+	// Initialize the date/time picker for the import form and common date editor.
+	const dateInputs = [];
 	const importDateShift = document.getElementById('import_date_shift');
-	if (importDateShift) {
-		luxon.Settings.defaultLocale = importDateShift.dataset.locale ?? 'en';
+	if (importDateShift) dateInputs.push(importDateShift);
+	const commonDateInput = document.getElementById('common-date');
+	if (commonDateInput) dateInputs.push(commonDateInput);
+
+	for (const dateInput of dateInputs) {
+		luxon.Settings.defaultLocale = dateInput.dataset.locale ?? 'en';
 
 		// Compute the time difference between a time in the browser timezone and the same time in the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
@@ -189,17 +194,17 @@
 				new Date(dateTime.toLocaleString('en-US')).getTime() -
 				new Date(
 					dateTime.toLocaleString('en-US', {
-						timeZone: importDateShift.dataset.timezone ?? 'America/New_York'
+						timeZone: dateInput.dataset.timezone ?? 'America/New_York'
 					})
 				).getTime()
 			);
 		};
 
-		let fallbackDate = importDateShift.value
-			? new Date(parseInt(importDateShift.value) * 1000 - timezoneAdjustment(parseInt(importDateShift.value)))
+		let fallbackDate = dateInput.value
+			? new Date(parseInt(dateInput.value) * 1000 - timezoneAdjustment(parseInt(dateInput.value)))
 			: new Date();
 
-		const fp = flatpickr(importDateShift.parentNode, {
+		const fp = flatpickr(dateInput.parentNode, {
 			allowInput: true,
 			enableTime: true,
 			minuteIncrement: 1,
@@ -216,15 +221,15 @@
 			disableMobile: true,
 			wrap: true,
 			plugins: [
-				new confirmDatePlugin({ confirmText: importDateShift.dataset.doneText, showAlways: true }),
+				new confirmDatePlugin({ confirmText: dateInput.dataset.doneText, showAlways: true }),
 				new ShortcutButtonsPlugin({
 					button: [
 						{
-							label: importDateShift.dataset.todayText ?? 'Today',
+							label: dateInput.dataset.todayText ?? 'Today',
 							attributes: { class: 'btn btn-sm btn-secondary ms-auto me-1 mb-1' }
 						},
 						{
-							label: importDateShift.dataset.nowText ?? 'Now',
+							label: dateInput.dataset.nowText ?? 'Now',
 							attributes: { class: 'btn btn-sm btn-secondary mx-auto mb-1' }
 						}
 					],
@@ -251,6 +256,10 @@
 
 				// Make the alternate input left-to-right even for right-to-left languages.
 				this.altInput.dir = 'ltr';
+
+				// Move the id of the now hidden input onto the added input so the labels still work.
+				this.altInput.id = this.input.id;
+				this.input.removeAttribute('id');
 			},
 			parseDate(datestr, format) {
 				// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
@@ -278,10 +287,45 @@
 			}
 		});
 
-		importDateShift.nextElementSibling.addEventListener('keydown', (e) => {
+		dateInput.nextElementSibling.addEventListener('keydown', (e) => {
 			if (e.key === ' ' || e.key === 'Enter') {
 				e.preventDefault();
 				fp.open();
+			}
+		});
+	}
+
+	if (commonDateInput) {
+		document.getElementById('apply-common-date')?.addEventListener('click', () => {
+			const dateTypeInput = document.getElementById('set-date-choice');
+			if (!dateTypeInput?.value) {
+				show_errors(['choose_date_type_err_msg'], [dateTypeInput]);
+				return;
+			}
+
+			if (!commonDateInput.value) {
+				show_errors(
+					['choose_common_date_err_msg'],
+					[commonDateInput.parentNode?._flatpickr?.input, commonDateInput.parentNode?._flatpickr?.altInput]
+				);
+				return;
+			}
+
+			const selectedSets = Array.from(document.getElementsByName('apply_date_sets')).filter((c) => c.checked);
+			if (!selectedSets.length) {
+				show_errors(['select_set_err_msg'], []);
+				event_listeners.set_table_id = hide_errors(
+					['set_table_id'],
+					[document.getElementById('select_set_err_msg')]
+				);
+				document.getElementById('set_table_id')?.addEventListener('change', event_listeners.set_table_id);
+			}
+
+			for (const set of selectedSets) {
+				const inputPicker = document.getElementsByName(`set.${set.value}.${dateTypeInput.value}`)[0]?.parentNode
+					?._flatpickr;
+				inputPicker?.setDate(commonDateInput.value, true);
+				inputPicker?.close(); // The picker isn't actually open, but this triggers the onClose handler.
 			}
 		});
 	}
