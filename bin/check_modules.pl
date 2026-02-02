@@ -577,6 +577,14 @@ if ($packagetype && $packagetype ne 'rhel' && $packagetype ne 'ubuntu') {
 	die 'packagetype must be one of \'ubuntu\' or \'rhel\'';
 }
 
+if (!$packagetype) {
+	if (determine_distribution()) {
+		say 'Distribution was not specified.  Detected that the distribution is ' . $packagetype . ' or equivalent.';
+	} else {
+		say 'Distribution was not specified and could not be detected. Use the -d option to specify your distribution.';
+	}
+}
+
 my %packagemgrcommand = ('ubuntu' => 'sudo apt install ', 'rhel' => 'sudo dnf install ');
 
 $test_modules = $test_programs = 1 unless $test_programs || $test_modules;
@@ -595,6 +603,45 @@ sub which {
 		return "$path/$program" if -e "$path/$program";
 	}
 	return;
+}
+
+sub determine_distribution {
+	my %os_attrs;
+
+	#code adapted from Sys::OsRelease
+	if (open my $fh, "<", '/etc/os-release') {
+		while (my $line = <$fh>) {
+			chomp $line;    # remove trailing nl
+			if (substr($line, -1, 1) eq "\r") {
+				$line = substr($line, 0, -1);    # remove trailing cr
+			}
+
+			# skip comments and blank lines
+			if ($line =~ /^ \s+ #/x or $line =~ /^ \s+ $/x) {
+				next;
+			}
+
+			# read attribute assignment lines
+			if ($line =~ /^ ([A-Z0-9_]+) = "(.*)" $/x
+				or $line =~ /^ ([A-Z0-9_]+) = '(.*)' $/x
+				or $line =~ /^ ([A-Z0-9_]+) = (.*) $/x)
+			{
+				next if $1 eq "_config";    # don't overwrite _config
+				$os_attrs{ lc($1) } = $2;
+			}
+		}
+		close $fh;
+		if ($os_attrs{'id'} =~ 'ubuntu' || $os_attrs{'id_like'} =~ 'ubuntu') {
+			$packagetype = 'ubuntu';
+			return 1;
+		} elsif ($os_attrs{'id'} =~ 'fedora' || $os_attrs{'id_like'} =~ 'fedora') {
+			$packagetype = 'rhel';
+			return 1;
+		}
+	} else {
+		return 0;
+	}
+
 }
 
 sub check_modules {
