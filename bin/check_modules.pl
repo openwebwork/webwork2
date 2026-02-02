@@ -9,15 +9,35 @@ webwork2 are installed.
 
 check_modules.pl [options]
 
- Options:
-   -m|--modules          Check that the perl modules needed by webwork2 can be loaded.
-   -p|--programs         Check that the programs needed by webwork2 exist.
-   -d|--distribution     Specify your linux distribution.  Currently supported options are
-                           'ubuntu' - tested on ubuntu 24. May work for other distributions
-				using the apt package manager
-                           'rhel' - for RedHat Enterprise Linux and equivalents with the 
-				EPEL and CodeReady Builder repositories enabled
-				(e.g. Rocky Linux, Oracle Linux)
+Options:
+
+=over 4
+
+=item C<-m|--modules>
+
+Check that the perl modules needed by webwork2 can be loaded.
+
+=item C<-p|--programs>
+
+Check that the programs needed by webwork2 exist.
+
+=item C<-d|--distribution>
+
+Specify your linux distribution.  Currently supported options are
+
+=over 4
+
+=item C<ubuntu>
+
+Tested on ubuntu 24. May work for other distributions using the apt package manager 
+
+=item C<rhel>
+
+For RedHat Enterprise Linux and equivalents with the EPEL and CodeReady Builder repositories enabled (e.g. Rocky Linux, Oracle Linux)
+
+=back
+
+=back
 
 Both programs and modules are checked if no options are given.
 
