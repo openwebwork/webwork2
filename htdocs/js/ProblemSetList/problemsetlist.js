@@ -139,16 +139,32 @@
 	filter_select?.addEventListener('change', filterElementToggle);
 
 	// This will make the popup menu alternate between a single selection and a multiple selection menu.
-	const importAmtSelect = document.getElementById('import_amt_select');
-	if (importAmtSelect) {
-		importAmtSelect.addEventListener('change', () => {
-			const numSelect = document.problemsetlist['action.import.number'];
-			const number = parseInt(numSelect.options[numSelect.selectedIndex].value);
-			document.problemsetlist['action.import.source'].size = number;
-			document.problemsetlist['action.import.source'].multiple = number > 1 ? true : false;
-			document.problemsetlist['action.import.name'].value = number > 1 ? '(taken from filenames)' : '';
-			document.problemsetlist['action.import.name'].readOnly = number > 1 ? true : false;
-			document.problemsetlist['action.import.name'].disabled = number > 1 ? true : false;
+	const numSelect = document.problemsetlist['action.import.number'];
+	if (numSelect) {
+		numSelect.addEventListener('change', () => {
+			const number = parseInt(numSelect.options[numSelect.selectedIndex]?.value ?? '1');
+			const importSourceSelect = document.problemsetlist['action.import.source'];
+			if (importSourceSelect) {
+				importSourceSelect.size = number;
+				if (number === 1) {
+					if (!importSourceSelect.value) importSourceSelect.options[0].selected = true;
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectSingleText ?? 'Select filename below';
+					importSourceSelect.multiple = false;
+				} else {
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectMultipleText ?? 'Select filename below';
+					importSourceSelect.multiple = true;
+					importSourceSelect.options[0].selected = false;
+				}
+			}
+			const importNameInput = document.problemsetlist['action.import.name'];
+			if (importNameInput) {
+				importNameInput.value =
+					number > 1 ? (importNameInput.dataset.multipleFilesText ?? '(taken from filenames)') : '';
+				importNameInput.readOnly = number > 1 ? true : false;
+				importNameInput.disabled = number > 1 ? true : false;
+			}
 		});
 	}
 
