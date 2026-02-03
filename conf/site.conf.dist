@@ -322,7 +322,7 @@ $job_queue{database_dsn} = "sqlite:$webwork_dir/DATA/webwork2_job_queue.db";
 # The problemLibrary configuration data should now be set in localOverrides.conf
 
 # For configuration instructions, see:
-# http://webwork.maa.org/wiki/National_Problem_Library
+# https://wiki.openwebwork.org/wiki/Open_Problem_Library
 # The directory containing the Open Problem Library files.
 # Set the root to "" if no problem
 # library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL.

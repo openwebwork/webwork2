@@ -149,7 +149,7 @@ $mail{feedbackRecipients}    = [
 
 
 # For configuration instructions, see:
-# http://webwork.maa.org/wiki/Open_Problem_Library
+# https://wiki.openwebwork.org/wiki/Open_Problem_Library
 # The directory containing the open problem library files. Set to "" if no problem
 # library is installed.
 # NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
@@ -402,7 +402,7 @@ $mail{feedbackRecipients}    = [
 
 # Alternate locations -- this allows you to place temporary files in a location
 # that is not backed up and is the recommended set up for most installations.
-# See http://webwork.maa.org/wiki/Store_WeBWorK%27s_temporary_files_in_a_separate_directory_or_partition
+# See https://wiki.openwebwork.org/wiki/Store_WeBWorK's_temporary_files_in_a_separate_directory_or_partition
 # for more information.   Note that the wwtmp directory (or partition) should be
 # created under Apache's main server document root which is usually
 # /var/www/html. If this is in a different location on your system, edit the
@@ -428,7 +428,7 @@ $mail{feedbackRecipients}    = [
 
 # To enable Rserve (the R statistical server) in WeBWorK, uncomment the
 # following line.  The R server needs to be installed and running in order for
-# this to work.  See http://webwork.maa.org/wiki/R_in_WeBWorK for more info.
+# this to work.  See https://wiki.openwebwork.org/wiki/R_in_WeBWorK for more info.
 
 #$pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
 
