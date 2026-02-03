@@ -545,8 +545,8 @@ sub getConfigValues ($ce) {
 				var  => 'permissionLevels{report_bugs}',
 				doc  => x('Can report bugs'),
 				doc2 => x(
-					'Users with at least this permission level get a link in the left panel for reporting bugs to the '
-						. 'bug tracking system at bugs.webwork.maa.org.'
+					'Users with at least this permission level get a link in the left panel for reporting issues at '
+						. 'github.com/openwebwork/webwork2.'
 				),
 				type => 'permission'
 			},

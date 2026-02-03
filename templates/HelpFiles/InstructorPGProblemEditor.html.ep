@@ -16,7 +16,7 @@
 			</dt>
 			<dd><%= maketext('Sample problem code with documentation.') %></dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:MathObjects" target="math_objects">
+				<a href="https://wiki.openwebwork.org/wiki/Category:MathObjects" target="math_objects">
 					<%= maketext('Math Objects') %>
 				</a>
 			</dt>
@@ -36,7 +36,7 @@
 				) =%>
 			</dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Authors" target="author_info">
+				<a href="https://wiki.openwebwork.org/wiki/Category:Authors" target="author_info">
 					<%= maketext('Author Info') %>
 				</a>
 			</dt>

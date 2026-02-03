@@ -6,8 +6,8 @@
 <hr>
 <%== maketext('The main page for WeBWorK documentation is the <a [_1]>webwork wiki</a> while specific help for '
 	. q{instructors setting up a course are in the <a [_2]>instructors' section</a>.},
-	'href="http://webwork.maa.org/wiki" target="ww_wiki"',
-	'href="http://webwork.maa.org/wiki/Instructors" target="ww_wiki"') =%>
+	'href="https://wiki.openwebwork.org/wiki" target="ww_wiki"',
+	'href="https://wiki.openwebwork.org/wiki/Instructors" target="ww_wiki"') =%>
 <hr>
 
 <dl>
