@@ -188,12 +188,14 @@ sub gateway_body ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 
-	my $set           = $c->{set};
-	my $effectiveUser = $c->param('effectiveUser');
-	my $user          = $c->param('user');
+	my $set             = $c->{set};
+	my $effectiveUserID = $c->param('effectiveUser');
+	my $userID          = $c->param('user');
+
+	my $effectiveUser = $db->getUser($effectiveUserID);
 
 	my $timeNow   = time;
-	my $timeLimit = $set->version_time_limit || 0;
+	my $timeLimit = ($set->version_time_limit || 0) * $effectiveUser->accommodation_time_factor;
 
 	# Compute how many versions have been launched within timeInterval to determine if a new version can be created,
 	# if a version can be continued, and the date a next version can be started.  If there is an open version that
@@ -214,8 +216,9 @@ sub gateway_body ($c) {
 		}
 
 		# Get a problem to determine how many submits have been made.
-		my @ProblemNums = $db->listUserProblems($effectiveUser, $set->set_id);
-		my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $verSet->version_id, $ProblemNums[0]);
+		my @ProblemNums = $db->listUserProblems($effectiveUserID, $set->set_id);
+		my $Problem =
+			$db->getMergedProblemVersion($effectiveUserID, $set->set_id, $verSet->version_id, $ProblemNums[0]);
 		my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
 		my $maxSubmits = $verSet->attempts_per_version || 0;
 
@@ -300,11 +303,11 @@ sub gateway_body ($c) {
 
 		$data->{score} = '';
 		# Only show score if user has permission and assignment has at least one submit.
-		if ($authz->hasPermissions($user, 'view_hidden_work')
+		if ($authz->hasPermissions($userID, 'view_hidden_work')
 			|| ($verSet->hide_score eq 'N'                && $verSubmits >= 1)
 			|| ($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
 		{
-			my ($total, $possible) = grade_set($db, $verSet, $effectiveUser, 1);
+			my ($total, $possible) = grade_set($db, $verSet, $effectiveUserID, 1);
 			$total = wwRound(2, $total);
 			$data->{score} = "$total/$possible";
 		}

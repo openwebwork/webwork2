@@ -290,7 +290,9 @@ use constant FIELD_PROPERTIES => {
 			'This sets a number of minutes for each version of a test, once it is started.  Use "0" to indicate no '
 				. 'time limit.  If there is a time limit, then there will be an indication that this is a timed '
 				. 'test on the main "Assignments" page.  Additionally the student will be sent to a confirmation '
-				. 'page beefore they can begin.'
+				. 'page before they can begin. Note that the actual time a student will have to complete a timed test '
+				. 'is the product of this time limit and the accommodation time factor set for the student in the '
+				. 'accounts manager.'
 		)
 	},
 	time_limit_cap => {
