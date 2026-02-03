@@ -431,20 +431,17 @@ async sub pre_header_initialize ($c) {
 		Count       => $problem->{showMeAnotherCount},
 	};
 
-	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
-	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
-
 	# Permissions
 
 	# What does the user want to do?
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		showCorrectAnswers => 1,
-		showProblemGrader  => $c->param('showProblemGrader') || 0,
-		showAnsGroupInfo   => $c->param('showAnsGroupInfo')  || $ce->{pg}{options}{showAnsGroupInfo},
-		showAnsHashInfo    => $c->param('showAnsHashInfo')   || $ce->{pg}{options}{showAnsHashInfo},
-		showPGInfo         => $c->param('showPGInfo')        || $ce->{pg}{options}{showPGInfo},
-		showResourceInfo   => $c->param('showResourceInfo')  || $ce->{pg}{options}{showResourceInfo},
+		showProblemGrader  => $userID ne $effectiveUserID,
+		showAnsGroupInfo   => $c->param('showAnsGroupInfo') || $ce->{pg}{options}{showAnsGroupInfo},
+		showAnsHashInfo    => $c->param('showAnsHashInfo')  || $ce->{pg}{options}{showAnsHashInfo},
+		showPGInfo         => $c->param('showPGInfo')       || $ce->{pg}{options}{showPGInfo},
+		showResourceInfo   => $c->param('showResourceInfo') || $ce->{pg}{options}{showResourceInfo},
 		showHints          => 1,
 		showSolutions      => 1,
 		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
@@ -581,10 +578,10 @@ async sub pre_header_initialize ($c) {
 					&& after($c->{set}->answer_date, $c->submitTime)),
 			showMessages       => !$showOnlyCorrectAnswers,
 			showCorrectAnswers => (
-				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
+				$c->{submitAnswers} && $c->{showCorrectOnRandomize} ? 2
 				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
 				? ($ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
-				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
+				: $will{showProblemGrader} || (!$c->{previewAnswers} && $will{showCorrectAnswers}) ? 1
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
@@ -725,9 +722,6 @@ sub siblings ($c) {
 
 	my @items;
 
-	# Keep the grader open when linking to problems if it is already open.
-	my %problemGraderLink = $c->{will}{showProblemGrader} ? (params => { showProblemGrader => 1 }) : ();
-
 	for my $problemID (@problemIDs) {
 		if ($isJitarSet
 			&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
@@ -798,7 +792,7 @@ sub siblings ($c) {
 					@items,
 					$c->tag(
 						'a',
-						$active ? () : (href => $c->systemLink($problemPage, %problemGraderLink)),
+						$active ? () : (href => $c->systemLink($problemPage)),
 						class => $class,
 						$c->b($c->maketext('Problem [_1]', join('.', @seq)) . $status_symbol)
 					)
@@ -809,7 +803,7 @@ sub siblings ($c) {
 				@items,
 				$c->tag(
 					'a',
-					$active ? () : (href => $c->systemLink($problemPage, %problemGraderLink)),
+					$active ? () : (href => $c->systemLink($problemPage)),
 					class => 'nav-link' . ($active ? ' active' : ''),
 					$c->b($c->maketext('Problem [_1]', $problemID) . $status_symbol)
 				)
@@ -973,10 +967,9 @@ sub nav ($c, $args) {
 	}
 
 	my %tail;
-	$tail{displayMode}       = $c->{displayMode}             if defined $c->{displayMode};
-	$tail{showOldAnswers}    = 1                             if $c->{will}{showOldAnswers};
-	$tail{showProblemGrader} = 1                             if $c->{will}{showProblemGrader};
-	$tail{studentNavFilter}  = $c->param('studentNavFilter') if $c->param('studentNavFilter');
+	$tail{displayMode}      = $c->{displayMode}             if defined $c->{displayMode};
+	$tail{showOldAnswers}   = 1                             if $c->{will}{showOldAnswers};
+	$tail{studentNavFilter} = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
 	return $c->tag(
 		'div',
@@ -1136,10 +1129,8 @@ sub output_message ($c) {
 
 # Output the problem grader if the user has permissions to grade problems
 sub output_grader ($c) {
-	if ($c->{will}{showProblemGrader}) {
-		return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem})->insertGrader;
-	}
-
+	return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem})->insertGrader
+		if $c->{will}{showProblemGrader};
 	return '';
 }
 
@@ -1447,7 +1438,7 @@ sub output_summary ($c) {
 	# Attempt summary
 	if ($c->{submitAnswers}) {
 		push(@$output, $c->attemptResults($pg));
-	} elsif ($will{checkAnswers} || $c->{will}{showProblemGrader}) {
+	} elsif ($will{checkAnswers}) {
 		push(
 			@$output,
 			$c->tag(

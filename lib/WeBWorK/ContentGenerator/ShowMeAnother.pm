@@ -157,10 +157,9 @@ async sub pre_header_initialize ($c) {
 	}
 
 	# Disable options that are not applicable for showMeAnother.
-	$c->{can}{recordAnswers}     = 0;
-	$c->{can}{checkAnswers}      = 0;    # This is turned on if the showMeAnother conditions are met below.
-	$c->{can}{getSubmitButton}   = 0;
-	$c->{can}{showProblemGrader} = 0;
+	$c->{can}{recordAnswers}   = 0;
+	$c->{can}{checkAnswers}    = 0;    # This is turned on if the showMeAnother conditions are met below.
+	$c->{can}{getSubmitButton} = 0;
 
 	if ($c->stash->{isPossible}) {
 		$c->{can}{showCorrectAnswers} =

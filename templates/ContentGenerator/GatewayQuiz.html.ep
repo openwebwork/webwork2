@@ -388,6 +388,7 @@
 	%
 	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form mt-0', begin =%>
 		<%= $c->hidden_authen_fields =%>
+		<%= hidden_field courseID => $ce->{courseName} =%>
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
 		<%= hidden_field pageChangeHack => '' =%>
@@ -533,7 +534,7 @@
 					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
 					% );
-				% } elsif ($c->{will}{checkAnswers} || $c->{will}{showProblemGrader}) {
+				% } elsif ($c->{will}{checkAnswers}) {
 					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 					% );
@@ -549,7 +550,7 @@
 					% # Show the jump to anchor.
 					<div id="<%= "prob$i" %>" tabindex="-1"><%= $recordMessage %></div>
 					% # Output the problem header.
-					<h2><%= maketext('Problem [_1].', $i + 1) %></h2>
+					<h2 class="gw-problem-number"><%= maketext('Problem [_1].', $i + 1) %></h2>
 					<span class="problem-sub-header">
 						% if ($c->{can}{showTemplateIds}) {
 							<%= '('
@@ -738,20 +739,10 @@
 			<p><em><%= maketext('Note: grading the test grades all problems, not just those on this page.') %></em></p>
 		% }
 		%
-		% if ($c->{can}{showProblemGrader}) {
+		% if ($c->{can}{showCorrectAnswers}) {
 			<div class="submit-buttons-container col-12 my-2">
-				% if ($c->{can}{showCorrectAnswers}) {
-					<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
-						class => 'btn btn-primary mb-1' =%>
-				% }
-				% if ($c->{will}{showProblemGrader}) {
-					<%= submit_button maketext('Hide Problem Graders'), name => 'hideProblemGrader',
-						class => 'btn btn-primary mb-1' =%>
-					<%= hidden_field showProblemGrader => 1 =%>
-				% } else {
-					<%= submit_button maketext('Show Problem Graders'), name => 'showProblemGrader',
-						class => 'btn btn-primary mb-1' =%>
-				% }
+				<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
+					class => 'btn btn-primary mb-1' =%>
 			</div>
 		% }
 		%

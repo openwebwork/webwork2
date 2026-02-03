@@ -138,16 +138,12 @@
 						% if ($versionID) {
 							% $problemLink = $c->systemLink(
 								% url_for('gateway_quiz', setID => "$setID,v$versionID"),
-								% params => {
-									% effectiveUser     => $userID,
-									% currentPage       => $_->{pageNumber},
-									% showProblemGrader => 1
-								% }
+								% params => { effectiveUser => $userID, currentPage => $_->{pageNumber} }
 							% )->fragment("prob$_->{problemNumber}");
 						% } else {
 							% $problemLink = $c->systemLink(
 								% url_for('problem_detail'),
-								% params => { effectiveUser => $userID, showProblemGrader => 1 }
+								% params => { effectiveUser => $userID }
 							% )->fragment('problem_body');
 						% }
 						<tr>

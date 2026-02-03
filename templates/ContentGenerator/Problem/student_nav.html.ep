@@ -9,11 +9,7 @@
 		% if ($prevUser) {
 			<%= link_to $c->systemLink(
 					$problemPage,
-					params => {
-						effectiveUser     => $prevUser->user_id,
-						showProblemGrader => $c->{will}{showProblemGrader},
-						$filter ? (studentNavFilter => $filter) : ()
-					}
+					params => { effectiveUser => $prevUser->user_id, $filter ? (studentNavFilter => $filter) : () }
 				),
 				data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
 				title => $prevUser->{displayName},
@@ -33,11 +29,7 @@
 					<li>
 						<%= link_to $_->{displayName} => $c->systemLink(
 								$problemPage,
-								params => {
-									effectiveUser     => $_->user_id,
-									showProblemGrader => $c->{will}{showProblemGrader},
-									$filter ? (studentNavFilter => $filter) : ()
-								}
+								params => { effectiveUser => $_->user_id, $filter ? (studentNavFilter => $filter) : () }
 							),
 							$_->{currentUser} ? (style => 'background-color:#8F8') : (),
 							class => 'dropdown-item' =%>
@@ -49,8 +41,7 @@
 			<%= link_to $c->systemLink(
 					$problemPage,
 					params => {
-						effectiveUser     => $nextUser->user_id,
-						showProblemGrader => $c->{will}{showProblemGrader},
+						effectiveUser => $nextUser->user_id,
 						$filter ? (studentNavFilter => $filter) : ()
 					}
 				),
@@ -74,24 +65,16 @@
 				% # If a filter is currently in use, then add an item that will remove that filter.
 				% if ($filter) {
 					<li>
-						<%= link_to maketext('Show all students') => $c->systemLink(
-								$problemPage,
-								params => {
-									effectiveUser     => $eUserID,
-									showProblemGrader => $c->{will}{showProblemGrader}
-								}
-							), class => 'dropdown-item' =%>
+						<%= link_to maketext('Show all students') =>
+								$c->systemLink($problemPage, params => { effectiveUser => $eUserID }),
+							class => 'dropdown-item' =%>
 					</li>
 				% }
 				% for (sort keys %$filters) {
 					<li>
 						<%= link_to $filters->{$_}[0] => $c->systemLink(
 								$problemPage,
-								params => {
-									effectiveUser     => $filters->{$_}[1],
-									showProblemGrader => $c->{will}{showProblemGrader},
-									studentNavFilter  => $_
-								}
+								params => { effectiveUser => $filters->{$_}[1], studentNavFilter  => $_ }
 							),
 							($filter || '') eq $_ ? (style => 'background-color:#8F8') : (),
 							class => 'dropdown-item' =%>
