@@ -531,18 +531,16 @@ async sub pre_header_initialize ($c) {
 	# requiring another answer submission.
 	my $showReturningFeedback = 0;
 
-	# Sticky answers
-	if (!($c->{submitAnswers} || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
+	# Reinsert sticky answers. Do this only if new answers are NOT being submitted,
+	# and a new problem version is NOT being opened.
+	if (!($prEnabled && !$problem->{prCount})
+		&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers)
+		&& $will{showOldAnswers})
+	{
 		my %oldAnswers = decodeAnswers($problem->last_answer);
-		# Do this only if new answers are NOT being submitted
-		if ($prEnabled && !$problem->{prCount}) {
-			# Clear answers if this is a new problem version
-			delete $formFields->{$_} for keys %oldAnswers;
-		} else {
-			$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
-			$showReturningFeedback = 1
-				if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
-		}
+		$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
+		$showReturningFeedback = 1
+			if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
 	}
 
 	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $will{showCorrectAnswers};
@@ -555,7 +553,9 @@ async sub pre_header_initialize ($c) {
 		$c->{set},
 		$problem,
 		$c->{set}->psvn,
-		$formFields,
+		$prEnabled
+			&& !$problem->{prCount}
+			&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers) ? {} : $formFields,
 		{
 			displayMode              => $displayMode,
 			showHints                => $will{showHints},
@@ -588,8 +588,11 @@ async sub pre_header_initialize ($c) {
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
-			$can{checkAnswers}
-				&& defined $formFields->{problem_data} ? (problemData => $formFields->{problem_data}) : ()
+			$prEnabled && !$problem->{prCount}
+			? (problemData => '{}')
+			: ($can{checkAnswers} && defined $formFields->{problem_data})
+			? (problemData => $formFields->{problem_data})
+			: ()
 		}
 	);
 
