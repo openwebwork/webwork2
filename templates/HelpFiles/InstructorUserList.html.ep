@@ -62,7 +62,7 @@
 	<dd>
 		<%== maketext('This is most easily done by importing a class list. The class list can be uploaded from your '
 			. 'workstation to the server using the File Manager page. The class list must be a file ending in .lst and '
-			. 'must have a specific <a href="http://webwork.maa.org/wiki/Classlist_Files#Format_of_classlist_files">'
+			. 'must have a specific <a href="https://wiki.openwebwork.org/wiki/Classlist_Files#Format_of_classlist_files">'
 			. 'format</a>. Once the file has been uploaded to the server the file will appear in the import action '
 			. 'pop-up list (5th action). demoCourse.lst is available for most courses and adds the "practice users" '
 			. 'which activate guest logins to the class list.') =%>

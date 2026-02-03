@@ -1,5 +1,43 @@
 (() => {
+	const renderURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
+
+	for (const pgmlLabButton of document.querySelectorAll('.pgml-lab')) {
+		pgmlLabButton.addEventListener('click', (e) => {
+			e.preventDefault();
+			const form = document.createElement('form');
+			form.style.display = 'none';
+			form.target = 'PGML';
+			form.action = renderURL;
+			form.method = 'post';
+
+			const inputs = [
+				['courseID', document.getElementsByName('courseID')[0]?.value],
+				['displayMode', document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax'],
+				['fileName', 'PGMLLab/PGML-lab.pg'],
+				['uriEncodedProblemSource', pgmlLabButton.dataset.source]
+			];
+
+			const user = document.getElementsByName('user')[0];
+			if (user) inputs.push(['user', user.value]);
+			const sessionKey = document.getElementsByName('key')[0];
+			if (sessionKey) inputs.push(['key', sessionKey.value]);
+
+			for (const [name, value] of inputs) {
+				const input = document.createElement('input');
+				input.name = name;
+				input.value = value;
+				input.type = 'hidden';
+				form.append(input);
+			}
+
+			document.body.append(form);
+			form.submit();
+			form.remove();
+		});
+	}
+
 	const fileChooserForm = document.forms['pg-editor-file-chooser'];
+
 	if (fileChooserForm) {
 		const newProblemRadio = document.getElementById('new_problem');
 
@@ -342,7 +380,6 @@
 		}
 	});
 
-	const renderURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
 	const fileType = document.getElementsByName('file_type')[0]?.value;
 
 	// This is either the div containing the CodeMirror editor or the problemContents textarea in the case that
@@ -650,37 +687,4 @@
 			rendering = false;
 		}
 	};
-
-	const pgmlLabButton = document.getElementById('pgml-lab');
-	pgmlLabButton?.addEventListener('click', () => {
-		const form = document.createElement('form');
-		form.style.display = 'none';
-		form.target = 'PGML';
-		form.action = renderURL;
-		form.method = 'post';
-
-		const inputs = [
-			['courseID', document.getElementsByName('courseID')[0]?.value],
-			['displayMode', document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax'],
-			['fileName', 'PGMLLab/PGML-lab.pg'],
-			['uriEncodedProblemSource', pgmlLabButton.dataset.source]
-		];
-
-		const user = document.getElementsByName('user')[0];
-		if (user) inputs.push(['user', user.value]);
-		const sessionKey = document.getElementsByName('key')[0];
-		if (sessionKey) inputs.push(['key', sessionKey.value]);
-
-		for (const [name, value] of inputs) {
-			const input = document.createElement('input');
-			input.name = name;
-			input.value = value;
-			input.type = 'hidden';
-			form.append(input);
-		}
-
-		document.body.append(form);
-		form.submit();
-		form.remove();
-	});
 })();

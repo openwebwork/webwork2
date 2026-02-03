@@ -2,6 +2,7 @@
 %
 <%= form_for current_route, method => 'POST', name => 'pg-editor-file-chooser',
 	class => 'needs-validation', novalidate => undef, begin =%>
+	<%= hidden_field courseID => $c->{courseID} =%>
 	<div class="row align-items-center mb-3">
 		<div class="col-auto">
 			<div class="form-check">
