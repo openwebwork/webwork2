@@ -107,7 +107,7 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 }
 
 sub grade_gateway ($db, $setName, $studentName) {
-	my $bestSetData = [ 0, 0 ];
+	my $bestSetData = [ 0, 0, [] ];
 
 	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,v\%" } });
 	for (@setVersions) {
