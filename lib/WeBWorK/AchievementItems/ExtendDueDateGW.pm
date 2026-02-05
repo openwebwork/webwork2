@@ -4,7 +4,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to extend the close date on a test
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(between);
+use WeBWorK::Utils::DateTime qw(before between);
 
 use constant ONE_DAY => 86400;
 
@@ -12,8 +12,7 @@ sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDateGW',
 		name        => x('Amulet of Extension'),
-		description =>
-			x('Extends the close date of a test by 24 hours. Note: The test must still be open for this to work.')
+		description => x('Extends the close date of a test by 24 hours.')
 	}, $class;
 }
 
@@ -25,13 +24,60 @@ sub can_use ($self, $set, $records) {
 }
 
 sub print_form ($self, $set, $records, $c) {
-	return $c->tag(
-		'p',
-		$c->maketext(
-			'Extend the close date of this test to [_1] (an additional 24 hours).',
-			$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat})
-		)
-	);
+	if ($set->enable_reduced_scoring) {
+		if (before($set->reduced_scoring_date + ONE_DAY)) {
+			return $c->c(
+				$c->tag('p', $c->maketext('Extend the deadline by 24 hours.')),
+				$c->tag(
+					'ul',
+					$c->c(
+						$c->tag(
+							'li',
+							$c->maketext(
+								'You will be able to receive full credit until [_1].',
+								$c->formatDateTime(
+									$set->reduced_scoring_date + ONE_DAY,
+									$c->ce->{studentDateDisplayFormat}
+								)
+							)
+						),
+						$c->tag(
+							'li',
+							$c->maketext(
+								'You will be able to receive reduced credit until [_1].',
+								$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat})
+							)
+						)
+					)->join('')
+				),
+			)->join('');
+		} else {
+			return $c->c(
+				$c->tag(
+					'p',
+					$c->maketext(
+						'Extend the reduced credit deadline of this assignment to [_1] (an additional 24 hours).',
+						$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat})
+					)
+				),
+				$c->tag(
+					'p',
+					$c->maketext(
+						'Because the deadline has already passed you will only receive reduced credit during this extension.'
+					)
+				)
+			)->join('');
+		}
+
+	} else {
+		return $c->tag(
+			'p',
+			$c->maketext(
+				'Extend the close date of this assignment to [_1] (an additional 24 hours).',
+				$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat})
+			)
+		);
+	}
 }
 
 sub use_item ($self, $set, $records, $c) {
