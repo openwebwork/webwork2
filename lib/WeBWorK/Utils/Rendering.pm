@@ -172,7 +172,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{templateDirectory} = "$ce->{courseDirs}{templates}/";
 	$options{tempDirectory}     = "$ce->{courseDirs}{html_temp}/";
 	$options{tempURL}           = "$ce->{courseURLs}{html_temp}/";
-	$options{webworkDocsURL}    = "$ce->{webworkURLs}{docs}/";
 	$options{localHelpURL}      = "$ce->{pg}{URLs}{localHelpURL}/";
 	$options{MathJaxURL}        = $ce->{webworkURLs}{MathJax};
 	$options{server_root_url}   = $ce->{server_root_url} || '';
