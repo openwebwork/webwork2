@@ -191,7 +191,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 		tmpl => $ce->{courseDirs}{templates},    # ditto
 	};
 
-	# Variables for interpreting capa problems and other things to be seen in a pg file.
 	$options{specialPGEnvironmentVars} = $ce->{pg}{specialPGEnvironmentVars};
 
 	return %options;

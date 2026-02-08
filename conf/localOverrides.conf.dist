@@ -183,9 +183,8 @@ $mail{feedbackRecipients}    = [
 # Problem Library.
 
 #$courseFiles{problibs}    = {
-	#Library          => "OPL Directory",
-	#capaLibrary      => "CAPA",
-	#Contrib          => "Contrib",
+	#Library => "OPL Directory",
+	#Contrib => "Contrib",
 # the following are not really needed but you can
 # create links to your own private libraries this way.
 	#rochesterLibrary => "Rochester",
