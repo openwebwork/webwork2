@@ -544,6 +544,8 @@ my %modulesList = (
 	}
 );
 
+my %cpanm_package = ('ubuntu' => 'cpanminus', 'rhel' => 'perl-App-cpanminus');
+
 my @programList = qw(
 	convert
 	curl
@@ -631,10 +633,10 @@ sub determine_distribution {
 			}
 		}
 		close $fh;
-		if ($os_attrs{'id'} =~ 'ubuntu' || $os_attrs{'id_like'} =~ 'ubuntu') {
+		if ($os_attrs{'id'} =~ 'ubuntu' || ($os_attrs{'id_like'} && $os_attrs{'id_like'} =~ 'ubuntu')) {
 			$packagetype = 'ubuntu';
 			return 1;
-		} elsif ($os_attrs{'id'} =~ 'fedora' || $os_attrs{'id_like'} =~ 'fedora') {
+		} elsif ($os_attrs{'id'} =~ 'fedora' || ($os_attrs{'id_like'} && $os_attrs{'id_like'} =~ 'fedora')) {
 			$packagetype = 'rhel';
 			return 1;
 		}
@@ -695,6 +697,8 @@ sub check_modules {
 			if (@missing_packages) {
 				say $packagemgrcommand{$packagetype} . join(' ', @missing_packages) . "\n";
 			}
+			say 'If the cpanm command is not installed, you can try installing it using the following command:' . "\n";
+			say $packagemgrcommand{$packagetype} . $cpanm_package{$packagetype};
 		}
 		say 'Exiting as this is required to check the database driver and programs.';
 		exit 0;
