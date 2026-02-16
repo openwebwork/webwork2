@@ -46,7 +46,7 @@
 	% if ($stats->{students_attempted}) {
 		% content_for "global-problem-stats-$cnt" => begin
 			<div class="d-inline-block font-sm text-nowrap">
-				<span class="info-button text-primary" title="<%= maketext('Global Usage Data') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Global Usage Data') %>"
 					data-bs-content="<%= maketext(
 						'Global data on problem usage is contributed by many institutions using '
 							. 'WeBWorK all over the world. The Usage figure is the total number of  '
@@ -59,7 +59,7 @@
 					<%= maketext('GLOBAL Usage') . ': ' =%>
 				</span>
 				<%= $stats->{students_attempted} . ', ' =%>
-				<span class="info-button text-primary" title="<%= maketext('Global Attempts') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Global Attempts') %>"
 					data-bs-content="<%= maketext(
 						'The Attempts figure is the global average of the number of attempts '
 							. '(both correct and incorrect) individuals take on this problem.  '
@@ -73,7 +73,7 @@
 					<%= maketext('Attempts') . ': ' =%>
 				</span>
 				<%= wwRound(2, $stats->{average_attempts}) . ', ' =%>
-				<span class="info-button text-primary" title="<%= maketext('Global Status') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Global Status') %>"
 					data-bs-content="<%= tag('p', maketext(
 						'The Status figure is the global average of the Status '
 							. 'individuals have earned on this problem. The Status is the percentage '
@@ -102,7 +102,7 @@
 	% if ($stats->{students_attempted}) {
 		% content_for "local-problem-stats-$cnt" => begin
 			<div class="d-inline-block font-sm text-nowrap">
-				<span class="info-button text-primary" title="<%= maketext('Local Usage Data') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Local Usage Data') %>"
 					data-bs-content="<%= tag('p', maketext(
 						'Local data on problem usage is generated and maintained by your institution. '
 							. 'The Usage figure is the total number of local '
@@ -119,7 +119,7 @@
 					<%= maketext('LOCAL Usage') . ': ' =%>
 				</span>
 				<%= $stats->{students_attempted} . ', ' =%>
-				<span class="info-button text-primary" title="<%= maketext('Local Attempts') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Local Attempts') %>"
 					data-bs-content="<%= maketext(
 						'The Attempts figure is the local average of the number of attempts '
 							. '(both correct and incorrect) individuals at your institution take on this problem. '
@@ -133,7 +133,7 @@
 					<%= maketext('Attempts') . ': ' =%>
 				</span>
 				<%= wwRound(2, $stats->{average_attempts}) . ', ' =%>
-				<span class="info-button text-primary" title="<%= maketext('Local Status') %>"
+				<span class="info-button text-primary-emphasis" title="<%= maketext('Local Status') %>"
 					data-bs-content="<%= tag('p', maketext(
 						'The Status figure is the local average of the Status '
 							. 'individuals at your institution have earned on this problem. The Status is the '

@@ -23,6 +23,8 @@
 <script>const webworkConfig = <%== $c->webwork_js_config %>;</script>
 %
 % # JS Loads
+% # The color scheme JavaScript must be loaded early and not deferred to prevent flickering as the color scheme is set.
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/color-scheme.js' }) =%>
 <%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/MathJaxConfig/mathjax-config.js' }),
 	defer => undef =%>
 <%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/mathjax/tex-svg.js' }),
@@ -47,24 +49,66 @@
 %
 <body>
 <%= link_to 'Skip to main content' => '#page-title',
-	class => 'visually-hidden-focusable bg-white p-2 m-3 position-absolute' =%>
+	class => 'visually-hidden-focusable bg-light p-2 m-3 position-absolute' =%>
 %
 % # Header
 <div class="masthead" role="banner">
 	<div class="webwork-logo">
 		% if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
-			<button type="button" class="navbar-toggler ms-3 me-2 p-0 fa-2x" id="toggle-sidebar"
+			<button type="button" class="navbar-toggler fa-2x" id="toggle-sidebar"
 				aria-controls="site-navigation">
 				<span id="toggle-sidebar-icon">
 					<i class="fa-solid fa-bars" aria-hidden="true"></i>
-					<span class="visually-hidden">close sidebar</span>
+					<span class="visually-hidden"><%= maketext('close sidebar') %></span>
 				</span>
 			</button>
 		% }
 		<%= $c->webwork_logo %>
 	</div>
-	<div class="institution-logo"><%= $c->institution_logo %></div>
-	<div class="login-status"><%= include 'ContentGenerator/Base/login_status' %></div>
+	<div class="institution-logo p-1">
+		<%= $c->institution_logo %>
+		<div class="dropdown me-2">
+			<button class="btn btn-link p-0 dropdown-toggle d-flex align-items-center"
+				id="color-scheme-chooser" type="button" aria-expanded="false" data-bs-toggle="dropdown"
+					title="<%= maketext('Choose Color Scheme') %>" aria-label="<%= maketext('Choose Color Scheme') %>"
+						data-light-text="<%= maketext('light') %>" data-dark-text="<%= maketext('dark') %>"
+						data-auto-text="<%= maketext('auto') %>">
+				<i class="fa-solid fa-circle-half-stroke my-1 theme-icon-active" aria-hidden="true"></i>
+				<span class="visually-hidden" id="color-scheme-chooser-text">
+					<%= maketext('Choose Color Scheme') %>
+				</span>
+			</button>
+			<ul class="dropdown-menu" aria-labelledby="color-scheme-chooser-text">
+				<li>
+					<button type="button" class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="light" aria-pressed="false">
+						<i class="fa-solid fa-sun me-2 opacity-50" aria-hidden="true"></i>
+						Light
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+				<li>
+					<button type="button" class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="dark" aria-pressed="true">
+						<i class="fa-solid fa-moon me-2 opacity-50" aria-hidden="true"></i>
+						Dark
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+				<li>
+					<button type="button" class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="auto" aria-pressed="false">
+						<i class="fa-solid fa-circle-half-stroke me-2 opacity-50" aria-hidden="true"></i>
+						Auto
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<div class="login-status d-flex flex-column justify-content-center gap-1">
+		<%= include 'ContentGenerator/Base/login_status' %>
+	</div>
 </div>
 % # Navigation
 % if ($c->can('links') || $c->can('siblings') || $c->can('options')) {
