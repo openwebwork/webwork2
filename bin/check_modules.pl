@@ -29,11 +29,13 @@ Specify your linux distribution.  Currently supported options are
 
 =item C<ubuntu>
 
-Tested on ubuntu 24. May work for other distributions using the apt package manager 
+Tested on ubuntu 24. May work for other distributions using the apt package
+manager 
 
 =item C<rhel>
 
-For RedHat Enterprise Linux and equivalents with the EPEL and CodeReady Builder repositories enabled (e.g. Rocky Linux, Oracle Linux)
+For RedHat Enterprise Linux and equivalents with the EPEL and CodeReady
+Builder repositories enabled (e.g. Rocky Linux, Oracle Linux)
 
 =back
 
