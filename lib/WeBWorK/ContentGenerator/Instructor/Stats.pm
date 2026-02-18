@@ -22,27 +22,6 @@ sub initialize ($c) {
 	# Check permissions
 	return unless $c->authz->hasPermissions($user, 'access_instructor_tools');
 
-	# Cache a list of all users except set level proctors and practice users, and restrict to the sections or
-	# recitations that are allowed for the user if such restrictions are defined.  This list is sorted by last_name,
-	# then first_name, then user_id.  This is used in multiple places in this module, and is guaranteed to be used at
-	# least once.  So it is done here to prevent extra database access.
-	$c->{student_records} = [
-		$db->getUsersWhere(
-			{
-				user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
-				$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
-				? (
-					-or => [
-						$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-						$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
-					]
-					)
-				: ()
-			},
-			[qw/last_name first_name user_id/]
-		)
-	];
-
 	if ($c->current_route =~ /^instructor_(set|problem)_statistics$/) {
 		my $setRecord = $db->getGlobalSet($c->stash('setID'));
 		return unless $setRecord;
@@ -55,6 +34,30 @@ sub initialize ($c) {
 			return unless $problemRecord;
 			$c->{problemRecord} = $problemRecord;
 		}
+
+		# Cache a list of all users except set level proctors and practice users, and restrict to the sections
+		# or recitations that are allowed for the user if such restrictions are defined.  This list is sorted by
+		# last_name, then first_name, then user_id.  This is used in multiple places in this module, and is used
+		# on every page except the main page, so it is done here to prevent extra database access.
+		$c->{student_records} = [
+			$db->getUsersWhere(
+				{
+					user_id =>
+						[ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+					$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+					? (
+						-or => [
+							$ce->{viewable_sections}{$user} ? (section => $ce->{viewable_sections}{$user}) : (),
+							$ce->{viewable_recitations}{$user}
+							? (recitation => $ce->{viewable_recitations}{$user})
+							: ()
+						]
+						)
+					: ()
+				},
+				[qw/last_name first_name user_id/]
+			)
+		];
 	}
 
 	return;
@@ -79,8 +82,7 @@ sub page_title ($c) {
 }
 
 sub siblings ($c) {
-	# Stats and StudentProgress share this template.
-	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Statistics'));
+	return $c->include('ContentGenerator/Instructor/Stats/siblings');
 }
 
 # Apply the currently selected filter to the student records, and return a reference to the
