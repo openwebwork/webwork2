@@ -43,9 +43,7 @@ sub initialize ($c) {
 		)
 	];
 
-	if ($c->current_route eq 'instructor_user_statistics') {
-		$c->{studentID} = $c->stash('userID');
-	} elsif ($c->current_route =~ /^instructor_(set|problem)_statistics$/) {
+	if ($c->current_route =~ /^instructor_(set|problem)_statistics$/) {
 		my $setRecord = $db->getGlobalSet($c->stash('setID'));
 		return unless $setRecord;
 		$c->{setRecord} = $setRecord;
@@ -67,9 +65,7 @@ sub page_title ($c) {
 
 	my $setID = $c->stash('setID') || '';
 
-	if ($c->current_route eq 'instructor_user_statistics') {
-		return $c->maketext('Statistics for student [_1]', $c->{studentID});
-	} elsif ($c->current_route eq 'instructor_set_statistics') {
+	if ($c->current_route eq 'instructor_set_statistics') {
 		return $c->maketext('Statistics for [_1]', $c->tag('span', dir => 'ltr', format_set_name_display($setID)));
 	} elsif ($c->current_route eq 'instructor_problem_statistics') {
 		return $c->maketext(
@@ -79,7 +75,7 @@ sub page_title ($c) {
 		);
 	}
 
-	return $c->maketext('Statistics');
+	return $c->maketext('Set Statistics');
 }
 
 sub siblings ($c) {

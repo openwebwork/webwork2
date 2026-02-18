@@ -87,7 +87,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_statistics               /$courseID/instructor/stats
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID
  instructor_problem_statistics       /$courseID/instructor/stats/set/$setID/$problemID
- instructor_user_statistics          /$courseID/instructor/stats/student/$userID
 
  instructor_progress                 /$courseID/instructor/progress
  instructor_set_progress             /$courseID/instructor/progress/set/$setID
@@ -491,7 +490,7 @@ my %routeParameters = (
 	},
 	instructor_statistics => {
 		title    => x('Statistics'),
-		children => [qw(instructor_set_statistics instructor_user_statistics)],
+		children => [qw(instructor_set_statistics)],
 		module   => 'Instructor::Stats',
 		path     => '/stats'
 	},
@@ -505,11 +504,6 @@ my %routeParameters = (
 		title  => '[_3]',
 		module => 'Instructor::Stats',
 		path   => '/<problemID:num>'
-	},
-	instructor_user_statistics => {
-		title  => '[_1]',
-		module => 'Instructor::Stats',
-		path   => '/student/#userID'
 	},
 	instructor_progress => {
 		title    => x('Student Progress'),
