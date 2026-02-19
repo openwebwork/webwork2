@@ -14,12 +14,17 @@ sub studentNav ($c, $setID) {
 
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 
-	# Find all users for the given set (except the current user) sorted by last_name, then first_name, then user_id.
-	my %users = map { $_->[0] => 1 } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } });
+	# Find all users (except the current user) sorted by last_name, then first_name, then user_id.
 	my @allUserRecords =
-		grep { $users{ $_->{user_id} } }
 		$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
 			[qw/last_name first_name user_id/]);
+
+	# If $setID is provided, only show users assigned to given set.
+	if ($setID) {
+		my %users =
+			map { $_->[0] => 1 } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } });
+		@allUserRecords = grep { $users{ $_->{user_id} } } @allUserRecords;
+	}
 
 	return '' unless @allUserRecords;
 
