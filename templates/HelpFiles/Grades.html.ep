@@ -2,13 +2,24 @@
 % title maketext('Grades Help');
 %
 <p>
-	<%= maketext(q{This page shows the student's current grades for all sets they are assigned to.  Only visible sets }
-		. 'are shown to the student, while invisible set names are italic when viewed as an instructor.  Students can '
-		. 'only see the per problem grades on open assignments.') =%>
+	<%= maketext(q{This page shows the student's current grade for all assignments they are assigned to.  This page }
+		. 'only shows assignments and grades visible to the student. To view all grades, visit the "Student Progress" '
+		. q{page for the student. The student navigation menu at the top can be used to change which student's grades }
+		. 'to view') =%>
 </p>
 <p>
-	<%= maketext('The total grade row at the bottom shows the total score and percent average over all open '
-		. 'assignments.  The total grade row can be shown/hidden under general course configuration settings.') =%>
+	<%= maketext('The total grade at the top shows the total score and percent average over all open assignments.  '
+		. 'The total grade can be shown/hidden under general course configuration settings.') =%>
+</p>
+<p>
+	<%= maketext('The grades are divided into open, reduced scoring, recently closed, closed, and future assignments.  '
+		. 'No grades are shown for future assignments, just their open date. Closed assignments are only put into the '
+		. 'recently closed category if achievements and achievement items are enabled for assignment extensions, and '
+		. 'the assignment has been closed for less than 48 hours, making it eligible for the longest extension item.  '
+		. 'Open, reduced scoring, and recently closed assignments are marked as either "complete" or "not complete".  '
+		. 'Complete assignments are ones in which either the student has answered all problems correctly, or all '
+		. 'attempts have been used up. If an assignment is not complete a student can improve their grade, and the '
+		. 'colored marking is to help a student quickly know which assignments they can improve their grade on.') %>
 </p>
 <p class="m-0">
 	<%== maketext(
