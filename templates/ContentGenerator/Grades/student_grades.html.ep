@@ -1,0 +1,52 @@
+% use WeBWorK::Utils qw(wwRound);
+%
+% if ($ce->{showCourseHomeworkTotals}) {
+	<h2><%= maketext('Total Grade') %></h2>
+	<div class="grade-item grade-total">
+		<div class="grade-item-percent">
+			<div class="display-grade">
+				% my $course_grade = 100 * wwRound(2, $courseTotal ? $totalRight / $courseTotal : 0);
+				% if ($course_grade == 100) {
+					&#128175;
+				% } else {
+					<%= $course_grade %>%
+				% }
+			</div>
+		</div>
+		<div class="grade-total-info">
+			<%= maketext('[_1] out of [_2] total points.', $totalRight, $courseTotal) %>
+		</div>
+	</div>
+% }
+%
+% if (@$open) {
+	<h2><%= maketext('Open Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', items => $open) %>
+% }
+% if (@$reduced) {
+	<h2><%= maketext('Reduced Scoring Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', items => $reduced) %>
+% }
+% if (@$closed) {
+	<h2><%= maketext('Closed Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', items => $closed) %>
+% }
+% if (@$notOpen) {
+	<h2><%= maketext('Future Assignments') %></h2>
+	<ul class="list-group">
+		% for my $item (@$notOpen) {
+			<li class="list-group-item">
+				<div>
+					% if ($item->{link}) {
+						<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
+					% } else {
+						<span class="fw-bold"><%= $item->{name} %></span>
+					% }
+				</div>
+				% if ($item->{message}) {
+					<div><em><%= $item->{message} %></em></div>
+				% }
+			</li>
+		% }
+	</ul>
+% }
