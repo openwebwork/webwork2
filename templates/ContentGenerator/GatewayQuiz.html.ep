@@ -644,7 +644,7 @@
 					%
 					% # Initialize the problem graders for the problem.
 					% if ($c->{will}{showProblemGrader} && !$pg->{flags}{error_flag}) {
-						<%= WeBWorK::HTML::SingleProblemGrader->new($c, $pg, $problems->[ $probOrder->[$i] ])
+						<%= WeBWorK::HTML::SingleProblemGrader->new($c, $pg, $problems->[ $probOrder->[$i] ], $c->{set})
 							->insertGrader =%>
 					% }
 				</div>

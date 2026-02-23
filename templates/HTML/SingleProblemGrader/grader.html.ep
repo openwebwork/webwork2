@@ -271,7 +271,8 @@
 					data-set-id="<%= $grader->{set_id} %>"
 					data-version-id="<%= $grader->{version_id} %>"
 					data-problem-id="<%= $grader->{problem_id} %>"
-					data-past-answer-id="<%= $grader->{past_answer_id} %>">
+					data-past-answer-id="<%= $grader->{past_answer_id} %>"
+					data-save-sub-status="<%= $grader->{save_sub_status} %>">
 					<%= maketext('Save') =%>
 				</button>
 			</div>

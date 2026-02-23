@@ -1076,7 +1076,7 @@ sub output_message ($c) {
 
 # Output the problem grader if the user has permissions to grade problems
 sub output_grader ($c) {
-	return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem})->insertGrader
+	return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem}, $c->{set})->insertGrader
 		if $c->{will}{showProblemGrader};
 	return '';
 }
