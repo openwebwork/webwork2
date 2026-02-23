@@ -178,16 +178,21 @@
 										) %>">
 											% if ($answerTypes[$i] && $answerTypes[$i] eq 'essay') {
 												% # If the answer is an essay answer then display it line by line.
-												<div class="past-answer">
-													<%= c(split /\n/, $answers[$i])->join('<br>') =%>
-												</div>
+												% my @lines = split /\n/, $answers[$i];
+												% for (0 .. $#lines - 1) {
+													<%= $lines[$_] =%><br>
+												% }
+												<%= $lines[-1] =%>
 											% } elsif ($answerTypes[$i] && $answerTypes[$i] eq 'Value (Formula)') {
 												% # If its a formula then mark it as tex for MathJax.
 												`<%= $answers[$i] %>`
-												</div>
 											% } else {
 												% # If it isn't an essay or a formula then show it as text.
-												<%= $answers[$i] %>
+												% my @parts = split("&#9070;", $answers[$i]);
+												% for (0 .. $#parts - 1) {
+													<%= $parts[$_] =%>&#9070;\
+												% }
+												<%= $parts[-1] =%>
 											% }
 										</div>
 									% }
