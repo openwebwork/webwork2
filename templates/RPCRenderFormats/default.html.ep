@@ -102,6 +102,9 @@
 					%= hidden_field showFooter                   => $showFooter
 					%= hidden_field extra_header_text            => $extra_header_text
 					%= hidden_field problem_data                 => $problem_data
+					% if ($ws->{inputs_ref}{answerPrefix}) {
+						%= hidden_field answerPrefix => $ws->{inputs_ref}{answerPrefix}
+					% }
 					% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
 						%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
 					% }
