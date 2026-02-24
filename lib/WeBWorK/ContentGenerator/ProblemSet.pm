@@ -19,18 +19,23 @@ use WeBWorK::Localize;
 use WeBWorK::AchievementItems;
 use WeBWorK::HTML::StudentNav qw(studentNav);
 
+sub can ($c, $arg) {
+	if ($arg eq 'info') {
+		return $c->{pg} ? 1 : 0;
+	}
+	return $c->SUPER::can($arg);
+}
+
 async sub initialize ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm
-	return
-		if $c->{invalidSet}
-		&& ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
-			|| $authz->{merged_set}->assignment_type !~ /gateway/);
+	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm.
+	# If $c->{viewSetCheck} is also set, we want to view some information unless the set is hidden.
+	return if $c->{invalidSet} && (!$c->{viewSetCheck} || $c->{viewSetCheck} eq 'hidden');
 
-	# This will all be valid if checkSet did not set $c->{invalidSet}.
+	# This will all be valid if the above check passes.
 	my $userID  = $c->param('user');
 	my $eUserID = $c->param('effectiveUser');
 
@@ -106,6 +111,7 @@ async sub initialize ($c) {
 
 	$c->{pg} =
 		await renderPG($c, $effectiveUser, $c->{set}, $problem, $c->{set}->psvn, {}, { displayMode => $displayMode });
+	$c->{pg} = '' unless $c->{pg}{body_text} =~ /\S/;
 
 	return;
 }
@@ -169,10 +175,8 @@ sub siblings ($c) {
 	return $c->include('ContentGenerator/ProblemSet/siblings', setIDs => \@setIDs);
 }
 
-sub info {
-	my ($c) = @_;
-	return '' unless $c->{pg};
-	return $c->include('ContentGenerator/ProblemSet/info');
+sub info ($c) {
+	return $c->{pg} ? $c->include('ContentGenerator/ProblemSet/info') : '';
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a regular homework set.
