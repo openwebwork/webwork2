@@ -553,7 +553,7 @@ async sub pre_header_initialize ($c) {
 		$c->{set}->psvn,
 		$prEnabled
 			&& !$problem->{prCount}
-			&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers) ? {} : $formFields,
+			&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers || $showOnlyCorrectAnswers) ? {} : $formFields,
 		{
 			displayMode              => $displayMode,
 			showHints                => $will{showHints},
