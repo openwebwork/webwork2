@@ -25,10 +25,11 @@ async sub initialize ($c) {
 	my $userID     = $c->param('user');
 
 	# Make sure these are defined for the template.
-	$c->stash->{set}          = $db->getGlobalSet($setID);
-	$c->stash->{problem}      = $db->getGlobalProblem($setID, $problemID);
-	$c->stash->{users}        = [];
-	$c->stash->{haveSections} = 0;
+	$c->stash->{set}           = $db->getGlobalSet($setID);
+	$c->stash->{problem}       = $db->getGlobalProblem($setID, $problemID);
+	$c->stash->{users}         = [];
+	$c->stash->{haveSections}  = 0;
+	$c->stash->{problem_value} = $c->stash->{problem}->value;
 
 	return
 		unless $c->stash->{set}
