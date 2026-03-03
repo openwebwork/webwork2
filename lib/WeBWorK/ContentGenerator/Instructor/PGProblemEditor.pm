@@ -704,14 +704,15 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	}
 
 	# If the file is being saved as a new file in a new location, and the file is accompanied by auxiliary files
-	# transfer them as well.  If the file is a pg file, then assume there are auxiliary files.  Copy all files not
-	# ending in .pg from the original directory to the new one.
-	if ($c->{action} eq 'save_as' && $outputFilePath =~ /\.pg/) {
+	# transfer them as well.  If the option 'copyAuxFiles' is set and the file is a pg file, then assume there are
+	# auxiliary files.  Copy all files not ending in .pg from the original directory to the new one.
+	if ($c->{action} eq 'save_as' && $c->param('copyAuxFiles') && $outputFilePath =~ /\.pg/) {
 		my $sourceDirectory = Mojo::File->new(($c->{sourceFilePath} || '') =~ s|/[^/]+\.pg$||r);
 		my $outputDirectory = Mojo::File->new($outputFilePath              =~ s|/[^/]+\.pg$||r);
 
 		# Only perform the copy if the output directory is an actual new location.
 		if ($sourceDirectory ne $outputDirectory && -d $sourceDirectory) {
+			my $filesCopied = 0;
 			for my $file (@{ $sourceDirectory->list }) {
 				# The .pg file being edited has already been transferred. Ignore any others in the directory.
 				next if $file =~ /\.pg$/;
@@ -719,13 +720,18 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 				# Only copy regular files that are readable and that have not already been copied.
 				if (-f $file && -r $file && !-e $toPath) {
 					eval { $file->copy_to($toPath) };
-					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath)) if $@;
+					if ($@) {
+						$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath));
+					} else {
+						$filesCopied = 1;
+					}
 				}
 			}
 			$c->addgoodmessage($c->maketext(
 				'Copied auxiliary files from [_1] to new location at [_2].',
 				$sourceDirectory, $outputDirectory
-			));
+			))
+				if $filesCopied;
 		}
 	}
 
