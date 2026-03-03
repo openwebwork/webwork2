@@ -180,6 +180,11 @@
 				. 'attached to a problem set.') =%>
 		</p>
 		<p>
+			<%= maketext('When saving the problem in a new location (directory), by default all auxiliary files, such '
+				. 'as images, or other files that do not end in ".pg", will also be copied to the new location.  To '
+				. 'stop this behavior, uncheck the "Copy auxiliary files" option.') =%>
+		</p>
+		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '
 				. 'for a new problem. You can add the new file to a homework set from the Library Browser or via the '
 				. 'set detail page of the "Sets Manager".') =%>
