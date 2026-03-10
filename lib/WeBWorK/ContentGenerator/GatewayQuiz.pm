@@ -1309,7 +1309,8 @@ async sub pre_header_initialize ($c) {
 	} elsif ($endTime > $set->due_date) {
 		$c->{exceededAllowedTime} = 1;
 	}
-	$c->{elapsedTime} = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
+	$c->{elapsedTime}   = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
+	$c->{completedTime} = $c->formatDateTime($endTime, $ce->{studentDateDisplayFormat});
 
 	# Get the number of attempts and number of remaining attempts.
 	$c->{attemptNumber} =
