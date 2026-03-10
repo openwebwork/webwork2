@@ -1,6 +1,3 @@
-% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
-% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
-%
 % use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
@@ -9,24 +6,8 @@
 % }
 %
 <div class="info-box bg-light">
-	<h2><%= $header %></h2>
-	% if (current_route =~ /^instructor_user_/) {
-		<ul class="nav flex-column problem-list">
-			% for (@{ $c->{student_records} }) {
-				<li class="nav-item">
-					<%= tag 'a',
-						$_->user_id eq $c->{studentID}
-						? (class => 'nav-link active')
-						: (
-							href => $c->systemLink(url_for(current_route, userID => $_->user_id)),
-							class => 'nav-link'
-						), begin =%>
-						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
-					<% end =%>
-				</li>
-			% }
-		</ul>
-	% } elsif (current_route eq 'instructor_problem_statistics') {
+	<h2><%= maketext('Statistics') %></h2>
+	% if (current_route eq 'instructor_problem_statistics') {
 		<ul class="nav flex-column problem-list">
 			% for (map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => stash->{setID} }, 'problem_id')) {
 				<li class="nav-item">
@@ -46,22 +27,8 @@
 			% }
 		</ul>
 	% } else {
-		<ul class="nav flex-column problem-list" dir="ltr">
-			% for (map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id')) {
-				<li class="nav-item">
-					<%= tag 'a',
-						defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
-						: (
-							href => $c->systemLink(
-								url_for(current_route =~ s/instructor_(progress|statistics)/instructor_set_$1/r,
-									setID => $_),
-								params => param('filter') ? { filter => param('filter') } : {}
-							),
-							class => 'nav-link'
-						),
-						format_set_name_display($_) =%>
-				</li>
-			% }
-		</ul>
+		% # Shared with StudentProgress siblings.
+		<%= include 'ContentGenerator/Instructor/Stats/siblings_set_list',
+			set_link_route => 'instructor_set_statistics' =%>
 	% }
 </div>
