@@ -13,15 +13,6 @@ for (const [immediate, extension, ready] of [
 		() => {
 			const { DraggableDialog } = MathJax._.ui.dialog.DraggableDialog;
 			switchToBSStyle(DraggableDialog.styles);
-
-			// This is a workaround for a bug in MathJax 4.1.0.  Delete this for the next version of MathJax.
-			// See https://github.com/mathjax/MathJax-src/pull/1414.
-			DraggableDialog.styles["[data-bs-theme='dark']"]['.mjx-dialog a[href]'] =
-				DraggableDialog.styles["[data-bs-theme='dark']"]['a[href]'];
-			delete DraggableDialog.styles["[data-bs-theme='dark']"]['a[href]'];
-			DraggableDialog.styles["[data-bs-theme='dark']"]['.mjx-dialog a[href]:visited'] =
-				DraggableDialog.styles["[data-bs-theme='dark']"]['a[href]:visited'];
-			delete DraggableDialog.styles["[data-bs-theme='dark']"]['a[href]:visited'];
 		}
 	],
 	[
