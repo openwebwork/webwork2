@@ -643,17 +643,6 @@ sub save_edit_handler ($c) {
 			}
 		}
 
-		# make sure the dates are not more than 10 years in the future
-		my $curr_time        = time;
-		my $seconds_per_year = 31_556_926;
-		my $cutoff           = $curr_time + $seconds_per_year * 10;
-		return (0, $c->maketext('Error: Open date cannot be more than 10 years from now in set [_1].', $setID))
-			if $Set->open_date > $cutoff;
-		return (0, $c->maketext('Error: Close date cannot be more than 10 years from now in set [_1].', $setID))
-			if $Set->due_date > $cutoff;
-		return (0, $c->maketext('Error: Answer date cannot be more than 10 years from now in set [_1].', $setID))
-			if $Set->answer_date > $cutoff;
-
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date) {
