@@ -32,6 +32,8 @@ our @EXPORT_OK = qw(
 	generateURLs
 	formatEmailSubject
 	getAssetURL
+	points_stepsize
+	round_nearest_stepsize
 	x
 );
 
@@ -533,6 +535,28 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
+sub points_stepsize ($points) {
+	my $stepsize;
+	if ($points == 1) {
+		$stepsize = 0.01;
+	} elsif ($points <= 5) {
+		$stepsize = 0.05;
+	} elsif ($points <= 10) {
+		$stepsize = 0.1;
+	} elsif ($points <= 25) {
+		$stepsize = 0.25;
+	} elsif ($points <= 50) {
+		$stepsize = 0.5;
+	} else {
+		$stepsize = int(($points - 1) / 100) + 1;
+	}
+	return $stepsize;
+}
+
+sub round_nearest_stepsize ($score, $stepsize) {
+	return wwRound(2, wwRound(0, $score / $stepsize) * $stepsize);
+}
+
 sub x (@args) { return @args }
 
 1;
@@ -762,6 +786,22 @@ Usage: C<getAssetURL($ce, $file, $isThemeFile)>
 Returns the URL for the asset specified in C<$file>.  If C<$isThemeFile> is
 true, then the asset will be assumed to be located in a theme directory.  The
 parameter C<$ce> must be a valid C<WeBWorK::CourseEnvironment> object.
+
+=head2 points_stepsize
+
+Usage: C<points_stepsize($points)>
+
+Returns a reasonable stepsize that best converts between a whole percent and
+a point value. The stepsize is the point value that is close to but greater
+than or equal to 1% per step. This is done by first using preset values of
+0.01, 0.05, 0.1, 0.25, or 0.5, then using only whole point values, such that
+the stepsize is greater than or equal to 1% of total points.
+
+=head2 round_nearest_stepsize
+
+Usage: C<round_nearest_stepsize($score, $stepsize)>
+
+Returns the value of the score rounded to the nearest stepsize.
 
 =head2 x
 
