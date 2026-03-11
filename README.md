@@ -1,15 +1,5 @@
 # Welcome to WeBWorK
 
-                                       WeBWorK
-                         Online Homework Delivery System
-                                   Version 2.*
-                        Branch:  github.com/openwebwork
-
-             https://wiki.openwebwork.org/wiki/Release_notes_for_WeBWorK_2.20
-                    Copyright 2000-2025, The WeBWorK Project
-                             https://openwebwork.org/
-                              All rights reserved.
-
 WeBWorK is an open-source online homework system for math and sciences courses. WeBWorK is supported by the MAA and the
 NSF and comes with an Open Problem Library (OPL) of over 30,000 homework problems. Problems in the OPL target most lower
 division undergraduate math courses, some advanced courses and some other STEM subjects. Supported courses include
