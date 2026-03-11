@@ -1,0 +1,54 @@
+<ul class="list-group">
+% my $n = 0;
+% for my $item (@$items) {
+	% $n++;
+	<li class="list-group-item d-flex align-items-center justify-content-between">
+		% if ($item->{hide_score}) {
+			<div style="width: 50px;"></div>
+		% } else {
+			% my $class = '';
+			% my $data  = '';
+			% if ($showCompleted && defined $item->{completed}) {
+				% $data  = ' data-bs-placement="top" data-bs-toggle="tooltip" ';
+				% $class = ' set-id-tooltip text-white rounded-3 ';
+				% if ($item->{completed}) {
+					% $class .= 'bg-success';
+					% $data .= 'data-bs-title="'
+						% . maketext('This assignment is complete and the grade can no longer be improved.')
+						% . '"';
+				% } else {
+					% $class .= 'bg-info';
+					% $data .= 'data-bs-title="'
+						% . maketext('This assignment is not complete and the grade could be improved.')
+						% . '"';
+				% }
+			% }
+			<div class="fw-bold font-lg text-center<%= $class %> p-2" style="width: 50px;"<%== $data =%>>
+				<%= $item->{grade} %>%
+			</div>
+		% }
+		<div class="ms-3 me-auto table-responsive">
+			<div>
+				% if ($item->{link}) {
+					<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
+				% } else {
+					<span class="fw-bold"><%= $item->{name} %></span>
+				% }
+			</div>
+			% if ($item->{message}) {
+				<div><em><%= $item->{message} %></em></div>
+			% }
+			% if ($item->{problems}) {
+				<%= include 'ContentGenerator/Grades/problem_table',
+					problems    => $item->{problems},
+					set_name    => $item->{name},
+					total       => $item->{grade_total},
+					total_right => $item->{grade_total_right} %>
+			% } elsif ($item->{versions}) {
+				<%= include 'ContentGenerator/Grades/version_list', versions => $item->{versions} %>
+			% }
+		</div>
+	</li>
+% }
+</ul>
+

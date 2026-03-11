@@ -1,0 +1,53 @@
+% use WeBWorK::Utils qw(wwRound);
+%
+% if ($ce->{showCourseHomeworkTotals}) {
+	<h2><%= maketext('Total Grade') %></h2>
+	<ul class="list-group">
+		<li class="list-group-item d-flex align-items-center justify-content-between">
+			<div class="fw-bold font-lg text-center text-white rounded-3 bg-primary p-2 set-id-tooltip"
+					style="width: 50px;" data-bs-placement="top" data-bs-toggle="tooltip"
+					data-bs-title="<%= maketext('Total grade includes all open and past due assignments.') %>">
+				<%= 100 * wwRound(2, $courseTotal ? $totalRight / $courseTotal : 0); %>%
+			</div>
+			<div class="ms-3 me-auto">
+				<%= maketext('[_1] out of [_2] total points.', $totalRight, $courseTotal) %>
+			</div>
+		</li>
+	</ul>
+% }
+%
+% if (@$open) {
+	<h2><%= maketext('Open Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', showCompleted => 1, items => $open) %>
+% }
+% if (@$reduced) {
+	<h2><%= maketext('Reduced Scoring Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', showCompleted => 1, items => $reduced) %>
+% }
+% if (@$recentClosed) {
+	<h2><%= maketext('Recently Closed Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', showCompleted => 1, items => $recentClosed) %>
+% }
+% if (@$closed) {
+	<h2><%= maketext('Closed Assignments') %></h2>
+	<%= include('ContentGenerator/Grades/grade_items', showCompleted => 0, items => $closed) %>
+% }
+% if (@$notOpen) {
+	<h2><%= maketext('Future Assignments') %></h2>
+	<ul class="list-group">
+		% for my $item (@$notOpen) {
+			<li class="list-group-item">
+				<div>
+					% if ($item->{link}) {
+						<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
+					% } else {
+						<span class="fw-bold"><%= $item->{name} %></span>
+					% }
+				</div>
+				% if ($item->{message}) {
+					<div><em><%= $item->{message} %></em></div>
+				% }
+			</li>
+		% }
+	</ul>
+% }

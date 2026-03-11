@@ -1,0 +1,32 @@
+<div class="ms-3">
+	<ul class="list-group">
+		% for my $item (@$versions) {
+			<li class="list-group-item d-flex align-items-center justify-content-between py-1">
+				<div class="fw-bold font-lg">
+						% unless ($item->{hide_score}) {
+							<%= $item->{grade} %>%
+						% }
+				</div>
+				<div class="ms-3 me-auto table-responsive">
+					<div>
+						% if ($item->{link}) {
+							<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
+						% } else {
+							<span class="fw-bold"><%= $item->{name} %></span>
+						% }
+					</div>
+					% if ($item->{message}) {
+						<div><em><%= $item->{message} %></em></div>
+					% }
+					% if ($item->{problems}) {
+						<%= include 'ContentGenerator/Grades/problem_table',
+							problems    => $item->{problems},
+							set_name    => $item->{name},
+							total       => $item->{grade_total},
+							total_right => $item->{grade_total_right} %>
+					% }
+				</div>
+			</li>
+		% }
+	</ul>
+</div>
