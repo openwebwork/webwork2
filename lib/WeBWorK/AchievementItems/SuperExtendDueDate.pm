@@ -65,7 +65,8 @@ sub print_form ($self, $set, $records, $c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'Because the deadline has already passed you will only receive reduced credit during this extension.'
+						'Because the deadline has already passed you will only '
+							. 'receive reduced credit during this extension.'
 					)
 				)
 			)->join('');
