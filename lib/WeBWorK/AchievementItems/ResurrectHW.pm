@@ -16,7 +16,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use($self, $set, $records) {
+sub can_use ($self, $set, $records) {
 	return $set->assignment_type eq 'default'
 		&& (after($set->due_date) || ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
 }
