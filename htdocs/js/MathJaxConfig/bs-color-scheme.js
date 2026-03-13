@@ -1,4 +1,4 @@
-if (MathJax.loader) MathJax.loader.checkVersion('[bs-color-scheme]', '4.1.0', 'extension');
+if (MathJax.loader) MathJax.loader.checkVersion('[bs-color-scheme]', '4.1.1', 'extension');
 
 const switchToBSStyle = (obj, key = '@media (prefers-color-scheme: dark)') => {
 	obj["[data-bs-theme='dark']"] = obj[key];
