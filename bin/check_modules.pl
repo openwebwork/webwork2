@@ -30,7 +30,7 @@ Specify your linux distribution.  Currently supported options are
 =item C<ubuntu>
 
 Tested on ubuntu 24. May work for other distributions using the apt package
-manager 
+manager
 
 =item C<rhel>
 
@@ -746,8 +746,8 @@ sub check_apps {
 	my $node_version_str = qx/node -v/;
 	my ($node_version) = $node_version_str =~ m/v(\d+)\./;
 
-	say "\n**The version of node should be at least 18.  You have version $node_version."
-		if $node_version < 18;
+	say "\n**The version of node should be at least 20.  You have version $node_version."
+		if $node_version < 20;
 
 	return;
 }
