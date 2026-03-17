@@ -8,15 +8,30 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 =cut
 
 use WeBWorK::Utils                    qw(wwRound);
-use WeBWorK::Utils::DateTime          qw(after);
+use WeBWorK::Utils::DateTime          qw(before);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
+use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display restricted_set_message);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
+use WeBWorK::HTML::StudentNav         qw(studentNav);
 use WeBWorK::Localize;
+
+use constant TWO_DAYS => 172800;
 
 sub initialize ($c) {
 	$c->{studentID} = $c->param('effectiveUser') // $c->param('user');
 	return;
+}
+
+sub nav ($c, $args) {
+	return '' unless $c->authz->hasPermissions($c->param('user'), 'become_student');
+
+	return $c->tag(
+		'div',
+		class        => 'row sticky-nav',
+		role         => 'navigation',
+		'aria-label' => 'student grades navigation',
+		studentNav($c, undef)
+	);
 }
 
 sub scoring_info ($c) {
@@ -122,16 +137,30 @@ sub scoring_info ($c) {
 	return $output->join('');
 }
 
-sub displayStudentStats ($c, $studentID) {
+# Determine if the grade can be improved by testing if the unreduced score
+# less than 1 and there are more attempts available.
+sub can_improve_score ($c, $set, $problem_record) {
+	my $unreduced_score = compute_unreduced_score($c->ce, $problem_record, $set);
+	return $unreduced_score < 1
+		&& ($problem_record->max_attempts < 0
+			|| $problem_record->num_correct + $problem_record->num_incorrect < $problem_record->max_attempts);
+}
+
+# Note, this is meant to be a student view. Instructors will see the same information
+# as the student they are acting as. For an instructor to see hidden grades, they
+# can use the student progress report in instructor tools.
+sub displayStudentGrades ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
+	my $studentID     = $c->{studentID};
 	my $studentRecord = $db->getUser($studentID);
 	unless ($studentRecord) {
 		$c->addbadmessage($c->maketext('Record for user [_1] not found.', $studentID));
 		return '';
 	}
+	my $effectiveUser = $studentRecord->user_id;
 
 	my $courseName = $ce->{courseName};
 
@@ -144,10 +173,10 @@ sub displayStudentStats ($c, $studentID) {
 	my %setVersionsCount;
 	my @allSetIDs;
 	for my $set (@sets) {
-		# Don't show hidden sets unless user has appropriate permissions.
-		next unless ($set->visible || $authz->hasPermissions($c->param('user'), 'view_hidden_sets'));
+		# Don't show hidden sets.
+		next unless $set->visible;
 
-		my $setID = $set->set_id();
+		my $setID = $set->set_id;
 
 		# FIXME: Here, as in many other locations, we assume that there is a one-to-one matching between versioned sets
 		# and gateways.  We really should have two flags, $set->assignment_type and $set->versioned.  I'm not adding
@@ -167,286 +196,192 @@ sub displayStudentStats ($c, $studentID) {
 			# Save the set names for display.
 			push(@allSetIDs, $setID);
 			push(@allSetIDs, map { $_->set_id . ',v' . $_->version_id } @setVersions);
-
 		} else {
 			push(@allSetIDs, $setID);
 		}
 	}
 
-	my $fullName      = join(' ', $studentRecord->first_name, $studentRecord->last_name);
-	my $effectiveUser = $studentRecord->user_id();
-
-	my $max_problems     = 0;
-	my $courseTotal      = 0;
-	my $courseTotalRight = 0;
+	# Set groups.
+	my (@notOpen, @open, @reduced, @recentClosed, @closed, %allItems);
 
 	for my $setID (@allSetIDs) {
-		my $set = $db->getGlobalSet($setID);
-		my $num_of_problems;
-		# For jitar sets we only display grades for top level problems, so we need to count how many there are.
-		if ($set && $set->assignment_type() eq 'jitar') {
-			my @problemIDs = $db->listGlobalProblems($setID);
-			for my $problemID (@problemIDs) {
-				my @seq = jitar_id_to_seq($problemID);
-				$num_of_problems++ if ($#seq == 0);
-			}
-		} else {
-			# For other sets we just count the number of problems.
-			$num_of_problems = $db->countGlobalProblems($setID);
-		}
-		$max_problems =
-			$set && after($set->open_date) && $max_problems < $num_of_problems ? $num_of_problems : $max_problems;
-	}
-
-	# Variables to help compute gateway scores.
-	my $numGatewayVersions = 0;
-	my $bestGatewayScore   = 0;
-
-	my $rows = $c->c;
-	for my $setID (@allSetIDs) {
-		my $act_as_student_set_url =
-			$c->systemLink($c->url_for('problem_list', setID => $setID), params => { effectiveUser => $effectiveUser });
 		my $set = $setsByID{$setID};
 
-		# Determine if set is a test and create the test url.
-		my $setIsVersioned          = 0;
-		my $act_as_student_test_url = '';
-		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
-			$setIsVersioned = 1;
-			if ($set->assignment_type eq 'proctored_gateway') {
-				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/proctored_test_mode\//r;
+		# Determine if set is a test and if it is a test template or version.
+		my $setIsTest      = defined $set->assignment_type && $set->assignment_type =~ /gateway/;
+		my $setIsVersioned = $setIsTest                    && !defined $setVersionsCount{$setID};
+		my $setTemplateID  = $setID =~ s/,v\d+$//r;
+
+		# Initialize set item. Define link here. It will be adjusted for versioned tests later.
+		my $item = {
+			name              => format_set_name_display($setTemplateID),
+			grade             => 0,
+			grade_total       => 0,
+			grade_total_right => 0,
+			is_test           => $setIsTest,
+			link              => $c->systemLink(
+				$c->url_for('problem_list', setID => $setID),
+				params => { effectiveUser => $effectiveUser }
+			)
+		};
+		$allItems{$setID} = $item;
+
+		# Determine which group to put set in. Test versions are added to test template.
+		unless ($setIsVersioned) {
+			my $enable_reduced_scoring =
+				$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+				&& $set->enable_reduced_scoring
+				&& $set->reduced_scoring_date;
+			if (before($set->open_date)) {
+				push(@notOpen, $item);
+				$item->{message} = $c->maketext('Will open on [_1].',
+					$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat}));
+				next;
+			} elsif (($enable_reduced_scoring && before($set->reduced_scoring_date)) || before($set->due_date)) {
+				push(@open, $item);
+			} elsif ($enable_reduced_scoring && before($set->due_date)) {
+				push(@reduced, $item);
+			} elsif ($ce->{achievementsEnabled} && $ce->{achievementItemsEnabled} && before($set->due_date + TWO_DAYS))
+			{
+				push(@recentClosed, $item);
 			} else {
-				$act_as_student_test_url = $act_as_student_set_url =~ s/($courseName)\//$1\/test_mode\//r;
+				push(@closed, $item);
 			}
-			# Remove version from set url
-			$act_as_student_set_url =~ s/,v\d+//;
 		}
 
-		# Format set name based on set visibility.
-		my $setName = $c->tag(
-			'span',
-			class => $set->visible ? 'font-visible' : 'font-hidden',
-			format_set_name_display($setID =~ s/,v\d+$//r)
-		);
-
-		# If the set is a template gateway set and there are no versions, we acknowledge that the set exists and the
-		# student hasn't attempted it. Otherwise, we skip it and let the versions speak for themselves.
-		if (defined $setVersionsCount{$setID}) {
-			next if $setVersionsCount{$setID};
-			push @$rows,
-				$c->tag(
-					'tr',
-					$c->c(
-						$c->tag(
-							'th',
-							dir => 'ltr',
-							(after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets'))
-							? $c->link_to($setName => $act_as_student_set_url)
-							: $setName
-						),
-						$c->tag(
-							'td',
-							colspan => $max_problems + 3,
-							$c->tag(
-								'em',
-								after($set->open_date) ? $c->maketext('No versions of this test have been taken.')
-								: $c->maketext(
-									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
-								)
-							)
-						)
-				)->join('')
-				);
-			next;
-		}
-
-		# If the set has hide_score set, then we need to skip printing the score as well.
-		if (
-			defined $set->assignment_type
-			&& $set->assignment_type =~ /gateway/
-			&& defined $set->hide_score
-			&& (
-				!$authz->hasPermissions($c->param('user'), 'view_hidden_work')
-				&& ($set->hide_score eq 'Y' || ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
-			)
-			)
-		{
-			# Add a link to the test version if the problems can be seen.
-			my $thisSetName =
-				$c->link_to($setName => $act_as_student_set_url) . ' ('
-				. (
-					(
-						$set->hide_work eq 'N'
-						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
-						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
-					)
-					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
-					: $c->maketext('version [_1]', $set->version_id)
-				) . ')';
-			push(
-				@$rows,
-				$c->tag(
-					'tr',
-					$c->c(
-						$c->tag(
-							'th',
-							dir => 'ltr',
-							sub {$thisSetName}
-						),
-						$c->tag(
-							'td',
-							colspan => $max_problems + 3,
-							$c->tag('em', $c->maketext('Display of scores for this test is not allowed.'))
-						)
-					)->join('')
-				)
-			);
-			next;
-		}
-
-		my ($totalRight, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
-			grade_set($db, $set, $studentID, $setIsVersioned, 1);
-		$totalRight = wwRound(2, $totalRight);
-
-		my @html_prob_scores;
-
-		my $show_problem_scores = 1;
-
-		if (defined $set->hide_score_by_problem
-			&& !$authz->hasPermissions($c->param('user'), 'view_hidden_work')
-			&& $set->hide_score_by_problem eq 'Y')
-		{
-			$show_problem_scores = 0;
-		}
-
-		for my $i (0 .. $max_problems - 1) {
-			my $score      = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
-			my $is_correct = $score =~ /^\d+$/ && compute_unreduced_score($ce, $problem_records->[$i], $set) == 1;
-			push(
-				@html_prob_scores,
-				$c->tag(
-					'td',
-					class => 'problem-data',
-					$c->c(
-						$c->tag(
-							'span',
-							class => $is_correct ? 'correct' : $score eq '&nbsp;.&nbsp;' ? 'unattempted' : '',
-							$c->b($score)
-						),
-						$c->tag('br'),
-						(defined $problem_incorrect_attempts->[$i] && $show_problem_scores)
-						? $problem_incorrect_attempts->[$i]
-						: $c->b('&nbsp;')
-					)->join('')
-				)
-			);
-		}
-
-		# Get percentage correct.
-		my $totalRightPercent = 100 * wwRound(2, $total ? $totalRight / $total : 0);
-		my $class             = '';
-		if ($totalRightPercent == 0) {
-			$class = 'unattempted';
-		} elsif ($totalRightPercent == 100) {
-			$class = 'correct';
-		}
-
-		# If its a gateway set, then in order to mimic the scoring done in Scoring Tools we need to use the best score a
-		# student had.  Otherwise we just add the set to the running course total.
-		if ($setIsVersioned) {
-			$setID =~ /(.+),v(\d+)$/;
-			my $gatewayName    = $1;
-			my $currentVersion = $2;
-
-			# If we are just starting a new gateway then set variables to look for the max.
-			if ($currentVersion == 1) {
-				$numGatewayVersions = $db->countSetVersions($studentID, $gatewayName);
+		# Tests need their link updated. Along with template sets need to add a version list.
+		# Also determines if grade and test problems should be shown.
+		if ($setIsTest) {
+			my $act_as_student_test_url = '';
+			if ($set->assignment_type eq 'proctored_gateway') {
+				$act_as_student_test_url = $item->{link} =~ s/($courseName)\//$1\/proctored_test_mode\//r;
+			} else {
+				$act_as_student_test_url = $item->{link} =~ s/($courseName)\//$1\/test_mode\//r;
 			}
 
-			if ($totalRight > $bestGatewayScore) {
-				$bestGatewayScore = $totalRight;
-			}
-
-			# If its the last version then add the max to the course totals and reset variables;
-			if ($currentVersion == $numGatewayVersions) {
-				if (after($set->open_date())) {
-					$courseTotal      += $total;
-					$courseTotalRight += $bestGatewayScore;
+			# If this is a template gateway set, determine if there are any versions, then move on.
+			unless ($setIsVersioned) {
+				# Remove version from set url
+				$item->{link} =~ s/,v\d+//;
+				if ($setVersionsCount{$setID}) {
+					$item->{versions} = [];
+					# Hide score initially unless there is a version the score can be seen.
+					$item->{hide_score} = 1;
+				} else {
+					$item->{message} = $c->maketext('No versions of this test have been taken.');
 				}
-				$bestGatewayScore = 0;
+				next;
 			}
+
+			# This is a versioned test, add it to the appropriate template item.
+			push(@{ $allItems{$setTemplateID}{versions} }, $item);
+			$item->{name} = $c->maketext('Version [_1]', $set->version_id);
+
+			# Only add link if the problems can be seen.
+			if ($set->hide_work eq 'N'
+				|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date))
+			{
+				if ($set->assignment_type eq 'proctored_gateway') {
+					$item->{link} =~ s/($courseName)\//$1\/proctored_test_mode\//;
+				} else {
+					$item->{link} =~ s/($courseName)\//$1\/test_mode\//;
+				}
+			} else {
+				$item->{link} = '';
+			}
+
+			# If the set has hide_score set, then nothing left to do.
+			if (defined $set->hide_score && $set->hide_score eq 'Y'
+				|| ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
+			{
+				$item->{hide_score} = 1;
+				$item->{message}    = $c->maketext('Display of scores for this test is not allowed.');
+				next;
+			}
+			# This is a test version, and the scores can be shown, so also show score of template set.
+			$allItems{$setTemplateID}{hide_score} = 0;
 		} else {
-			if (after($set->open_date())) {
-				$courseTotal      += $total;
-				$courseTotalRight += $totalRight;
+			# For a regular set, start out assuming it is complete until a problem says otherwise.
+			$item->{completed} = 1;
+		}
+
+		my ($total_right, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
+			grade_set($db, $set, $studentID, $setIsVersioned, 1);
+		$total_right = wwRound(2, $total_right);
+
+		# Save set grades.
+		$item->{grade_total}       = $total;
+		$item->{grade_total_right} = $total_right;
+		$item->{grade}             = 100 * wwRound(2, $total ? $total_right / $total : 0);
+
+		# Only show problem scores if allowed.
+		unless (defined $set->hide_score_by_problem && $set->hide_score_by_problem eq 'Y') {
+			$item->{problems} = [];
+
+			# Create a direct link to the problems unless the set is a test, or there is a set
+			# restriction preventing the student from accessing the set problems.
+			my $noProblemLink =
+				$setIsTest
+				|| restricted_set_message($c, $set, 'lti')
+				|| restricted_set_message($c, $set, 'conditional')
+				|| $authz->invalidIPAddress($set);
+
+			for my $i (0 .. $#$problem_scores) {
+				my $score      = $problem_scores->[$i];
+				my $problem_id = $setIsVersioned ? $i + 1 : $problem_records->[$i]{problem_id};
+				my $problem_link =
+					$noProblemLink
+					? ''
+					: $c->systemLink($c->url_for('problem_detail', setID => $setID, problemID => $problem_id),
+						params => { effectiveUser => $effectiveUser });
+				$score = 0 unless $score =~ /^\d+$/;
+				# For jitar sets we only display grades for top level problems.
+				if ($set->assignment_type eq 'jitar') {
+					my @seq = jitar_id_to_seq($problem_id);
+					if ($#seq == 0) {
+						push(@{ $item->{problems} }, { id => $seq[0], score => $score, link => $problem_link });
+						$item->{completed} = 0 if $c->can_improve_score($set, $problem_records->[$i]);
+					}
+				} else {
+					push(@{ $item->{problems} }, { id => $problem_id, score => $score, link => $problem_link });
+					$item->{completed} = 0 if !$setIsTest && $c->can_improve_score($set, $problem_records->[$i]);
+				}
 			}
 		}
 
-		# Only show scores for open sets, and don't link to non open sets.
-		if (after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets')) {
-			# Set the set name and link. If a test, don't link to the version unless the problems can be seen.
-			my $thisSetName = $setIsVersioned
-				? $c->link_to($setName => $act_as_student_set_url) . ' ('
-				. (
-					(
-						$set->hide_work eq 'N'
-						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
-						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
-					)
-					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
-					: $c->maketext('version [_1]', $set->version_id)
-				)
-				. ')'
-				: $c->link_to($setName => $act_as_student_set_url);
-			push @$rows, $c->tag(
-				'tr',
-				$c->c(
-					$c->tag(
-						'th',
-						scope => 'row',
-						dir   => 'ltr',
-						sub {$thisSetName}
-					),
-					$c->tag('td', $c->tag('span', class => $class, $totalRightPercent . '%')),
-					$c->tag('td', sprintf('%0.2f', $totalRight)),                                # score
-					$c->tag('td', $total),                                                       # out of
-					@html_prob_scores                                                            # problems
-				)->join('')
-			);
-		} else {
-			push @$rows,
-				$c->tag(
-					'tr',
-					$c->c(
-						$c->tag(
-							'th',
-							dir => 'ltr',
-							$setName
-						),
-						$c->tag(
-							'td',
-							colspan => $max_problems + 3,
-							$c->tag(
-								'em',
-								$c->maketext(
-									'Will open on [_1].',
-									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
-								)
-							)
-						)
-				)->join('')
-				);
+		# If this is a test version, update template set to the best grade a student hand.
+		if ($setIsVersioned) {
+			# Compare the score to the template set and update as needed.
+			my $templateItem = $allItems{$setTemplateID};
+			if ($item->{grade} > $templateItem->{grade}) {
+				for ('grade', 'grade_total', 'grade_total_right') {
+					$templateItem->{$_} = $item->{$_};
+				}
+			}
+		}
+	}
+
+	# Compute total course grade if requested.
+	my $courseTotal = 0;
+	my $totalRight  = 0;
+	if ($ce->{showCourseHomeworkTotals}) {
+		for (@open, @reduced, @recentClosed, @closed) {
+			$courseTotal += $_->{grade_total};
+			$totalRight  += $_->{grade_total_right};
 		}
 	}
 
 	return $c->include(
-		'ContentGenerator/Grades/student_stats',
-		fullName         => $fullName,
-		max_problems     => $max_problems,
-		rows             => $rows->join(''),
-		courseTotal      => $courseTotal,
-		courseTotalRight => $courseTotalRight
+		'ContentGenerator/Grades/student_grades',
+		effectiveUser => $effectiveUser,
+		fullName      => join(' ', $studentRecord->first_name, $studentRecord->last_name),
+		notOpen       => \@notOpen,
+		open          => \@open,
+		reduced       => \@reduced,
+		recentClosed  => \@recentClosed,
+		closed        => \@closed,
+		courseTotal   => $courseTotal,
+		totalRight    => $totalRight
 	);
 }
 

@@ -15,10 +15,14 @@ sub studentNav ($c, $setID) {
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 
 	# Find all users for the given set (except the current user) sorted by last_name, then first_name, then user_id.
+	# If $setID is undefined, list all users except the current user instead.
 	my @allUserRecords = $c->db->getUsersWhere(
 		{
-			user_id =>
-				[ map { $_->[0] } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } }) ]
+			user_id => [
+				map { $_->[0] } $c->db->listUserSetsWhere(
+					{ defined $setID ? (set_id => $setID) : (), user_id => { '!=' => $userID } }
+				)
+			]
 		},
 		[qw/last_name first_name user_id/]
 	);
