@@ -388,6 +388,15 @@
 	% # Problems can be shown, so output the main form and the problems.
 	% my $startTime = param('startTime') || time;
 	%
+	% if ($haveProblemWarnings) {
+		<div class="row g-0">
+			<div class="col-12 alert alert-danger">
+				<%== maketext('<strong>Warning</strong>: There may be something wrong with a problem in this test. '
+					. 'Please inform your instructor including the warning messages below the problem.') =%>
+			</div>
+		</div>
+	% }
+	%
 	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form mt-0', begin =%>
 		<%= $c->hidden_authen_fields =%>
 		<%= hidden_field courseID => $ce->{courseName} =%>
@@ -649,6 +658,11 @@
 						<%= WeBWorK::HTML::SingleProblemGrader->new($c, $pg, $problems->[ $probOrder->[$i] ], $c->{set})
 							->insertGrader =%>
 					% }
+					% # Show warnings for the problem if there are any.
+					<%= include 'ContentGenerator/Base/problem_warning_and_debug_output',
+						warnings         => $pg->{warnings},
+						warning_messages => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
+						debug_messages   => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [] =%>
 				</div>
 				% # Store the problem status for continued attempts recording.
 				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}

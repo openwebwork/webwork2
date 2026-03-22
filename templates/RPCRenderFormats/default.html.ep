@@ -136,63 +136,27 @@
 				% end
 			</div>
 		</div>
-		% # PG warning messages (this includes translator warnings but not translator errors).
-		% if ($rh_result->{pg_warnings}) {
-			<div class="Warnings alert alert-danger p-1">
-				<h3><%= $lh->maketext('Warning messages') %></h3>
-				<ul>
-					% for (split("\n", $rh_result->{pg_warnings})) {
-						<li><code><%== $_ %></code></li>
-					% }
-				</ul>
-			</div>
-		% }
-		% # PG warning messages generated with WARN_message.
-		% if (ref $rh_result->{warning_messages} eq 'ARRAY' && @{ $rh_result->{warning_messages} }) {
-			<div class="Warnings alert alert-danger p-1">
-				<h3><%= $lh->maketext('PG warning messages') %></h3>
-				<ul>
-					% for (@{ $rh_result->{warning_messages} }) {
-						<li><code><%== $_ %></code></li>
-					% }
-				</ul>
-			</div>
-		% }
-		% # Translator errors.
-		% if ($rh_result->{flags}{error_flag}) {
-			<div class="Warnings alert alert-danger p-1">
-				<h3>Translator errors</h3>
-				<code><%== $rh_result->{errors} %></code>
-			</div>
-		% }
+		<%= include 'ContentGenerator/Base/problem_warning_and_debug_output',
+			warnings         => $rh_result->{pg_warnings},
+			warning_messages => ref $rh_result->{warning_messages} eq 'ARRAY' ? $rh_result->{warning_messages} : [],
+			debug_messages   =>
+				$formatName eq 'debug' && ref $rh_result->{debug_messages} eq 'ARRAY'
+				? $rh_result->{debug_messages}
+				: []
+			=%>
 		% # Additional information output only for the debug format.
 		% if ($formatName eq 'debug') {
-			% # PG debug messages generated with DEBUG_message.
-			% if (@{ $rh_result->{debug_messages} }) {
-				<div class="Warnings alert alert-danger p-1">
-					<h3>PG debug messages</h3>
-					<ul>
-						% for (@{ $rh_result->{debug_messages} }) {
-							<li><code><%== $_ %></code></li>
-						% }
-					</ul>
-				</div>
-			% }
-			% # Internal debug messages generated within PGcore.
-			% if (ref $rh_result->{internal_debug_messages} eq 'ARRAY' && @{ $rh_result->{internal_debug_messages} }) {
-				<div class="Warnings alert alert-danger p-1">
-					<h3>Internal errors</h3>
-					<ul>
-						% for (@{ $rh_result->{internal_debug_messages} }) {
-							<li><code><%== $_ %></code></li>
-						% }
-					</ul>
-				</div>
-			% }
 			% if ($ws->{inputs_ref}{clientDebug}) {
 				<h3>Webwork client data</h3>
 				%== $pretty_print->($ws)
 			% }
+		% }
+		% # Translator errors.
+		% if ($rh_result->{flags}{error_flag}) {
+			<div class="alert alert-danger p-1">
+				<h3>Translator errors</h3>
+				<div><%== $rh_result->{errors} %></div>
+			</div>
 		% }
 	</div>
 	% # Show the footer unless it is explicity disabled.

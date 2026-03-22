@@ -594,10 +594,6 @@ async sub pre_header_initialize ($c) {
 		}
 	);
 
-	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
-	# So rewarn them and let the global warning handler take care of it.
-	warn $pg->{warnings} if $pg->{warnings};
-
 	debug('end pg processing');
 
 	$pg->{body_text} .= $c->hidden_field(
@@ -609,20 +605,6 @@ async sub pre_header_initialize ($c) {
 	$can{showHints}     &&= $pg->{flags}{hintExists};
 	$can{showSolutions} &&= $pg->{flags}{solutionExists};
 
-	# Record errors
-	$c->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
-	$c->{pgwarning}        = $pg->{warning_messages}        if ref $pg->{warning_messages} eq 'ARRAY';
-	$c->{pginternalerrors} = $pg->{internal_debug_messages} if ref $pg->{internal_debug_messages} eq 'ARRAY';
-	# $c->{pgerrors} is defined if any of the above are defined, and is nonzero if any are non-empty.
-	$c->{pgerrors} = @{ $c->{pgdebug} // [] } || @{ $c->{pgwarning} // [] } || @{ $c->{pginternalerrors} // [] }
-		if defined $c->{pgdebug} || defined $c->{pgwarning} || defined $c->{pginternalerrors};
-
-	# If $c->{pgerrors} is not defined, then the PG messages arrays were not defined,
-	# which means $pg->{pgcore} was not defined and the translator died.
-	warn 'Processing of this PG problem was not completed.  Probably because of a syntax error. '
-		. 'The translator died prematurely and no PG warning messages were transmitted.'
-		unless defined $c->{pgerrors};
-
 	# Store fields
 	$c->{want} = \%want;
 	$c->{can}  = \%can;
@@ -633,53 +615,6 @@ async sub pre_header_initialize ($c) {
 	$c->{scoreRecordedMessage} = await process_and_log_answer($c) || '';
 
 	return;
-}
-
-sub warnings ($c) {
-	my $output = $c->c;
-
-	# Display warning messages
-	if (!defined $c->{pgerrors}) {
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				$c->c(
-					$c->tag('h3', style => 'color:red;', $c->maketext('PG question failed to render')),
-					$c->tag('p',  $c->maketext('Unable to obtain error messages from within the PG question.'))
-				)->join('')
-			)
-		);
-	} elsif ($c->{pgerrors} > 0) {
-		my @pgdebug          = @{ $c->{pgdebug}          // [] };
-		my @pgwarning        = @{ $c->{pgwarning}        // [] };
-		my @pginternalerrors = @{ $c->{pginternalerrors} // [] };
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				$c->c(
-					$c->tag('h2', $c->maketext('PG question processing error messages')),
-					@pgdebug ? $c->c(
-						$c->tag('h3', $c->maketext('PG debug messages')),
-						$c->tag('p',  $c->c(@pgdebug)->join($c->tag('br')))
-					)->join('') : '',
-					@pgwarning ? $c->c(
-						$c->tag('h3', $c->maketext('PG warning messages')),
-						$c->tag('p',  $c->c(@pgwarning)->join($c->tag('br')))
-					)->join('') : '',
-					@pginternalerrors ? $c->c(
-						$c->tag('h3', $c->maketext('PG internal errors')),
-						$c->tag('p',  $c->c(@pginternalerrors)->join($c->tag('br')))
-					)->join('') : ''
-				)->join('')
-			)
-		);
-	}
-
-	push(@$output, $c->SUPER::warnings());
-
-	return $output->join('');
 }
 
 sub head ($c) {
@@ -1042,14 +977,7 @@ sub output_problem_body ($c) {
 		} else {
 			# For students render the body text of the problem with a message about error details.
 			return $c->c(
-				$c->tag(
-					'div',
-					id    => 'output_problem_body',
-					class => 'text-dark',
-					style => 'color-scheme: light',
-					data  => { bs_theme => 'light' },
-					$c->b($c->{pg}{body_text})
-				),
+				$c->tag('div', $c->b($c->{pg}{body_text})),
 				$c->include(
 					'ContentGenerator/Base/error_output',
 					error   => $c->{pg}{errors},
@@ -1534,7 +1462,8 @@ sub output_past_answer_button ($c) {
 				$c->hidden_field(selected_sets     => $c->{problem}->set_id),
 				$c->hidden_field(selected_users    => $c->{problem}->user_id),
 				$c->tag(
-					'p',
+					'div',
+					class => 'mb-3',
 					$c->submit_button(
 						$c->maketext('Show Past Answers'),
 						name  => 'action',

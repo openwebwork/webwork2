@@ -258,26 +258,23 @@ async sub renderProblem {
 
 	# New version of output:
 	return {
-		text                    => $pg->{body_text},
-		header_text             => $pg->{head_text},
-		post_header_text        => $pg->{post_header_text},
-		answers                 => $pg->{answers},
-		errors                  => $pg->{errors},
-		pg_warnings             => $pg->{warnings},
-		PG_ANSWERS_HASH         => $pg->{PG_ANSWERS_HASH},
-		PERSISTENCE_HASH        => $pg->{PERSISTENCE_HASH},
-		problem_result          => $pg->{result},
-		problem_state           => $pg->{state},
-		flags                   => $pg->{flags},
-		psvn                    => $psvn,
-		problem_seed            => $problemSeed,
-		resource_list           => $pg->{resource_list},
-		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
-		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
-		internal_debug_messages => ref $pg->{internal_debug_messages} eq 'ARRAY'
-		? $pg->{internal_debug_messages}
-		: [],
-		compute_time => logTimingInfo($beginTime, Benchmark->new),
+		text             => $pg->{body_text},
+		header_text      => $pg->{head_text},
+		post_header_text => $pg->{post_header_text},
+		answers          => $pg->{answers},
+		errors           => $pg->{errors},
+		pg_warnings      => $pg->{warnings},
+		PG_ANSWERS_HASH  => $pg->{PG_ANSWERS_HASH},
+		PERSISTENCE_HASH => $pg->{PERSISTENCE_HASH},
+		problem_result   => $pg->{result},
+		problem_state    => $pg->{state},
+		flags            => $pg->{flags},
+		psvn             => $psvn,
+		problem_seed     => $problemSeed,
+		resource_list    => $pg->{resource_list},
+		warning_messages => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
+		debug_messages   => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
+		compute_time     => logTimingInfo($beginTime, Benchmark->new),
 	};
 }
 
