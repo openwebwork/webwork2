@@ -13,8 +13,10 @@ sub new ($class) {
 		id          => 'ResurrectGW',
 		name        => x('Necromancers Charm'),
 		description => x(
-			'Reopens any test for an additional 24 hours. If you are allowed to start new versions of the test, then this allows you to start a new test even if the '
-				. 'close date has past. If you were not allowed to start a new version of the test, then this item will not allow you to take additional versions of the test.'
+			'Reopens any test for an additional 24 hours. If you are allowed to start new versions of the test, '
+			. 'then this allows you to start a new test even if the close date has past. '
+				. 'If you were not allowed to start a new version of the test, '
+				. 'then this item will not allow you to take additional versions of the test. '
 				. 'This item will not extend the time limit for any tests that you have already started.'
 		)
 	}, $class;
@@ -31,8 +33,10 @@ sub print_form ($self, $set, $records, $c) {
 		return $c->tag(
 			'p',
 			$c->maketext(
-				'Reopen this test for the next 24 hours. If you were allowed to start new versions of the test, then this will allow you to start a new test. '
-				. 'If you were not allowed to start a new version of the test, then you should not use this item. '
+				'Reopen this test for the next 24 hours. If you were allowed to start new versions of the test, '
+				. 'then this will allow you to start a new test. '
+				. 'If you have already started all of the versions of the test that you are allowed to start, '
+				. 'then you should not use this item. '
 				. 'This item will not extend the time limit for any tests that you have already started.'
 			)
 		);
@@ -41,8 +45,10 @@ sub print_form ($self, $set, $records, $c) {
 			return $c->tag(
 				'p',
 				$c->maketext(
-					'Reopen this test for full credit for the next 24 hours. If you are allowed to start new versions of the test, then this will allow you to start a new test. '
-					. 'If you were not allowed to start a new version of the test, then you should not use this item. '
+					'Reopen this test for full credit for the next 24 hours. If you are allowed to start new versions '
+					. 'of the test, then this will allow you to start a new test. '
+					. 'If you have already started all of the versions of the test that you are allowed to start, '
+					. 'then you should not use this item. '
 					. 'This item will not extend the time limit for any tests that you have already started.'
 				)
 			);
@@ -51,16 +57,19 @@ sub print_form ($self, $set, $records, $c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'Reopen this test for full credit for the next 24 hours.  After 24 hours any tests will revert to counting for '
-						. $c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100 . '% of their value until [_1].',
+						'Reopen this test for full credit for the next 24 hours.  After 24 hours any tests will revert '
+						. 'to counting for [_1]% of their value until [_2].',
+						$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
 						$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
 					)
 				),
 				$c->tag(
 					'p',
 					$c->maketext(
-						' If you are allowed to start new versions of the test, then this will allow you to start a new test. '
-						. 'If you were not allowed to start a new version of the test, then you should not use this item. '
+						' If you are allowed to start new versions of the test, '
+						. 'then this will allow you to start a new test. '
+						. 'If you have already started all of the versions of the test that you are allowed to start, '
+						. 'then you should not use this item. '
 						. 'This item will not extend the time limit for any tests that you have already started.'
 					)
 				)
@@ -82,7 +91,7 @@ sub use_item ($self, $set, $records, $c) {
 		$set->due_date(time + ONE_DAY);
 		$userSet->due_date($set->due_date);
 		if ($set->due_date > $set->answer_date) {
-			$set->answer_date(time + ONE_DAY);
+			$set->answer_date($set->due_date);
 			$userSet->answer_date($set->answer_date);
 		}
 	}
