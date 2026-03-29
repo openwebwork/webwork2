@@ -56,7 +56,7 @@ for (const [immediate, extension, ready] of [
 		'output/chtml',
 		() => {
 			const { CHTML } = MathJax._.output.chtml_ts;
-			switchToBSStyle(CHTML);
+			switchToBSStyle(CHTML.commonStyles);
 			const { ChtmlMaction } = MathJax._.output.chtml.Wrappers.maction;
 			switchToBSStyle(ChtmlMaction.styles, '@media (prefers-color-scheme: dark) /* chtml maction */');
 		}
