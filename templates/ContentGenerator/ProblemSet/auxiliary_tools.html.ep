@@ -43,7 +43,7 @@
 				<div class="modal-dialog modal-dialog-centered">
 					<div class="modal-content">
 						<div class="modal-header">
-							<h4 class="modal-title"><%= maketext('Achievement Rewards') %></h4>
+							<h1 class="modal-title h4"><%= maketext('Achievement Rewards') %></h1>
 							<button type="button" class="btn-close" data-bs-dismiss="modal"
 								aria-label="<%= maketext('close') %>"></button>
 						</div>
