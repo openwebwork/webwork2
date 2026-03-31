@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(wwRound getAssetURL);
+% use WeBWorK::Utils qw(wwRound getAssetURL points_stepsize round_nearest_stepsize);
 % require WeBWorK::PG;
 %
 % content_for js => begin
@@ -122,11 +122,17 @@
 						<%= check_box 'select-all' => 'on', id => 'select-all', class => 'select-all form-check-input',
 							data => { select_group => 'mark_correct' } =%>
 					</th>
-					<th id="score-header"><%= maketext('Score (%)') %></th>
+					% unless ($ce->{problemGraderScore} eq 'Point') {
+						<th id="score-header"><%= maketext('Score (%)') %></th>
+					% }
+					% unless ($ce->{problemGraderScore} eq 'Percent') {
+						<th id="point-header"><%= maketext('Points (0 - [_1])', $problem->value) %></th>
+					% }
 					<th id="comment-header"><%= maketext('Comment') %></th>
 				</tr>
 			</thead>
 			<tbody>
+				% my $stepSize = points_stepsize($problem->value);
 				% for my $user (@$users) {
 					% my $userID = $user->user_id;
 					%
@@ -206,14 +212,46 @@
 									class             => 'mark_correct form-check-input',
 									'aria-labelledby' => 'mark-all-correct-header' =%>
 							</td>
-							<td class="restricted-width-col">
-								% param("$userID.$versionID.score", undef);
-								<%= number_field "$userID.$versionID.score" =>
-										wwRound(0, $_->{problem}->status * 100),
-									class => 'score-selector form-control form-control-sm restricted-width-col',
-									style => 'width:6.5rem;', min => 0, max => 100, autocomplete => 'off',
-									'aria-labelledby' => 'score-header' =%>
-							</td>
+							% unless ($ce->{problemGraderScore} eq 'Point') {
+								<td class="restricted-width-col">
+									% param("$userID.$versionID.score", undef);
+									<%= number_field "$userID.$versionID.score" => wwRound(0, $_->{problem}->status * 100),
+										id    => "$userID.$versionID.score",
+										class => 'problem-score form-control form-control-sm restricted-width-col',
+										style => 'width:6.5rem;', min => 0, max => 100, step => 1,
+										autocomplete => 'off', 'aria-labelledby' => 'score-header' =%>
+								</td>
+							% }
+							% unless ($ce->{problemGraderScore} eq 'Percent') {
+								% my $problemValue = ($_->{problem}->value ne '' ? $_->{problem} : $problem)->value;
+								% my $useUserValue = $problemValue != $problem->value;
+								% my $thisStepSize = $useUserValue ? points_stepsize($problemValue) : $stepSize;
+								<td class="restricted-width-col">
+									% if ($ce->{problemGraderScore} eq 'Point') {
+										% param("$userID.$versionID.score", wwRound(0, $_->{problem}->status * 100));
+										<%= hidden_field "$userID.$versionID.score" => 0,
+											id => "$userID.$versionID.score" %>
+									% }
+									% param("$userID.$versionID.points", undef);
+									<%= number_field "$userID.$versionID.points" => round_nearest_stepsize(
+											$_->{problem}->status * $problemValue, $thisStepSize),
+										id    => "$userID.$versionID.points",
+										class => 'problem-points form-control form-control-sm restricted-width-col',
+										style => 'width:6.5rem;',
+										min   => 0,
+										max   => $problemValue,
+										step  => $thisStepSize,
+										autocomplete      => 'off',
+										'aria-labelledby' => $useUserValue
+											? "point-label-$userID.$versionID"
+											: 'point-header' =%>
+									% if ($useUserValue) {
+										<div id="point-label-<%= "$userID.$versionID" =%>" class="fw-bold">
+											<%= maketext('Points (0 - [_1])', $problemValue) =%>
+										</div>
+									% }
+								</td>
+							% }
 							<td class="grader-comment-column">
 								% if (defined $_->{past_answer}) {
 									<%= text_area "$userID.$versionID.comment" => $_->{past_answer}->comment_string,

@@ -776,12 +776,12 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'problemGraderScore',
-				doc  => x('Method to enter problem scores in the single problem manual grader'),
+				doc  => x('Method to enter problem scores in the manual problem graders'),
 				doc2 => x(
-					'This configures if the single problem manual grader has inputs to enter problem scores as '
-						. 'a percent, a point value, or both. Note, the problem score is always saved as a '
-						. 'percent, so when using a point value, the problem score will be rounded to the '
-						. 'nearest whole percent.'
+					'This configures if the manual problem grader or single problem grader has inputs to enter '
+						. 'problem scores as a percent, a point value, or both. Note, the problem score is always '
+						. 'saved as a percent, so when using a point value, the problem score will be rounded to '
+						. 'the nearest whole percent.'
 				),
 				values => [qw(Percent Point Both)],
 				type   => 'popuplist'
