@@ -189,7 +189,7 @@
 		</div>
 		%
 		% if ($c->have_warnings) {
-			<div id="warnings" class="Warnings alert alert-danger mb-2"><%= $c->warnings %></div>
+			<div class="alert alert-danger mb-2"><%= $c->warnings %></div>
 		% }
 		% if ($c->can('message')) {
 			<div id="message_bottom" class="message"><%= $c->message %></div>

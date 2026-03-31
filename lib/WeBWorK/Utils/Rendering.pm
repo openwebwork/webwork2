@@ -252,10 +252,9 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 		};
 
 		if (ref($pg->{pgcore}) eq 'PGcore') {
-			$ret->{internal_debug_messages} = $pg->{pgcore}->get_internal_debug_messages;
-			$ret->{warning_messages}        = $pg->{pgcore}->get_warning_messages();
-			$ret->{debug_messages}          = $pg->{pgcore}->get_debug_messages();
-			$ret->{PG_ANSWERS_HASH}         = {
+			$ret->{warning_messages} = $pg->{pgcore}->get_warning_messages();
+			$ret->{debug_messages}   = $pg->{pgcore}->get_debug_messages();
+			$ret->{PG_ANSWERS_HASH}  = {
 				map {
 					$_ => {
 						response_obj => unbless($pg->{pgcore}{PG_ANSWERS_HASH}{$_}->response_obj),
@@ -269,6 +268,8 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 					keys %{ $pg->{pgcore}{PG_alias}{resource_list} }
 			};
 			$ret->{PERSISTENCE_HASH} = $pg->{pgcore}{PERSISTENCE_HASH};
+		} else {
+			$ret->{render_fail} = 1;
 		}
 
 		# Save the problem source. This is used by Caliper::Entity. Why?
@@ -277,7 +278,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 		$pg->free;
 		return $ret;
 	})->catch(sub ($err) {
-		return { body_text => '', answers => {}, flags => { error_flag => 1 }, errors => $err };
+		return { body_text => '', answers => {}, render_fail => 1, flags => { error_flag => 1 }, errors => $err };
 	});
 }
 

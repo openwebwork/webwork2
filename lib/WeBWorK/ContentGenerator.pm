@@ -813,7 +813,7 @@ there are pg errors.
 =cut
 
 sub have_warnings ($c) {
-	return $c->stash('warnings') || $c->{pgerrors};
+	return $c->stash('warnings');
 }
 
 =item exists_theme_file
@@ -1220,8 +1220,8 @@ Used to display a generic warning message at the top of the page
 =cut
 
 sub warningMessage ($c) {
-	return $c->maketext('<strong>Warning</strong>: There may be something wrong with this question. '
-			. 'Please inform your instructor including the warning messages below.');
+	return $c->maketext('<strong>Warning</strong>: WeBWorK has encountered warnings while processing your request. '
+			. 'See the warning messages below for details.');
 }
 
 =item $string = formatDateTime($date_time, $format_string, $timezone, $locale)
