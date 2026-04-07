@@ -119,13 +119,14 @@
 						],
 						onClick: (index, fp) => {
 							if (index === 0) {
-								const today = new Date();
-								// If there isn't a selected date, then use 12:00 am on the current date.
-								const selectedDate = fp.selectedDates[0] ?? new Date(new Date().toDateString());
-								selectedDate.setFullYear(today.getFullYear());
-								selectedDate.setMonth(today.getMonth());
-								selectedDate.setDate(today.getDate());
-								fp.setDate(selectedDate, true);
+								// The initial date represents 12:00 am on the current date.
+								const today = new Date(new Date().toDateString());
+								if (fp.selectedDates[0]) {
+									today.setHours(fp.selectedDates[0].getHours());
+									today.setMinutes(fp.selectedDates[0].getMinutes());
+									today.setSeconds(fp.selectedDates[0].getSeconds());
+								}
+								fp.setDate(today, true);
 							} else if (index === 1) {
 								fp.setDate(new Date(), true);
 							}
