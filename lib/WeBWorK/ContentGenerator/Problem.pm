@@ -1442,13 +1442,13 @@ sub output_custom_edit_message ($c) {
 
 # Output the "Show Past Answers" button
 sub output_past_answer_button ($c) {
-	my $problemID = $c->{problem}->problem_id;
-	my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
-	if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
-		$problemID = join('.', jitar_id_to_seq($problemID));
-	}
-
 	if ($c->authz->hasPermissions($c->param('user'), 'view_answers')) {
+		my $problemID = $c->{problem}->problem_id;
+		my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
+		if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
+			$problemID = join('.', jitar_id_to_seq($problemID));
+		}
+
 		my $hiddenFields = $c->hidden_authen_fields;
 		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		return $c->form_for(

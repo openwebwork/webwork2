@@ -114,10 +114,11 @@
 		<% end =%>
 	</div>
 </div>
-<div id="problemFooter" class="problemFooter">
-	<%= $c->output_past_answer_button =%>
-	<%= $c->output_email_instructor =%>
-</div>
+<%= $c->output_past_answer_button =%>
+% my $emailInstructorButton = $c->output_email_instructor;
+% if ($emailInstructorButton) {
+	<div class="mb-3"><%= $emailInstructorButton =%></div>
+% }
 <%= include 'ContentGenerator/Base/problem_warning_and_debug_output',
 	warnings         => $c->{pg}{warnings},
 	warning_messages => ref $c->{pg}{warning_messages} eq 'ARRAY' ? $c->{pg}{warning_messages} : [],
