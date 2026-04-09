@@ -19,14 +19,6 @@
 			<%= link_to $display_name => $c->systemLink(url_for('problem_list', setID => $set->set_id)),
 				class => 'fw-bold'
 			=%>
-			% if ($set->description =~ /\S/) {
-				<a class="set-id-tooltip" role="button" tabindex="0" data-bs-placement="right"
-						data-bs-toggle="tooltip" data-bs-title="<%= $set->description =%>"
-						data-fallback-placements="top bottom">
-					<i class="icon fas fa-circle-info" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Assignment Description') =%></span>
-				</a>
-			% }
 		</div>
 		<div class="font-sm"><%= $status_msg %></div>
 		% if (!$set->visible && $authz->hasPermissions(param('user'), 'view_unopened_sets')) {
