@@ -10,12 +10,12 @@
 </head>
 %
 <body>
-	<div class="main-index-header navbar navbar-dark bg-primary px-3 position-fixed border-bottom border-dark">
+	<nav class="main-index-header navbar navbar-dark bg-primary px-3 position-fixed border-bottom border-dark">
 		<div class="container-fluid">
 			<h1 class="navbar-brand fw-bold fs-5 m-0">WeBWorK/PG POD</h1>
 		</div>
-	</div>
-	<div class="main-index-container mx-3">
+	</nav>
+	<main class="main-index-container mx-3">
 		<div class="pt-3">
 			<h2 class="fw-bold fs-6">(Plain Old Documentation)</h2>
 			<nav class="nav flex-column list-group">
@@ -31,7 +31,7 @@
 				% }
 			</nav>
 		</div>
-	</div>
+	</main>
 </body>
 %
 </html>
