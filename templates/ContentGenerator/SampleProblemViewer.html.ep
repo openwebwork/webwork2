@@ -30,7 +30,7 @@
 </head>
 
 <body>
-	<div class="container">
+	<main class="container">
 		<div class="row my-3">
 			<div class="col-lg-6 col-12"><h1><%= title %></h1></div>
 			<div class="col-lg-6 col-12">
@@ -97,7 +97,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</main>
 </body>
 %
 </html>

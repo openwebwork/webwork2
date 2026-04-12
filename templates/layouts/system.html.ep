@@ -127,7 +127,7 @@
 %
 <div class="d-flex">
 	% # Main Content Area
-	<div id="content" class="container-fluid <%=
+	<main id="content" class="container-fluid <%=
 		$c->can('links') || $c->can('siblings') || $c->can('options')
 			? 'flex-grow-1'
 			: 'flex-grow-1 toggle-width' %>">
@@ -202,7 +202,7 @@
 		%
 		% # Footer
 		<%= include 'ContentGenerator/Base/footer' =%>
-	</div>
+	</main>
 </div>
 %
 % # This is a place that modal dialog html markup can be safely placed if needed by a page.
