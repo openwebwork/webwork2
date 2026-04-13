@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
-use WeBWorK::Utils                    qw(wwRound);
+use WeBWorK::Utils                    qw(wwRound max);
 use WeBWorK::Utils::DateTime          qw(after);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
 use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
@@ -181,21 +181,21 @@ sub displayStudentStats ($c, $studentID) {
 	my $courseTotalRight = 0;
 
 	for my $setID (@allSetIDs) {
-		my $set = $db->getGlobalSet($setID);
-		my $num_of_problems;
-		# For jitar sets we only display grades for top level problems, so we need to count how many there are.
+		my $set            = $db->getGlobalSet($setID);
+		my $max_problem_id = 0;
+		# For jitar sets we only display grades for top level problems, so we need to filter.
 		if ($set && $set->assignment_type() eq 'jitar') {
 			my @problemIDs = $db->listGlobalProblems($setID);
 			for my $problemID (@problemIDs) {
 				my @seq = jitar_id_to_seq($problemID);
-				$num_of_problems++ if ($#seq == 0);
+				$max_problem_id = $seq[0] if ($#seq == 0 && $seq[0] > $max_problem_id);
 			}
 		} else {
-			# For other sets we just count the number of problems.
-			$num_of_problems = $db->countGlobalProblems($setID);
+			# For other sets we just get the largest problem ID.
+			$max_problem_id = max($db->listGlobalProblems($setID));
 		}
 		$max_problems =
-			$set && after($set->open_date) && $max_problems < $num_of_problems ? $num_of_problems : $max_problems;
+			$set && after($set->open_date) && $max_problems < $max_problem_id ? $max_problem_id : $max_problems;
 	}
 
 	# Variables to help compute gateway scores.
@@ -320,9 +320,23 @@ sub displayStudentStats ($c, $studentID) {
 			$show_problem_scores = 0;
 		}
 
+		my @skipped;
 		for my $i (0 .. $max_problems - 1) {
 			my $score      = defined $problem_scores->[$i] && $show_problem_scores ? $problem_scores->[$i] : '';
 			my $is_correct = $score =~ /^\d+$/ && compute_unreduced_score($ce, $problem_records->[$i], $set) == 1;
+			my $j;
+			if ($setIsVersioned) {
+				$j = $i;
+			} else {
+				$j = $problem_records->[$i]{problem_id} // 0;
+				if ($set && $set->assignment_type() eq 'jitar') {
+					my @seq = jitar_id_to_seq($j);
+					$j = $#seq == 0 ? $seq[0] : 0;
+				}
+				my @new_skipped = ($i + 1 .. $j - 1 - scalar @skipped);
+				push(@skipped,          @new_skipped);
+				push(@html_prob_scores, ($c->tag('td', class => 'problem-data')) x scalar @new_skipped);
+			}
 			push(
 				@html_prob_scores,
 				$c->tag(
@@ -341,6 +355,7 @@ sub displayStudentStats ($c, $studentID) {
 					)->join('')
 				)
 			);
+			last if ($i + scalar @skipped == $max_problems - 1);
 		}
 
 		# Get percentage correct.
