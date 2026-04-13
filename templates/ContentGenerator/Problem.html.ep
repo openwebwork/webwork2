@@ -65,7 +65,7 @@
 % stash->{footerWidthClass} = 'col-lg-10';
 %
 <%== $c->post_header_text =%>
-% if ($c->{pg}{warnings} || @{ $c->{pgwarning} // [] }) {
+% if ($c->{pg}{warnings} || @{ $c->{pg}{warning_messages} // [] }) {
 	<div class="row g-0 mb-2">
 		<div class="col-12 alert alert-danger m-0">
 			<%== maketext('<strong>Warning</strong>: There may be something wrong with this question. '
