@@ -20,7 +20,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return 0
 		unless $set->assignment_type eq 'default'
 		&& $set->enable_reduced_scoring

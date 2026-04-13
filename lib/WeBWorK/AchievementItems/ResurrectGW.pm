@@ -22,9 +22,14 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type =~ /gateway/
-		&& (after($set->due_date) || ($set->enable_reduced_scoring && after($set->reduced_scoring_date)));
+		&& (
+			after($set->due_date)
+			|| ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+				&& $set->enable_reduced_scoring
+				&& after($set->reduced_scoring_date))
+		);
 	# TODO: Check if a new version can be created, and only allow using this reward in that case.
 }
 

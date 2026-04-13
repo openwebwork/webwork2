@@ -16,7 +16,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type eq 'default'
 		&& (after($set->due_date) || ($set->enable_reduced_scoring && after($set->reduced_scoring_date)));
 }
@@ -85,16 +85,16 @@ sub use_item ($self, $set, $records, $c) {
 	if ($set->enable_reduced_scoring && ($set->reduced_scoring_date != $set->due_date)) {
 		return $c->maketext(
 			'This assignment has been reopened and is due on [_1].  After that date any work '
-				. 'completed will count for [_2]% of its value until [_3]. ',
+				. 'completed will count for [_2]% of its value until [_3].',
 			$c->formatDateTime($set->reduced_scoring_date, $c->ce->{studentDateDisplayFormat}),
 			$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
 			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
-		) . $rerandomizeMessage;
+		) . ($rerandomizeMessage ? " $rerandomizeMessage" : '');
 	} else {
 		return $c->maketext(
-			'This assignment has been reopened and will now close on [_1]. ',
+			'This assignment has been reopened and will now close on [_1].',
 			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
-		) . $rerandomizeMessage;
+		) . ($rerandomizeMessage ? " $rerandomizeMessage" : '');
 	}
 }
 
