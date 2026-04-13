@@ -248,8 +248,8 @@ sub command_permission {
 
 		# WebworkWebservice::ProblemActions
 		getUserProblem => 'access_instructor_tools',
-		# Note: The modify_student_data permission is checked in the following three methods and only the status and
-		# comment_string can actually be modified by users with the problem_grader permission only.
+		# Note: The modify_student_data permission is checked in the following three methods and only the status,
+		# sub_status, and comment_string can actually be modified by users with the problem_grader permission only.
 		putUserProblem    => 'problem_grader',
 		putProblemVersion => 'problem_grader',
 		putPastAnswer     => 'problem_grader',

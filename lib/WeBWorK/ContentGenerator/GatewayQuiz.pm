@@ -274,14 +274,15 @@ sub get_instructor_comment ($c, $problem) {
 
 async sub pre_header_initialize ($c) {
 	# Make sure these are defined for the templates.
-	$c->stash->{problems}        = [];
-	$c->stash->{pg_results}      = [];
-	$c->stash->{startProb}       = 0;
-	$c->stash->{endProb}         = 0;
-	$c->stash->{numPages}        = 0;
-	$c->stash->{pageNumber}      = 0;
-	$c->stash->{problem_numbers} = [];
-	$c->stash->{probOrder}       = [];
+	$c->stash->{problems}            = [];
+	$c->stash->{pg_results}          = [];
+	$c->stash->{startProb}           = 0;
+	$c->stash->{endProb}             = 0;
+	$c->stash->{numPages}            = 0;
+	$c->stash->{pageNumber}          = 0;
+	$c->stash->{problem_numbers}     = [];
+	$c->stash->{probOrder}           = [];
+	$c->stash->{haveProblemWarnings} = 0;
 
 	# If authz->checkSet has failed, then this set is invalid.  No need to proceeded.
 	return if $c->{invalidSet};
@@ -1309,7 +1310,8 @@ async sub pre_header_initialize ($c) {
 	} elsif ($endTime > $set->due_date) {
 		$c->{exceededAllowedTime} = 1;
 	}
-	$c->{elapsedTime} = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
+	$c->{elapsedTime}   = int(($endTime - $set->open_date) / 0.6 + 0.5) / 100;
+	$c->{completedTime} = $c->formatDateTime($endTime, $ce->{studentDateDisplayFormat});
 
 	# Get the number of attempts and number of remaining attempts.
 	$c->{attemptNumber} =
@@ -1446,11 +1448,6 @@ sub nav ($c, $args) {
 	return '';
 }
 
-sub warningMessage ($c) {
-	return $c->maketext('<strong>Warning</strong>: There may be something wrong with a question in this test. '
-			. 'Please inform your instructor including the warning messages below.');
-}
-
 # Evaluation utility
 # $effectiveUser is the current effective user, $set is the merged set version, $formFields is a reference to the
 # hash of parameters from the input form that need to be passed to the translator, and $mergedProblem
@@ -1509,15 +1506,13 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		},
 	);
 
-	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
-	# So rewarn them and let the global warning handler take care of it.
-	warn $pg->{warnings} if $pg->{warnings};
-
 	# If the user can check answers and either this is not an answer submission or the problem_data form
 	# parameter was previously set, then set or update the problem_data form parameter.
 	$c->param('problem_data_' . $mergedProblem->problem_id => encode_json($pg->{PERSISTENCE_HASH} || '{}'))
 		if $c->{can}{checkAnswers}
 		&& (!$c->{submitAnswers} || defined $c->param('problem_data_' . $mergedProblem->problem_id));
+
+	$c->stash->{haveProblemWarnings} = 1 if $pg->{warnings} || @{ $pg->{pgwarning} // [] };
 
 	return $pg;
 }

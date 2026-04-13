@@ -1,0 +1,18 @@
+% # This is shared between Stats and StudentProgress siblings page to list all sets.
+%
+<ul class="nav flex-column problem-list" dir="ltr">
+	% for (map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id')) {
+		<li class="nav-item">
+			<%= tag 'a',
+				defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
+				: (
+					href => $c->systemLink(
+						url_for($set_link_route, setID => $_),
+						params => param('filter') ? { filter => param('filter') } : {}
+					),
+					class => 'nav-link'
+				),
+				format_set_name_display($_) =%>
+		</li>
+	% }
+</ul>

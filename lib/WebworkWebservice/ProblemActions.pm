@@ -38,16 +38,17 @@ sub putUserProblem {
 			'source_file',          'value',               'max_attempts', 'showMeAnother',
 			'showMeAnotherCount',   'prPeriod',            'prCount',      'problem_seed',
 			'attempted',            'last_answer',         'num_correct',  'num_incorrect',
-			'att_to_open_children', 'counts_parent_grade', 'sub_status',   'flags'
+			'att_to_open_children', 'counts_parent_grade', 'flags'
 			)
 		{
 			$userProblem->{$_} = $params->{$_} if defined $params->{$_};
 		}
 	}
 
-	# The status is the only thing that users with the problem_grader permission can change.
+	# The status and sub_status are the only things that users with the problem_grader permission can change.
 	# This method cannot be called without the problem_grader permission.
-	$userProblem->{status} = $params->{status} if defined $params->{status};
+	$userProblem->{status}     = $params->{status}     if defined $params->{status};
+	$userProblem->{sub_status} = $params->{sub_status} if defined $params->{sub_status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
 	$userProblem->{flags} =~ s/:needs_grading$// if $params->{mark_graded};
@@ -77,16 +78,17 @@ sub putProblemVersion {
 			'source_file',          'value',               'max_attempts', 'showMeAnother',
 			'showMeAnotherCount',   'prPeriod',            'prCount',      'problem_seed',
 			'attempted',            'last_answer',         'num_correct',  'num_incorrect',
-			'att_to_open_children', 'counts_parent_grade', 'sub_status',   'flags'
+			'att_to_open_children', 'counts_parent_grade', 'flags'
 			)
 		{
 			$problemVersion->{$_} = $params->{$_} if defined($params->{$_});
 		}
 	}
 
-	# The status is the only thing that users with the problem_grader permission can change.
+	# The status and sub_status are the only things that users with the problem_grader permission can change.
 	# This method cannot be called without the problem_grader permission.
-	$problemVersion->{status} = $params->{status} if defined $params->{status};
+	$problemVersion->{status}     = $params->{status}     if defined $params->{status};
+	$problemVersion->{sub_status} = $params->{sub_status} if defined $params->{sub_status};
 
 	# Remove the needs_grading flag if the mark_graded parameter is set.
 	$problemVersion->{flags} =~ s/:needs_grading$// if $params->{mark_graded};

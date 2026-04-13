@@ -5,6 +5,7 @@
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/themes/dark.css'), id => 'flatpickr-dark-theme' =%>
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
 % end
 %
@@ -116,7 +117,7 @@
 	% }
 	% @$userLinks = sort @$userLinks;
 	%
-	<div class="border border-dark mb-2 rounded">
+	<div class="border border-dark-subtle mb-2 rounded">
 		<div class="row p-2 align-items-center">
 			<div class="col-md-6">
 				<%== maketext(
@@ -151,7 +152,7 @@
 		</div>
 	</div>
 % } else {
-	<div class="border border-dark mb-2 rounded">
+	<div class="border border-dark-subtle mb-2 rounded">
 		<div class="row p-2 align-items-center">
 			<div class="col-md-6">
 				<%== maketext(
@@ -198,7 +199,7 @@
 	</div>
 	%
 	% # General set information
-	<div class="card mb-2 border border-dark" style="width:fit-content">
+	<div class="card mb-2 border border-dark-subtle" style="width:fit-content">
 		<div class="card-body p-2">
 			<div class="card-title fw-bold"><%= maketext('Set Parameters') %></div>
 			<div class="card-text">
@@ -226,7 +227,7 @@
 	%
 	% # Display header information
 	% if (!@editForUser) {
-		<div class="card mb-2 border border-dark" style="width:fit-content">
+		<div class="card mb-2 border border-dark-subtle" style="width:fit-content">
 			<div class="card-body p-2">
 				<div class="card-title fw-bold"><%= maketext("Headers") %></div>
 				% for my $headerType (@$headers) {

@@ -14,14 +14,14 @@
 	},
 	"dependencies": {
 		"@fortawesome/fontawesome-free": "^7.0.0",
-		"@openwebwork/pg-codemirror-editor": "^0.0.6",
+		"@openwebwork/pg-codemirror-editor": "^0.0.9",
 		"bootstrap": "~5.3.7",
 		"flatpickr": "^4.6.13",
 		"iframe-resizer": "^4.4.2",
 		"jquery": "^3.7.1",
 		"jquery-ui-dist": "^1.13.3",
 		"luxon": "^3.7.1",
-		"mathjax": "^4.1.0",
+		"mathjax": "^4.1.1",
 		"minisearch": "^7.1.2",
 		"shortcut-buttons-flatpickr": "^0.4.0",
 		"sortablejs": "^1.15.6"

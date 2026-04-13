@@ -25,8 +25,7 @@
 						% $previousTime = $record{time} if $previousTime < 0;
 						% my $upper_limit = $#scores > $#answers ? $#scores : $#answers;
 						%
-						<tr <%== $record{time} - $previousTime > $ce->{sessionTimeout}
-							? 'class="table-rule"' : '' %>>
+						<tr <%== $record{time} - $previousTime > $ce->{sessionTimeout} ? 'class="table-rule"' : '' %>>
 							% # Show the problem seed for instructors.
 							% if ($isInstructor) {
 								<td class="px-3">
@@ -47,9 +46,13 @@
 								%
 								% # Color the answer if the user is an instructor, there is an answer,
 								% # there is a score, and it is not an essay question.
-								<td <%== $isInstructor && $answer ne '' && defined $score && $answerType ne 'essay'
-									? ($score ? 'style="color:#006600"' : 'style="color:#660000"')
-									: '' %> class="px-3 <%== $answerType eq 'essay' ? 'essay' : '' %>">
+								<td class="<%= join(
+									' ',
+									'px-3',
+									$answerType eq 'essay' ? 'essay' : (),
+									$isInstructor && $answer ne '' && defined $score && $answerType ne 'essay'
+										? ($score ? 'correct' : 'incorrect') : ()
+								) %>">
 									% if ($answer eq '') {
 										<small><i><%= maketext('empty') %></i></small>
 									% } else {

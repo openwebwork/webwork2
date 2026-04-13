@@ -436,11 +436,17 @@ sub abort_transaction {
 
 BEGIN {
 	*User            = gen_schema_accessor("user");
-	*newUser         = gen_new("user");
 	*countUsersWhere = gen_count_where("user");
 	*existsUserWhere = gen_exists_where("user");
 	*listUsersWhere  = gen_list_where("user");
 	*getUsersWhere   = gen_get_records_where("user");
+}
+
+sub newUser {
+	my ($self, @data) = @_;
+	my $user = $self->{user}{record}->new(@data);
+	$user->accommodation_time_factor(1) unless defined $user->accommodation_time_factor;
+	return $user;
 }
 
 sub countUsers { return scalar shift->listUsers(@_) }

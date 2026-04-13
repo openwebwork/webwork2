@@ -4,7 +4,7 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to extend a close date by 48 hours.
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(after between);
+use WeBWorK::Utils::DateTime qw(before after between);
 
 use constant TWO_DAYS => 172800;
 
@@ -25,14 +25,63 @@ sub can_use ($self, $set, $records, $c) {
 
 sub print_form ($self, $set, $records, $c) {
 	my $randomization_statement = after($set->due_date) ? $c->maketext('All problems will be rerandomized.') : '';
-	return $c->tag(
-		'p',
-		$c->maketext(
-			'Extend the close date of this assignment to [_1] (an additional 48 hours). [_2]',
-			$c->formatDateTime($set->due_date + TWO_DAYS, $c->ce->{studentDateDisplayFormat}),
-			$randomization_statement
-		)
-	);
+	if ($set->enable_reduced_scoring) {
+		if (before($set->reduced_scoring_date + TWO_DAYS)) {
+			return $c->c(
+				$c->tag('p', $c->maketext('Extend the deadline by 48hours. [_1]', $randomization_statement)),
+				$c->tag(
+					'ul',
+					$c->c(
+						$c->tag(
+							'li',
+							$c->maketext(
+								'You will be able to receive full credit until [_1].',
+								$c->formatDateTime(
+									$set->reduced_scoring_date + TWO_DAYS,
+									$c->ce->{studentDateDisplayFormat}
+								)
+							)
+						),
+						$c->tag(
+							'li',
+							$c->maketext(
+								'You will be able to receive reduced credit until [_1].',
+								$c->formatDateTime($set->due_date + TWO_DAYS, $c->ce->{studentDateDisplayFormat})
+							)
+						)
+					)->join('')
+				),
+			)->join('');
+		} else {
+			return $c->c(
+				$c->tag(
+					'p',
+					$c->maketext(
+						'Extend the reduced credit deadline of this assignment to [_1] (an additional 48 hours). [_2]',
+						$c->formatDateTime($set->due_date + TWO_DAYS, $c->ce->{studentDateDisplayFormat}),
+						$randomization_statement
+					)
+				),
+				$c->tag(
+					'p',
+					$c->maketext(
+						'Because the deadline has already passed you will only '
+							. 'receive reduced credit during this extension.'
+					)
+				)
+			)->join('');
+		}
+
+	} else {
+		return $c->tag(
+			'p',
+			$c->maketext(
+				'Extend the close date of this assignment to [_1] (an additional 48 hours). [_2]',
+				$c->formatDateTime($set->due_date + TWO_DAYS, $c->ce->{studentDateDisplayFormat}),
+				$randomization_statement
+			)
+		);
+	}
 }
 
 sub use_item ($self, $set, $records, $c) {

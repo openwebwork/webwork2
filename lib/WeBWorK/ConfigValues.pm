@@ -776,12 +776,12 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'problemGraderScore',
-				doc  => x('Method to enter problem scores in the single problem manual grader'),
+				doc  => x('Method to enter problem scores in the manual problem graders'),
 				doc2 => x(
-					'This configures if the single problem manual grader has inputs to enter problem scores as '
-						. 'a percent, a point value, or both. Note, the problem score is always saved as a '
-						. 'percent, so when using a point value, the problem score will be rounded to the '
-						. 'nearest whole percent.'
+					'This configures if the manual problem grader or single problem grader has inputs to enter '
+						. 'problem scores as a percent, a point value, or both. Note, the problem score is always '
+						. 'saved as a percent, so when using a point value, the problem score will be rounded to '
+						. 'the nearest whole percent.'
 				),
 				values => [qw(Percent Point Both)],
 				type   => 'popuplist'
@@ -1155,7 +1155,9 @@ sub getConfigValues ($ce) {
 	};
 
 	# Get the list of theme folders in the theme directory.
-	my $themes = eval { path($ce->{webworkDirs}{themes})->list({ dir => 1 })->map('basename')->sort; };
+	my $themes = eval {
+		path($ce->{webworkDirs}{themes})->list({ dir => 1 })->grep(sub {-d})->map('basename')->sort;
+	};
 	die "can't opendir $ce->{webworkDirs}{themes}: $@" if $@;
 
 	# Get the list of all site hardcopy theme files.

@@ -65,12 +65,34 @@
 % stash->{footerWidthClass} = 'col-lg-10';
 %
 <%== $c->post_header_text =%>
+% if ($c->{pg}{warnings} || @{ $c->{pgwarning} // [] }) {
+	<div class="row g-0 mb-2">
+		<div class="col-12 alert alert-danger m-0">
+			<%== maketext('<strong>Warning</strong>: There may be something wrong with this question. '
+				. 'Please inform your instructor including the warning messages below.') =%>
+		</div>
+	</div>
+% }
+% if (ref $c->{pg}{debug_messages} eq 'ARRAY' && @{ $c->{pg}{debug_messages} }) {
+	<div class="row g-0 mb-2">
+		<div class="col-12 alert alert-info m-0"><%== maketext('Debugging information is shown below.') %></div>
+	</div>
+% }
 <div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
 <div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
 <div class="row">
 	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>
 </div>
 <div class="row"><div id="output_comments" class="col-lg-10"><%= $c->output_comments %></div></div>
+% if ($c->{pg}{render_fail}) {
+	<div class="row g-0 mb-2">
+		<div class="col-10 alert alert-danger m-0">
+			<h2 style="color:red"><%= maketext('PG question failed to render') %></h2>
+			<p class="m-0"><%= maketext('Processing of this PG problem was not completed.  Probably because of a '
+				. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.') %></p>
+		</div>
+	</div>
+% }
 <div class="row">
 	<div class="col-lg-10">
 		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
@@ -92,7 +114,12 @@
 		<% end =%>
 	</div>
 </div>
-<div id="problemFooter" class="problemFooter">
-	<%= $c->output_past_answer_button =%>
-	<%= $c->output_email_instructor =%>
-</div>
+<%= $c->output_past_answer_button =%>
+% my $emailInstructorButton = $c->output_email_instructor;
+% if ($emailInstructorButton) {
+	<div class="mb-3"><%= $emailInstructorButton =%></div>
+% }
+<%= include 'ContentGenerator/Base/problem_warning_and_debug_output',
+	warnings         => $c->{pg}{warnings},
+	warning_messages => ref $c->{pg}{warning_messages} eq 'ARRAY' ? $c->{pg}{warning_messages} : [],
+	debug_messages   => ref $c->{pg}{debug_messages} eq 'ARRAY'   ? $c->{pg}{debug_messages}   : [] =%>

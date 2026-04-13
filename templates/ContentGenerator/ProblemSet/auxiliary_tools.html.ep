@@ -1,3 +1,22 @@
+% # If viewing a restricted set, only show the email instructor button.
+% if ($c->{viewSetCheck}) {
+	<div class="submit-buttons-container mb-3">
+		<div class="d-inline-block">
+			<%= $c->feedbackMacro(
+				route              => current_route,
+				set                => $c->{set}->set_id,
+				problem            => '',
+				displayMode        => $c->{displayMode},
+				showOldAnswers     => '',
+				showCorrectAnswers => '',
+				showHints          => '',
+				showSolutions      => '',
+			) =%>
+		</div>
+	</div>
+	% last;
+% }
+%
 <div class="submit-buttons-container mb-3">
 	<div class="d-inline-block">
 		<%= $c->feedbackMacro(
@@ -24,7 +43,7 @@
 				<div class="modal-dialog modal-dialog-centered">
 					<div class="modal-content">
 						<div class="modal-header">
-							<h4 class="modal-title"><%= maketext('Achievement Rewards') %></h4>
+							<h1 class="modal-title h4"><%= maketext('Achievement Rewards') %></h1>
 							<button type="button" class="btn-close" data-bs-dismiss="modal"
 								aria-label="<%= maketext('close') %>"></button>
 						</div>

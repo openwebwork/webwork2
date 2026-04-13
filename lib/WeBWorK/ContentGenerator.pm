@@ -110,8 +110,6 @@ async sub go ($c) {
 
 	my $tx = $c->render_later->tx;
 
-	$c->stash->{footerWidthClass} = $c->can('info') ? 'col-md-8' : 'col-12';
-
 	if ($c->can('pre_header_initialize')) {
 		my $pre_header_initialize = $c->pre_header_initialize;
 		await $pre_header_initialize
@@ -132,6 +130,8 @@ async sub go ($c) {
 		my $initialize = $c->initialize;
 		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
 	}
+
+	$c->stash->{footerWidthClass} //= $c->can('info') ? 'col-md-8' : 'col-12';
 
 	$c->content;
 
@@ -692,8 +692,8 @@ accessed by JavaScript files to obtain various webwork2 settings.
 
 sub webwork_js_config ($c, $showMathJaxErrors = 0) {
 	return encode_json({
-		webwork_url        => $c->location,
-		mathJaxDarkModeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/no-dark-mode.js'),
+		webwork_url             => $c->location,
+		mathJaxBSColorSchemeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/bs-color-scheme.js'),
 		$showMathJaxErrors ? (showMathJaxErrors => true) : ()
 	});
 }
@@ -813,7 +813,7 @@ there are pg errors.
 =cut
 
 sub have_warnings ($c) {
-	return $c->stash('warnings') || $c->{pgerrors};
+	return $c->stash('warnings');
 }
 
 =item exists_theme_file
@@ -1220,8 +1220,8 @@ Used to display a generic warning message at the top of the page
 =cut
 
 sub warningMessage ($c) {
-	return $c->maketext('<strong>Warning</strong>: There may be something wrong with this question. '
-			. 'Please inform your instructor including the warning messages below.');
+	return $c->maketext('<strong>Warning</strong>: WeBWorK has encountered warnings while processing your request. '
+			. 'See the warning messages below for details.');
 }
 
 =item $string = formatDateTime($date_time, $format_string, $timezone, $locale)

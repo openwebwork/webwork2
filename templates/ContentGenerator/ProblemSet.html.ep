@@ -1,28 +1,56 @@
 % use WeBWorK::Utils::DateTime qw(before between);
 %
-% if (
-	% $c->{invalidSet}
-	% && ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
-		% || $authz->{merged_set}->assignment_type !~ /gateway/)
-	% )
-% {
-	<div class="alert alert-danger">
-		<p class="mb-3">
-			<%= maketext(
-				'The selected problem set ([_1]) is not a valid set for [_2].',
-				stash('setID'), param('effectiveUser')
-			) =%>
-		</p>
-		<p class="mb-0"><%= $c->{invalidSet} %></p>
-	</div>
-	% last;
+% if ($c->{invalidSet}) {
+	% # If $c->{viewSetCheck} is set, show some set information.
+	% if ($c->{viewSetCheck}) {
+		% # Do nothing unless the set is hidden, then show a warning message instead of an error.
+		% if ($c->{viewSetCheck} eq 'hidden') {
+			<div class="alert alert-warning">
+				<p class="mb-0"><%= $c->{invalidSet} %></p>
+			</div>
+			% last;
+		% }
+	% } else {
+		<div class="alert alert-danger">
+			<p class="mb-3">
+				<%= maketext(
+					'The selected problem set ([_1]) is not a valid set for [_2].',
+					stash('setID'), param('effectiveUser')
+				) =%>
+			</p>
+			<p class="mb-0"><%= $c->{invalidSet} %></p>
+		</div>
+		% last;
+	% }
 % }
 %
 % my $set = $c->{set};
 %
+% # Show the set description if it is not empty.
+% if ($set->description =~ /\S/) {
+	<div class="alert alert-secondary"><%= $set->description %></div>
+% }
+%
 % # Stats message displays the current status of the set and states the next important date.
 <%= include 'ContentGenerator/Base/set_status', set => $set =%>
 %
+% # Show any restricted messages.
+% if ($c->{viewSetCheck} && $c->{viewSetCheck} eq 'restricted') {
+	<div class="alert alert-warning"><%== $c->{invalidSet} %></div>
+% } elsif ($c->{restrictedSetMessages}) {
+	<div class="alert alert-warning">
+		% for (0 .. $#{ $c->{restrictedSetMessages} }) {
+			% my $class = $_ == $#{ $c->{restrictedSetMessages} } ? ' class="mb-0"' : '';
+			<p<%== $class %>><%== $c->{restrictedSetMessages}->[$_] %></p>
+		% }
+	</div>
+% }
+%
 <%= include 'ContentGenerator/ProblemSet/auxiliary_tools' =%>
 %
-<%= $set->assignment_type =~ /gateway/ ? $c->gateway_body : $c->problem_list =%>
+% # Always show test versions, but only show problem list if the set has no restrictions.
+% if ($set->assignment_type =~ /gateway/) {
+	<%= $c->gateway_body =%>
+% } elsif (!$c->{viewSetCheck}) {
+	<%= $c->problem_list =%>
+% }

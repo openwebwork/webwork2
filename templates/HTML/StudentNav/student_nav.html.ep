@@ -36,8 +36,9 @@
 								url_for,
 								params => { effectiveUser => $_->user_id, $filter ? (studentNavFilter => $filter) : () }
 							),
-							$eUserID ne $userID && $_->{currentUser} ? (style => 'background-color:#8F8') : (),
-							class => 'dropdown-item' =%>
+							class =>
+								join(' ', 'dropdown-item', $eUserID ne $userID && $_->{currentUser} ? 'active' : ())
+						=%>
 					</li>
 				% }
 			</ul>
@@ -86,8 +87,7 @@
 								   	studentNavFilter => $_
 							   	}
 							),
-							($filter || '') eq $_ ? (style => 'background-color:#8F8') : (),
-							class => 'dropdown-item' =%>
+							class => join(' ', 'dropdown-item', ($filter || '') eq $_ ? 'active' : ()) =%>
 					</li>
 				% }
 			</ul>
