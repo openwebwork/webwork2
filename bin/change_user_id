@@ -1,18 +1,19 @@
 #!/usr/bin/env perl
+
+# Sometimes a webwork user id changes.  This script transfers the webwork data for the old user_id to the new user_id.
 #
-#Sometimes a webwork user id changes.  This script transfers the webwork data for the old user_id to the new user_id
-# Update database tables
-#user
-#permission
-#password
-#key
-#set_user
-#problem_user
-#set_locations_user
-#global_achievement_user
-#achievement_user
+# The script updates the following database database tables
+#     user
+#     permission
+#     password
+#     key
+#     set_user
+#     problem_user
+#     set_locations_user
+#     global_achievement_user
+#     achievement_user
 #
-# Update answer_log
+# and updates the answer_log.
 
 use strict;
 use warnings;
@@ -21,7 +22,7 @@ use File::Basename;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -32,13 +33,13 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use Data::Dumper;
 
-if((scalar(@ARGV) != 3)) {
-  print "\nSyntax is: change_user_id course_id old_user_id new_user_id";
-  print "\n    (e.g.  newpassword MAT_123 jjones jsmith\n\n";
-  exit();
+if ((scalar(@ARGV) != 3)) {
+	print "\nSyntax is: change_user_id course_id old_user_id new_user_id";
+	print "\n    (e.g.  newpassword MAT_123 jjones jsmith\n\n";
+	exit();
 }
 
-my $courseID = shift;
+my $courseID    = shift;
 my $old_user_id = shift;
 my $new_user_id = shift;
 
@@ -50,63 +51,63 @@ my $ce = WeBWorK::CourseEnvironment->new({
 my $db = WeBWorK::DB->new($ce);
 die "Error: $old_user_id does not exist!" unless $db->existsUser($old_user_id);
 
-unless($db->existsUser($new_user_id)) {
-    my $user = $db->getUser($old_user_id);
-    $user->{user_id}=$new_user_id;
-    $user->{comment} = $user->{comment}."Record created from $old_user_id record";
-    $db->addUser($user);
+unless ($db->existsUser($new_user_id)) {
+	my $user = $db->getUser($old_user_id);
+	$user->{user_id} = $new_user_id;
+	$user->{comment} = $user->{comment} . "Record created from $old_user_id record";
+	$db->addUser($user);
 }
 
-unless($db->existsPassword($new_user_id)) {
-    my $password = $db->getPassword($old_user_id);
-    $password->{user_id} = $new_user_id;
-    $db->addPassword($password);
+if (!$db->existsPassword($new_user_id) && (my $password = $db->getPassword($old_user_id))) {
+	$password->{user_id} = $new_user_id;
+	$db->addPassword($password);
 }
 
-unless($db->existsPermissionLevel($new_user_id)) {
-    my $permission = $db->getPermissionLevel($old_user_id);
-    $permission->{user_id} = $new_user_id;
-    $db->addPermissionLevel($permission);
+unless ($db->existsPermissionLevel($new_user_id)) {
+	my $permission = $db->getPermissionLevel($old_user_id);
+	$permission->{user_id} = $new_user_id;
+	$db->addPermissionLevel($permission);
 }
 
 my @old_user_sets = $db->listUserSets($old_user_id);
-foreach(@old_user_sets) {
-    my $set_id = $_;
-    my $new_set = $db->newUserSet;
-    $new_set->user_id($new_user_id);
-    $new_set->set_id($set_id);
-    eval{$db->addUserSet($new_set)};
-    my $old_set = $db->getUserSet($old_user_id,$set_id);
-    foreach(keys %$old_set) {
-        next if /user_id|set_id/;
-        $new_set->$_($old_set->$_);
-    }
+foreach (@old_user_sets) {
+	my $set_id  = $_;
+	my $new_set = $db->newUserSet;
+	$new_set->user_id($new_user_id);
+	$new_set->set_id($set_id);
+	eval { $db->addUserSet($new_set) };
+	my $old_set = $db->getUserSet($old_user_id, $set_id);
+	foreach (keys %$old_set) {
+		next if /user_id|set_id/;
+		$new_set->$_($old_set->$_);
+	}
 
-    $db->putUserSet($new_set) unless $db->existsUserSet($new_user_id,$set_id);
-    my @global_problems = grep { defined $_} $db->getAllGlobalProblems($set_id);
-    foreach(@global_problems) {
-        if($db->existsUserProblem($old_user_id,$set_id,$_->{problem_id})) {
-            my $old_user_problem = $db->getUserProblem($old_user_id,$set_id,$_->{problem_id});
-            my $new_user_problem = $db->newUserProblem;
-            $new_user_problem->user_id($new_user_id);
-            $new_user_problem->set_id($set_id);
-            $new_user_problem->problem_id($_->{problem_id});
-            $db->addUserProblem($new_user_problem) unless $db->existsUserProblem($new_user_id,$set_id,$_->{problem_id});
-            foreach(keys %$old_user_problem) {
-                next if /(user_id|set_id|problem_id)/;
-                $new_user_problem->$_($old_user_problem->$_);
-            }
-            $db->putUserProblem($new_user_problem);
-        }
-    }
+	$db->putUserSet($new_set) unless $db->existsUserSet($new_user_id, $set_id);
+	my @global_problems = grep { defined $_ } $db->getAllGlobalProblems($set_id);
+	foreach (@global_problems) {
+		if ($db->existsUserProblem($old_user_id, $set_id, $_->{problem_id})) {
+			my $old_user_problem = $db->getUserProblem($old_user_id, $set_id, $_->{problem_id});
+			my $new_user_problem = $db->newUserProblem;
+			$new_user_problem->user_id($new_user_id);
+			$new_user_problem->set_id($set_id);
+			$new_user_problem->problem_id($_->{problem_id});
+			$db->addUserProblem($new_user_problem)
+				unless $db->existsUserProblem($new_user_id, $set_id, $_->{problem_id});
+			foreach (keys %$old_user_problem) {
+				next if /(user_id|set_id|problem_id)/;
+				$new_user_problem->$_($old_user_problem->$_);
+			}
+			$db->putUserProblem($new_user_problem);
+		}
+	}
 }
 
 my $answer_log = $ce->{courseFiles}->{logs}->{answer_log};
-my $dirname = dirname($answer_log);
-copy($answer_log,"$dirname/answer_log.bak");
-open(my $in,'<',"$dirname/answer_log.bak") or die "Can't open $dirname/answer_log.bak:$!";
-open(my $out,'>',$answer_log);
-while(<$in>) {
-    s/$old_user_id/$new_user_id/g;
-    print $out $_;
+my $dirname    = dirname($answer_log);
+copy($answer_log, "$dirname/answer_log.bak");
+open(my $in,  '<', "$dirname/answer_log.bak") or die "Can't open $dirname/answer_log.bak:$!";
+open(my $out, '>', $answer_log);
+while (<$in>) {
+	s/$old_user_id/$new_user_id/g;
+	print $out $_;
 }
