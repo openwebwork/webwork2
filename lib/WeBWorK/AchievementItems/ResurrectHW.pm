@@ -87,7 +87,10 @@ sub use_item ($self, $set, $records, $c) {
 	}
 	$db->putUserSet($userSet);
 
-	if ($set->enable_reduced_scoring && ($set->reduced_scoring_date != $set->due_date)) {
+	if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $set->enable_reduced_scoring
+		&& ($set->reduced_scoring_date != $set->due_date))
+	{
 		return $c->maketext(
 			'This assignment has been reopened and is due on [_1].  After that date any work '
 				. 'completed will count for [_2]% of its value until [_3].',
