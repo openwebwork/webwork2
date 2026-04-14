@@ -18,7 +18,12 @@ sub new ($class) {
 
 sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type eq 'default'
-		&& (after($set->due_date) || ($set->enable_reduced_scoring && after($set->reduced_scoring_date)));
+		&& (
+			after($set->due_date)
+			|| ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+				&& $set->enable_reduced_scoring
+				&& after($set->reduced_scoring_date))
+		);
 }
 
 sub print_form ($self, $set, $records, $c) {
