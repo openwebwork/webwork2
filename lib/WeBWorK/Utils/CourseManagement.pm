@@ -152,10 +152,6 @@ environment.
 
 $courseOptions is a reference to a hash containing the following options:
 
-    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}
-
-C<PRINT_FILE_NAMES_FOR> is a reference to an array.
-
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
 
@@ -1199,26 +1195,6 @@ sub writeCourseConf {
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
-
-	print $fh <<'EOF';
-# Users for whom to label problems with the PG file name (global value typically "professor")
-# For users in this list, PG will display the source file name when rendering a problem.
-# defaults.config values:
-EOF
-
-	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ",
-			map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }),
-			'];', "\n";
-	} else {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ ];', "\n";
-	}
-
-	if (defined $options{PRINT_FILE_NAMES_FOR}) {
-		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
-	}
 }
 
 sub get_SeedCE

@@ -376,9 +376,6 @@ sub do_add_course ($c) {
 		}
 	}
 
-	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} },
-		map { $_->[0]->user_id } grep { $_->[2]->permission >= $ce->{userRoles}{professor} } @users;
-
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
 	if ($copy_from_course ne '') {
