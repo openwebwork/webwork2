@@ -906,10 +906,7 @@ sub page_title ($c) {
 
 	# This uses the permission level and user id of the user assigned to the problem.
 	my $problemUser = $problem->user_id;
-	my $inList      = grep { $_ eq $problemUser } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} };
-	if ($db->getPermissionLevel($problemUser)->permission >=
-		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} || $inList)
-	{
+	if ($c->authz->hasPermissions($problemUser, 'print_path_to_problem')) {
 		$subheader .= ' ' . $problem->source_file;
 	}
 
