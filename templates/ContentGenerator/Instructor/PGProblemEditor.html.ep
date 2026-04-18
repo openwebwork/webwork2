@@ -12,6 +12,10 @@
 	<%= javascript getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
 %
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.css') =%>
+% end
+%
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
 	% last;
@@ -154,23 +158,42 @@
 			% }
 		</div>
 	% }
-	<div class="row mb-2">
-		<div class="col-lg-6 col-md-12 order-last order-lg-first">
-			<%= generate_codemirror_html(
-				$c,
-				'problemContents',
-				$problemContents,
-				{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
-			) =%>
-		</div>
-		<div class="col-lg-6 col-md-12 mb-lg-0 mb-2 order-first order-lg-last">
-			<div class="p-0" id="pgedit-render-area">
-				<div class="placeholder d-flex flex-column justify-content-center
-					 align-items-center bg-secondary h-100">
-					<div class="fs-1"><%= maketext('Loading...') %></div>
-					<i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+	<div id="pgedit-container" class="mb-2">
+		<div class="pgedit-inner-container">
+			<div class="pgedit-panel code order-last order-lg-first">
+				<%= generate_codemirror_html(
+					$c,
+					'problemContents',
+					$problemContents,
+					{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
+				) =%>
+			</div>
+            <div class="pgedit-resizer horizontal-resizer"
+                tabindex="0"
+                role="separator"
+                aria-hidden="vertical"
+                aria-label="horizontally resize panels"
+            >
+				<i class="fa-solid fa-grip-lines-vertical fa-lg" aria-hidden="true"></i>
+			</div>
+			<div class="pgedit-panel render mb-lg-0 order-first order-lg-last bg-white">
+				<div class="p-0" id="pgedit-render-area">
+					<div class="placeholder d-flex flex-column justify-content-center
+						 align-items-center bg-secondary h-100">
+						<div class="fs-1"><%= maketext('Loading...') %></div>
+						<i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+					</div>
 				</div>
 			</div>
+		</div>
+        <div
+            class="pgedit-resizer vertical-resizer"
+            tabindex="0"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="vertically resize panels"
+        >
+			<i class="fa-solid fa-grip-lines fa-lg" aria-hidden="true"></i>
 		</div>
 	</div>
 	<%= $fileInfo->() %>
