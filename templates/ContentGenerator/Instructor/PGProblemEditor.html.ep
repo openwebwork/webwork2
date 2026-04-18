@@ -104,18 +104,18 @@
 			<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
 				target => 'techniques_window',
 				title  => maketext('Sample problem code with documentation.'),
-				class  => 'btn btn-sm btn-info',
+				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
 				target => 'math_objects',
 				title  => maketext('Wiki summary page for MathObjects'),
-				class  => 'btn btn-sm btn-info',
+				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PG POD served locally
 			<%= link_to maketext('POD') => url_for('pod_index'),
 				target => 'pod_docs',
 				title  => maketext('Documentation from source code for PG modules and macro files.'),
-				class  => 'btn btn-sm btn-info',
+				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PGML lab problem rendered as an unattached problem in a new window.
 			% my $pgml_lab_source = readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg");
@@ -124,13 +124,13 @@
 					'PG markdown syntax used to format WeBWorK questions. '
 					. 'This interactive lab can help you to learn the techniques.'
 				),
-				class => 'pgml-lab btn btn-sm btn-info',
+				class => 'reference-link pgml-lab btn btn-sm btn-info',
 				data  => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
 				'PGML' =%>
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',
 				title  => maketext('Top level of author information on the wiki.'),
-				class  => 'btn btn-sm btn-info',
+				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
 			% if ($ce->{webworkURLs}{OPLBugReporter}
@@ -149,7 +149,7 @@
 						. 'The very first time you do this you will need to register with an email address so that '
 						. 'information on the bug fix can be reported back to you.'
 					),
-					class  => 'btn btn-sm btn-info',
+					class  => 'reference-link btn btn-sm btn-info',
 					data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% }
 		</div>
