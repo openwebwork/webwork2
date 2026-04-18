@@ -1,0 +1,174 @@
+#pgedit-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 600px;
+	min-height: 400px;
+
+	.pgedit-inner-container {
+		display: flex;
+		flex: 1;
+		width: 100%;
+		height: calc(100% - 1rem - 2px);
+
+		.pgedit-panel {
+			overflow: auto;
+		}
+
+		.code {
+			width: calc(50% - 0.5rem);
+			height: 100%;
+			min-width: 400px;
+
+			.code-mirror-editor {
+				min-height: unset;
+				overflow: unset;
+				height: 100%;
+			}
+
+			.text-area-editor {
+				min-height: unset;
+				overflow: unset;
+				height: 100%;
+				resize: unset;
+			}
+		}
+
+		.render {
+			flex: 1;
+			min-width: 300px;
+			height: 100%;
+
+			#pgedit-render-area {
+				border: 1px solid var(--ww-layout-border-color, #ddd);
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+
+				#pgedit-render-iframe {
+					flex-grow: 1;
+					border: none;
+					width: 100%;
+				}
+			}
+
+			#author-comment {
+				border-top: 1px solid var(--ww-layout-border-color, #ddd);
+			}
+		}
+	}
+
+	.pgedit-resizer {
+		background-color: #fff;
+		transition:
+			background 0.2s,
+			box-shadow 0.2s ease-in-out;
+		position: relative;
+		border: 1px solid var(--ww-layout-border-color, #ddd);
+		user-select: none;
+		touch-action: none;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		color: black;
+
+		&:focus {
+			z-index: 19;
+			box-shadow: 0 0 0.2rem 0.25rem #aaa;
+			outline: none;
+		}
+
+		&:hover {
+			z-index: 19;
+			background-color: #888;
+			color: white;
+			box-shadow: 0 0 0.2rem 0.25rem #888;
+		}
+
+		&::after {
+			content: '';
+			position: absolute;
+			background: transparent;
+		}
+	}
+
+	.vertical-resizer {
+		height: 1rem;
+		width: 100%;
+		cursor: row-resize;
+
+		i {
+			transform: scale(4, 1);
+		}
+
+		&::after {
+			top: -4px;
+			left: 0;
+			right: 0;
+			bottom: -4px;
+		}
+	}
+
+	.horizontal-resizer {
+		height: 100%;
+		width: 1rem;
+		cursor: col-resize;
+
+		i {
+			transform: scale(1, 4);
+		}
+
+		&::after {
+			top: 0;
+			left: -4px;
+			right: -4px;
+			bottom: 0;
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.pgedit-resizer {
+			background-color: #000;
+			color: white;
+
+			&:focus {
+				box-shadow: 0 0 0.2rem 0.25rem #777;
+			}
+
+			&:hover {
+				background-color: #bbb;
+				color: black;
+				box-shadow: 0 0 0.2rem 0.25rem #999;
+			}
+		}
+	}
+
+	@media (max-width: 991px) {
+		height: unset;
+		min-height: unset;
+
+		.pgedit-inner-container {
+			flex-direction: column;
+			row-gap: 1rem;
+
+			.code {
+				width: 100%;
+				height: 400px;
+				min-height: 200px;
+				min-width: unset;
+			}
+
+			.render {
+				flex: unset;
+				height: 400px;
+				min-height: 200px;
+				width: 100%;
+				min-width: unset;
+			}
+
+			.horizontal-resizer {
+				display: none;
+			}
+		}
+	}
+}

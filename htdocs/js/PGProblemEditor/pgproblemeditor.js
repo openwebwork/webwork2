@@ -395,27 +395,124 @@
 		}
 	});
 
-	// Synchronize the heights of the render area and the editor area for wide windows.
-	if (editorArea && renderArea) {
-		const codeMirrorResizeObserver = new ResizeObserver((entries) => {
-			if (document.body.clientWidth < 992) return;
+	const pgEditContainer = document.getElementById('pgedit-container');
+	const codePanel = pgEditContainer?.querySelector('.pgedit-panel.code');
+	const renderPanel = pgEditContainer?.querySelector('.pgedit-panel.render');
 
-			for (const entry of entries) {
-				if (entry.borderBoxSize) {
-					// Note that the blockSize is the height (since width is not resizable).
-					const height = Array.isArray(entry.borderBoxSize)
-						? entry.borderBoxSize[0].blockSize
-						: entry.borderBoxSize.blockSize;
-					if (window.getComputedStyle(renderArea).getPropertyValue('height') !== `${height}px`)
-						renderArea.style.height = `${height}px`;
-					if (window.getComputedStyle(editorArea).getPropertyValue('height') !== `${height}px`) {
-						editorArea.style.height = `${height}px`;
-					}
-				}
+	if (pgEditContainer && codePanel && renderPanel) {
+		if (document.body.clientWidth < 992) {
+			const initialCodePanelHeight = localStorage.getItem('WW.pgedit.codePanelHeight');
+			if (initialCodePanelHeight) codePanel.style.height = initialCodePanelHeight;
+		} else {
+			const initialResizeContainerHeight = localStorage.getItem('WW.pgedit.containerHeight');
+			if (initialResizeContainerHeight) pgEditContainer.style.height = initialResizeContainerHeight;
+			const initialCodePanelWidth = localStorage.getItem('WW.pgedit.codePanelWidth');
+			if (initialCodePanelWidth) codePanel.style.width = initialCodePanelWidth;
+		}
+
+		const verticalResizer = pgEditContainer.querySelector('.vertical-resizer');
+
+		verticalResizer?.addEventListener('pointerdown', (e) => {
+			verticalResizer.setPointerCapture(e.pointerId);
+
+			const startY = e.clientY;
+			const startHeight =
+				document.body.clientWidth < 992
+					? codePanel.getBoundingClientRect().height
+					: pgEditContainer.getBoundingClientRect().height;
+
+			const onPointerMove =
+				document.body.clientWidth < 992
+					? (moveEvent) => {
+							codePanel.style.height = `${startHeight + (moveEvent.clientY - startY)}px`;
+							localStorage.setItem('WW.pgedit.codePanelHeight', codePanel.style.height);
+						}
+					: (moveEvent) => {
+							pgEditContainer.style.height = `${startHeight + (moveEvent.clientY - startY)}px`;
+							localStorage.setItem('WW.pgedit.containerHeight', pgEditContainer.style.height);
+						};
+			const onPointerUp = () => {
+				verticalResizer.releasePointerCapture(e.pointerId);
+				document.removeEventListener('pointermove', onPointerMove);
+				document.removeEventListener('pointerup', onPointerUp);
+			};
+
+			document.addEventListener('pointermove', onPointerMove);
+			document.addEventListener('pointerup', onPointerUp);
+		});
+
+		const updateHeight = (delta) => {
+			if (document.body.clientWidth < 992) {
+				codePanel.style.height = `${codePanel.getBoundingClientRect().height + delta}px`;
+				localStorage.setItem('WW.pgedit.codePanelHeight', codePanel.style.height);
+			} else {
+				pgEditContainer.style.height = `${pgEditContainer.getBoundingClientRect().height + delta}px`;
+				localStorage.setItem('WW.pgedit.containerHeight', pgEditContainer.style.height);
+			}
+		};
+
+		verticalResizer?.addEventListener('keydown', (e) => {
+			const step = e.ctrlKey ? 1 : e.altKey ? 50 : 20;
+			if (e.key === 'ArrowUp') {
+				updateHeight(-step);
+				e.preventDefault();
+			} else if (e.key === 'ArrowDown') {
+				updateHeight(step);
+				e.preventDefault();
 			}
 		});
-		codeMirrorResizeObserver.observe(editorArea);
-		codeMirrorResizeObserver.observe(renderArea);
+
+		const horizontalResizer = pgEditContainer.querySelector('.horizontal-resizer');
+
+		horizontalResizer?.addEventListener('pointerdown', (e) => {
+			horizontalResizer.setPointerCapture(e.pointerId);
+
+			const startX = e.clientX;
+			const startWidth = codePanel.getBoundingClientRect().width;
+
+			const onPointerMove = (moveEvent) => {
+				codePanel.style.width = `${startWidth + (moveEvent.clientX - startX)}px`;
+				localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+			};
+
+			const onPointerUp = () => {
+				horizontalResizer.releasePointerCapture(e.pointerId);
+				document.removeEventListener('pointermove', onPointerMove);
+				document.removeEventListener('pointerup', onPointerUp);
+			};
+
+			document.addEventListener('pointermove', onPointerMove);
+			document.addEventListener('pointerup', onPointerUp);
+		});
+
+		horizontalResizer?.addEventListener('dblclick', () => {
+			codePanel.style.width = 'calc(50% - 0.5rem + 1px)';
+			localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+		});
+
+		horizontalResizer?.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				codePanel.style.width = 'calc(50% - 0.5rem + 1px)';
+				localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+				e.preventDefault();
+			}
+		});
+
+		const updateWidth = (delta) => {
+			codePanel.style.width = `${codePanel.getBoundingClientRect().width + delta}px`;
+			localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+		};
+
+		horizontalResizer?.addEventListener('keydown', (e) => {
+			const step = e.ctrlKey ? 1 : e.altKey ? 50 : 20;
+			if (e.key === 'ArrowLeft') {
+				updateWidth(-step);
+				e.preventDefault();
+			} else if (e.key === 'ArrowRight') {
+				updateWidth(step);
+				e.preventDefault();
+			}
+		});
 	}
 
 	// Save the initial placeholder content of the render area so that it can be put back when a problem is reloaded.
@@ -425,12 +522,29 @@
 	iframe.id = 'pgedit-render-iframe';
 	iframe.style.colorScheme = 'light';
 
-	// Adjust the height of the iframe when the window is resized and when the iframe loads.
+	// Adjust editor dimensions when the window is resized and when the iframe loads.
 	const adjustIFrameHeight = () => {
 		if (document.body.clientWidth < 992) {
-			if (iframe.contentDocument)
-				renderArea.style.height = `${iframe.contentDocument.documentElement.offsetHeight + 2}px`;
-		} else renderArea.style.height = `${editorArea.offsetHeight}px`;
+			if (iframe.contentDocument) {
+				pgEditContainer.style.height = '';
+				codePanel.style.width = '100%';
+				codePanel.style.height = localStorage.getItem('WW.pgedit.codePanelHeight') ?? '';
+				renderArea.style.height = `${
+					iframe.contentDocument.documentElement.offsetHeight +
+					2 +
+					(document.getElementById('author-comment')?.offsetHeight ?? 0)
+				}px`;
+				renderPanel.style.width = '100%';
+				renderPanel.style.height = renderArea.style.height;
+			}
+		} else {
+			pgEditContainer.style.height = localStorage.getItem('WW.pgedit.containerHeight') ?? '';
+			codePanel.style.width = localStorage.getItem('WW.pgedit.codePanelWidth') ?? '';
+			renderPanel.style.width = '';
+			codePanel.style.height = '100%';
+			renderPanel.style.height = '100%';
+			renderArea.style.height = '100%';
+		}
 	};
 	window.addEventListener('resize', adjustIFrameHeight);
 
@@ -584,7 +698,8 @@
 					if (data.pg_flags && data.pg_flags.comment) {
 						// The problem has a comment, so show it.
 						const container = document.createElement('div');
-						container.classList.add('px-2', 'mb-2');
+						container.id = 'author-comment';
+						container.classList.add('p-2');
 						container.innerHTML = data.pg_flags.comment;
 						iframe.after(container);
 					}

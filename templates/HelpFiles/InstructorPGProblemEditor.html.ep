@@ -92,6 +92,12 @@
 				</tr>
 			</tbody>
 		</table>
+		<%= maketext('There are resize grips that can be moved to resize the editor windows.  This can be done by '
+			. 'clicking and dragging or by focusing the resize grip and using the arrow keys. If the resize grip is '
+			. 'focused and the Ctrl key is held down then the size is only changed by one pixel for each arrow key '
+			. 'press, and if the Alt key is held down then the size is changed by 50 pixels for each arrow key press. '
+			. 'With no modifier key the size is changed by 20 pixels. Double clicking on a resize grip or pressing '
+			. 'Enter or Space while a resize grip is focused resets the windows to their default sizes.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
 	<dd class="list-group-item">

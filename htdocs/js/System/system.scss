@@ -836,31 +836,11 @@ input.changed[type='text'] {
 	}
 }
 
-/* Styles for the PGProblemEditor Page */
+/* Common styles for pages containing an editor. */
 
 #editor {
 	.tab-content {
 		min-height: 140px;
-	}
-}
-
-#pgedit-render-area {
-	border: 1px solid var(--ww-layout-border-color, #ddd);
-	min-height: 400px;
-	height: 600px;
-	resize: vertical;
-	display: flex;
-	flex-direction: column;
-
-	@media only screen and (max-width: 992px) {
-		min-height: 200px;
-		height: 300px;
-	}
-
-	#pgedit-render-iframe {
-		flex-grow: 1;
-		border: none;
-		width: 100%;
 	}
 }
 
