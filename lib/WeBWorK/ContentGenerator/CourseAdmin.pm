@@ -294,8 +294,6 @@ sub do_add_course ($c) {
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
 
-	my %courseOptions;
-
 	my @users;
 
 	# copy users from current (admin) course if desired
@@ -392,15 +390,7 @@ sub do_add_course ($c) {
 
 	my $output = $c->c;
 
-	eval {
-		addCourse(
-			courseID      => $add_courseID,
-			ce            => $ce2,
-			courseOptions => \%courseOptions,
-			users         => \@users,
-			%optional_arguments,
-		);
-	};
+	eval { addCourse(courseID => $add_courseID, ce => $ce2, users => \@users, %optional_arguments,); };
 	if ($@) {
 		my $error = $@;
 		push(
