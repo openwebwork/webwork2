@@ -13,28 +13,28 @@
 		"url": "https://github.com/openwebwork/webwork2"
 	},
 	"dependencies": {
-		"@fortawesome/fontawesome-free": "^7.0.0",
+		"@fortawesome/fontawesome-free": "^7.2.0",
 		"@openwebwork/pg-codemirror-editor": "^0.0.10",
-		"bootstrap": "~5.3.7",
+		"bootstrap": "^5.3.8",
 		"flatpickr": "^4.6.13",
 		"iframe-resizer": "^4.4.2",
-		"jquery": "^3.7.1",
+		"jquery": "^4.0.0",
 		"jquery-ui-dist": "^1.13.3",
-		"luxon": "^3.7.1",
-		"mathjax": "^4.1.1",
-		"minisearch": "^7.1.2",
+		"luxon": "^3.7.2",
+		"mathjax": "^4.1.2",
+		"minisearch": "^7.2.0",
 		"shortcut-buttons-flatpickr": "^0.4.0",
-		"sortablejs": "^1.15.6"
+		"sortablejs": "^1.15.7"
 	},
 	"devDependencies": {
-		"autoprefixer": "^10.4.21",
-		"chokidar": "^4.0.3",
-		"cssnano": "^7.1.0",
-		"postcss": "^8.5.12",
-		"prettier": "^3.6.2",
+		"autoprefixer": "^10.5.0",
+		"chokidar": "^5.0.0",
+		"cssnano": "^8.0.1",
+		"postcss": "^8.5.15",
+		"prettier": "^3.8.3",
 		"rtlcss": "^4.3.0",
-		"sass": "^1.90.0",
-		"terser": "^5.43.1",
+		"sass": "^1.100.0",
+		"terser": "^5.48.0",
 		"yargs": "^18.0.0"
 	},
 	"browserslist": [
