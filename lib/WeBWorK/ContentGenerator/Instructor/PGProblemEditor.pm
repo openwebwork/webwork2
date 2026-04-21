@@ -90,7 +90,7 @@ the submit button pressed (the action).
     Requested actions and aliases
         View/Reload                action = view
         Generate Hardcopy:         action = hardcopy
-        Format Code:               action = format_code
+        Code Maintenance:          action = code_maintenance
         Save:                      action = save
         Save as:                   action = save_as
         Append:                    action = add_problem
@@ -108,25 +108,25 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 use Mojo::File;
 use XML::LibXML;
 
-use WeBWorK::Utils             qw(not_blank x max);
-use WeBWorK::Utils::Files      qw(surePathToFile readFile path_is_subdir);
-use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
-use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Utils::Sets       qw(format_set_name_display);
-use SampleProblemParser        qw(getSampleProblemCode generateMetadata);
+use WeBWorK::Utils                   qw(not_blank x max);
+use WeBWorK::Utils::Files            qw(surePathToFile readFile path_is_subdir);
+use WeBWorK::Utils::Instructor       qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR            qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets             qw(format_set_name_display);
+use WeBWorK::PG::SampleProblemParser qw(getSampleProblemCode generateMetadata);
 
 use constant DEFAULT_SEED => 123456;
 
 # Editor tabs
-use constant ACTION_FORMS => [qw(view hardcopy format_code save save_as add_problem revert)];
+use constant ACTION_FORMS => [qw(view hardcopy code_maintenance save save_as add_problem revert)];
 use constant ACTION_FORM_TITLES => {
-	view        => x('View/Reload'),
-	hardcopy    => x('Generate Hardcopy'),
-	format_code => x('Format Code'),
-	save        => x('Save'),
-	save_as     => x('Save As'),
-	add_problem => x('Append'),
-	revert      => x('Revert'),
+	view             => x('View/Reload'),
+	hardcopy         => x('Generate Hardcopy'),
+	code_maintenance => x('Code Maintenance'),
+	save             => x('Save'),
+	save_as          => x('Save As'),
+	add_problem      => x('Append'),
+	revert           => x('Revert'),
 };
 
 my $BLANKPROBLEM = 'newProblem.pg';
@@ -704,14 +704,15 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	}
 
 	# If the file is being saved as a new file in a new location, and the file is accompanied by auxiliary files
-	# transfer them as well.  If the file is a pg file, then assume there are auxiliary files.  Copy all files not
-	# ending in .pg from the original directory to the new one.
-	if ($c->{action} eq 'save_as' && $outputFilePath =~ /\.pg/) {
+	# transfer them as well.  If the option 'copyAuxFiles' is set and the file is a pg file, then assume there are
+	# auxiliary files.  Copy all files not ending in .pg from the original directory to the new one.
+	if ($c->{action} eq 'save_as' && $c->param('copyAuxFiles') && $outputFilePath =~ /\.pg/) {
 		my $sourceDirectory = Mojo::File->new(($c->{sourceFilePath} || '') =~ s|/[^/]+\.pg$||r);
 		my $outputDirectory = Mojo::File->new($outputFilePath              =~ s|/[^/]+\.pg$||r);
 
 		# Only perform the copy if the output directory is an actual new location.
 		if ($sourceDirectory ne $outputDirectory && -d $sourceDirectory) {
+			my $filesCopied = 0;
 			for my $file (@{ $sourceDirectory->list }) {
 				# The .pg file being edited has already been transferred. Ignore any others in the directory.
 				next if $file =~ /\.pg$/;
@@ -719,13 +720,18 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 				# Only copy regular files that are readable and that have not already been copied.
 				if (-f $file && -r $file && !-e $toPath) {
 					eval { $file->copy_to($toPath) };
-					$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath)) if $@;
+					if ($@) {
+						$c->addbadmessage($c->maketext('Error copying [_1] to [_2].', $file, $toPath));
+					} else {
+						$filesCopied = 1;
+					}
 				}
 			}
 			$c->addgoodmessage($c->maketext(
 				'Copied auxiliary files from [_1] to new location at [_2].',
 				$sourceDirectory, $outputDirectory
-			));
+			))
+				if $filesCopied;
 		}
 	}
 
@@ -847,9 +853,9 @@ sub view_handler ($c) {
 	return;
 }
 
-# The format_code action is handled by javascript.  This is provided just in case
+# The code_maintenance action is handled by javascript.  This is provided just in case
 # something goes wrong and the handler is called.
-sub format_code_handler { }
+sub code_maintenance_handler { }
 
 sub hardcopy_handler ($c) {
 	# Redirect to problem editor page.
@@ -1278,7 +1284,7 @@ sub save_as_handler ($c) {
 		$new_file_type = $file_type;
 	} else {
 		$c->addbadmessage($c->maketext(
-			'Please use radio buttons to choose the method for saving this file. Uknown saveMode: [_1].', $saveMode
+			'Please use radio buttons to choose the method for saving this file. Unknown saveMode: [_1].', $saveMode
 		));
 		return;
 	}

@@ -10,6 +10,50 @@
 	% answer_date            => maketext('Answer Date')
 % );
 %
+% if ($c->{editMode}) {
+	<div class="row">
+		<label class="col-auto col-form-label col-form-label-sm" for="set-date-choice">Set</label>
+		<div class="col-auto">
+			<select class="form-select form-select-sm" id="set-date-choice">
+				<option value="" selected disabled><%= maketext('Choose set date type') %></option>
+				<option value="open_date"><%= maketext('Open Date') %></option>
+				% if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+					<option value="reduced_scoring_date"><%= maketext('Reduced Scoring Date') %></option>
+				% }
+				<option value="due_date"><%= maketext('Close Date') %></option>
+				<option value="answer_date"><%= maketext('Answer Date') %></option>
+			</select>
+		</div>
+		<label class="col-auto col-form-label col-form-label-sm" for="common-date">to</label>
+		<div class="col-auto input-group input-group-sm flatpickr flex-nowrap" style="max-width: 200px">
+			<%= text_field 'common-date' => '',
+				id => 'common-date', class => 'form-control',
+				data => {
+					input => undef,
+					done_text  => maketext('Done'),
+					today_text => maketext('Today'),
+					now_text   => maketext('Now'),
+					locale     => $ce->{language},
+					timezone   => $ce->{siteDefaults}{timezone}
+				} =%>
+			<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
+				aria-label="<%= maketext('Pick date and time') =%>">
+				<i class="fas fa-calendar-alt"></i>
+			</a>
+		</div>
+		<div class="col-auto">
+			<button id="apply-common-date" type="button" class="btn btn-secondary btn-sm">
+				<%= maketext('Apply to Selected Sets') %>
+			</button>
+		</div>
+	</div>
+	<div id="choose_date_type_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+		<%= maketext('Please choose a set date type.') %>
+	</div>
+	<div id="choose_common_date_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+		<%= maketext('Please select a date.') %>
+	</div>
+% }
 <div id="select_set_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 	<%= maketext('Please select at least one set.') %>
 </div>
@@ -21,22 +65,20 @@
 		%
 		<thead class="table-group-divider">
 			<tr>
-				% if (!$c->{editMode}) {
-					<th>
-						<%= label_for 'select-all', begin =%>
-							<%= check_box 'select-all' => '', id => 'select-all',
-								class => 'select-all form-check-input set-id-tooltip',
-								'aria-label' => maketext('Select all sets'),
-								data => {
-									select_group => 'selected_sets',
-									bs_toggle => 'tooltip',
-									bs_placement => 'right',
-									bs_title => maketext('Select all sets')
-								} =%>
-								<i class="fa-solid fa-check-double" aria-hidden="true"></i>
-							<% end =%>
-					</th>
-				% }
+				<th>
+					<%= label_for 'select-all', begin =%>
+						<%= check_box 'select-all' => '', id => 'select-all',
+							class => 'select-all form-check-input set-id-tooltip',
+							'aria-label' => maketext('Select all sets'),
+							data => {
+								select_group => $c->{editMode} ? 'apply_date_sets' : 'selected_sets',
+								bs_toggle => 'tooltip',
+								bs_placement => 'right',
+								bs_title => maketext('Select all sets')
+							} =%>
+							<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+						<% end =%>
+				</th>
 				% for (@$fieldNames) {
 					<th id="<%= $_ %>_header">
 						% if (!$c->{editMode} && $sortableFields->{$_}) {

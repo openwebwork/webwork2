@@ -10,6 +10,7 @@ problem sets.
 
 use File::Temp qw/tempdir/;
 use Mojo::File;
+use Mojo::Util qw(xml_escape);
 use String::ShellQuote;
 use Archive::Zip qw(:ERROR_CODES);
 use XML::LibXML;
@@ -130,14 +131,16 @@ async sub pre_header_initialize ($c) {
 
 		# Make sure the format is valid.
 		unless (grep { $_ eq $hardcopy_format } keys %HC_FORMATS) {
-			$c->addbadmessage(qq{"$hardcopy_format" is not a valid hardcopy format.});
+			$c->addbadmessage($c->maketext('"[_1]" is not a valid hardcopy format.', xml_escape($hardcopy_format)));
 			$validation_failed = 1;
 		}
 
 		# Make sure we are allowed to generate hardcopy in this format.
 		unless ($authz->hasPermissions($userID, "download_hardcopy_format_$hardcopy_format")) {
-			$c->addbadmessage(
-				$c->maketext('You do not have permission to generate hardcopy in [_1] format.', $hardcopy_format));
+			$c->addbadmessage($c->maketext(
+				'You do not have permission to generate hardcopy in [_1] format.',
+				xml_escape($hardcopy_format)
+			));
 			$validation_failed = 1;
 		}
 
@@ -284,13 +287,14 @@ async sub pre_header_initialize ($c) {
 		my $fullFilePath = "$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID/$tempFile";
 
 		unless (-e $fullFilePath) {
-			$c->addbadmessage($c->maketext('The requested file "[_1]" does not exist on the server.', $tempFile));
+			$c->addbadmessage(
+				$c->maketext('The requested file "[_1]" does not exist on the server.', xml_escape($tempFile)));
 			return;
 		}
 
 		unless ($baseName =~ /\.$userID\./ || $authz->hasPermissions($userID, 'download_hardcopy_multiuser')) {
 			$c->addbadmessage($c->maketext('You do not have permission to access the requested file "[_1]".'),
-				$tempFile);
+				xml_escape($tempFile));
 			return;
 		}
 
@@ -670,7 +674,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 			);
 		}
 	}
-	for (qw{pg.sty PGML.tex CAPA.tex}) {
+	for (qw{pg.sty PGML.tex}) {
 		eval { Mojo::File->new("$ce->{pg}{directories}{assetsTex}/$_")->copy_to($bundle_path) };
 		if ($@) {
 			$c->add_error(

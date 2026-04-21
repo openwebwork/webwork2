@@ -78,6 +78,7 @@ async sub pre_header_initialize ($c) {
 			effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 			useMathQuill             => $c->{will}{useMathQuill},
 			useMathView              => $c->{will}{useMathView},
+			problemData              => '{}'
 		},
 	);
 
@@ -116,6 +117,7 @@ async sub pre_header_initialize ($c) {
 					effectivePermissionLevel => $db->getPermissionLevel($c->{effectiveUserID})->permission,
 					useMathQuill             => $c->{will}{useMathQuill},
 					useMathView              => $c->{will}{useMathView},
+					problemData              => '{}'
 				},
 			);
 
@@ -155,10 +157,9 @@ async sub pre_header_initialize ($c) {
 	}
 
 	# Disable options that are not applicable for showMeAnother.
-	$c->{can}{recordAnswers}     = 0;
-	$c->{can}{checkAnswers}      = 0;    # This is turned on if the showMeAnother conditions are met below.
-	$c->{can}{getSubmitButton}   = 0;
-	$c->{can}{showProblemGrader} = 0;
+	$c->{can}{recordAnswers}   = 0;
+	$c->{can}{checkAnswers}    = 0;    # This is turned on if the showMeAnother conditions are met below.
+	$c->{can}{getSubmitButton} = 0;
 
 	if ($c->stash->{isPossible}) {
 		$c->{can}{showCorrectAnswers} =
@@ -206,33 +207,16 @@ async sub pre_header_initialize ($c) {
 			showMessages             => !$showOnlyCorrectAnswers,
 			showCorrectAnswers       => $showOnlyCorrectAnswers
 				|| ($c->{will}{checkAnswers} && $c->{will}{showCorrectAnswers}) ? 1 : 0,
-			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID})
+			debuggingOptions => getTranslatorDebuggingOptions($c->authz, $c->{userID}),
+			problemData      => $c->{formFields}{problem_data} || '{}'
 		}
 	);
-
-	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
-	# So rewarn them and let the global warning handler take care of it.
-	warn $pg->{warnings} if $pg->{warnings};
 
 	debug('end pg processing');
 
 	# Update and fix hint/solution options after PG processing
 	$c->{can}{showHints}     &&= $pg->{flags}{hintExists};
 	$c->{can}{showSolutions} &&= $pg->{flags}{solutionExists};
-
-	# Record errors
-	$c->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
-	$c->{pgwarning}        = $pg->{warning_messages}        if ref $pg->{warning_messages} eq 'ARRAY';
-	$c->{pginternalerrors} = $pg->{internal_debug_messages} if ref $pg->{internal_debug_messages} eq 'ARRAY';
-	# $c->{pgerrors} is defined if any of the above are defined, and is nonzero if any are non-empty.
-	$c->{pgerrors} = @{ $c->{pgdebug} // [] } || @{ $c->{pgwarning} // [] } || @{ $c->{pginternalerrors} // [] }
-		if defined $c->{pgdebug} || defined $c->{pgwarning} || defined $c->{pginternalerrors};
-
-	# If $c->{pgerrors} is not defined, then the PG messages arrays were not defined,
-	# which means $pg->{pgcore} was not defined and the translator died.
-	warn 'Processing of this PG problem was not completed.  Probably because of a syntax error. '
-		. 'The translator died prematurely and no PG warning messages were transmitted.'
-		unless defined $c->{pgerrors};
 
 	$c->{pg} = $pg;
 

@@ -2,7 +2,7 @@
 =head1 NAME
 
 HardcopyRenderedProblem.pm -- Generate a pdf file or zip file containing a tex
-file and the neccessary files to generate the pdf file from the result of the
+file and the necessary files to generate the pdf file from the result of the
 renderProblem method.
 
 =cut
@@ -120,7 +120,7 @@ sub generate_hardcopy_tex {
 			if $@;
 	}
 	my $pgAssetsTex_dir = path($ce->{pg}{directories}{assetsTex});
-	for (qw{pg.sty PGML.tex CAPA.tex}) {
+	for (qw{pg.sty PGML.tex}) {
 		eval { $pgAssetsTex_dir->child($_)->copy_to($working_dir) };
 		push(@$errors, qq{Failed to copy "$ce->{pg}{directories}{assetsTex}/$_" into directory "$working_dir": $@})
 			if $@;

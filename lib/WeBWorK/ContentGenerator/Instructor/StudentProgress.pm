@@ -68,8 +68,7 @@ sub page_title ($c) {
 }
 
 sub siblings ($c) {
-	# Stats and StudentProgress share this template.
-	return $c->include('ContentGenerator/Instructor/Stats/siblings', header => $c->maketext('Student Progress'));
+	return $c->include('ContentGenerator/Instructor/StudentProgress/siblings');
 }
 
 # Display student progress table

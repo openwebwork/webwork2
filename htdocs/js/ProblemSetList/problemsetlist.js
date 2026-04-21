@@ -7,12 +7,12 @@
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
 			if (element?.id.endsWith('_err_msg')) {
-				element?.classList.remove('d-none');
-			} else {
-				element?.classList.add('is-invalid');
+				element.classList.remove('d-none');
+			} else if (element) {
+				element.classList.add('is-invalid');
 				if (!(element.id in event_listeners)) {
 					event_listeners[element.id] = hide_errors([], elements);
-					element?.addEventListener('change', event_listeners[element.id]);
+					element.addEventListener('change', event_listeners[element.id]);
 				}
 			}
 		}
@@ -23,17 +23,17 @@
 			for (const id of ids) elements.push(document.getElementById(id));
 			for (const element of elements) {
 				if (element?.id.endsWith('_err_msg')) {
-					element?.classList.add('d-none');
+					element.classList.add('d-none');
 					if (element.id === 'select_set_err_msg' && 'set_table_id' in event_listeners) {
 						document
 							.getElementById('set_table_id')
 							?.removeEventListener('change', event_listeners.set_table_id);
 						delete event_listeners.set_table_id;
 					}
-				} else {
-					element?.classList.remove('is-invalid');
+				} else if (element) {
+					element.classList.remove('is-invalid');
 					if (element.id in event_listeners) {
-						element?.removeEventListener('change', event_listeners[element.id]);
+						element.removeEventListener('change', event_listeners[element.id]);
 						delete event_listeners[element.id];
 					}
 				}
@@ -139,16 +139,32 @@
 	filter_select?.addEventListener('change', filterElementToggle);
 
 	// This will make the popup menu alternate between a single selection and a multiple selection menu.
-	const importAmtSelect = document.getElementById('import_amt_select');
-	if (importAmtSelect) {
-		importAmtSelect.addEventListener('change', () => {
-			const numSelect = document.problemsetlist['action.import.number'];
-			const number = parseInt(numSelect.options[numSelect.selectedIndex].value);
-			document.problemsetlist['action.import.source'].size = number;
-			document.problemsetlist['action.import.source'].multiple = number > 1 ? true : false;
-			document.problemsetlist['action.import.name'].value = number > 1 ? '(taken from filenames)' : '';
-			document.problemsetlist['action.import.name'].readOnly = number > 1 ? true : false;
-			document.problemsetlist['action.import.name'].disabled = number > 1 ? true : false;
+	const numSelect = document.problemsetlist['action.import.number'];
+	if (numSelect) {
+		numSelect.addEventListener('change', () => {
+			const number = parseInt(numSelect.options[numSelect.selectedIndex]?.value ?? '1');
+			const importSourceSelect = document.problemsetlist['action.import.source'];
+			if (importSourceSelect) {
+				importSourceSelect.size = number;
+				if (number === 1) {
+					if (!importSourceSelect.value) importSourceSelect.options[0].selected = true;
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectSingleText ?? 'Select filename below';
+					importSourceSelect.multiple = false;
+				} else {
+					importSourceSelect.options[0].textContent =
+						importSourceSelect.dataset.selectMultipleText ?? 'Select filename below';
+					importSourceSelect.multiple = true;
+					importSourceSelect.options[0].selected = false;
+				}
+			}
+			const importNameInput = document.problemsetlist['action.import.name'];
+			if (importNameInput) {
+				importNameInput.value =
+					number > 1 ? (importNameInput.dataset.multipleFilesText ?? '(taken from filenames)') : '';
+				importNameInput.readOnly = number > 1 ? true : false;
+				importNameInput.disabled = number > 1 ? true : false;
+			}
 		});
 	}
 
@@ -174,10 +190,15 @@
 		'zh-HK': 'yyyy/L/d ah:mm'
 	};
 
-	// Initialize the date/time picker for the import form.
+	// Initialize the date/time picker for the import form and common date editor.
+	const dateInputs = [];
 	const importDateShift = document.getElementById('import_date_shift');
-	if (importDateShift) {
-		luxon.Settings.defaultLocale = importDateShift.dataset.locale ?? 'en';
+	if (importDateShift) dateInputs.push(importDateShift);
+	const commonDateInput = document.getElementById('common-date');
+	if (commonDateInput) dateInputs.push(commonDateInput);
+
+	for (const dateInput of dateInputs) {
+		luxon.Settings.defaultLocale = dateInput.dataset.locale ?? 'en';
 
 		// Compute the time difference between a time in the browser timezone and the same time in the course timezone.
 		// flatpickr gives the time in the browser's timezone, and this is used to adjust to the course timezone.
@@ -189,17 +210,17 @@
 				new Date(dateTime.toLocaleString('en-US')).getTime() -
 				new Date(
 					dateTime.toLocaleString('en-US', {
-						timeZone: importDateShift.dataset.timezone ?? 'America/New_York'
+						timeZone: dateInput.dataset.timezone ?? 'America/New_York'
 					})
 				).getTime()
 			);
 		};
 
-		let fallbackDate = importDateShift.value
-			? new Date(parseInt(importDateShift.value) * 1000 - timezoneAdjustment(parseInt(importDateShift.value)))
+		let fallbackDate = dateInput.value
+			? new Date(parseInt(dateInput.value) * 1000 - timezoneAdjustment(parseInt(dateInput.value)))
 			: new Date();
 
-		const fp = flatpickr(importDateShift.parentNode, {
+		const fp = flatpickr(dateInput.parentNode, {
 			allowInput: true,
 			enableTime: true,
 			minuteIncrement: 1,
@@ -216,27 +237,28 @@
 			disableMobile: true,
 			wrap: true,
 			plugins: [
-				new confirmDatePlugin({ confirmText: importDateShift.dataset.doneText, showAlways: true }),
+				new confirmDatePlugin({ confirmText: dateInput.dataset.doneText, showAlways: true }),
 				new ShortcutButtonsPlugin({
 					button: [
 						{
-							label: importDateShift.dataset.todayText ?? 'Today',
+							label: dateInput.dataset.todayText ?? 'Today',
 							attributes: { class: 'btn btn-sm btn-secondary ms-auto me-1 mb-1' }
 						},
 						{
-							label: importDateShift.dataset.nowText ?? 'Now',
+							label: dateInput.dataset.nowText ?? 'Now',
 							attributes: { class: 'btn btn-sm btn-secondary mx-auto mb-1' }
 						}
 					],
 					onClick: (index, fp) => {
 						if (index === 0) {
-							const today = new Date();
-							// If there isn't a selected date, then use 12:00 am on the current date.
-							const selectedDate = fp.selectedDates[0] ?? new Date(new Date().toDateString());
-							selectedDate.setFullYear(today.getFullYear());
-							selectedDate.setMonth(today.getMonth());
-							selectedDate.setDate(today.getDate());
-							fp.setDate(selectedDate);
+							// The initial date represents 12:00 am on the current date.
+							const today = new Date(new Date().toDateString());
+							if (fp.selectedDates[0]) {
+								today.setHours(fp.selectedDates[0].getHours());
+								today.setMinutes(fp.selectedDates[0].getMinutes());
+								today.setSeconds(fp.selectedDates[0].getSeconds());
+							}
+							fp.setDate(today, true);
 						} else if (index === 1) {
 							fp.setDate(new Date());
 						}
@@ -251,6 +273,10 @@
 
 				// Make the alternate input left-to-right even for right-to-left languages.
 				this.altInput.dir = 'ltr';
+
+				// Move the id of the now hidden input onto the added input so the labels still work.
+				this.altInput.id = this.input.id;
+				this.input.removeAttribute('id');
 			},
 			parseDate(datestr, format) {
 				// Deal with the case of a unix timestamp.  The timezone needs to be adjusted back as this is for
@@ -278,10 +304,45 @@
 			}
 		});
 
-		importDateShift.nextElementSibling.addEventListener('keydown', (e) => {
+		dateInput.nextElementSibling.addEventListener('keydown', (e) => {
 			if (e.key === ' ' || e.key === 'Enter') {
 				e.preventDefault();
 				fp.open();
+			}
+		});
+	}
+
+	if (commonDateInput) {
+		document.getElementById('apply-common-date')?.addEventListener('click', () => {
+			const dateTypeInput = document.getElementById('set-date-choice');
+			if (!dateTypeInput?.value) {
+				show_errors(['choose_date_type_err_msg'], [dateTypeInput]);
+				return;
+			}
+
+			if (!commonDateInput.value) {
+				show_errors(
+					['choose_common_date_err_msg'],
+					[commonDateInput.parentNode?._flatpickr?.input, commonDateInput.parentNode?._flatpickr?.altInput]
+				);
+				return;
+			}
+
+			const selectedSets = Array.from(document.getElementsByName('apply_date_sets')).filter((c) => c.checked);
+			if (!selectedSets.length) {
+				show_errors(['select_set_err_msg'], []);
+				event_listeners.set_table_id = hide_errors(
+					['set_table_id'],
+					[document.getElementById('select_set_err_msg')]
+				);
+				document.getElementById('set_table_id')?.addEventListener('change', event_listeners.set_table_id);
+			}
+
+			for (const set of selectedSets) {
+				const inputPicker = document.getElementsByName(`set.${set.value}.${dateTypeInput.value}`)[0]?.parentNode
+					?._flatpickr;
+				inputPicker?.setDate(commonDateInput.value, true);
+				inputPicker?.close(); // The picker isn't actually open, but this triggers the onClose handler.
 			}
 		});
 	}

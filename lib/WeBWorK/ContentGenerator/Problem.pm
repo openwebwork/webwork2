@@ -7,7 +7,6 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
 
-use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::Debug;
 use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
@@ -23,6 +22,8 @@ use WeBWorK::AchievementEvaluator qw(checkForAchievements);
 use WeBWorK::DB::Utils            qw(global2user fake_set fake_problem);
 use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
+use WeBWorK::HTML::SingleProblemGrader;
+use WeBWorK::HTML::StudentNav qw(studentNav);
 
 # GET/POST Parameters for this module
 #
@@ -431,20 +432,17 @@ async sub pre_header_initialize ($c) {
 		Count       => $problem->{showMeAnotherCount},
 	};
 
-	# Unset the showProblemGrader parameter if the "Hide Problem Grader" button was clicked.
-	$c->param(showProblemGrader => undef) if $c->param('hideProblemGrader');
-
 	# Permissions
 
 	# What does the user want to do?
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers},
 		showCorrectAnswers => 1,
-		showProblemGrader  => $c->param('showProblemGrader') || 0,
-		showAnsGroupInfo   => $c->param('showAnsGroupInfo')  || $ce->{pg}{options}{showAnsGroupInfo},
-		showAnsHashInfo    => $c->param('showAnsHashInfo')   || $ce->{pg}{options}{showAnsHashInfo},
-		showPGInfo         => $c->param('showPGInfo')        || $ce->{pg}{options}{showPGInfo},
-		showResourceInfo   => $c->param('showResourceInfo')  || $ce->{pg}{options}{showResourceInfo},
+		showProblemGrader  => $userID ne $effectiveUserID,
+		showAnsGroupInfo   => $c->param('showAnsGroupInfo') || $ce->{pg}{options}{showAnsGroupInfo},
+		showAnsHashInfo    => $c->param('showAnsHashInfo')  || $ce->{pg}{options}{showAnsHashInfo},
+		showPGInfo         => $c->param('showPGInfo')       || $ce->{pg}{options}{showPGInfo},
+		showResourceInfo   => $c->param('showResourceInfo') || $ce->{pg}{options}{showResourceInfo},
 		showHints          => 1,
 		showSolutions      => 1,
 		useMathView        => $user->useMathView ne ''  ? $user->useMathView  : $ce->{pg}{options}{useMathView},
@@ -531,18 +529,16 @@ async sub pre_header_initialize ($c) {
 	# requiring another answer submission.
 	my $showReturningFeedback = 0;
 
-	# Sticky answers
-	if (!($c->{submitAnswers} || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
+	# Reinsert sticky answers. Do this only if new answers are NOT being submitted,
+	# and a new problem version is NOT being opened.
+	if (!($prEnabled && !$problem->{prCount})
+		&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers)
+		&& $will{showOldAnswers})
+	{
 		my %oldAnswers = decodeAnswers($problem->last_answer);
-		# Do this only if new answers are NOT being submitted
-		if ($prEnabled && !$problem->{prCount}) {
-			# Clear answers if this is a new problem version
-			delete $formFields->{$_} for keys %oldAnswers;
-		} else {
-			$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
-			$showReturningFeedback = 1
-				if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
-		}
+		$formFields->{$_} = $oldAnswers{$_} for (keys %oldAnswers);
+		$showReturningFeedback = 1
+			if $ce->{pg}{options}{automaticAnswerFeedback} && $problem->num_correct + $problem->num_incorrect > 0;
 	}
 
 	my $showOnlyCorrectAnswers = $c->param('showCorrectAnswers') && $will{showCorrectAnswers};
@@ -555,7 +551,9 @@ async sub pre_header_initialize ($c) {
 		$c->{set},
 		$problem,
 		$c->{set}->psvn,
-		$formFields,
+		$prEnabled
+			&& !$problem->{prCount}
+			&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers || $showOnlyCorrectAnswers) ? {} : $formFields,
 		{
 			displayMode              => $displayMode,
 			showHints                => $will{showHints},
@@ -581,21 +579,20 @@ async sub pre_header_initialize ($c) {
 					&& after($c->{set}->answer_date, $c->submitTime)),
 			showMessages       => !$showOnlyCorrectAnswers,
 			showCorrectAnswers => (
-				$will{showProblemGrader} || ($c->{submitAnswers} && $c->{showCorrectOnRandomize}) ? 2
+				$c->{submitAnswers} && $c->{showCorrectOnRandomize} ? 2
 				: !$c->{previewAnswers} && after($c->{set}->answer_date, $c->submitTime)
 				? ($ce->{pg}{options}{correctRevealBtnAlways} ? 1 : 2)
-				: !$c->{previewAnswers} && $will{showCorrectAnswers} ? 1
+				: $will{showProblemGrader} || (!$c->{previewAnswers} && $will{showCorrectAnswers}) ? 1
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
-			$can{checkAnswers}
-				&& defined $formFields->{problem_data} ? (problemData => $formFields->{problem_data}) : ()
+			$prEnabled && !$problem->{prCount}
+			? (problemData => '{}')
+			: ($can{checkAnswers} && defined $formFields->{problem_data})
+			? (problemData => $formFields->{problem_data})
+			: ()
 		}
 	);
-
-	# Warnings in the renderPG subprocess will not be caught by the global warning handler of this process.
-	# So rewarn them and let the global warning handler take care of it.
-	warn $pg->{warnings} if $pg->{warnings};
 
 	debug('end pg processing');
 
@@ -608,20 +605,6 @@ async sub pre_header_initialize ($c) {
 	$can{showHints}     &&= $pg->{flags}{hintExists};
 	$can{showSolutions} &&= $pg->{flags}{solutionExists};
 
-	# Record errors
-	$c->{pgdebug}          = $pg->{debug_messages}          if ref $pg->{debug_messages} eq 'ARRAY';
-	$c->{pgwarning}        = $pg->{warning_messages}        if ref $pg->{warning_messages} eq 'ARRAY';
-	$c->{pginternalerrors} = $pg->{internal_debug_messages} if ref $pg->{internal_debug_messages} eq 'ARRAY';
-	# $c->{pgerrors} is defined if any of the above are defined, and is nonzero if any are non-empty.
-	$c->{pgerrors} = @{ $c->{pgdebug} // [] } || @{ $c->{pgwarning} // [] } || @{ $c->{pginternalerrors} // [] }
-		if defined $c->{pgdebug} || defined $c->{pgwarning} || defined $c->{pginternalerrors};
-
-	# If $c->{pgerrors} is not defined, then the PG messages arrays were not defined,
-	# which means $pg->{pgcore} was not defined and the translator died.
-	warn 'Processing of this PG problem was not completed.  Probably because of a syntax error. '
-		. 'The translator died prematurely and no PG warning messages were transmitted.'
-		unless defined $c->{pgerrors};
-
 	# Store fields
 	$c->{want} = \%want;
 	$c->{can}  = \%can;
@@ -632,53 +615,6 @@ async sub pre_header_initialize ($c) {
 	$c->{scoreRecordedMessage} = await process_and_log_answer($c) || '';
 
 	return;
-}
-
-sub warnings ($c) {
-	my $output = $c->c;
-
-	# Display warning messages
-	if (!defined $c->{pgerrors}) {
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				$c->c(
-					$c->tag('h3', style => 'color:red;', $c->maketext('PG question failed to render')),
-					$c->tag('p',  $c->maketext('Unable to obtain error messages from within the PG question.'))
-				)->join('')
-			)
-		);
-	} elsif ($c->{pgerrors} > 0) {
-		my @pgdebug          = @{ $c->{pgdebug}          // [] };
-		my @pgwarning        = @{ $c->{pgwarning}        // [] };
-		my @pginternalerrors = @{ $c->{pginternalerrors} // [] };
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				$c->c(
-					$c->tag('h2', $c->maketext('PG question processing error messages')),
-					@pgdebug ? $c->c(
-						$c->tag('h3', $c->maketext('PG debug messages')),
-						$c->tag('p',  $c->c(@pgdebug)->join($c->tag('br')))
-					)->join('') : '',
-					@pgwarning ? $c->c(
-						$c->tag('h3', $c->maketext('PG warning messages')),
-						$c->tag('p',  $c->c(@pgwarning)->join($c->tag('br')))
-					)->join('') : '',
-					@pginternalerrors ? $c->c(
-						$c->tag('h3', $c->maketext('PG internal errors')),
-						$c->tag('p',  $c->c(@pginternalerrors)->join($c->tag('br')))
-					)->join('') : ''
-				)->join('')
-			)
-		);
-	}
-
-	push(@$output, $c->SUPER::warnings());
-
-	return $output->join('');
 }
 
 sub head ($c) {
@@ -721,9 +657,6 @@ sub siblings ($c) {
 	my $progressBarEnabled = $c->ce->{pg}{options}{enableProgressBar};
 
 	my @items;
-
-	# Keep the grader open when linking to problems if it is already open.
-	my %problemGraderLink = $c->{will}{showProblemGrader} ? (params => { showProblemGrader => 1 }) : ();
 
 	for my $problemID (@problemIDs) {
 		if ($isJitarSet
@@ -795,7 +728,7 @@ sub siblings ($c) {
 					@items,
 					$c->tag(
 						'a',
-						$active ? () : (href => $c->systemLink($problemPage, %problemGraderLink)),
+						$active ? () : (href => $c->systemLink($problemPage)),
 						class => $class,
 						$c->b($c->maketext('Problem [_1]', join('.', @seq)) . $status_symbol)
 					)
@@ -806,7 +739,7 @@ sub siblings ($c) {
 				@items,
 				$c->tag(
 					'a',
-					$active ? () : (href => $c->systemLink($problemPage, %problemGraderLink)),
+					$active ? () : (href => $c->systemLink($problemPage)),
 					class => 'nav-link' . ($active ? ' active' : ''),
 					$c->b($c->maketext('Problem [_1]', $problemID) . $status_symbol)
 				)
@@ -841,74 +774,6 @@ sub nav ($c, $args) {
 
 	my $mergedSet = $db->getMergedSet($eUserID, $setID);
 	return '' if !$mergedSet;
-
-	# Set up a student navigation for those that have permission to act as a student.
-	my $userNav = '';
-	if ($authz->hasPermissions($userID, 'become_student') && $eUserID ne $userID) {
-		# Find all users for this set (except the current user) sorted by last_name, then first_name, then user_id.
-		my @allUserRecords = $db->getUsersWhere(
-			{
-				user_id => [
-					map { $_->[0] } $db->listUserSetsWhere({ set_id => $setID, user_id => { not_like => $userID } })
-				]
-			},
-			[qw/last_name first_name user_id/]
-		);
-
-		my $filter = $c->param('studentNavFilter');
-
-		# Find the previous, current, and next users, and format the student names for display.
-		# Also create a hash of sections and recitations if there are any for the course.
-		my @userRecords;
-		my $currentUserIndex = 0;
-		my %filters;
-		for (@allUserRecords) {
-			# Add to the sections and recitations if defined.  Also store the first user found in that section or
-			# recitation.  This user will be switched to when the filter is selected.
-			my $section = $_->section;
-			$filters{"section:$section"} = [ $c->maketext('Filter by section [_1]', $section), $_->user_id ]
-				if $section && !$filters{"section:$section"};
-			my $recitation = $_->recitation;
-			$filters{"recitation:$recitation"} = [ $c->maketext('Filter by recitation [_1]', $recitation), $_->user_id ]
-				if $recitation && !$filters{"recitation:$recitation"};
-
-			# Only keep this user if it satisfies the selected filter if a filter was selected.
-			next
-				unless !$filter
-				|| ($filter =~ /^section:(.*)$/    && $_->section eq $1)
-				|| ($filter =~ /^recitation:(.*)$/ && $_->recitation eq $1);
-
-			my $addRecord = $_;
-			$currentUserIndex = @userRecords if $addRecord->user_id eq $eUserID;
-			push @userRecords, $addRecord;
-
-			# Construct a display name.
-			$addRecord->{displayName} =
-				($addRecord->last_name || $addRecord->first_name
-					? $addRecord->last_name . ', ' . $addRecord->first_name
-					: $addRecord->user_id);
-		}
-		my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
-		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;
-
-		# Mark the current user.
-		$userRecords[$currentUserIndex]{currentUser} = 1;
-
-		my $problemPage = $c->url_for('problem_detail', setID => $setID, problemID => $problemID);
-
-		# Set up the student nav.
-		$userNav = $c->include(
-			'ContentGenerator/Problem/student_nav',
-			eUserID          => $eUserID,
-			problemPage      => $problemPage,
-			userRecords      => \@userRecords,
-			currentUserIndex => $currentUserIndex,
-			prevUser         => $prevUser,
-			nextUser         => $nextUser,
-			filter           => $filter,
-			filters          => \%filters
-		);
-	}
 
 	my $isJitarSet = $mergedSet->assignment_type eq 'jitar';
 
@@ -970,10 +835,9 @@ sub nav ($c, $args) {
 	}
 
 	my %tail;
-	$tail{displayMode}       = $c->{displayMode}             if defined $c->{displayMode};
-	$tail{showOldAnswers}    = 1                             if $c->{will}{showOldAnswers};
-	$tail{showProblemGrader} = 1                             if $c->{will}{showProblemGrader};
-	$tail{studentNavFilter}  = $c->param('studentNavFilter') if $c->param('studentNavFilter');
+	$tail{displayMode}      = $c->{displayMode}             if defined $c->{displayMode};
+	$tail{showOldAnswers}   = 1                             if $c->{will}{showOldAnswers};
+	$tail{studentNavFilter} = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
 	return $c->tag(
 		'div',
@@ -981,7 +845,7 @@ sub nav ($c, $args) {
 		role         => 'navigation',
 		'aria-label' => 'problem navigation',
 		$c->c($c->tag('div', class => 'd-flex submit-buttons-container', $c->navMacro($args, \%tail, @links)),
-			$userNav)->join('')
+			studentNav($c, $setID))->join('')
 	);
 }
 
@@ -1113,7 +977,7 @@ sub output_problem_body ($c) {
 		} else {
 			# For students render the body text of the problem with a message about error details.
 			return $c->c(
-				$c->tag('div', id => 'output_problem_body', $c->b($c->{pg}{body_text})),
+				$c->tag('div', $c->b($c->{pg}{body_text})),
 				$c->include(
 					'ContentGenerator/Base/error_output',
 					error   => $c->{pg}{errors},
@@ -1123,7 +987,14 @@ sub output_problem_body ($c) {
 		}
 	}
 
-	return $c->tag('div', id => 'output_problem_body', $c->b($c->{pg}{body_text}));
+	return $c->tag(
+		'div',
+		id    => 'output_problem_body',
+		class => 'text-dark',
+		style => 'color-scheme: light',
+		data  => { bs_theme => 'light' },
+		$c->b($c->{pg}{body_text})
+	);
 }
 
 # Output messages about the problem
@@ -1133,10 +1004,8 @@ sub output_message ($c) {
 
 # Output the problem grader if the user has permissions to grade problems
 sub output_grader ($c) {
-	if ($c->{will}{showProblemGrader}) {
-		return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem})->insertGrader;
-	}
-
+	return WeBWorK::HTML::SingleProblemGrader->new($c, $c->{pg}, $c->{problem}, $c->{set})->insertGrader
+		if $c->{will}{showProblemGrader};
 	return '';
 }
 
@@ -1444,7 +1313,7 @@ sub output_summary ($c) {
 	# Attempt summary
 	if ($c->{submitAnswers}) {
 		push(@$output, $c->attemptResults($pg));
-	} elsif ($will{checkAnswers} || $c->{will}{showProblemGrader}) {
+	} elsif ($will{checkAnswers}) {
 		push(
 			@$output,
 			$c->tag(
@@ -1480,7 +1349,7 @@ sub output_summary ($c) {
 			'div',
 			class => 'alert alert-danger d-inline-block mb-2 p-1',
 			$c->maketext(
-				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).')
+				'ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if necessary).')
 		)
 	) if $c->{resubmitDetected};
 
@@ -1549,7 +1418,7 @@ sub output_achievement_message ($c) {
 		&& $c->{submitAnswers}
 		&& $c->{problem}->set_id ne 'Undefined_Set')
 	{
-		return checkForAchievements($c->{problem}, $c->{pg}, $c);
+		return checkForAchievements($c->{problem}, $c);
 	}
 
 	return '';
@@ -1573,13 +1442,13 @@ sub output_custom_edit_message ($c) {
 
 # Output the "Show Past Answers" button
 sub output_past_answer_button ($c) {
-	my $problemID = $c->{problem}->problem_id;
-	my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
-	if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
-		$problemID = join('.', jitar_id_to_seq($problemID));
-	}
-
 	if ($c->authz->hasPermissions($c->param('user'), 'view_answers')) {
+		my $problemID = $c->{problem}->problem_id;
+		my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
+		if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
+			$problemID = join('.', jitar_id_to_seq($problemID));
+		}
+
 		my $hiddenFields = $c->hidden_authen_fields;
 		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		return $c->form_for(
@@ -1593,7 +1462,8 @@ sub output_past_answer_button ($c) {
 				$c->hidden_field(selected_sets     => $c->{problem}->set_id),
 				$c->hidden_field(selected_users    => $c->{problem}->user_id),
 				$c->tag(
-					'p',
+					'div',
+					class => 'mb-3',
 					$c->submit_button(
 						$c->maketext('Show Past Answers'),
 						name  => 'action',

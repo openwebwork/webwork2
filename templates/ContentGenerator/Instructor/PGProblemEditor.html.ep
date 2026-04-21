@@ -103,10 +103,9 @@
 		<div class="mb-2">
 			<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
 				target => 'techniques_window',
-				title  => maketext('POD for macros and sample problem code and snippets'),
+				title  => maketext('Sample problem code with documentation.'),
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% # http://webwork.maa.org/wiki/Category:MathObjects
 			<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
 				target => 'math_objects',
 				title  => maketext('Wiki summary page for MathObjects'),
@@ -125,11 +124,9 @@
 					'PG markdown syntax used to format WeBWorK questions. '
 					. 'This interactive lab can help you to learn the techniques.'
 				),
-				id => 'pgml-lab',
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
+				class => 'reference-link pgml-lab btn btn-sm btn-info',
+				data  => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
 				'PGML' =%>
-			% # http://webwork.maa.org/wiki/Category:Authors
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',
 				title  => maketext('Top level of author information on the wiki.'),

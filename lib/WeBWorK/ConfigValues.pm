@@ -213,7 +213,7 @@ sub getConfigValues ($ce) {
 			{
 				var     => 'hardcopyThemePGEditor',
 				doc     => x('Hardcopy Theme for Problem Editor'),
-				doc2    => x('Choose a layout/styling theme for PDF hardcopy production from the Prooblem Editor.'),
+				doc2    => x('Choose a layout/styling theme for PDF hardcopy production from the Problem Editor.'),
 				values  => [qw(empty.xml)],
 				type    => 'popuplist',
 				hashVar => '{hardcopyThemePGEditor}'
@@ -278,8 +278,8 @@ sub getConfigValues ($ce) {
 					"Achievements are a way to gamify WeBWorK. In parallel to a student's regular scores on "
 						. 'assignments, they earn "achievement points" for (a) answering an exercise correctly, and '
 						. '(b) earning badges. Badges can be for tasks like earning 100% on three assignments, '
-						. 'answering five questions correclty on the first attempt, etc. As students earn achivement '
-						. 'points, they can "level up" as well. An instructor can manage Achievents using the '
+						. 'answering five questions correctly on the first attempt, etc. As students earn achievement '
+						. 'points, they can "level up" as well. An instructor can manage Achievements using the '
 						. 'Achievements Manager tool.'
 				),
 				type => 'boolean'
@@ -545,8 +545,8 @@ sub getConfigValues ($ce) {
 				var  => 'permissionLevels{report_bugs}',
 				doc  => x('Can report bugs'),
 				doc2 => x(
-					'Users with at least this permission level get a link in the left panel for reporting bugs to the '
-						. 'bug tracking system at bugs.webwork.maa.org.'
+					'Users with at least this permission level get a link in the left panel for reporting issues at '
+						. 'github.com/openwebwork/webwork2.'
 				),
 				type => 'permission'
 			},
@@ -776,12 +776,12 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'problemGraderScore',
-				doc  => x('Method to enter problem scores in the single problem manual grader'),
+				doc  => x('Method to enter problem scores in the manual problem graders'),
 				doc2 => x(
-					'This configures if the single problem manual grader has inputs to enter problem scores as '
-						. 'a percent, a point value, or both. Note, the problem score is always saved as a '
-						. 'percent, so when using a point value, the problem score will be rounded to the '
-						. 'nearest whole percent.'
+					'This configures if the manual problem grader or single problem grader has inputs to enter '
+						. 'problem scores as a percent, a point value, or both. Note, the problem score is always '
+						. 'saved as a percent, so when using a point value, the problem score will be rounded to '
+						. 'the nearest whole percent.'
 				),
 				values => [qw(Percent Point Both)],
 				type   => 'popuplist'
@@ -796,7 +796,7 @@ sub getConfigValues ($ce) {
 						. 'the "Check Answers" button. Or if that button is also not present, it will activate '
 						. 'the "Preview My Answers" button. A third option is "conservative". In this case, the '
 						. 'enter key behaves like "preview" when the "Submit" button is available and there are '
-						. 'only finitely many attempts allowed. Otherise the enter key behaves like "submit". '
+						. 'only finitely many attempts allowed. Otherwise the enter key behaves like "submit". '
 						. 'Note that this is only affects homework problem pages, not test/quiz pages, and not '
 						. 'instructor pages like the PG Editor and the Library Browser.'
 				),
@@ -820,7 +820,8 @@ sub getConfigValues ($ce) {
 				doc2 => x(
 					'A "Reveal" button must be clicked to make a correct answer visible any time that correct '
 						. 'answers for a problem are shown. Note that this is always the case for instructors '
-						. 'before answers are available to students, and in "Show Me Another" problems.'
+						. 'before answers are available to students (except when the problem grader is open), and '
+						. 'in "Show Me Another" problems.'
 				),
 				type => 'boolean'
 			}
@@ -829,13 +830,15 @@ sub getConfigValues ($ce) {
 			x('E-Mail'),
 			{
 				var  => 'mail{feedbackSubjectFormat}',
-				doc  => x('Format for the subject line in feedback emails'),
+				doc  => x('Format for the subject of feedback emails'),
 				doc2 => x(
-					'When students click the <em>Email Instructor</em> button to send feedback, WeBWorK fills in the '
-						. 'subject line. Here you can set the subject line. In it, you can have various bits of '
-						. 'information filled in with the following escape sequences.<p><ul><li>%c = course ID</li>'
+					'<p>When students click the <em>Email Instructor</em> button to send feedback, WeBWorK fills in '
+						. 'the subject line. Here you can set the subject line. In it, you can have various bits of '
+						. 'information filled in with the following escape sequences.</p><ul><li>%c = course ID</li>'
 						. '<li>%u = user ID</li><li>%s = set ID</li><li>%p = problem ID</li><li>%x = section</li>'
-						. '<li>%r = recitation</li><li>%% = literal percent sign</li></ul>'
+						. '<li>%r = recitation</li><li>%% = literal percent sign</li></ul><p>If content is between '
+						. "a brace pair, like '{ rec:%r}', then it will only be included in the subject line if all "
+						. 'substitutions within the double brace pair are defined and nonempty.'
 				),
 				width => 45,
 				type  => 'text'
@@ -1152,13 +1155,15 @@ sub getConfigValues ($ce) {
 	};
 
 	# Get the list of theme folders in the theme directory.
-	my $themes = eval { path($ce->{webworkDirs}{themes})->list({ dir => 1 })->map('basename')->sort; };
+	my $themes = eval {
+		path($ce->{webworkDirs}{themes})->list({ dir => 1 })->grep(sub {-d})->map('basename')->sort;
+	};
 	die "can't opendir $ce->{webworkDirs}{themes}: $@" if $@;
 
 	# Get the list of all site hardcopy theme files.
 	my $hardcopyThemesSite =
 		eval { path($ce->{webworkDirs}{hardcopyThemes})->list->grep(qr/\.xml$/)->map('basename')->sort };
-	die "Unabled to list files in  $ce->{webworkDirs}{hardcopyThemes}: $@" if $@;
+	die "Unable to list files in  $ce->{webworkDirs}{hardcopyThemes}: $@" if $@;
 
 	my $hardcopyThemesCourse = eval {
 		path($ce->{courseDirs}{hardcopyThemes})->list->grep(sub {

@@ -14,7 +14,14 @@
 	<%= javascript $c->url({
 		type => 'webwork', name => 'htdocs', file => 'node_modules/minisearch/dist/umd/index.js'
 	}), defer => undef =%>
-	<script>const webworkConfig = { webwork_url: '<%= $c->webwork_url %>' };</script>
+	<script>
+		const webworkConfig = <%== $c->webwork_js_config %>;
+		window.pgDocConfig = {
+			rootURL: '<%= $c->webwork_url %>',
+			htmlSuffixMutation: [/\.pg$/, ''],
+			searchDataURL: '<%= $c->url_for('sample_problem_search_data') %>'
+		};
+	</script>
 	<%= javascript $c->url({
 		type => 'webwork', name => 'htdocs', file => 'js/SampleProblemViewer/documentation-search.js'
 	}), defer => undef =%>
@@ -83,7 +90,9 @@
 					<%= link_to 'sample_problem_viewer', { filePath => 'macros' },
 						class => 'list-group-item list-group-item-action', begin =%>
 						<span class="h4"><%= maketext('Sample Problems by Macro') %></span>
-						<div><%= maketext('For many macros, this lists all sample problems used by the macro.') %></div>
+						<div>
+							<%= maketext('For many macros, this lists all sample problems that use the macro.') %>
+						</div>
 					% end
 				</div>
 			</div>

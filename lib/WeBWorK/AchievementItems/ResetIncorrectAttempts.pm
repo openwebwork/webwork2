@@ -14,7 +14,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return 0
 		unless $set->assignment_type eq 'default'
 		&& between($set->open_date, $set->due_date);

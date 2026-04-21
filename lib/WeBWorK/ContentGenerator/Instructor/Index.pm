@@ -80,13 +80,6 @@ sub pre_header_initialize ($c) {
 		} else {
 			push @error, E_ONE_SET;
 		}
-	} elsif (defined $c->param('user_stats')) {
-		if ($nusers == 1) {
-			$route = 'instructor_user_statistics';
-			$args{userID} = $firstUserID;
-		} else {
-			push @error, E_ONE_USER;
-		}
 	} elsif (defined $c->param('set_stats')) {
 		if ($nsets == 1) {
 			$route = 'instructor_set_statistics';

@@ -32,6 +32,7 @@ use MIME::Base64;
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use Encode;
+use Mojo::JSON qw(encode_json true);
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
@@ -94,7 +95,7 @@ The method content() is called to send the page content to client.
 async sub go ($c) {
 	my $ce = $c->ce;
 
-	# If grades are being passed back to the lti, then peroidically update all of the
+	# If grades are being passed back to the lti, then periodically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
 	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
 
@@ -108,8 +109,6 @@ async sub go ($c) {
 		if ($c->stash('courseID') && $c->ce->{courseFiles}{logs}{activity_log});
 
 	my $tx = $c->render_later->tx;
-
-	$c->stash->{footerWidthClass} = $c->can('info') ? 'col-md-8' : 'col-12';
 
 	if ($c->can('pre_header_initialize')) {
 		my $pre_header_initialize = $c->pre_header_initialize;
@@ -131,6 +130,8 @@ async sub go ($c) {
 		my $initialize = $c->initialize;
 		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
 	}
+
+	$c->stash->{footerWidthClass} //= $c->can('info') ? 'col-md-8' : 'col-12';
 
 	$c->content;
 
@@ -646,7 +647,7 @@ sub timestamp ($c) {
 Defined in this package.
 
 Print any messages (error or non-error) resulting from the last form submission.
-This could be used to give Sucess and Failure messages after an action is performed by a module.
+This could be used to give Success and Failure messages after an action is performed by a module.
 
 The implementation in this package outputs the value of the field
 $c->{status_message}, if it is present.
@@ -682,20 +683,19 @@ sub page_title ($c) {
 	return route_title($c, $c->current_route, 1);
 }
 
-=item webwork_url
+=item webwork_js_config
 
-Defined in this package.
-
-Outputs the $webwork_url defined in site.conf, unless $webwork_url is equal to
-"/", in which case this outputs the empty string.
-
-This is used to set a value in a global webworkConfig javascript variable,
-that can be accessed in javascript files.
+Outputs the webwork2 JavaScript configuration.  This configuration can be
+accessed by JavaScript files to obtain various webwork2 settings.
 
 =cut
 
-sub webwork_url ($c) {
-	return $c->location;
+sub webwork_js_config ($c, $showMathJaxErrors = 0) {
+	return encode_json({
+		webwork_url             => $c->location,
+		mathJaxBSColorSchemeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/bs-color-scheme.js'),
+		$showMathJaxErrors ? (showMathJaxErrors => true) : ()
+	});
 }
 
 =item warnings()
@@ -813,7 +813,7 @@ there are pg errors.
 =cut
 
 sub have_warnings ($c) {
-	return $c->stash('warnings') || $c->{pgerrors};
+	return $c->stash('warnings');
 }
 
 =item exists_theme_file
@@ -1122,7 +1122,7 @@ object from which the base path will be taken. %options can consist of:
 
 Can be either a reference to an array or a reference to a hash.
 
-If it is a reference to a hash, it maps parmaeter names to values. These
+If it is a reference to a hash, it maps parameter names to values. These
 parameters will be included in the generated link. If a value is an arrayref,
 the values of the array referenced will be used. If a value is undefined, the
 value from the current request will be used.
@@ -1220,8 +1220,8 @@ Used to display a generic warning message at the top of the page
 =cut
 
 sub warningMessage ($c) {
-	return $c->maketext('<strong>Warning</strong>: There may be something wrong with this question. '
-			. 'Please inform your instructor including the warning messages below.');
+	return $c->maketext('<strong>Warning</strong>: WeBWorK has encountered warnings while processing your request. '
+			. 'See the warning messages below for details.');
 }
 
 =item $string = formatDateTime($date_time, $format_string, $timezone, $locale)
@@ -1238,7 +1238,7 @@ If C<$locale> is provided, the string returned will be in the format of that
 locale. If C<$locale> is not provided, Perl defaults to using C<en-US>.
 
 Note that the defaults for C<$timezone> and C<$locale> should almost never be
-overriden when this method is used.
+overridden when this method is used.
 
 =cut
 

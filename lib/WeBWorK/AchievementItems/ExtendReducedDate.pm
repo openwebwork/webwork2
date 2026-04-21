@@ -20,9 +20,10 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return 0
 		unless $set->assignment_type eq 'default'
+		&& $c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $set->enable_reduced_scoring
 		&& $set->reduced_scoring_date
 		&& $set->reduced_scoring_date < $set->due_date;
@@ -37,7 +38,7 @@ sub print_form ($self, $set, $records, $c) {
 		'p',
 		$c->maketext(
 			q{This item won't work unless your instructor enables the reduced scoring feature.  }
-				. 'Let your instructor know that you recieved this message.'
+				. 'Let your instructor know that you received this message.'
 		)
 	) unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
 
