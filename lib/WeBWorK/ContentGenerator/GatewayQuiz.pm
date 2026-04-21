@@ -1512,7 +1512,7 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		if $c->{can}{checkAnswers}
 		&& (!$c->{submitAnswers} || defined $c->param('problem_data_' . $mergedProblem->problem_id));
 
-	$c->stash->{haveProblemWarnings} = 1 if $pg->{warnings} || @{ $pg->{pgwarning} // [] };
+	$c->stash->{haveProblemWarnings} = 1 if $pg->{warnings} || @{ $pg->{warning_messages} // [] };
 
 	return $pg;
 }
