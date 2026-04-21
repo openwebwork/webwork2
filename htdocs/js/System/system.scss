@@ -942,10 +942,6 @@ input.changed[type='text'] {
 	}
 }
 
-.sortable-ghost {
-	opacity: 0.5;
-}
-
 #psd_list {
 	padding-left: 0;
 	padding-bottom: 0.25rem;
@@ -953,6 +949,10 @@ input.changed[type='text'] {
 
 	.psd_list_item {
 		list-style-type: none;
+
+		&.sortable-ghost {
+			opacity: 0.5;
+		}
 	}
 
 	&:not(.disable_renumber) .pdr_handle {
