@@ -18,7 +18,7 @@ sub remaining_title ($self, $c) {
 	return $c->maketext($self->name);
 }
 
-sub can_use ($self, $set, $records) { return 1; }
+sub can_use ($self, $set, $records, $c) { return 1; }
 
 sub print_form ($self, $set, $records, $c) {
 	$self->{hideUseButton} = 1;

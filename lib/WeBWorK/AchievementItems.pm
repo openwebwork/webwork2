@@ -80,7 +80,7 @@ sub UserItems ($c, $userName, $set, $records) {
 			push(@items, $achievementItem);
 			next;
 		}
-		next unless $achievementItem->can_use($set, $records);
+		next unless $achievementItem->can_use($set, $records, $c);
 
 		# Use the achievement item.
 		if ($use_item_id eq $item) {
@@ -104,7 +104,7 @@ sub UserItems ($c, $userName, $set, $records) {
 		my @new_items;
 		for (@items) {
 			my $item = $_->[0];
-			next unless $item->{count} && $item->can_use($set, $records);
+			next unless $item->{count} && $item->can_use($set, $records, $c);
 			push(@new_items, [ $item, $item->print_form($set, $records, $c) ]);
 		}
 		return \@new_items;

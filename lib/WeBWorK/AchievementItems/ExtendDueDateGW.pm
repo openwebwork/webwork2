@@ -16,7 +16,7 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return
 		$set->assignment_type =~ /gateway/
 		&& $set->set_id !~ /,v\d+$/

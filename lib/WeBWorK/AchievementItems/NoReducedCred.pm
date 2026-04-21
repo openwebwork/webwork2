@@ -18,9 +18,10 @@ sub new ($class) {
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return
 		$set->assignment_type eq 'default'
+		&& $c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 		&& $set->enable_reduced_scoring
 		&& $set->reduced_scoring_date
 		&& $set->reduced_scoring_date < $set->due_date
