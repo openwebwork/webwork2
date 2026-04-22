@@ -102,7 +102,7 @@ if [ ! -d "$APP_ROOT/courses/admin" ]; then
 	umask 2
 	cd $APP_ROOT/courses
 	wait_for_db
-	$WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
+	$WEBWORK_ROOT/bin/addcourse admin --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
 	chown www-data:www-data -R $APP_ROOT/courses
 	echo "Admin course is created."
 	echo "user: admin password: admin added to course admin and tables upgraded"

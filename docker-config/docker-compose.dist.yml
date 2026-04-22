@@ -1,6 +1,6 @@
 services:
   db:
-    image: mariadb:10.4
+    image: mariadb:10.11
 
     # Set a fixed container name, so it does not depend on the directory name
     container_name: webwork2_db_1
