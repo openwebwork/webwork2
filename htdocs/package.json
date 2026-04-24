@@ -30,7 +30,7 @@
 		"autoprefixer": "^10.4.19",
 		"chokidar": "^3.6.0",
 		"cssnano": "^6.1.2",
-		"postcss": "^8.4.38",
+		"postcss": "^8.5.10",
 		"prettier": "^3.2.5",
 		"rtlcss": "^4.1.1",
 		"sass": "^1.75.0",
