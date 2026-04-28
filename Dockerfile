@@ -174,7 +174,7 @@ RUN apt-get update \
 	texlive-xetex \
 	tzdata \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -183,9 +183,8 @@ RUN apt-get update \
 # Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
 RUN cpanm install -n \
-	Statistics::R::IO \
 	DBD::MariaDB \
-	Perl::Tidy@20220613 \
+	Perl::Tidy@20240903 \
 	Archive::Zip::SimpleZip \
 	Net::SAML2 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
