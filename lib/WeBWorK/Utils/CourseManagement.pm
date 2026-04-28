@@ -126,10 +126,9 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID      => course ID for the new course,
- ce            => a course environment for the new course,
- courseOptions => hash ref explained below
- users         => array ref explained below
+ courseID => course ID for the new course,
+ ce       => a course environment for the new course,
+ users    => array ref explained below
 
 %options may contain:
 
@@ -149,12 +148,6 @@ Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
 environment.
-
-$courseOptions is a reference to a hash containing the following options:
-
-    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}
-
-C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -187,11 +180,10 @@ sub addCourse {
 		debug("$key  : $value");
 	}
 
-	my $courseID      = $options{courseID};
-	my $sourceCourse  = $options{copyFrom} // '';
-	my $ce            = $options{ce};
-	my %courseOptions = %{ $options{courseOptions} // {} };
-	my @users         = exists $options{users} ? @{ $options{users} } : ();
+	my $courseID     = $options{courseID};
+	my $sourceCourse = $options{copyFrom} // '';
+	my $ce           = $options{ce};
+	my @users        = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
 
@@ -432,7 +424,7 @@ sub addCourse {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
 		open my $fh, ">:utf8", $courseEnvFile
 			or die "failed to open $courseEnvFile for writing.\n";
-		writeCourseConf($fh, $ce, %courseOptions);
+		writeCourseConf($fh);
 		close $fh;
 	}
 
@@ -1180,18 +1172,17 @@ sub protectQString {
 	return $string;
 }
 
-=item writeCourseConf($fh, $ce, %options)
+=item writeCourseConf($fh)
 
-Writes a course.conf file to $fh, a file handle, using defaults from the course
-environment object $ce and overrides from %options. %options can contain any of
-the pairs accepted in %courseOptions by addCourse(), above.
+Writes an essentially empty course.conf file to $fh, a file handle. System
+administrators can use this file to override global settings for a course.
 
 =back
 
 =cut
 
 sub writeCourseConf {
-	my ($fh, $ce, %options) = @_;
+	my ($fh) = @_;
 
 	print $fh <<'EOF';
 #!perl
@@ -1199,26 +1190,6 @@ sub writeCourseConf {
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
-
-	print $fh <<'EOF';
-# Users for whom to label problems with the PG file name (global value typically "professor")
-# For users in this list, PG will display the source file name when rendering a problem.
-# defaults.config values:
-EOF
-
-	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ",
-			map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }),
-			'];', "\n";
-	} else {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ ];', "\n";
-	}
-
-	if (defined $options{PRINT_FILE_NAMES_FOR}) {
-		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
-	}
 }
 
 sub get_SeedCE

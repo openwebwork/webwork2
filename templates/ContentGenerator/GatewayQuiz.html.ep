@@ -574,14 +574,7 @@
 						% }
 						%
 						% # This uses the permission level and user id of the user assigned to the set.
-						% if (
-							% $db->getPermissionLevel($effectiveUserID)->permission >=
-								% $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-							% || (
-								% grep { $_ eq $effectiveUserID }
-									% @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }
-							% )
-						% )
+						% if ( $authz->hasPermissions($effectiveUserID, 'print_path_to_problem') )
 						% {
 							<%= $problems->[ $probOrder->[$i] ]->source_file %>
 						% }

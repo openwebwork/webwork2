@@ -118,10 +118,7 @@ async sub pre_header_initialize ($c) {
 	die 'Parameter "user" not defined -- this should never happen' unless defined $userID;
 
 	# Check to see if the user is authorized to view source file paths.
-	$c->{can_show_source_file} =
-		($db->getPermissionLevel($userID)->permission >=
-			$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL})
-		|| (grep { $_ eq $userID } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} });
+	$c->{can_show_source_file} = $authz->hasPermissions($userID, 'print_path_to_problem');
 
 	if ($generate_hardcopy) {
 		my $validation_failed = 0;
