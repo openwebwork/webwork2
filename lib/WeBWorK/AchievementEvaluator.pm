@@ -23,17 +23,17 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	# Make a copy of the problem so that local modifications do not persist.
 	our $problem = $db->newUserProblem($problem_in);
 
-	# Date and time for course timezone (may differ from the server timezone)
-	# Saved into separate array
+	# Date and time for course timezone (may differ from the server timezone).
+	# Saved into separate array:
 	# https://metacpan.org/pod/DateTime
 	my $dtCourseTime = DateTime->from_epoch(epoch => time(), time_zone => $ce->{siteDefaults}{timezone} || 'local');
 
-	# Set up variables and get achievements
+	# Set up variables and get achievements.
 	my $cheevoMessage = $c->c;
 	my $user_id       = $problem->user_id;
 	my $set_id        = $problem->set_id;
 
-	# exit early if the set is to be ignored by achievements
+	# Exit early if the set is to be ignored by achievements.
 	foreach my $excludedSet (@{ $ce->{achievementExcludeSet} }) {
 		return '' if $set_id eq $excludedSet;
 	}
@@ -45,12 +45,12 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	my $isGatewaySet = ($set->assignment_type =~ /gateway/) ? 1 : 0;
 	my $isJitarSet   = ($set->assignment_type eq 'jitar')   ? 1 : 0;
 
-	# If its a gateway set get the current version
+	# If its a gateway set get the current version.
 	if ($isGatewaySet) {
 		$set = $db->getSetVersion($user_id, $set_id, $options{setVersion});
 	}
 
-	# If no global data then initialize
+	# If no global data then initialize.
 	if (not $globalUserAchievement) {
 		$globalUserAchievement = $db->newGlobalUserAchievement();
 		$globalUserAchievement->user_id($user_id);
@@ -58,7 +58,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$db->addGlobalUserAchievement($globalUserAchievement);
 	}
 
-	#These need to be "our" so that they can share to the safe container
+	# These need to be "our" so that they can share to the safe container.
 	our $counter;
 	our $maxCounter;
 	our $achievementPoints = $globalUserAchievement->achievement_points;
@@ -75,21 +75,21 @@ sub checkForAchievements ($problem_in, $c, %options) {
 
 	my $compartment = WeBWorK::WWSafe->new;
 
-	#initialize things that are ""
+	# Initialize things that are "".
 	if (not $achievementPoints) {
 		$achievementPoints = 0;
 		$globalUserAchievement->achievement_points(0);
 	}
 
-	#Methods alowed in the safe container
+	# Methods allowed in the safe container.
 	$compartment->permit(qw(time localtime));
 
-	#Thaw_Base64 globalData hash
+	# Thaw_Base64 globalData hash.
 	if ($globalUserAchievement->frozen_hash) {
 		$globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	}
 
-	#Generate hash of user achievements:
+	# Generate hash of user achievements:
 	foreach my $achievement (@achievements) {
 		next unless $achievement->enabled;
 		my $userAchievement = $db->getUserAchievement($user_id, $achievement->achievement_id);
@@ -132,10 +132,15 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		}
 	}
 
-	$globalData->{completeSets}++ if ($allcorrect);
+	# Store the setID of all completed sets so they can be used in achievements and not double counted.
+	$globalData->{completedSetIds} //= {};
+	if ($allcorrect) {
+		++$globalData->{completeSets} unless $globalData->{completedSetIds}{$set_id};
+		$globalData->{completedSetIds}{$set_id} = 1;
+	}
 
-	# get the problem tags if its not a gatway
-	# if it is a gateway get rid of $problem since it doensn't make sense
+	# Get the problem tags if its not a gateway.
+	# If it is a gateway get rid of $problem since it doesn't make sense.
 	if ($isGatewaySet) {
 		$problem = undef;
 	} else {
@@ -143,8 +148,8 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$tags = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
 	}
 
-	#These variables are shared with the safe compartment.  The achievement evaulators
-	# have access too
+	# These variables are shared with the safe compartment.
+	# The achievement evaluators have access too:
 	# $problem - the problem data;
 	# @setProblems - the problem data for everything from this set;
 	# $localData - the hash that is used only for this achievement
@@ -161,7 +166,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	$compartment->share(qw( $problem @setProblems $localData $maxCounter $userAchievements
 		$globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
-	#load any preamble code
+	# Load any preamble code.
 	my $preamble = '';
 	my $source;
 	if (-e "$ce->{courseDirs}{achievements}/$ce->{achievementPreambleFile}") {
@@ -170,27 +175,27 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$preamble = <$PREAMB>;
 		close($PREAMB);
 	}
-	#loop through the various achievements, see if they have been obtained,
+	# Loop through the various achievements, see if they have been obtained.
 	foreach my $achievement (@achievements) {
-		#skip achievements not assigned, not enabled, and that are already earned, or if it doesn't match the set type
+		# Skip achievements not assigned, not enabled, and that are already earned, or if it doesn't match the set type.
 		next unless $achievement->enabled;
 		my $achievement_id = $achievement->achievement_id;
-		next unless ($db->existsUserAchievement($user_id, $achievement_id));
+		next unless $db->existsUserAchievement($user_id, $achievement_id);
 		my $userAchievement = $db->getUserAchievement($user_id, $achievement_id);
-		next if ($userAchievement->earned);
+		next if $userAchievement->earned;
 		my $setType = $set->assignment_type;
 		next unless $achievement->assignment_type =~ /$setType/;
 
-		#thaw_base64 localData hash
+		# Thaw_base64 localData hash.
 		if ($userAchievement->frozen_hash) {
 			$localData = thaw_base64($userAchievement->frozen_hash);
 		}
 
-		#recover counter information (for progress bar achievements)
+		# Recover counter information (for progress bar achievements).
 		$counter    = $userAchievement->counter;
 		$maxCounter = $achievement->max_counter;
 
-		#check the achievement using Safe
+		# Check the achievement using Safe.
 		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
 		if (-e $sourceFilePath) {
 			local $/ = undef;
@@ -205,11 +210,11 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		my $earned = $compartment->reval($preamble . "\n" . $source);
 		warn "There were errors in achievement $achievement_id\n" . $@ if $@;
 
-		#if we have a new achievement then update achievement points
+		# If we have a new achievement then update achievement points.
 		if ($earned) {
 			$userAchievement->earned(1);
 
-			# update userAchievements hash with earned status.
+			# Update userAchievements hash with earned status.
 			$userAchievements->{$achievement_id} = $earned;
 
 			if ($achievement->category eq 'level') {
@@ -223,14 +228,14 @@ sub checkForAchievements ($problem_in, $c, %options) {
 			push(@$cheevoMessage, $c->include('AchievementEvaluator/cheevoMessage', achievement => $achievement));
 
 			my $points = $achievement->points;
-			#just in case points is an uninitialized variable
+			# Just in case points is an uninitialized variable.
 			$points = 0 unless $points;
 
 			$globalUserAchievement->achievement_points($globalUserAchievement->achievement_points + $points);
-			#this variable is shared and should be considered iffy
+			# This variable is shared and should be considered iffy.
 			$achievementPoints += $points;
 
-			# if email_template is defined, send an email to the user
+			# If email_template is defined, send an email to the user.
 			$c->minion->enqueue(
 				send_achievement_email => [ {
 					recipient       => $user_id,
@@ -245,14 +250,14 @@ sub checkForAchievements ($problem_in, $c, %options) {
 			) if ($ce->{mail}{achievementEmailFrom} && $achievement->email_template);
 		}
 
-		#update counter, nfreeze_base64 localData and store
+		# Update counter, nfreeze_base64 localData and store.
 		$userAchievement->counter($counter);
 		$userAchievement->frozen_hash(nfreeze_base64($localData));
 		$db->putUserAchievement($userAchievement);
 
-	}    #end for loop
+	}    # End for loop.
 
-	#nfreeze_base64 globalData and store
+	# nfreeze_base64 globalData and store.
 	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
 	$db->putGlobalUserAchievement($globalUserAchievement);
 
