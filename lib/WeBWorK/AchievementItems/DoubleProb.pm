@@ -6,11 +6,11 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(after);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'DoubleProb',
 		name        => x('Cupcake of Enlargement'),
-		description => x('Causes a single homework problem to be worth twice as much.')
+		description => [ x('Causes a single homework problem to be worth twice as much.') ]
 	}, $class;
 }
 

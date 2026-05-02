@@ -322,6 +322,21 @@ sub getConfigValues ($ce) {
 				type => 'boolean'
 			},
 			{
+				var  => 'achievementExtensionFactor',
+				doc  => x('Multiplicative time factor for extension achievement items'),
+				doc2 => x(
+					'This sets the time factor which affects the extension time for the extension achievement items. '
+						. 'This factor is multiplied by the base extension time of 24 hours to determine the '
+						. 'extension time. In effect, this is the number of days of the extension. If this factor is '
+						. 'not a whole number, then the resulting time is rounded to the nearest full hour, and '
+						. 'cannot be less than 1 hour. This affects the extension achievement items "ExtendDueDate", '
+						. '"ExtendDueDateGW", "ExtendReducedDate", "ReducedCred", "ResurrectGW", and "ResurrectHW". '
+						. 'The two super extensions, "SuperExtendDueDate" and "SuperExtendedReducedDate", will have '
+						. 'double the time.'
+				),
+				type => 'number'
+			},
+			{
 				var  => 'achievementExcludeSet',
 				doc  => x('List of sets excluded from achievements'),
 				doc2 => x(

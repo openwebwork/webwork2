@@ -1,18 +1,20 @@
 package WeBWorK::AchievementItems::ResurrectHW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to resurrect a homework for 24 hours
+# Item to resurrect a homework for 24 * $achievementExtensionFactor hours
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::DateTime qw(after getExtensionTime);
 
-use constant ONE_DAY => 86400;
+sub new ($class, $c) {
+	my ($time, $timeText) = getExtensionTime($c, 1);
 
-sub new ($class) {
 	return bless {
 		id          => 'ResurrectHW',
 		name        => x('Scroll of Resurrection'),
-		description => x("Reopens one closed homework set for 24 hours and rerandomizes all problems."),
+		description => [ x('Reopens one closed homework set for [_1] and rerandomizes all problems.', $timeText) ],
+		time        => $time,
+		timeText    => $timeText
 	}, $class;
 }
 
@@ -31,18 +33,26 @@ sub print_form ($self, $set, $records, $c) {
 		return $c->tag(
 			'p',
 			$c->maketext(
-				'Reopen this homework assignment for the next 24 hours. All problems will be rerandomized.')
+				'Reopen this homework assignment for the next [_1]. All problems will be rerandomized.',
+				$self->{timeText}
+			)
 		);
 	} else {
-		if (after($set->due_date - ONE_DAY)) {
-			return $c->tag('p',
-				$c->maketext('Reopen this homework assignment for full credit for the next 24 hours. '));
+		if (after($set->due_date - $self->{time})) {
+			return $c->tag(
+				'p',
+				$c->maketext(
+					'Reopen this homework assignment for full credit for the next [_1]. ',
+					$self->{timeText}
+				)
+			);
 		} else {
 			return $c->tag(
 				'p',
 				$c->maketext(
-					'Reopen this homework assignment for full credit for the next 24 hours. After 24 hours '
-						. 'any progress will revert to counting for [_1]% of the value until [_2].',
+					'Reopen this homework assignment for full credit for the next [_1]. After [_1] '
+						. 'any progress will revert to counting for [_2]% of the value until [_3].',
+					$self->{timeText},
 					$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
 					$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
 				)
@@ -72,12 +82,12 @@ sub use_item ($self, $set, $records, $c) {
 
 	# Add time to the reduced scoring date if it was defined in the first place
 	if ($set->reduced_scoring_date) {
-		$set->reduced_scoring_date(time + ONE_DAY);
+		$set->reduced_scoring_date(time + $self->{time});
 		$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	}
 	# Add time to the close date if necessary
-	if (after($set->due_date - ONE_DAY)) {
-		$set->due_date(time + ONE_DAY);
+	if (after($set->due_date - $self->{time})) {
+		$set->due_date(time + $self->{time});
 		$userSet->due_date($set->due_date);
 		# This may require also extending the answer date.
 		if ($set->due_date > $set->answer_date) {

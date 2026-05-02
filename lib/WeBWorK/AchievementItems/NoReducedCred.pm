@@ -7,14 +7,16 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(between);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'NoReducedCred',
 		name        => x('Potion of Power'),
-		description => x(
-			'Remove reduced scoring penalties from an open assignment.  You will have to resubmit '
-				. 'any problems that have already been penalized to earn full credit on them.'
-		)
+		description => [
+			x(
+				'Remove reduced scoring penalties from an open assignment.  You will have to resubmit '
+					. 'any problems that have already been penalized to earn full credit on them.'
+			)
+		]
 	}, $class;
 }
 
