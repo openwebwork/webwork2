@@ -24,4 +24,4 @@
 	<%= link_to $studentRecord->user_id =>
 		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>
 % }
-<%= WeBWorK::ContentGenerator::Grades::displayStudentStats($c, $c->{studentID}) =%>
+<%= $c->displayStudentStats =%>

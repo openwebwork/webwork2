@@ -1,0 +1,59 @@
+% my @problems = @{ $item->{problems} };
+%
+% unless (@problems) {
+	% # If this is a test and no problems are available, this means the problems are hidden
+	% # in which case a message was already displayed.
+	% unless ($item->{version_id}) {
+		<em><%= maketext('This assignment has zero problems.') %></em>
+	% }
+	% last;
+% }
+%
+<table class="table table-sm table-bordered font-sm text-center w-auto mb-0">
+	<tbody>
+		% if ($item->{version_id}) {
+			<tr>
+				<th class="text-start"><%= maketext('Test') %></th>
+				<td class="text-start" colspan="<%= @problems %>">
+					% if ($item->{version_link}) {
+						<a class="fw-bold" href="<%= $item->{version_link} %>">
+					% }
+					% if ($item->{version_count} > 1) {
+						<%= maketext('Version [_1] of [_2] versions taken',
+							$item->{version_id}, $item->{version_count}) %>
+					% } else {
+						<%= maketext('Version [_1]', $item->{version_id}) %>
+					% }
+					% if ($item->{version_link}) {
+						</a>
+					% }
+				</td>
+			</tr>
+		% }
+		<tr>
+			<th class="text-start"><%= maketext('Score') %></th>
+			<td class="text-start" colspan="<%= @problems %>">
+				<%= maketext('[_1] out of [_2]', $item->{grade_total_right}, $item->{grade_total}) %>
+			</td>
+		<tr>
+			<th class="text-start"><%= maketext('Problem') %></th>
+			% for my $problem (@problems) {
+				<td>
+					% if ($problem->{link}) {
+						<%= link_to $problem->{id} => $problem->{link},
+							class        => "fw-bold",
+							'aria-label' => maketext('[_1] problem [_2]', $item->{set_name}, $problem->{id}) %>
+					% } else {
+						<%= $problem->{id} %>
+					% }
+				</td>
+			% }
+		</tr>
+		<tr>
+			<th class="text-start"><%= maketext('Status') %></th>
+			% for my $problem (@problems) {
+				<td><%= $problem->{score} %>%</td>
+			% }
+		</tr>
+	</tbody>
+</table>

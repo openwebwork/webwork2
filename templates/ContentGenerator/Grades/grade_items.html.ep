@@ -1,0 +1,37 @@
+<ul class="list-group">
+% my $n = 0;
+% for my $item (@$items) {
+	% $n++;
+	<li class="list-group-item">
+		<div class="grade-item">
+			<div class="grade-item-title">
+				% if ($item->{link}) {
+					<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
+				% } else {
+					<span class="fw-bold"><%= $item->{name} %></span>
+				% }
+			</div>
+			<div class="grade-item-percent">
+				% unless ($item->{hide_score}) {
+					<div class="display-grade">
+						% if ($item->{grade} == 100) {
+							&#128175;
+						% } else {
+							<%= $item->{grade} %>%
+						% }
+					</div>
+				% }
+			</div>
+			<div class="grade-item-scores table-responsive ms-3">
+				% if ($item->{message}) {
+					<div><em><%= $item->{message} %></em></div>
+				% }
+				% if (defined $item->{problems}) {
+					<%= include 'ContentGenerator/Grades/problem_table', item => $item %>
+				% }
+			</div>
+		</div>
+	</li>
+% }
+</ul>
+
