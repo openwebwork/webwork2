@@ -27,6 +27,8 @@ sub can_use ($self, $set, $records, $c) {
 		$new_grade += ($problem->status > 0.5 ? 1 : $problem->status + 0.5) * $problem->value;
 		$total     += $problem->value;
 	}
+	return 0 unless $total;
+
 	$self->{old_grade} = 100 * wwRound(2, $old_grade / $total);
 	$self->{new_grade} = 100 * wwRound(2, $new_grade / $total);
 	return $self->{old_grade} == 100 ? 0 : 1;
