@@ -6,11 +6,11 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x wwRound);
 use WeBWorK::Utils::DateTime qw(after);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'HalfCreditProb',
 		name        => x('Lesser Rod of Revelation'),
-		description => x('Increases the grade of a single problem by 50%, to a maximum of 100%.')
+		description => [ x('Increases the grade of a single problem by 50%, to a maximum of 100%.') ]
 	}, $class;
 }
 

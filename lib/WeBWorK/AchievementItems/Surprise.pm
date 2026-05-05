@@ -5,11 +5,11 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
 use WeBWorK::Utils qw(x);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'Surprise',
 		name        => x('Mysterious Package (with Ribbons)'),
-		description => x('What could be inside?')
+		description => [ x('What could be inside?') ]
 	}, $class;
 }
 

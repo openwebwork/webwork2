@@ -1,34 +1,42 @@
 package WeBWorK::AchievementItems::ExtendDueDate;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to extend a close date by 24 hours.
+# Item to extend a close date by 24 * $achievementExtensionFactor hours.
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(before after between);
+use WeBWorK::Utils::DateTime qw(before after between getExtensionTime);
 
-use constant ONE_DAY => 86400;
+sub new ($class, $c) {
+	my ($time, $timeText) = getExtensionTime($c, 1);
 
-sub new ($class) {
 	return bless {
 		id          => 'ExtendDueDate',
 		name        => x('Tunic of Extension'),
-		description => x(
-			'Adds 24 hours to the close date of a homework. '
-				. 'This will randomize problem details if used after the original close date.'
-		)
+		description => [
+			x(
+				'Adds [_1] to the close date of a homework. '
+					. 'This will randomize problem details if used after the original close date.',
+				$timeText
+			)
+		],
+		time     => $time,
+		timeText => $timeText
 	}, $class;
 }
 
 sub can_use ($self, $set, $records, $c) {
-	return $set->assignment_type eq 'default' && between($set->open_date, $set->due_date + ONE_DAY);
+	return $set->assignment_type eq 'default' && between($set->open_date, $set->due_date + $self->{time});
 }
 
 sub print_form ($self, $set, $records, $c) {
 	my $randomization_statement = after($set->due_date) ? $c->maketext('All problems will be rerandomized.') : '';
 	if ($set->enable_reduced_scoring) {
-		if (before($set->reduced_scoring_date + ONE_DAY)) {
+		if (before($set->reduced_scoring_date + $self->{time})) {
 			return $c->c(
-				$c->tag('p', $c->maketext('Extend the deadline by 24 hours. [_1]', $randomization_statement)),
+				$c->tag(
+					'p',
+					$c->maketext('Extend the deadline by [_1]. [_2]', $self->{timeText}, $randomization_statement)
+				),
 				$c->tag(
 					'ul',
 					$c->c(
@@ -37,7 +45,7 @@ sub print_form ($self, $set, $records, $c) {
 							$c->maketext(
 								'You will be able to receive full credit until [_1].',
 								$c->formatDateTime(
-									$set->reduced_scoring_date + ONE_DAY,
+									$set->reduced_scoring_date + $self->{time},
 									$c->ce->{studentDateDisplayFormat}
 								)
 							)
@@ -46,7 +54,10 @@ sub print_form ($self, $set, $records, $c) {
 							'li',
 							$c->maketext(
 								'You will be able to receive reduced credit until [_1].',
-								$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat})
+								$c->formatDateTime(
+									$set->due_date + $self->{time},
+									$c->ce->{studentDateDisplayFormat}
+								)
 							)
 						)
 					)->join('')
@@ -57,8 +68,9 @@ sub print_form ($self, $set, $records, $c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'Extend the reduced credit deadline of this assignment to [_1] (an additional 24 hours). [_2]',
-						$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat}),
+						'Extend the reduced credit deadline of this assignment to [_1] (an additional [_2]). [_3]',
+						$c->formatDateTime($set->due_date + $self->{time}, $c->ce->{studentDateDisplayFormat}),
+						$self->{timeText},
 						$randomization_statement
 					)
 				),
@@ -76,8 +88,9 @@ sub print_form ($self, $set, $records, $c) {
 		return $c->tag(
 			'p',
 			$c->maketext(
-				'Extend the close date of this assignment to [_1] (an additional 24 hours). [_2]',
-				$c->formatDateTime($set->due_date + ONE_DAY, $c->ce->{studentDateDisplayFormat}),
+				'Extend the close date of this assignment to [_1] (an additional [_2]). [_3]',
+				$c->formatDateTime($set->due_date + $self->{time}, $c->ce->{studentDateDisplayFormat}),
+				$self->{timeText},
 				$randomization_statement
 			)
 		);
@@ -104,11 +117,11 @@ sub use_item ($self, $set, $records, $c) {
 
 	# Add time to the reduced scoring date if it was defined in the first place
 	if ($set->reduced_scoring_date) {
-		$set->reduced_scoring_date($set->reduced_scoring_date + ONE_DAY);
+		$set->reduced_scoring_date($set->reduced_scoring_date + $self->{time});
 		$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	}
 	# Add time to the close date
-	$set->due_date($set->due_date + ONE_DAY);
+	$set->due_date($set->due_date + $self->{time});
 	$userSet->due_date($set->due_date);
 	# This may require also extending the answer date.
 	if ($set->due_date > $set->answer_date) {
@@ -117,10 +130,8 @@ sub use_item ($self, $set, $records, $c) {
 	}
 	$db->putUserSet($userSet);
 
-	return $c->maketext(
-		'Close date of this assignment extended by 24 hours to [_1].',
-		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
-	);
+	return $c->maketext('Close date of this assignment extended by [_1] to [_2].',
+		$self->{timeText}, $c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
 }
 
 1;

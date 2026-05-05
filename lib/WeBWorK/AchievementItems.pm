@@ -72,7 +72,7 @@ sub UserItems ($c, $userName, $set, $records) {
 
 	for my $item (@{ +ITEMS }) {
 		next unless $globalData->{$item};
-		my $achievementItem = "WeBWorK::AchievementItems::$item"->new;
+		my $achievementItem = "WeBWorK::AchievementItems::$item"->new($c);
 		$achievementItem->{count} = $globalData->{$item};
 
 		# Return list of achievements items if $set is not defined.

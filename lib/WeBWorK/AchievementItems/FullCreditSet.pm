@@ -6,11 +6,11 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x wwRound);
 use WeBWorK::Utils::DateTime qw(after);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'FullCreditSet',
 		name        => x('Greater Tome of Enlightenment'),
-		description => x('Gives full credit on every problem in a set.')
+		description => [ x('Gives full credit on every problem in a set.') ]
 	}, $class;
 }
 

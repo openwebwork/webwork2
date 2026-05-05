@@ -6,14 +6,16 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(between);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'AddNewTestGW',
 		name        => x('Oil of Cleansing'),
-		description => x(
-			'Unlock an additional version of a test.  If used before the close date of '
-				. 'the test this will allow you to generate a new version of the test.'
-		)
+		description => [
+			x(
+				'Unlock an additional version of a test.  If used before the close date of '
+					. 'the test this will allow you to generate a new version of the test.'
+			)
+		]
 	}, $class;
 }
 
