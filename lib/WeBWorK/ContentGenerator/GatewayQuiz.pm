@@ -118,6 +118,10 @@ sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 # Allow for a version_last_attempt_time which is the time the set was submitted. If that is present we use that instead
 # of the current time to decide if answers can be recorded.  This deals with the time between the submission time and
 # the proctor authorization.
+# IMPORTANT: This method is called directly by the LoginProctor.pm package without a proper GatewayQuiz object, and so
+# it can not call any of the object methods in the GatewayQuiz package or use anything that is not set for a generic
+# ContentGenerator object. Also make sure that the conditions for recording an unsubmitted test are kept in sync with
+# the conditions of the can_gradeUnsubmittedTest method.
 sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet = 0, $submitAnswers = 0) {
 	my $authz = $c->authz;
 
@@ -130,8 +134,12 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 		# allow that between the open and close dates, and so drop out of this conditional to the usual one.
 		return 1
 			if $authz->hasPermissions($user->user_id, 'record_answers_when_acting_as_student')
-			|| $c->can_gradeUnsubmittedTest($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet,
-				$submitAnswers);
+			|| (!$submitAnswers
+				&& $authz->hasPermissions($user->user_id, 'access_instructor_tools')
+				&& $authz->hasPermissions($user->user_id, 'problem_grader')
+				&& !$c->{invalidSet}
+				&& after($set->due_date + $c->ce->{gatewayGracePeriod})
+				&& !$set->version_last_attempt_time);
 		return 0 if !$authz->hasPermissions($user->user_id, 'record_set_version_answers_when_acting_as_student');
 	}
 
