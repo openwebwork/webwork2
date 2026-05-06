@@ -57,8 +57,9 @@
 									}
 								),
 								tabindex => '-1',
-								style    => $eUserID ne $userID && $_->{currentTest} ? 'background-color: #8F8' : '',
-								class    => 'dropdown-item' =%>
+								class =>
+									join(' ', 'dropdown-item', $eUserID ne $userID && $_->{currentTest} ? 'active' : '')
+							=%>
 						</li>
 					% }
 				</ul>
@@ -114,8 +115,7 @@
 										studentNavFilter => $_
 									}
 								),
-								class => 'dropdown-item',
-								style => ($filter || '') eq $_ ? 'background-color: #8F8' : '' =%>
+								class => join(' ', 'dropdown-item', ($filter || '') eq $_ ? 'active' : '') =%>
 						</li>
 					% }
 				</ul>
