@@ -1197,6 +1197,23 @@ input.changed[type='text'] {
 	}
 }
 
+// Login proctor styles
+.proctor-login-info {
+	background-color: #ddf;
+
+	&.proctor-login-overtime {
+		background-color: #ffa;
+	}
+
+	[data-bs-theme='dark'] & {
+		background-color: #00d;
+
+		&.proctor-login-overtime {
+			background-color: #550;
+		}
+	}
+}
+
 mjx-help-background {
 	z-index: 1055;
 }
