@@ -16,14 +16,14 @@
 % # Print a message about submission times if we're submitting an answer.
 % if (param('submitAnswers')) {
 	% my $dueTime = $userSet->due_date;
-	% my ($color, $msg) = ('#ddddff', '');
+	% my ($overtimeClass, $msg) = ('', '');
 	% if ($dueTime + $ce->{gatewayGracePeriod} < $submitTime) {
-		% $color = '#ffffaa';
+		% $overtimeClass = ' proctor-login-overtime';
 		% $msg = maketext('The time limit on this assignment was exceeded. The assignment may be checked, '
 			% . 'but the result will not be counted.');
 	% }
 	%
-	<div class="card mb-2" style="background-color:<%= $color %>;">
+	<div class="proctor-login-info card mb-2<%= $overtimeClass %>">
 		<div class="card-body p-2">
 			<div class="card-title"><strong><%= maketext('Grading Assignment') %></strong></div>
 			<div class="card-text">
@@ -52,7 +52,7 @@
 		% || ($userSet->restricted_login_proctor eq '' || $userSet->restricted_login_proctor eq 'No'))
 	% {
 		% # The user info and username field for the proctor.
-		<div class="card p-2 mb-2" style="background-color:#ddddff;">
+		<div class="proctor-login-info card p-2 mb-2">
 			<div><%= maketext(q{User's username is:}) %> <strong><%= param('effectiveUser') // '' %></strong></div>
 			<div>
 				<%= maketext(q{User's name is:}) %>
@@ -68,7 +68,7 @@
 		</div>
 	% } else {
 		% # Restricted set login
-		<div class="card p-2 mb-2" style="background-color:#ddddff;">
+		<div class="proctor-login-info card p-2 mb-2">
 			<em>
 				<%= maketext(
 					'This set has a set-level proctor password to authorize logins. Enter the password below.') =%>
