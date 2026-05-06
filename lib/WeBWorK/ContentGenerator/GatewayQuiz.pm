@@ -1245,7 +1245,7 @@ async sub pre_header_initialize ($c) {
 					($userID eq $effectiveUserID && !$can{recordAnswersNextTime})
 					|| (
 						$userID ne $effectiveUserID
-						&& $authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
+						&& $can{recordAnswers}
 						&& $set->attempts_per_version > 0
 						&& ($problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0) >=
 							$set->attempts_per_version)
