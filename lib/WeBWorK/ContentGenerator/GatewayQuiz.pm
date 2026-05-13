@@ -1378,7 +1378,13 @@ sub nav ($c, $args) {
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
 		my @users =
 			$db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => { like => "$setID,v\%" } });
-		my @allUserRecords = $db->getUsers(map { $_->[0] } @users);
+		my @allUserRecords;
+		my $i = 0;
+		while ($i < @users) {
+			push(@allUserRecords,
+				$db->getUsers(map { $_->[0] } @users[ $i .. ($i + 499 < $#users ? $i + 499 : $#users) ]));
+			$i += 500;
+		}
 
 		if (@allUserRecords) {
 			my $filter = $c->param('studentNavFilter');
