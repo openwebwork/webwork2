@@ -26,7 +26,7 @@ sub print_form ($self, $set, $records, $c) {
 	# The form opens the file "surprise_message.txt" in the achievements
 	# folder and prints the contents of the file.
 	open my $MESSAGE, '<', "$c->{ce}{courseDirs}{achievements}/surprise_message.txt"
-		or return $c->tag('p', $c->maketext(q{I couldn't find the file [ACHIEVEMENT_DIR]/surprise_message.txt!}));
+		or return $c->tag('p', $c->maketext(q{I couldn't find the file ~[ACHIEVEMENT_DIR~]/surprise_message.txt!}));
 	local $/ = undef;
 	my $message = <$MESSAGE>;
 	close $MESSAGE;
