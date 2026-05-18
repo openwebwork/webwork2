@@ -15,24 +15,11 @@ sub studentNav ($c, $setID) {
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 
 	# Find all users for the given set (except the current user) sorted by last_name, then first_name, then user_id.
-	my @users = map { $_->[0] } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } });
-	my @allUserRecords;
-	my $i = 0;
-	while ($i < @users) {
-		push(
-			@allUserRecords,
-			$c->db->getUsersWhere(
-				{ user_id => [ @users[ $i .. ($i + 499 < $#users ? $i + 499 : $#users) ] ] },
-				[qw/last_name first_name user_id/]
-			)
-		);
-		$i += 500;
-	}
-	if (@allUserRecords > 500) {
-		@allUserRecords =
-			sort { $a->last_name cmp $b->last_name || $a->first_name cmp $b->first_name || $a->user_id cmp $b->user_id }
-			@allUserRecords;
-	}
+	my %users = map { $_->[0] => 1 } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } });
+	my @allUserRecords =
+		grep { $users{ $_->{user_id} } }
+		$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
+			[qw/last_name first_name user_id/]);
 
 	return '' unless @allUserRecords;
 
