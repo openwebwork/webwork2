@@ -58,7 +58,7 @@
 			<tbody class="table-group-divider">
 				<tr>
 					<td>Ctrl-m</td>
-					<td>Alt-Shift-m</td>
+					<td>Option-Shift-m</td>
 					<td>
 						<%= maketext('Enable or disable tab-focus mode. When tab-focus mode is off, pressing Tab '
 							. 'inside the editor window indents the current line. When tab-focus mode is on '
@@ -66,7 +66,7 @@
 					</td>
 				<tr>
 					<td>Ctrl-Shift-[</td>
-					<td>Cmd-Shift-[</td>
+					<td>Cmd-Option-[</td>
 					<td>
 						<%= maketext('Fold the region that begins on the current line. Triangles in the gutter '
 						. 'next to line numbers indicate which regions can be folded.') %>
@@ -74,30 +74,31 @@
 				</tr>
 				<tr>
 					<td>Ctrl-Shift-]</td>
-					<td>Cmd-Shift-]</td>
+					<td>Cmd-Option-]</td>
 					<td><%= maketext('Unfold the region that begins on the current line.') %></td>
 				</tr>
-				<tr><td>Ctrl-Alt-[</td><td>Cmd-Alt-[</td><td><%= maketext('Fold all regions.') %></td></tr>
-				<tr><td>Cmd-Alt-]</td><td>Cmd-Alt-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-[</td><td>Ctrl-Option-[</td><td><%= maketext('Fold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-]</td><td>Ctrl-Option-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
 				<tr><td>Ctrl-/</td><td>Cmd-/</td><td><%= maketext('Toggle comment.') %></td></tr>
 				<tr>
 					<td>Shift-Alt-a</td>
-					<td></td>
+					<td>Shift-Option-a</td>
 					<td><%= maketext('Toggle block comment. (Only has effect inside PGML blocks.)') %></td>
 				</tr>
 				<tr>
 					<td>Ctrl-Space</td>
-					<td>Alt-`</td>
+					<td>Option-`</td>
 					<td><%= maketext('Show available autocompletions at the current cursor location.') %></td>
 				</tr>
 			</tbody>
 		</table>
 		<%= maketext('There are resize grips that can be moved to resize the editor windows.  This can be done by '
 			. 'clicking and dragging or by focusing the resize grip and using the arrow keys. If the resize grip is '
-			. 'focused and the Ctrl key is held down then the size is only changed by one pixel for each arrow key '
-			. 'press, and if the Alt key is held down then the size is changed by 50 pixels for each arrow key press. '
-			. 'With no modifier key the size is changed by 20 pixels. Double clicking on a resize grip or pressing '
-			. 'Enter or Space while a resize grip is focused resets the windows to their default sizes.') =%>
+			. 'focused and the Ctrl key (Ctrl + Cmd keys on Mac) is held down then the size is only changed by one '
+			. 'pixel for each arrow key press, and if the Alt key (Option key for Mac) is held down then the size is '
+			. 'changed by 50 pixels for each arrow key press. With no modifier key the size is changed by 20 pixels. '
+			. 'Double clicking on a resize grip or pressing Enter or Space while a resize grip is focused resets the '
+			. 'windows to their default sizes.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
 	<dd class="list-group-item">
