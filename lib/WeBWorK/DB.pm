@@ -2233,11 +2233,8 @@ sub checkArgs {
 
 		if (defined $table) {
 			my $class = $self->{$table}{record};
-			#print "arg=$arg class=$class\n";
 			croak "argument $pos must be of type $class"
-				unless defined $arg
-				and ref $arg
-				and $arg->isa($class);
+				unless blessed $arg && $arg->isa($class);
 			eval { checkKeyfields($arg, $versioned) };
 			croak "argument $pos contains $@" if $@;
 		} else {
