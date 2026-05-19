@@ -4,21 +4,26 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 # Item to extend the due date on a gateway
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::DateTime qw(after getExtensionTime);
 
-use constant ONE_DAY => 86400;
+sub new ($class, $c) {
+	my ($time, $timeText) = getExtensionTime($c, 1);
 
-sub new ($class) {
 	return bless {
 		id          => 'ResurrectGW',
 		name        => x('Necromancers Charm'),
-		description => x(
-			'Reopens any test for an additional 24 hours. If you are allowed to start new versions of the test, '
-				. 'then this allows you to start a new test even if the close date has past. '
-				. 'If you were not allowed to start a new version of the test, '
-				. 'then this item will not allow you to take additional versions of the test. '
-				. 'This item will not extend the time limit for any tests that you have already started.'
-		)
+		description => [
+			x(
+				'Reopens any test for an additional [_1]. If you are allowed to start new versions of the test, '
+					. 'then this allows you to start a new test even if the close date has past. '
+					. 'If you were not allowed to start a new version of the test, '
+					. 'then this item will not allow you to take additional versions of the test. '
+					. 'This item will not extend the time limit for any tests that you have already started.',
+				$timeText
+			)
+		],
+		time     => $time,
+		timeText => $timeText
 	}, $class;
 }
 
@@ -38,23 +43,25 @@ sub print_form ($self, $set, $records, $c) {
 		return $c->tag(
 			'p',
 			$c->maketext(
-				'Reopen this test for the next 24 hours. If you were allowed to start new versions of the test, '
+				'Reopen this test for the next [_1]. If you were allowed to start new versions of the test, '
 					. 'then this will allow you to start a new test. '
 					. 'If you have already started all of the versions of the test that you are allowed to start, '
 					. 'then you should not use this item. '
-					. 'This item will not extend the time limit for any tests that you have already started.'
+					. 'This item will not extend the time limit for any tests that you have already started.',
+				$self->{timeText}
 			)
 		);
 	} else {
-		if (after($set->due_date - ONE_DAY)) {
+		if (after($set->due_date - $self->{time})) {
 			return $c->tag(
 				'p',
 				$c->maketext(
-					'Reopen this test for full credit for the next 24 hours. If you are allowed to start new versions '
+					'Reopen this test for full credit for the next [_1]. If you are allowed to start new versions '
 						. 'of the test, then this will allow you to start a new test. '
 						. 'If you have already started all of the versions of the test that you are allowed to start, '
 						. 'then you should not use this item. '
-						. 'This item will not extend the time limit for any tests that you have already started.'
+						. 'This item will not extend the time limit for any tests that you have already started.',
+					$self->{timeText}
 				)
 			);
 		} else {
@@ -62,8 +69,9 @@ sub print_form ($self, $set, $records, $c) {
 				$c->tag(
 					'p',
 					$c->maketext(
-						'Reopen this test for full credit for the next 24 hours.  After 24 hours any tests will revert '
-							. 'to counting for [_1]% of their value until [_2].',
+						'Reopen this test for full credit for the next [_1].  After [_1] any tests will revert '
+							. 'to counting for [_2]% of their value until [_3].',
+						$c->{timeText},
 						$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
 						$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
 					)
@@ -89,11 +97,11 @@ sub use_item ($self, $set, $records, $c) {
 
 	# Add time to the reduced scoring date, due date, and answer date.
 	if ($set->reduced_scoring_date) {
-		$set->reduced_scoring_date(time + ONE_DAY);
+		$set->reduced_scoring_date(time + $self->{time});
 		$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	}
-	if (after($set->due_date - ONE_DAY)) {
-		$set->due_date(time + ONE_DAY);
+	if (after($set->due_date - $self->{time})) {
+		$set->due_date(time + $self->{time});
 		$userSet->due_date($set->due_date);
 		if ($set->due_date > $set->answer_date) {
 			$set->answer_date($set->due_date);
