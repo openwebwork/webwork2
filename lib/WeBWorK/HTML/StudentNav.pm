@@ -15,13 +15,11 @@ sub studentNav ($c, $setID) {
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 
 	# Find all users for the given set (except the current user) sorted by last_name, then first_name, then user_id.
-	my @allUserRecords = $c->db->getUsersWhere(
-		{
-			user_id =>
-				[ map { $_->[0] } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } }) ]
-		},
-		[qw/last_name first_name user_id/]
-	);
+	my %users = map { $_->[0] => 1 } $c->db->listUserSetsWhere({ set_id => $setID, user_id => { '!=' => $userID } });
+	my @allUserRecords =
+		grep { $users{ $_->{user_id} } }
+		$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
+			[qw/last_name first_name user_id/]);
 
 	return '' unless @allUserRecords;
 
@@ -50,15 +48,11 @@ sub studentNav ($c, $setID) {
 			|| ($filter =~ /^section:(.*)$/    && $_->section eq $1)
 			|| ($filter =~ /^recitation:(.*)$/ && $_->recitation eq $1);
 
-		my $addRecord = $_;
-		$currentUserIndex = @userRecords if $addRecord->user_id eq $eUserID;
-		push @userRecords, $addRecord;
+		$currentUserIndex = @userRecords if $_->user_id eq $eUserID;
+		push @userRecords, $_;
 
 		# Construct a display name.
-		$addRecord->{displayName} =
-			($addRecord->last_name || $addRecord->first_name
-				? $addRecord->last_name . ', ' . $addRecord->first_name
-				: $addRecord->user_id);
+		$_->{displayName} = ($_->last_name || $_->first_name ? $_->last_name . ', ' . $_->first_name : $_->user_id);
 	}
 	my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
 	my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;

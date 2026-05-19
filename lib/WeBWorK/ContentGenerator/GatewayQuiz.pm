@@ -1376,9 +1376,13 @@ sub nav ($c, $args) {
 		my $setVersion = $c->{set}->version_id;
 
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
-		my @users =
+		my @userVersions =
 			$db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => { like => "$setID,v\%" } });
-		my @allUserRecords = $db->getUsers(map { $_->[0] } @users);
+		my %users = map { $_->user_id => 1 } @userVersions;
+		my @allUserRecords =
+			grep { $users{ $_->{user_id} } }
+			$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
+				[qw/last_name first_name user_id/]);
 
 		if (@allUserRecords) {
 			my $filter = $c->param('studentNavFilter');
@@ -1390,13 +1394,15 @@ sub nav ($c, $args) {
 				# Add to the sections and recitations if defined.  Also store the first user found in that section or
 				# recitation.  This user will be switched to when the filter is selected.
 				my $section = $allUserRecords[$_]->section;
-				$filters{"section:$section"} =
-					[ $c->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id, $users[$_][2] ]
+				$filters{"section:$section"} = [
+					$c->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id,
+					$userVersions[$_][2]
+					]
 					if $section && !$filters{"section:$section"};
 				my $recitation = $allUserRecords[$_]->recitation;
 				$filters{"recitation:$recitation"} = [
 					$c->maketext('Filter by recitation [_1]', $recitation), $allUserRecords[$_]->user_id,
-					$users[$_][2]
+					$userVersions[$_][2]
 					]
 					if $recitation && !$filters{"recitation:$recitation"};
 
@@ -1413,7 +1419,7 @@ sub nav ($c, $args) {
 					($addRecord->last_name || $addRecord->first_name
 						? $addRecord->last_name . ', ' . $addRecord->first_name
 						: $addRecord->user_id);
-				$addRecord->{setVersion} = $users[$_][2];
+				$addRecord->{setVersion} = $userVersions[$_][2];
 			}
 
 			# Sort by last name, then first name, then user_id, then set version.
