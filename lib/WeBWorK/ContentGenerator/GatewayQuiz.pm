@@ -1378,7 +1378,7 @@ sub nav ($c, $args) {
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
 		my @userVersions =
 			$db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => { like => "$setID,v\%" } });
-		my %users = map { $_->user_id => 1 } @userVersions;
+		my %users = map { $_->[0] => 1 } @userVersions;
 		my @allUserRecords =
 			grep { $users{ $_->{user_id} } }
 			$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
