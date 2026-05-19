@@ -9,17 +9,16 @@ generate-ww-pg-pod.pl - Convert WeBWorK and PG POD into HTML form.
 generate-ww-pg-pod.pl [options]
 
  Options:
-   -p|--pg-root          Directory containing  a git clone of pg.
-                         If this option is not set, then the environment
-                         variable $PG_ROOT will be used if it is set.
    -o|--output-dir       Directory to save the output files to. (required)
    -b|--base-url         Base url location used on server. (default: /)
                          This is needed for internal POD links to work correctly.
    -v|--verbose          Increase the verbosity of the output.
                          (Use multiple times for more verbosity.)
 
-Note that --pg-root must be provided or the PG_ROOT environment variable set
-if the POD for pg is desired.
+Note that C<pg_dir> must be set in the C<conf/webwork2.mojolicious.yml> file, or
+if that file does not exist then the clone of the PG repository must be located
+at C</opt/webwork/pg> as defined in the C<conf/webwork2.mojolicious.dist.yml>
+file.
 
 =head1 DESCRIPTION
 
@@ -30,37 +29,47 @@ Convert WeBWorK and PG POD into HTML form.
 use strict;
 use warnings;
 
+my ($webwork_root, $pg_root);
+
+BEGIN {
+	use File::Basename qw(dirname);
+	use Cwd            qw(abs_path);
+	use YAML::XS       qw(LoadFile);
+
+	$webwork_root = abs_path(dirname(dirname(dirname(__FILE__))));
+
+	# Load the configuration file to obtain the PG root directory.
+	my $config_file = "$webwork_root/conf/webwork2.mojolicious.yml";
+	$config_file = "$webwork_root/conf/webwork2.mojolicious.dist.yml" unless -e $config_file;
+	my $config = LoadFile($config_file);
+
+	$pg_root = $config->{pg_dir};
+}
+
 use Getopt::Long qw(:config bundling);
 use Pod::Usage;
 
-my ($pg_root, $output_dir, $base_url);
+my ($output_dir, $base_url);
 my $verbose = 0;
 GetOptions(
-	'p|pg-root=s'    => \$pg_root,
 	'o|output-dir=s' => \$output_dir,
 	'b|base-url=s'   => \$base_url,
 	'v|verbose+'     => \$verbose
 );
 
-$pg_root = $ENV{PG_ROOT} if !$pg_root;
-
-pod2usage(2) unless $output_dir;
+pod2usage(2) unless $output_dir && $pg_root && -d $pg_root;
 
 $base_url = "/" if !$base_url;
 
 use Mojo::Template;
 use IO::File;
 use File::Copy;
-use File::Path     qw(make_path remove_tree);
-use File::Basename qw(dirname);
-use Cwd            qw(abs_path);
+use File::Path qw(make_path remove_tree);
 
-use lib dirname(dirname(dirname(__FILE__))) . '/lib';
-use lib dirname(__FILE__);
+use lib "$webwork_root/lib";
+use lib "$pg_root/lib";
 
-use PODtoHTML;
-
-my $webwork_root = abs_path(dirname(dirname(dirname(__FILE__))));
+use WeBWorK::Utils::PODtoHTML;
 
 for my $dir ($webwork_root, $pg_root) {
 	next unless $dir && -d $dir;
@@ -73,10 +82,10 @@ my $index_fh = IO::File->new("$output_dir/index.html", '>')
 write_index($index_fh);
 
 make_path("$output_dir/assets");
-copy("$webwork_root/htdocs/js/PODViewer/podviewer.css", "$output_dir/assets/podviewer.css");
-print "copying $webwork_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.css\n" if $verbose;
-copy("$webwork_root/htdocs/js/PODViewer/podviewer.js", "$output_dir/assets/podviewer.js");
-print "copying $webwork_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.js\n" if $verbose;
+copy("$pg_root/htdocs/js/PODViewer/podviewer.css", "$output_dir/assets/podviewer.css");
+print "copying $pg_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.css\n" if $verbose;
+copy("$pg_root/htdocs/js/PODViewer/podviewer.js", "$output_dir/assets/podviewer.js");
+print "copying $pg_root/htdocs/js/PODViewer/podviewer.css to $output_dir/assets/podviewer.js\n" if $verbose;
 
 sub process_dir {
 	my $source_dir = shift;
@@ -89,12 +98,15 @@ sub process_dir {
 	remove_tree($dest_dir);
 	make_path($dest_dir);
 
-	my $htmldocs = PODtoHTML->new(
-		source_root  => $source_dir,
-		dest_root    => $dest_dir,
-		template_dir => "$webwork_root/bin/dev_scripts/pod-templates",
-		dest_url     => $base_url,
-		verbose      => $verbose
+	my $htmldocs = WeBWorK::Utils::PODtoHTML->new(
+		source_root        => $source_dir,
+		dest_root          => $dest_dir,
+		template_dir       => "$pg_root/assets/pod-templates",
+		dest_url           => $base_url,
+		home_url           => $base_url,
+		home_url_link_name => 'WeBWorK POD Home',
+		page_url           => $base_url . ($source_dir =~ s|^.*/||r),
+		verbose            => $verbose
 	);
 	$htmldocs->convert_pods;
 

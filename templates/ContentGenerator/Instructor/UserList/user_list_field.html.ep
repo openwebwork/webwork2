@@ -1,12 +1,13 @@
 % my $fieldName = 'user.' . $user->user_id . '.' . $field;
 % my $properties = $fieldProperties->{$field};
 %
-% if ($properties->{type} eq 'text') {
+% if ($properties->{type} eq 'text' || $properties->{type} eq 'number') {
 	% my $value = $user->$field;
 	% if ($c->{editMode}) {
-		<%= text_field $fieldName => $value, id => $fieldName . '_id', size => $properties->{size},
+		% my $field_method = "$properties->{type}_field";
+		<%= $c->$field_method($fieldName => $value, id => $fieldName . '_id', %{$properties->{attributes} // {}},
 			class => 'form-control form-control-sm d-inline w-auto',
-			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header') =%>
 	% } else {
 		% if ($field eq 'email_address') {
 			% if ($value =~ /\S/) {

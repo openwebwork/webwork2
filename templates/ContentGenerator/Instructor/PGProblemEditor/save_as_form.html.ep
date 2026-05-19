@@ -52,6 +52,12 @@
 		<%= hidden_field 'action.save_as.source_file' => $c->{editFilePath} =%>
 		<%= hidden_field 'action.save_as.file_type' => $c->{file_type} =%>
 	</div>
+	<div class="form-check">
+		% param('copyAuxFiles', 1) unless defined param('copyAuxFiles');
+		<%= check_box copyAuxFiles => 1, id => 'copyAuxFiles', class => 'form-check-input' =%>
+		<%= hidden_field copyAuxFiles => 0 =%>
+		<%= label_for copyAuxFiles => maketext('Copy auxiliary files.'), class => 'form-check-label' =%>
+	</div>
 	% if ($can_add_problem_to_set) {
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'rename', id => 'action_save_as_saveMode_rename_id',

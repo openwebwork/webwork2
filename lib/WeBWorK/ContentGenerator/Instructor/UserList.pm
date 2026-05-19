@@ -93,24 +93,47 @@ use constant SORT_SUBS => {
 };
 
 use constant FIELDS => [
-	'user_id', 'first_name', 'last_name', 'email_address', 'student_id', 'status',
-	'section', 'recitation', 'comment',   'permission',    'password'
+	'user_id',    'first_name', 'last_name',                 'email_address',
+	'student_id', 'status',     'accommodation_time_factor', 'section',
+	'recitation', 'comment',    'permission',                'password'
 ];
 
-# Note that only the editable fields need a type (i.e. all but user_id),
-# and only the text fields need a size.
+# Note that only the editable fields need a type (i.e. all but user_id).
+# The fields of type text or number may also include optional attributes for the HTML input.
+# Any field may also contain a perlValidate method that will be called to validate user input. If provided, it should be
+# a subroutine that takes the parameter value as its only argument, and returns a translatable error string if the
+# parameter value is not valid for the field, and 0 otherwise.
 use constant FIELD_PROPERTIES => {
-	user_id       => { name => x('Login Name') },
-	first_name    => { name => x('First Name'),        type => 'text', size => 10 },
-	last_name     => { name => x('Last Name'),         type => 'text', size => 10 },
-	email_address => { name => x('Email Address'),     type => 'text', size => 20 },
-	student_id    => { name => x('Student ID'),        type => 'text', size => 11 },
-	status        => { name => x('Enrollment Status'), type => 'status' },
-	section       => { name => x('Section'),           type => 'text', size => 3 },
-	recitation    => { name => x('Recitation'),        type => 'text', size => 3 },
-	comment       => { name => x('Comment'),           type => 'text', size => 20 },
-	permission    => { name => x('Permission Level'),  type => 'permission' },
-	password      => { name => x('Password'),          type => 'password' },
+	user_id                   => { name => x('Login Name') },
+	first_name                => { name => x('First Name'),        type => 'text', attributes => { size => 10 } },
+	last_name                 => { name => x('Last Name'),         type => 'text', attributes => { size => 10 } },
+	email_address             => { name => x('Email Address'),     type => 'text', attributes => { size => 20 } },
+	student_id                => { name => x('Student ID'),        type => 'text', attributes => { size => 11 } },
+	status                    => { name => x('Enrollment Status'), type => 'status' },
+	accommodation_time_factor => {
+		name       => x('Accommodation Time Factor'),
+		type       => 'number',
+		attributes => {
+			size  => 5,
+			min   => 1,
+			step  => 'any',
+			title => 'Enter a decimal number that is greater than or equal to 1.'
+		},
+		perlValidate => sub {
+			my $value = shift;
+			return $value !~ /^(\d+(\.\d*)?|\.\d+)$/ || $value <= 0
+				? (x(
+					'Accomodation time factor for [_1] unchanged. '
+					. 'A value was given that is not a decimal number or is not greater than or equal to 1.'
+				))[0]
+				: 0;
+		}
+	},
+	section    => { name => x('Section'),          type => 'text', attributes => { size => 3 } },
+	recitation => { name => x('Recitation'),       type => 'text', attributes => { size => 3 } },
+	comment    => { name => x('Comment'),          type => 'text', attributes => { size => 20 } },
+	permission => { name => x('Permission Level'), type => 'permission' },
+	password   => { name => x('Password'),         type => 'password' },
 };
 
 sub pre_header_initialize ($c) {
@@ -517,7 +540,14 @@ sub save_edit_handler ($c) {
 
 		for my $field ($User->NONKEYFIELDS()) {
 			my $newValue = $c->param("user.$userID.$field");
-			$User->$field($newValue) if defined $newValue;
+			next unless defined $newValue;
+			if (ref(FIELD_PROPERTIES()->{$field}{perlValidate}) eq 'CODE'
+				&& (my $error = FIELD_PROPERTIES()->{$field}{perlValidate}->($newValue)))
+			{
+				$c->addbadmessage($c->maketext($error, $userID));
+				next;
+			}
+			$User->$field($newValue);
 		}
 		$db->putUser($User);
 

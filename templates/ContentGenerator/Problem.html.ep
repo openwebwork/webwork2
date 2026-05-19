@@ -65,29 +65,47 @@
 % stash->{footerWidthClass} = 'col-lg-10';
 %
 <%== $c->post_header_text =%>
+% if ($c->{pg}{warnings} || @{ $c->{pg}{warning_messages} // [] }) {
+	<div class="row g-0 mb-2">
+		<div class="col-12 alert alert-danger m-0">
+			<%== maketext('<strong>Warning</strong>: There may be something wrong with this question. '
+				. 'Please inform your instructor including the warning messages below.') =%>
+		</div>
+	</div>
+% }
+% if (ref $c->{pg}{debug_messages} eq 'ARRAY' && @{ $c->{pg}{debug_messages} }) {
+	<div class="row g-0 mb-2">
+		<div class="col-12 alert alert-info m-0"><%== maketext('Debugging information is shown below.') %></div>
+	</div>
+% }
 <div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
 <div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
 <div class="row">
 	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>
 </div>
 <div class="row"><div id="output_comments" class="col-lg-10"><%= $c->output_comments %></div></div>
-<div class="row"><div id="output_grader" class="col-lg-10"><%= $c->output_grader %></div></div>
+% if ($c->{pg}{render_fail}) {
+	<div class="row g-0 mb-2">
+		<div class="col-10 alert alert-danger m-0">
+			<h2 style="color:red"><%= maketext('PG question failed to render') %></h2>
+			<p class="m-0"><%= maketext('Processing of this PG problem was not completed.  Probably because of a '
+				. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.') %></p>
+		</div>
+	</div>
+% }
 <div class="row">
 	<div class="col-lg-10">
 		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
 			id => 'problemMainForm', class => 'problem-main-form', begin =%>
 			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field(startTime => param('startTime') || time) =%>
-			<% if ($c->can('output_hidden_info')) {
-				<%= $c->output_hidden_info =%>
-			% }
-			<div class="problem">
-				<div id="problem_body" class="problem-content"
-					<%== $c->output_problem_lang_and_dir %>>
-					<%= $c->output_problem_body =%>
-				</div>
-				<%= $c->output_message =%>
+			<%= hidden_field(courseID => $c->ce->{courseName}) =%>
+			<div id="problem_body" class="problem-content"
+				<%== $c->output_problem_lang_and_dir %>>
+				<%= $c->output_problem_body =%>
 			</div>
+			<%= $c->output_message =%>
+			<%= $c->output_grader %>
 			<%= $c->output_checkboxes %>
 			<div class="submit-buttons-container col-12 my-2"><%= $c->output_submit_buttons %></div>
 			<%= include 'ContentGenerator/Problem/instructor_buttons' %>
@@ -96,7 +114,12 @@
 		<% end =%>
 	</div>
 </div>
-<div id="problemFooter" class="problemFooter">
-	<%= $c->output_past_answer_button =%>
-	<%= $c->output_email_instructor =%>
-</div>
+<%= $c->output_past_answer_button =%>
+% my $emailInstructorButton = $c->output_email_instructor;
+% if ($emailInstructorButton) {
+	<div class="mb-3"><%= $emailInstructorButton =%></div>
+% }
+<%= include 'ContentGenerator/Base/problem_warning_and_debug_output',
+	warnings         => $c->{pg}{warnings},
+	warning_messages => ref $c->{pg}{warning_messages} eq 'ARRAY' ? $c->{pg}{warning_messages} : [],
+	debug_messages   => ref $c->{pg}{debug_messages} eq 'ARRAY'   ? $c->{pg}{debug_messages}   : [] =%>

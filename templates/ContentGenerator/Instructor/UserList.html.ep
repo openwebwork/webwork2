@@ -59,10 +59,15 @@
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
 					class            => "nav-link action-link$active$disabled",
 					id               => "$actionID-tab",
-					data             => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+					data             => {
+						action    => $actionID,
+						bs_toggle => 'tab',
+						bs_target => "#$actionID",
+						$actionID eq 'cancel_edit' ? (no_validate => 1) : ()
+					},
 					role             => 'tab',
 					'aria-controls'  => $actionID,
-					'aria-selected'  => $active ? 'true' : 'false' =%>
+					'aria-selected'  => $active ? 'true' : 'false', =%>
 			</li>
 		% end
 		% content_for 'tab-content' => begin

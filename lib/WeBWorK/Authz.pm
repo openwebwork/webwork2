@@ -46,7 +46,7 @@ use warnings;
 use Carp qw/croak/;
 
 use WeBWorK::Utils::DateTime qw(before);
-use WeBWorK::Utils::Sets     qw(is_restricted);
+use WeBWorK::Utils::Sets     qw(restricted_set_message);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
@@ -414,34 +414,35 @@ sub checkSet {
 	# Cache the set for future use as needed.  This should probably be more sophisticated than this.
 	$self->{merged_set} = $set;
 
+	# Save restricted set messages to show to instructors if they exist.
+	my $canViewUnopened = $self->hasPermissions($userName, "view_unopened_sets");
+	my @restrictedSetMessages;
+
 	# Now we know that the set is assigned to the appropriate user.
-	# Check to see if the user is trying to access a set that is not open.
-	if (
-		before($set->open_date)
-		&& !$self->hasPermissions($userName, "view_unopened_sets")
-		&& !(
-			defined $set->assignment_type
-			&& $set->assignment_type =~ /gateway/
-			&& $node_name eq 'problem_list'
-			&& $db->countSetVersions($effectiveUserName, $set->set_id)
-		)
-		)
-	{
-		return $c->maketext("Requested set '[_1]' is not yet open.", $setName);
-	}
+	# $c->{viewSetCheck} is used to configure what is shown on ProblemSet page.
 
 	# Check to make sure that the set is visible, and that the user is allowed to view hidden sets.
 	my $visible = $set && $set->visible ne '0' && $set->visible ne '1' ? 1 : $set->visible;
 	if (!$visible && !$self->hasPermissions($userName, "view_hidden_sets")) {
+		$c->{viewSetCheck} = 'hidden';
+		return $c->maketext("Requested set '[_1]' is not available.", $setName);
+	}
+
+	# Check to see if the user is trying to access a set that is not open.
+	if (before($set->open_date) && !$canViewUnopened) {
+		$c->{viewSetCheck} = 'not-open';
 		return $c->maketext("Requested set '[_1]' is not available yet.", $setName);
 	}
 
 	# Check to see if conditional release conditions have been met.
-	if ($ce->{options}{enableConditionalRelease}
-		&& is_restricted($db, $set, $effectiveUserName)
-		&& !$self->hasPermissions($userName, "view_unopened_sets"))
-	{
-		return $c->maketext("The prerequisite conditions have not been met for set '[_1]'.", $setName);
+	my $conditional_msg = restricted_set_message($c, $set, 'conditional');
+	if ($conditional_msg) {
+		if ($canViewUnopened) {
+			push(@restrictedSetMessages, $conditional_msg);
+		} else {
+			$c->{viewSetCheck} = 'restricted';
+			return $conditional_msg;
+		}
 	}
 
 	# Check to be sure that gateways are being sent to the correct content generator.
@@ -474,25 +475,27 @@ sub checkSet {
 
 	# Check for ip restrictions.
 	my $badIP = $self->invalidIPAddress($set);
-	return $badIP if $badIP;
-
-	# If LTI grade passback is enabled and set to 'homework' mode then we need to make sure that there is a sourcedid
-	# for this set before students access it.
-	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
-
-	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
-		my $LMS =
-			$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
-			? $c->link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
-			: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
-		return $c->b($c->maketext(
-			'You must use your Learning Management System ([_1]) to access this set.  '
-				. 'Try logging in to the Learning Management System and visiting the set from there.',
-			$LMS
-		))
-			unless $set->lis_source_did || ($ce->{LTIVersion} eq 'v1p3' && $ce->{LTI}{v1p3}{ignoreMissingSourcedID});
+	if ($badIP) {
+		if ($self->hasPermissions($userName, 'view_ip_restricted_sets')) {
+			push(@restrictedSetMessages, $badIP);
+		} else {
+			$c->{viewSetCheck} = 'restricted';
+			return $badIP;
+		}
 	}
 
+	# Check for lis_source_did if LTI grade passback is 'homework'.
+	my $lti_msg = restricted_set_message($c, $set, 'lti');
+	if ($lti_msg) {
+		if ($canViewUnopened) {
+			push(@restrictedSetMessages, $lti_msg);
+		} else {
+			$c->{viewSetCheck} = 'restricted';
+			return $lti_msg;
+		}
+	}
+
+	$c->{restrictedSetMessages} = \@restrictedSetMessages if @restrictedSetMessages;
 	return 0;
 }
 
@@ -514,8 +517,7 @@ sub invalidIPAddress {
 	return 0
 		if (!defined($set->restrict_ip)
 			|| $set->restrict_ip eq ''
-			|| $set->restrict_ip eq 'No'
-			|| $self->hasPermissions($userName, 'view_ip_restricted_sets'));
+			|| $set->restrict_ip eq 'No');
 
 	my $clientIP = new Net::IP($c->tx->remote_address);
 
@@ -530,7 +532,9 @@ sub invalidIPAddress {
 	# if there are no addresses in the locations, return an error that
 	#    says this
 	return $c->maketext(
-		"Client ip address [_1] is not allowed to work this assignment, because the assignment has ip address restrictions and there are no allowed locations associated with the restriction.  Contact your professor to have this problem resolved.",
+		'Client ip address [_1] is not allowed to work this assignment, because the assignment has ip address '
+			. 'restrictions and there are no allowed locations associated with the restriction.  Contact your '
+			. 'professor to have this problem resolved.',
 		$clientIP->ip()
 	) if (!@restrictAddresses);
 
@@ -552,17 +556,13 @@ sub invalidIPAddress {
 	# this is slightly complicated by having to check relax_restrict_ip
 	my $badIP = '';
 	if ($restrictType eq 'RestrictTo' && !$inRestrict) {
-		$badIP =
-			"Client ip address "
-			. $clientIP->ip()
-			. " is not in the list of addresses from "
-			. "which this assignment may be worked.";
+		$badIP = $c->maketext(
+			'Client ip address [_1] is not in the list of addresses from which this assignment may be worked.',
+			$clientIP->ip());
 	} elsif ($restrictType eq 'DenyFrom' && $inRestrict) {
-		$badIP =
-			"Client ip address "
-			. $clientIP->ip()
-			. " is in the list of addresses from "
-			. "which this assignment may not be worked.";
+		$badIP = $c->maketext(
+			'Client ip address [_1] is in the list of addresses from which this assignment may not be worked.',
+			$clientIP->ip());
 	} else {
 		return 0;
 	}

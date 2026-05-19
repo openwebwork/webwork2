@@ -23,6 +23,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  ltiadvantage_launch                 /ltiadvantage/launch
  ltiadvantage_keys                   /ltiadvantage/keys
  ltiadvantage_content_selection      /ltiadvantage/content_selection
+ ltiadvantage_registration           /ltiadvantage/registration
 
  saml2_acs                           /saml2/acs
  saml2_metadata                      /saml2/metadata
@@ -86,7 +87,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_statistics               /$courseID/instructor/stats
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID
  instructor_problem_statistics       /$courseID/instructor/stats/set/$setID/$problemID
- instructor_user_statistics          /$courseID/instructor/stats/student/$userID
 
  instructor_progress                 /$courseID/instructor/progress
  instructor_set_progress             /$courseID/instructor/progress/set/$setID
@@ -147,6 +147,7 @@ my %routeParameters = (
 			ltiadvantage_launch
 			ltiadvantage_keys
 			ltiadvantage_content_selection
+			ltiadvantage_registration
 			saml2_acs
 			saml2_metadata
 			saml2_error
@@ -216,6 +217,12 @@ my %routeParameters = (
 		module => 'LTIAdvantage',
 		path   => '/ltiadvantage/content_selection',
 		action => 'content_selection'
+	},
+	ltiadvantage_registration => {
+		title  => x('LTI 1.3 Registration'),
+		module => 'LTIAdvantage',
+		path   => '/ltiadvantage/registration',
+		action => 'registration'
 	},
 
 	# This route also ends up at the login screen on failure, and the title is not used anywhere else.
@@ -483,7 +490,7 @@ my %routeParameters = (
 	},
 	instructor_statistics => {
 		title    => x('Statistics'),
-		children => [qw(instructor_set_statistics instructor_user_statistics)],
+		children => [qw(instructor_set_statistics)],
 		module   => 'Instructor::Stats',
 		path     => '/stats'
 	},
@@ -497,11 +504,6 @@ my %routeParameters = (
 		title  => '[_3]',
 		module => 'Instructor::Stats',
 		path   => '/<problemID:num>'
-	},
-	instructor_user_statistics => {
-		title  => '[_1]',
-		module => 'Instructor::Stats',
-		path   => '/student/#userID'
 	},
 	instructor_progress => {
 		title    => x('Student Progress'),

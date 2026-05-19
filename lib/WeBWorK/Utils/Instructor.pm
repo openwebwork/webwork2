@@ -554,10 +554,7 @@ sub getDefList {
 	find(
 		{
 			wanted => sub {
-				if ($File::Find::dir =~ /^$topdir\/Library/
-					|| $File::Find::dir =~ /^$topdir\/Contrib/
-					|| $File::Find::dir =~ /^$topdir\/capaLibrary/)
-				{
+				if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
 					$File::Find::prune = 1;
 					return;
 				}

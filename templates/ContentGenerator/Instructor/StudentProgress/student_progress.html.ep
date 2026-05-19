@@ -1,6 +1,3 @@
-% # Note that this template is used by both WeBWorK::ContentGenerator::Instructor::Stats and
-% # WeBWorK::ContentGenerator::Instructor::StudentProgress.
-%
 % use WeBWorK::ContentGenerator::Grades;
 %
 % my $studentRecord = $db->getUser($c->{studentID});

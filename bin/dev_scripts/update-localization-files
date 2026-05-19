@@ -45,7 +45,7 @@ if [ -z "$WEBWORK_ROOT" ]; then
 fi
 
 command -v xgettext.pl >/dev/null 2>&1 || {
-    echo >&2 "xgettext.pl needs to be installed.  It is inlcuded in the perl package Locale::Maketext::Extract. Aborting.";
+    echo >&2 "xgettext.pl needs to be installed.  It is included in the perl package Locale::Maketext::Extract. Aborting.";
     exit 1;
 }
 

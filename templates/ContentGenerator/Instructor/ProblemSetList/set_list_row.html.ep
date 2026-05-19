@@ -16,6 +16,7 @@
 <tr>
 %
 % if ($c->{editMode}) {
+	<td><%= check_box apply_date_sets => $set_id, class => 'form-check-input' =%></td>
 	<td dir="ltr">
 		% if ($iconClass) {
 			<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" alt="<%= $iconTitle =%>"></i>
@@ -71,9 +72,9 @@
 % for my $field (@$fieldNames) {
 	% next unless defined $fieldTypes->{$field};
 	<td>
-		<span class="d-inline-block w-100 text-center text-nowrap <%= $visibleClass %>">
+		<div class="d-inline-block w-100 text-center text-nowrap <%= $visibleClass %>">
 			<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_field',
 				name => "set.$set_id.$field", value => $set->$field, type => $fieldTypes->{$field} =%>
-		</span>
+		</div>
 	</td>
 % }

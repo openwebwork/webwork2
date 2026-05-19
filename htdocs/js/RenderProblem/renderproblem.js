@@ -69,6 +69,7 @@
 						iframe = document.createElement('iframe');
 						iframe.id = `${renderArea.id}_iframe`;
 						iframe.style.border = 'none';
+						iframe.style.colorScheme = 'light';
 						while (renderArea.firstChild) renderArea.firstChild.remove();
 						renderArea.append(iframe);
 

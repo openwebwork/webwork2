@@ -5,10 +5,14 @@
 % unless ($authz->hasPermissions(param('user'), 'navigation_allowed')) {
 	<div class="alert alert-danger">
 		<b>
-			<%== maketext('You must access assignments from your Course Management System ([_1]).',
-				$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
-					? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
-					: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}) =%>
+			% if ($ce->{LTI}) {
+				<%== maketext('You must access assignments from your Course Management System ([_1]).',
+					$ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+						? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
+						: $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name}) =%>
+			% } else {
+				<%= maketext('You do not have permission to list assignments in this course.') %>
+			% }
 		</b>
 	</div>
 	% last;

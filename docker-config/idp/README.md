@@ -27,7 +27,7 @@ the port as needed.
 A docker service that implements a SAML2 identity provider is provided in the
 `docker-compose.yml.dist` file. To start this identity provider along with the
 rest of webwork2, add the `--profile saml2dev` argument to docker compose as in
-the following exmaple.
+the following example.
 
 ```bash
 docker compose --profile saml2dev up
@@ -165,7 +165,7 @@ identity provider is accessible to webwork2.
 
 The user was verified by the identity provider but did not have a corresponding
 user account in the Webwork course. The Webwork user account needs to be created
-separately as the Saml2 autentication module does not do user provisioning.
+separately as the Saml2 authentication module does not do user provisioning.
 
 ### The WeBWorK service provider does not appear in the service provider Federation tab
 

@@ -5,22 +5,21 @@
 $primary: #ffc700;
 $info: black;
 
+$primary-bg-subtle-dark: shade-color($primary, 90%);
+$info-text-emphasis-dark: tint-color($info, 50%);
+
 // Override the default white for the foreground color of active components.
 // White has poor color contrast with the yellow primary color.
 $component-active-color: black;
 
 // Link colors
-$link-color: darken(#bf5454, 30%);
-$link-hover-color: lighten($link-color, 30%);
+$link-color: shade-color($primary, 60%);
 
 // Webwork logo background color in the banner
 $ww-logo-background-color: $info;
 
 // Achievment level bar
 $ww-achievement-level-color: darken($primary, 15%);
-
-// Make accordion buttons darker.
-$accordion-button-active-color: shade-color($primary, 50%);
 
 // Make the navbar colors dark.
 $navbar-dark-color: rgba(#000, 0.55);

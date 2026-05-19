@@ -74,7 +74,8 @@
 	// FIXME: These are really general purpose tooltips and not just in the homework sets editor.  So the class name
 	// should be chosen to better reflect this.
 	document.querySelectorAll('.set-id-tooltip').forEach((el) => {
-		if (el.dataset.bsTitle) new bootstrap.Tooltip(el, { fallbackPlacements: [] });
+		if (el.dataset.bsTitle)
+			new bootstrap.Tooltip(el, { fallbackPlacements: el.dataset.fallbackPlacements?.split(' ') || [] });
 	});
 
 	// Hardcopy tooltips shown on the Problem Sets page.

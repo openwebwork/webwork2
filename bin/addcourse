@@ -49,7 +49,7 @@ use Getopt::Long;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -59,9 +59,9 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::File::Classlist;
-use WeBWorK::Utils qw(runtime_use cryptPassword);
+use WeBWorK::Utils                   qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
-use WeBWorK::File::Classlist qw(parse_classlist);
+use WeBWorK::File::Classlist         qw(parse_classlist);
 use WeBWorK::DB::Record::User;
 use WeBWorK::DB::Record::Password;
 use WeBWorK::DB::Record::PermissionLevel;
@@ -123,6 +123,8 @@ if ($users) {
 		if (!$record{status} && defined $professors{$user_id}) {
 			$record{permission} = $ce->{userRoles}{professor};
 		}
+
+		$record{accommodation_time_factor} = 1;
 
 		delete $professors{$user_id};
 

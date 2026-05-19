@@ -2,7 +2,8 @@
 
 /* eslint-env node */
 
-const yargs = require('yargs');
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
 const chokidar = require('chokidar');
 const path = require('path');
 const { minify } = require('terser');
@@ -14,7 +15,7 @@ const postcss = require('postcss');
 const rtlcss = require('rtlcss');
 const cssMinify = require('cssnano');
 
-const argv = yargs
+const argv = yargs(hideBin(process.argv))
 	.usage('$0 Options')
 	.version(false)
 	.alias('help', 'h')
@@ -110,7 +111,11 @@ const processFile = async (file, _details) => {
 			// This works for both sass/scss files and css files.
 			let result;
 			try {
-				result = sass.compile(filePath, { sourceMap: argv.enableSourcemaps });
+				result = sass.compile(filePath, {
+					sourceMap: argv.enableSourcemaps,
+					// Silence warnings about bootstrap usage of deprecated sass methods.
+					silenceDeprecations: ['import', 'global-builtin', 'color-functions']
+				});
 			} catch (e) {
 				console.log(`\x1b[31mIn ${file}:`);
 				console.log(`${e.message}\x1b[0m`);

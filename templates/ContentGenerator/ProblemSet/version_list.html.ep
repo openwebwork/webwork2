@@ -8,14 +8,11 @@
 %
 % my $routeName = $set->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz' : 'gateway_quiz';
 %
-% if ($c->{invalidSet}) {
-	% # If this is an invalidSet it is because the IP address is not allowed to access the set.
-	% # Display that message here.  Note that the set is valid so the set versions can still be displayed,
-	% # but the "Start New Test" or "Continue Test" buttons should not be.
-	<div class="alert alert-warning"><%= $c->{invalidSet} %></div>
+% if ($c->{viewSetCheck}) {
+	% # If we are viewing a restricted set, then only show existing set versions and no other information.
 % } elsif ($continueVersion) {
 	% # Display information about the current test and a continue open test button.
-	% if ($timeLimit > 0) {
+	% if ($continueVersion->version_time_limit > 0) {
 		% if ($timeNow >= $continueVersion->due_date) {
 			% # If the currently open test is in the grace period, display a mesage stating this.
 			<div class="alert alert-danger">
@@ -249,6 +246,6 @@
 	% } else {
 		<%= $version_list->() =%>
 	% }
-% } else {
+% } elsif (!$c->{viewSetCheck}) {
 	<div><p><%= maketext('No versions of this test have been taken.') %></p></div>
 % }

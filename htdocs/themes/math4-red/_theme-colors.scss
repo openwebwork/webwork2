@@ -8,6 +8,7 @@ $info: #c30;
 // Link colors
 $link-color: $primary;
 $link-hover-color: #c00;
+$link-color-dark: tint-color($primary, 50%);
 
 // Webwork logo background color in the banner
 $ww-logo-background-color: darken($info, 8%);

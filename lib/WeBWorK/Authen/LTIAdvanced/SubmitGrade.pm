@@ -298,7 +298,7 @@ EOS
 				}
 
 				# Blackboard seems to return this when there is no prior grade.
-				# See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
+				# See: https://forums.openwebwork.org/mod/forum/discuss.php?d=5002
 				$priorScore = '' if $priorScore eq 'success';
 
 				# Do not update the score if there is no significant change. Note that the cases where the webwork score

@@ -3,7 +3,8 @@ use Mojo::Base 'Exporter', -signatures;
 
 use DateTime;
 use DateTime::TimeZone;
-use Time::Zone qw(tz_offset);
+use Time::Zone     qw(tz_offset);
+use WeBWorK::Utils qw(max);
 
 our @EXPORT_OK = qw(
 	before
@@ -13,6 +14,7 @@ our @EXPORT_OK = qw(
 	getDefaultSetDueDate
 	parseDateTime
 	timeToSec
+	getExtensionTime
 );
 
 sub before ($time, $now = time) { return $now < $time }
@@ -226,6 +228,26 @@ sub verify_timezone ($display_tz) {
 	return 'America/New_York';
 }
 
+sub getExtensionTime ($c, $base) {
+	my $hours    = $base * max(int($c->ce->{achievementExtensionFactor} * 24 + 0.5), 1);
+	my $time     = 3600 * $hours;
+	my $days     = int($hours / 24);
+	my $timeText = '';
+
+	if ($days > 2) {
+		$hours -= 24 * $days;
+		if ($hours) {
+			$timeText = $c->maketext('[_1] days and [quant,_2,hour,hours]', $days, $hours);
+		} else {
+			$timeText = $c->maketext('[_1] days', $days);
+		}
+	} else {
+		$timeText = $c->maketext('[quant,_1,hour,hours]', $hours);
+	}
+
+	return ($time, $timeText);
+}
+
 1;
 
 =head1 NAME
@@ -310,5 +332,19 @@ and issue warning.
 
 Note that this method is not exported, and can only be used internally by this
 package.
+
+=head2 getExtensionTime
+
+Usage: C<getExtensionTime($c, $base)>
+
+Determines the length of an extension based on the course environment extension
+time factor setting and C<$base> time. The C<$base> time is the number of days
+for the base extension. The extension time is rounded to the nearest full hour
+and cannot be less than C<$base> hours.
+
+Returns an array consisting of the extension time in seconds and a translated
+string stating the length of the extension. The translated string will state
+the number of days and hours if greater than or equal to 3 days, otherwise
+state only the number of hours.
 
 =cut

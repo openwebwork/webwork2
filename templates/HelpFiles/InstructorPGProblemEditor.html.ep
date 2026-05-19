@@ -11,13 +11,12 @@
 	<dd class="list-group-item">
 		<dl>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques" target="techniques_window">
-					<%= maketext('Problem Techniques') =%>
-				</a>
+				<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
+					target => 'techniques_window' =%>
 			</dt>
-			<dd><%= maketext('This links to a list of problem authoring techniques.') %></dd>
+			<dd><%= maketext('Sample problem code with documentation.') %></dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:MathObjects" target="math_objects">
+				<a href="https://wiki.openwebwork.org/wiki/Category:MathObjects" target="math_objects">
 					<%= maketext('Math Objects') %>
 				</a>
 			</dt>
@@ -28,29 +27,16 @@
 					. 'macro files themselves.') =%>
 			</dd>
 			<dt>
-				% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-					<%= link_to maketext('PGML') => $c->systemLink(
-							url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-							params => {
-								displayMode    => $ce->{pg}{options}{displayMode},
-								problemSeed    => 1234,
-								editMode       => 'temporaryFile',
-								sourceFilePath => 'PGMLLab/PGML-lab.pg'
-							}
-						),
-						target => 'PGML' =%>
-					% } else {
-						<a><%= maketext('PGML') %></a>
-					% }
+				<%= link_to PGML => '#', class  => 'pgml-lab', target => 'PGML',
+					data => { source => url_escape(readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg")) } =%>
 			</dt>
 			<dd>
-				<%= maketext('This links to a WeBWorK "problem" which allows you to try out fragments of PGML code. '
-					. 'This link will not be available if the file [_1] is not located in the templates directory of '
-					. 'the course.',
-					'PGMLLab/PGML-lab.pg') =%>
+				<%= maketext(
+					'This links to a WeBWorK "problem" which allows you to try out fragments of PGML code.'
+				) =%>
 			</dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Authors" target="author_info">
+				<a href="https://wiki.openwebwork.org/wiki/Category:Authors" target="author_info">
 					<%= maketext('Author Info') %>
 				</a>
 			</dt>
@@ -156,19 +142,22 @@
 			. 'generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
-		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
-			. 'the templates/hardcopyThemes folder.') =%>
+		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved '
+			. 'to the templates/hardcopyThemes folder.') =%>
 		</p>
 	</dd>
 
-	<dt><%= maketext('Format Code') %></dt>
+	<dt><%= maketext('Code Maintenance') %></dt>
 	<dd>
-		<%= maketext('Reformat the code using perltidy or a conversion to PGML. Using perltidy will change the code '
-			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
-			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
-			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
-			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
-			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
+		<%= maketext('Three code maintenance tools can be utilized. First, the code can be reformatted using perltidy. '
+		. 'Using perltidy will change the code in the editor window, and save changes to the temporary file. In some '
+		. 'cases (if the code contains backslashes or double tildes) this can result in odd spacing in the code. '
+		. 'Second the code can be converted to PGML. This changes the code in text blocks to use PGML features. '
+		. 'Generally the conversion of much of the formatting and LaTeX is performed correctly. However, answer '
+		. 'blanks need attention. In any case, make sure to inspect the formatted code, and edit further or revert '
+		. 'if needed. Third, the code can be analyzed by the "PG Critic." This checks that the code does not use '
+		. 'old or deprecated features of PG and conforms to current best-practices in problem authoring, and offers '
+		. 'suggestions on how to fix issues that are found.') =%>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>
@@ -189,6 +178,11 @@
 				. 'templates (~[TMPL~]) directory. You may choose to replace the current problem in the current set, '
 				. 'append to the end to then end of the current set as a new problem, or create a problem that is not '
 				. 'attached to a problem set.') =%>
+		</p>
+		<p>
+			<%= maketext('When saving the problem in a new location (directory), by default all auxiliary files, such '
+				. 'as images, or other files that do not end in ".pg", will also be copied to the new location.  To '
+				. 'stop this behavior, uncheck the "Copy auxiliary files" option.') =%>
 		</p>
 		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '

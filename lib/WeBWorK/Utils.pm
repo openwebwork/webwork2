@@ -30,7 +30,10 @@ our @EXPORT_OK = qw(
 	processEmailMessage
 	createEmailSenderTransportSMTP
 	generateURLs
+	formatEmailSubject
 	getAssetURL
+	points_stepsize
+	round_nearest_stepsize
 	x
 );
 
@@ -356,7 +359,6 @@ sub generateURLs ($c, %params) {
 				for my $name ('displayMode', 'showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
 					$args{$name} = [ $c->param($name) ] if defined $c->param($name) && $c->param($name) ne '';
 				}
-				$args{showProblemGrader} = 1;
 			} else {
 				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
@@ -380,6 +382,33 @@ sub generateURLs ($c, %params) {
 	} else {
 		return ($emailableURL, $returnURL);
 	}
+}
+
+sub formatEmailSubject ($formatString, $courseID, $userID, $setID, $problemID, $section, $recitation) {
+	my %subject_map = (
+		c   => $courseID,
+		u   => $userID,
+		s   => $setID,
+		p   => $problemID,
+		x   => $section,
+		r   => $recitation,
+		'%' => '%',
+	);
+	my $chars   = join('', keys %subject_map);
+	my $subject = $formatString;
+	# extract the brace pairs
+	my @braces = $formatString =~ /(\{(?:[^{}]*|(?0))*\})/xg;
+	if (@braces) {
+		# for each brace pair, do substitutions, but leave %c etc when variable is empty
+		my %braces = map { $_ => $_ =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : "%$1"/egr } @braces;
+		# If there is an instance of %c, etc, nullify the whole thing. Remove outer braces.
+		%braces = map { $_ => $braces{$_} =~ /%[$chars]/ ? '' : substr($braces{$_}, 1, -1) } keys %braces;
+		my $regex = join('|', map {"\Q$_\E"} keys %braces);
+		$regex = qr/$regex/;
+		$subject =~ s/($regex)/$braces{$1}/g;
+	}
+	$subject =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : ''/eg;
+	return $subject;
 }
 
 my $staticWWAssets;
@@ -504,6 +533,28 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	# If the file was not found in the lists, then assume it is in the webwork htdocs location, and use the given file
 	# name.  If it is actually in the pg htdocs location, then the Mojolicious rewrite will send it there.
 	return "$ce->{webworkURLs}{htdocs}/$file";
+}
+
+sub points_stepsize ($points) {
+	my $stepsize;
+	if ($points == 1) {
+		$stepsize = 0.01;
+	} elsif ($points <= 5) {
+		$stepsize = 0.05;
+	} elsif ($points <= 10) {
+		$stepsize = 0.1;
+	} elsif ($points <= 25) {
+		$stepsize = 0.25;
+	} elsif ($points <= 50) {
+		$stepsize = 0.5;
+	} else {
+		$stepsize = int(($points - 1) / 100) + 1;
+	}
+	return $stepsize;
+}
+
+sub round_nearest_stepsize ($score, $stepsize) {
+	return wwRound(2, wwRound(0, $score / $stepsize) * $stepsize);
 }
 
 sub x (@args) { return @args }
@@ -735,6 +786,22 @@ Usage: C<getAssetURL($ce, $file, $isThemeFile)>
 Returns the URL for the asset specified in C<$file>.  If C<$isThemeFile> is
 true, then the asset will be assumed to be located in a theme directory.  The
 parameter C<$ce> must be a valid C<WeBWorK::CourseEnvironment> object.
+
+=head2 points_stepsize
+
+Usage: C<points_stepsize($points)>
+
+Returns a reasonable stepsize that best converts between a whole percent and
+a point value. The stepsize is the point value that is close to but greater
+than or equal to 1% per step. This is done by first using preset values of
+0.01, 0.05, 0.1, 0.25, or 0.5, then using only whole point values, such that
+the stepsize is greater than or equal to 1% of total points.
+
+=head2 round_nearest_stepsize
+
+Usage: C<round_nearest_stepsize($score, $stepsize)>
+
+Returns the value of the score rounded to the nearest stepsize.
 
 =head2 x
 
