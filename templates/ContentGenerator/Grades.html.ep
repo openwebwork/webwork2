@@ -3,6 +3,9 @@
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'js/Grades/grades.css') =%>
 % end
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Grades/grades.js'), defer => undef =%>
+% end
 %
 <%= $c->displayStudentGrades =%>
 %

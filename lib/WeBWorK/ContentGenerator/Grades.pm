@@ -308,31 +308,33 @@ sub displayStudentGrades ($c) {
 				|| $authz->invalidIPAddress($set);
 
 			for my $i (0 .. $#$problem_scores) {
-				my $score      = $problem_scores->[$i];
+				my $addProblem = 1;
 				my $problem_id = $setIsVersioned ? $i + 1 : $problem_records->[$i]{problem_id};
-				my $attempts = $setIsTest ? 0 : $problem_incorrect_attempts->[$i] + $problem_records->[$i]->num_correct;
-				my $problem_link =
-					$noProblemLink
-					? ''
-					: $c->systemLink($c->url_for('problem_detail', setID => $setID, problemID => $problem_id),
-						params => { effectiveUser => $effectiveUser });
-				$score = 0 unless $score =~ /^\d+$/;
-
-				# For jitar sets we only display grades for top level problems.
 				if ($set->assignment_type eq 'jitar') {
+					# For jitar sets we only display grades for top level problems.
 					my @seq = jitar_id_to_seq($problem_id);
 					if ($#seq == 0) {
-						push(
-							@{ $item->{problems} },
-							{ id => $seq[0], score => $score, link => $problem_link, attempts => $attempts }
-						);
+						$problem_id = $seq[0];
+					} else {
+						$addProblem = 0;
 					}
-				} else {
-					push(
-						@{ $item->{problems} },
-						{ id => $problem_id, score => $score, link => $problem_link, attempts => $attempts }
-					);
 				}
+
+				push(
+					@{ $item->{problems} },
+					{
+						id    => $problem_id,
+						score => $problem_scores->[$i] =~ /^\d+$/ ? $problem_scores->[$i] : 0,
+						value => $problem_records->[$i]{value},
+						link  => $noProblemLink ? '' : $c->systemLink(
+							$c->url_for('problem_detail', setID => $setID, problemID => $problem_id),
+							params => { effectiveUser => $effectiveUser }
+						),
+						attempts => $setIsTest
+						? 0
+						: $problem_incorrect_attempts->[$i] + $problem_records->[$i]->num_correct
+					}
+				) if $addProblem;
 			}
 		}
 
