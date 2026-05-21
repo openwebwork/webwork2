@@ -19,6 +19,19 @@
 	</div>
 % }
 %
+% if (@$open || @$reduced || @$closed) {
+	<div class="my-3">
+		<%= hidden_field hidden_course_id => $courseID =%>
+		<button id="toggle-weights" class="btn btn-primary" data-hidden="1" data-row-class="weights-row"
+				data-hide-text="<%= maketext('Hide Weights') %>" data-show-text="<%= maketext('Show Weights') %>">
+			<%= maketext('Show Weights') %>
+		</button>
+		<button id="toggle-attempts" class="btn btn-primary" data-hidden="1" data-row-class="attempts-row"
+				data-hide-text="<%= maketext('Hide Attempts') %>" data-show-text="<%= maketext('Show Attempts') %>">
+			<%= maketext('Show Attempts') %>
+		</button>
+	</div>
+% }
 % if (@$open) {
 	<h2><%= maketext('Open Assignments') %></h2>
 	<%= include('ContentGenerator/Grades/grade_items', items => $open) %>

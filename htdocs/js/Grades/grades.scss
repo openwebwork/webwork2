@@ -41,6 +41,11 @@
 	grid-column: 2 / 3;
 }
 
-.problem-table th {
-	min-width: 2rem;
+.problem-table {
+	th {
+		min-width: 2rem;
+	}
+	caption {
+		width: max-content;
+	}
 }
