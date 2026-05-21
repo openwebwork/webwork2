@@ -1,0 +1,15 @@
+# This is an example achievement evaluator that awards credit if n specific
+# sets are completed. This is done by counting how many set IDs from a list
+# are present in the $globalData->{completedSetIds} hash.  The $counter variable
+# is updated so that the achievement progress bar works correctly. Credit is
+# given when $maxCounter sets have been completed, which is configured in
+# the achievement manager.
+#
+# See [templates]/achievements/achievement_readme.txt for details.
+
+$counter = 0;
+for my $setID ('SetName1', 'SetName2') {
+	++$counter if $globalData->{completedSetIds}{$setID};
+}
+
+return $counter >= $maxCounter ? 1 : 0;
