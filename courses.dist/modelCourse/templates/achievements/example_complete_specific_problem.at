@@ -1,13 +1,18 @@
-# This achievement checks to see if a particular challenge problem of a
-# particular set has been solved. It updates $globalData->{challengerCounter}
-# to be used with the challenger.at achievement.
+# This is an example achievement evaluator that awards credit if a specific
+# problem is completed. This is done by creating a list of valid problems
+# and checking if a problem from that list was answered correctly.
 #
 # See [templates]/achievements/achievement_readme.txt for details.
 
-# Create a hash of all valid set id and problem numbers.
+# Create a hash of all valid set ids and problem numbers.
 # Set names (ids) are keys, and each is a hash of valid
 # problem numbers. Use "_" for spaces in set ids.
-my %validproblems = ('Challenge' => { '4' => 1 });
+my %validproblems = (
+	'SetName' => {
+		'3' => 1,
+		'5' => 1,
+	},
+);
 
 # Checks to see if a valid problem was solved.
 if ($validproblems{ $problem->set_id }
@@ -15,8 +20,6 @@ if ($validproblems{ $problem->set_id }
 	&& $problem->status == 1
 	&& $problem->num_correct == 1)
 {
-	# Update challenger counter.
-	++$globalData->{challengerCounter};
 	return 1;
 }
 

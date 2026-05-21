@@ -1,9 +1,11 @@
-# This is a "solved n challenge problems" achievement.  Notice how we update
+# This is a "solved n problems" achievement.  This evaluator can be assigned
+# to multiple different achievements since it uses $maxCounter to determine
+# if the desired number of problems to be completed. Notice how we update
 # $counter (even though the appropriate variable is already given to use in
 # $globalData) so that the achievement progress bar works correctly.
 #
 # See [templates]/achievements/achievement_readme.txt for details.
 
 # Update counter from $globalData.
-$counter = $globalData->{challengerCounter};
+$counter = $globalData->{completeProblems};
 return $counter >= $maxCounter ? 1 : 0;

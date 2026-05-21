@@ -1,0 +1,4 @@
+# This is prepended to the start of every achievement evaluator. Any code
+# here will be processed before the actual evaluator code is, and if this
+# returns 0 or 1, the actual evaluator will not be processed.
+

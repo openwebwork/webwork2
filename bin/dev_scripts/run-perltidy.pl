@@ -91,7 +91,7 @@ if (@files) {
 					return;
 				}
 
-				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/;
+				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/ || $path =~ /\.at$/;
 
 				say "Tidying file: $path" if $verbose;
 
