@@ -1481,6 +1481,9 @@ sub initialize ($c) {
 				}
 			}
 		} else {
+			my $originalOpenDate = $setRecord->open_date;
+			my $originalDueDate  = $setRecord->due_date;
+
 			foreach my $field (@{ SET_FIELDS() }) {
 				next unless canChange($forUsers, $field);
 
@@ -1508,6 +1511,15 @@ sub initialize ($c) {
 				}
 			}
 			$db->putGlobalSet($setRecord);
+
+			if ($ce->{LTIVersion}
+				&& $ce->{LTIVersion} eq 'v1p3'
+				&& $ce->{LTIGradeMode} eq 'homework'
+				&& $ce->{LTI}{v1p3}{autoSyncSetDatesToLMS}
+				&& ($originalOpenDate != $setRecord->open_date || $originalDueDate != $setRecord->due_date))
+			{
+				$c->minion->enqueue(lti_set_date_sync => [$setID], { notes => { courseID => $ce->{courseName} } });
+			}
 
 			# Save IP restriction Location information
 			if (defined($c->param("set.$setID.restrict_ip")) && $c->param("set.$setID.restrict_ip") ne 'No') {

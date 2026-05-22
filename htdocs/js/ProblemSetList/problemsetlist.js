@@ -49,7 +49,14 @@
 		err_msg?.classList.remove('d-none');
 		if (!('set_table_id' in event_listeners)) {
 			event_listeners.set_table_id = hide_errors(
-				['filter_select', 'edit_select', 'publish_filter_select', 'export_select', 'score_select'],
+				[
+					'filter_select',
+					'edit_select',
+					'publish_filter_select',
+					'export_select',
+					'score_select',
+					'lms_date_sync_select'
+				],
 				[err_msg]
 			);
 			document.getElementById('set_table_id')?.addEventListener('change', event_listeners.set_table_id);
@@ -72,7 +79,7 @@
 				e.stopPropagation();
 				show_errors(['filter_err_msg'], [filter_select, filter_text]);
 			}
-		} else if (['edit', 'publish', 'export', 'score'].includes(action)) {
+		} else if (['edit', 'publish', 'export', 'score', 'lms_date_sync'].includes(action)) {
 			const action_select = document.getElementById(`${action}_select`);
 			if (action_select.value === 'selected' && !is_set_selected()) {
 				e.preventDefault();

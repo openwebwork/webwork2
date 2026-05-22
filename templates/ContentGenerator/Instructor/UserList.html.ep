@@ -48,6 +48,13 @@
 	%
 	% for my $actionID (@$formsToShow) {
 		% next if $actionID eq 'reset_2fa' && !$ce->two_factor_authentication_enabled;
+		% next
+			% if $actionID eq 'lms_roster_sync' && (
+				% !$ce->{LTIVersion}
+				% || $ce->{LTIVersion} ne 'v1p3'
+				% || !$ce->{LTI}{v1p3}{preferred_source_of_username}
+				% || !$db->getSettingValue('LTINamesRolesServiceURL')
+			% );
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';

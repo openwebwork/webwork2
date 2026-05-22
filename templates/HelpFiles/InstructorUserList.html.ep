@@ -176,6 +176,25 @@
 
 	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
 	<dd><%= maketext('This is done from the "Sets Manager" page or the "Instructor tools" page.') %></dd>
+
+	% if (
+		% $ce->{LTIVersion}
+		% && $ce->{LTIVersion} eq 'v1p3'
+		% && $ce->{LTI}{v1p3}{preferred_source_of_username}
+		% && $db->getSettingValue('LTINamesRolesServiceURL')
+	% ) {
+		<dt><%= maketext('Synchronize users with the associated course in the LMS.') %></dt>
+		<dd>
+			<%= maketext('Select the "Synchronize LMS Roster" tab and click "Synchronize LMS Roster". '
+				. 'This will enqueue a job that will contact the LMS and retrieve the list of users in the associated '
+				. 'LMS course. Users that are in the LMS course but not in the WeBWorK course will be added. Users '
+				. 'that are not in the LMS course will have their status changed to "Drop". Users that are in the LMS '
+				. 'course and the WeBWorK course will have their data updated unless $LMSManageUserData is false. Note '
+				. 'that users that have a permission level above the $LTIAccountCreationCutoff will not be added or '
+				. 'modified. Go to the Job Manager to see the status of this job.'
+				) =%>
+		</dd>
+	% }
 </dl>
 
 <p>
