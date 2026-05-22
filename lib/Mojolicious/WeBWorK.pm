@@ -75,6 +75,7 @@ sub startup ($app) {
 	# WeBWorK::ContentGenerator::Instructor::JobManager.
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
 	$app->minion->add_task(lti_mass_update        => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
+	$app->minion->add_task(lti_set_date_sync      => 'Mojolicious::WeBWorK::Tasks::LTISetDateSync');
 	$app->minion->add_task(send_instructor_email  => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
 	$app->minion->add_task(send_achievement_email => 'Mojolicious::WeBWorK::Tasks::AchievementNotification');
 
