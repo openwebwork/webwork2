@@ -13,17 +13,14 @@
 	<caption class="small p-0">
 		<%= maketext('Score: [_1] out of [_2]', $item->{grade_total_right}, $item->{grade_total}) %>
 		% if ($item->{version_id}) {
-			% if ($item->{version_link}) {
-				<a class="fw-bold" href="<%= $item->{version_link} %>">
-			% }
+			% my $versionName = maketext('version [_1]', $item->{version_id});
+			% $versionName = begin
+				<a class="fw-bold" href="<%= $item->{version_link} %>"><%= $versionName %></a>
+			% end->() if $item->{version_link};
 			% if ($item->{version_count} > 1) {
-				<%= maketext('for version [_1] of [_2] versions taken',
-					$item->{version_id}, $item->{version_count}) %>
+				<%== maketext('for [_1] ([_2] versions taken)', $versionName, $item->{version_count}) %>
 			% } else {
-				<%= maketext('for version [_1]', $item->{version_id}) %>
-			% }
-			% if ($item->{version_link}) {
-				</a>
+				<%== maketext('for [_1]', $versionName) %>
 			% }
 		% }
 	</caption>

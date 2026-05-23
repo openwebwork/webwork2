@@ -23,10 +23,8 @@
 	toggleWeightsButton?.addEventListener('click', () => showHideRows(toggleWeightsButton));
 	toggleAttemptsButton?.addEventListener('click', () => showHideRows(toggleAttemptsButton));
 
-	document.addEventListener('DOMContentLoaded', () => {
-		for (const button of [toggleWeightsButton, toggleAttemptsButton]) {
-			if (button && localStorage.getItem(`WW.${courseID}.grades.show-${button.dataset.rowClass}`))
-				showHideRows(button);
-		}
-	});
+	for (const button of [toggleWeightsButton, toggleAttemptsButton]) {
+		if (button && localStorage.getItem(`WW.${courseID}.grades.show-${button.dataset.rowClass}`))
+			showHideRows(button);
+	}
 })();

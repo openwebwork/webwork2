@@ -1,33 +1,33 @@
-<ul class="list-group">
-% my $n = 0;
-% for my $item (@$items) {
-	% $n++;
-	<li class="list-group-item">
-		<div class="grade-item">
-			<div class="grade-item-title">
-				<h3 class="fs-5 fw-bold mb-0">
-					% if ($item->{link}) {
-						<%= link_to $item->{name} => $item->{link} %>
-					% } else {
-						<%= $item->{name} %>
+<ul class="list-group mb-3">
+	% my $n = 0;
+	% for my $item (@$items) {
+		% ++$n;
+		<li class="list-group-item">
+			<div class="grade-item">
+				<div class="grade-item-title">
+					<h3 class="fs-5 fw-bold mb-0">
+						% if ($item->{link}) {
+							<%= link_to $item->{name} => $item->{link} %>
+						% } else {
+							<%= $item->{name} %>
+						% }
+					</h3>
+				</div>
+				<div class="grade-item-percent">
+					% unless ($item->{hide_score}) {
+						<div class="display-grade"><%= $item->{grade} %>%</div>
 					% }
-				</h3>
+				</div>
+				<div class="grade-item-scores table-responsive">
+					% if ($item->{message}) {
+						<div><em><%= $item->{message} %></em></div>
+					% }
+					% if (defined $item->{problems}) {
+						<%= include 'ContentGenerator/Grades/problem_table', item => $item %>
+					% }
+				</div>
 			</div>
-			<div class="grade-item-percent">
-				% unless ($item->{hide_score}) {
-					<div class="display-grade"><%= $item->{grade} %>%</div>
-				% }
-			</div>
-			<div class="grade-item-scores table-responsive">
-				% if ($item->{message}) {
-					<div><em><%= $item->{message} %></em></div>
-				% }
-				% if (defined $item->{problems}) {
-					<%= include 'ContentGenerator/Grades/problem_table', item => $item %>
-				% }
-			</div>
-		</div>
-	</li>
-% }
+		</li>
+	% }
 </ul>
 
