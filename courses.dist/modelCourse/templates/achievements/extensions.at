@@ -1,9 +1,10 @@
-#  This achievement executes unconditionally, and awards the user a certain number
-#  of ExtendDueDate, SuperExtendDueDate, and ResurrectHW reward items. How many of
-#  each is specified below.
+# This achievement executes unconditionally, and awards the user a certain number
+# of ExtendDueDate, SuperExtendDueDate, and ResurrectHW reward items. How many of
+# each is specified below.  This could also give other extension type reward items
+# such as AddNewTestGW, ExtendDueDateGW, ExtendReducedDate, NoReducedCred, ReducedCred,
+# RessurectGW, and SuperExtendReducedDate.
 
-$globalData->{ExtendDueDate}      += 10; 
-$globalData->{SuperExtendDueDate} += 5; 
-$globalData->{ResurrectHW}        += 3; 
+$globalData->{ExtendDueDate}      += 10;
+$globalData->{SuperExtendDueDate} += 5;
+$globalData->{ResurrectHW}        += 3;
 return 1;
-

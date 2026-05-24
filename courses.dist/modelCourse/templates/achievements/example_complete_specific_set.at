@@ -1,0 +1,11 @@
+# This is an example achievement evaluator that awards credit if a specific
+# set is completed. This is done by checking if a list of set IDs is is
+# present in the $globalData->{completedSetIds} hash.
+#
+# See [templates]/achievements/achievement_readme.txt for details.
+
+for my $setID ('SetName1', 'SetName2') {
+	return 1 if $globalData->{completedSetIds}{$setID};
+}
+
+return 0;
