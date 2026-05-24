@@ -114,7 +114,7 @@ const processFile = async (file, _details) => {
 				result = sass.compile(filePath, {
 					sourceMap: argv.enableSourcemaps,
 					// Silence warnings about bootstrap usage of deprecated sass methods.
-					silenceDeprecations: ['import', 'global-builtin', 'color-functions']
+					silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'if-function']
 				});
 			} catch (e) {
 				console.log(`\x1b[31mIn ${file}:`);
