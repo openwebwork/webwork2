@@ -8,7 +8,6 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 =cut
 
 use WeBWorK::Localize;
-use WeBWorK::Authen qw(write_log_entry);
 
 sub pre_header_initialize ($c) {
 	my $ce     = $c->ce;
@@ -20,7 +19,7 @@ sub pre_header_initialize ($c) {
 	$authen->logout_user if $authen->can('logout_user');
 
 	$authen->killSession;
-	$authen->WeBWorK::Authen::write_log_entry('LOGGED OUT');
+	$authen->write_log_entry('LOGGED OUT');
 
 	# Check to see if there is a proctor key associated with this login.  If there is a proctor user, then there must be
 	# a proctored test.  So try and delete the key.
