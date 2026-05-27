@@ -70,13 +70,13 @@ use constant FORM_TITLES => {
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	save_edit  => 'modify_student_data',
-	edit       => 'modify_student_data',
-	reset2_2fa => 'change_password',
-	import     => 'modify_student_data',
-	export     => 'modify_classlist_files',
-	add        => 'modify_student_data',
-	delete     => 'modify_student_data',
+	save_edit => 'modify_student_data',
+	edit      => 'modify_student_data',
+	reset_2fa => 'change_password',
+	import    => 'modify_student_data',
+	export    => 'modify_classlist_files',
+	add       => 'modify_student_data',
+	delete    => 'modify_student_data',
 };
 
 use constant SORT_SUBS => {
@@ -504,10 +504,11 @@ sub reset_2fa_handler ($c) {
 			push @resultText, $c->maketext('You are not allowed to reset two factor authenticatio for [_1].', $userID);
 			next;
 		}
-		my $password = $db->getPassword($userID);
-		$password->otp_secret('');
-		$db->putPassword($password);
-		$num++;
+		if (my $password = $db->getPassword($userID)) {
+			$password->otp_secret('');
+			$db->putPassword($password);
+		}
+		++$num;
 	}
 
 	unshift @resultText, $c->maketext('Reset two factor authentication for [quant,_1,user].', $num);
