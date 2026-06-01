@@ -261,6 +261,11 @@ $LTI{v1p3}{ignoreMissingSourcedID} = 0;
 
 $LTI{v1p3}{autoSyncSetDatesToLMS} = 0;
 
+# If this is set then authentication into a webwork course is only allowed if the LMS context id
+# is set in the LTI course map for the site and that matches that of the LMS course from which
+# the current user is attempting to sign in.
+$LTI{v1p3}{restrictAuthenticationByCourseMap} = 0;
+
 # If this is set and an instructor attempts to use content selection from an LMS course that is
 # that is not in the LTI course map, then the instructor will be offered a list of WeBWorK
 # courses to choose from.  The WeBWorK courses that will be listed for the instructor are
