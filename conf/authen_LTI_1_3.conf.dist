@@ -261,4 +261,21 @@ $LTI{v1p3}{ignoreMissingSourcedID} = 0;
 
 $LTI{v1p3}{autoSyncSetDatesToLMS} = 0;
 
+# If this is set and an instructor attempts to use content selection from an LMS course that is
+# that is not in the LTI course map, then the instructor will be offered a list of WeBWorK
+# courses to choose from.  The WeBWorK courses that will be listed for the instructor are
+# courses that
+#
+# 1. have LTI 1.3 authentication parameters that match those sent by the LMS,
+# 2. have a user for the instructor, that
+#    - has the email address set that matches the email address sent from the LMS, and
+#    - has access_instructor_tools and modify_problem_sets permissions.
+#
+# Note that if only one course is found that satisfies the above conditions, then it will
+# be used automatically.
+#
+# This is a site wide setting only, and cannot be configured per course
+# (in the course.conf file of a course).
+$LTI{v1p3}{allowCourseSelection} = 0;
+
 1;    # final line of the file to reassure perl that it was read properly.

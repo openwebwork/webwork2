@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html <%== $c->output_course_lang_and_dir %>>
+%
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= maketext('Available Courses') %></title>
+	<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+</head>
+%
+<body class="m-3">
+	<div class="container-fluid">
+		<%= form_for current_route, method => 'POST', begin =%>
+			<%= $c->hidden_authen_fields =%>
+			<%= hidden_field courseID => $courseID =%>
+			<%= hidden_field initial_request => 1 =%>
+			% for (keys %$forwardParams) {
+				<%= hidden_field $_ => $forwardParams->{$_} =%>
+			% }
+			<fieldset class="mb-3">
+				<legend><%= maketext('Available Courses') %></legend>
+				% for (@$courseChoices) {
+					<div class="form-check">
+						<%= radio_button selected_course => $_, id => "${_}_id", class => 'form-check-input' =%>
+						<%= label_for "${_}_id" => $_, class => 'form-check-label' =%>
+					</div>
+				% }
+			</fieldset>
+			<%= submit_button maketext('Submit Choice'), class => 'btn btn-primary' =%>
+		<% end =%>
+	</div>
+</body>
+%
+</html>
