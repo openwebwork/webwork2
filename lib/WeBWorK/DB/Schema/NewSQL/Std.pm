@@ -13,7 +13,9 @@ use Iterator::Util;
 use File::Temp;
 use String::ShellQuote;
 use Scalar::Util qw(weaken);
+use Mojo::JSON   qw(decode_json encode_json);
 
+use WeBWorK::DB::Record;
 use WeBWorK::DB::Utils qw(parse_dsn);
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 
@@ -175,42 +177,133 @@ sub _delete_table_stmt {
 # table dumping and restoring
 ################################################################################
 
-# These are limited to mysql, since they use the mysql monitor and mysqldump.
-# An exception will be thrown if the table in question doesn't use mysql.
-# It also requires some additions to the params:
-#     mysqldump_path - path to mysqldump(1)
-#     mysql_path - path to mysql(1)
-
 sub dump_table {
 	my ($self, $dumpfile_path) = @_;
 
-	my ($my_cnf, $database) = $self->_get_db_info;
-	my $mysqldump = $self->dbh->{params}{mysqldump_path};
-
-	# 2>&1 is specified first, which apparently makes stderr go to stdout
-	# and stdout (not including stderr) go to the dumpfile. see bash(1).
-	my $dump_cmd = '2>&1 '
-		. shell_quote($mysqldump)
-		. ' --defaults-file='
-		. shell_quote($my_cnf->filename) . ' '
-		. shell_quote($database) . ' '
-		. shell_quote($self->sql_table_name) . ' > '
-		. shell_quote($dumpfile_path);
-	my $dump_out = readpipe $dump_cmd;
-	if ($?) {
-		my $exit   = $? >> 8;
-		my $signal = $? & 127;
-		my $core   = $? & 128;
-		warn "Failed to dump table '"
-			. $self->sql_table_name
-			. "' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
+	my $fh = eval { $dumpfile_path->open('>') };
+	if ($@) {
+		warn 'Warning: Failed to dump table "' . $self->sql_table_name . qq{": $@\n};
 		return 0;
 	}
+
+	my ($stmt, @bind_vals) = $self->sql->select($self->table, [ $self->fields ], {});
+	my $sth = $self->dbh->prepare_cached($stmt, undef, 3);
+	$sth->execute(@bind_vals);
+
+	# The first line of the file is a JSON array of field names, and the second line is a JSON array of field types.
+	print $fh encode_json([ $self->fields ]) . "\n" . encode_json([ $self->{record}->SQL_TYPES ]);
+
+	while (my @row = $sth->fetchrow_array) {
+		print $fh "\n" . encode_json(\@row);
+	}
+	$fh->close;
 
 	return 1;
 }
 
-sub restore_table {
+sub create_and_restore_table {
+	my ($self, $dumpfile_path) = @_;
+
+	# Delete the table if it exists.
+	$self->delete_table;
+
+	# Now create the table. Note that the create_table method cannot be used, since that will insert default initial
+	# records and conflict with those records in the database dump file.
+	$self->dbh->do($self->_create_table_stmt);
+
+	# It is okay if a table dump file does not exist. This could be a new table.
+	return 1 unless -e $dumpfile_path;
+
+	my $fh = eval { $dumpfile_path->open('<') };
+	if ($@) {
+		warn 'Warning: Failed to open dump file for table "' . $self->sql_table_name . qq{": $@\n};
+		return 0;
+	}
+
+	# Emulate what mysql does when restoring a mysqldump file and disable unique checks, foreign keys, and keys, and
+	# lock tables to write mode. This gives a considerable speed boost when inserting a large number of rows.
+	$self->dbh->do('SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0');
+	$self->dbh->do('SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0');
+	$self->dbh->do('LOCK TABLES `' . $self->sql_table_name . '` WRITE');
+	$self->dbh->do('ALTER TABLE `' . $self->sql_table_name . '` DISABLE KEYS');
+
+	# The first line of the file is a JSON array of field names.
+	my $dumpFields = decode_json(scalar <$fh>);
+
+	# The second line of the file is a JSON array of field types.
+	my $dumpTypes = decode_json(scalar <$fh>);
+
+	my %dumpFieldData;
+	@dumpFieldData{@$dumpFields} = @$dumpTypes;
+
+	my @fields = $self->fields;
+	my %values;
+	@values{@fields} = (0 .. @fields - 1);
+	my ($baseStmt, @order) = $self->sql->insert($self->table, \%values);
+
+	my ($insertPrefix) = $baseStmt =~ /^(.*?VALUES\s)/is;
+
+	my $rowPlaceholders = '(' . join(', ', map {'?'} @order) . ')';
+
+	my $batchSize = 2000;
+	my @batchValues;
+	my $rowsInBatch = 0;
+
+	# Prepare a statement for inserting 2000 rows at a time. Once the batch contains 2000 rows,
+	# the entire batch will be inserted at once with this.
+	my $batchStmt = $insertPrefix . join(', ', ($rowPlaceholders) x $batchSize);
+	my $batchSth  = $self->dbh->prepare_cached($batchStmt, undef, 3);
+
+	# If the fields in the dump file are the same as the fields in the schema, and the record
+	# class does not override upgrade_data, then skip the data upgrade for efficiency.
+	my $dataUpgradeNeeded =
+		@$dumpFields != @fields
+		|| grep { $dumpFields->[$_] ne $fields[$_] } 0 .. $#fields
+		|| $self->{record}->can('upgrade_data') != WeBWorK::DB::Record->can('upgrade_data');
+
+	while (my $row = <$fh>) {
+		my $data = eval { decode_json($row) };
+		if ($@) {
+			warn "Invalid row in database dump file for $self->{table}: $@";
+			next;
+		}
+
+		if ($dataUpgradeNeeded) {
+			my %rowHash;
+			@rowHash{@$dumpFields} = @$data;
+			$data = $self->{record}->upgrade_data(\%rowHash, \%dumpFieldData);
+		}
+
+		push @batchValues, @$data[@order];
+		++$rowsInBatch;
+
+		if ($rowsInBatch == $batchSize) {
+			$batchSth->execute(@batchValues);
+			@batchValues = ();
+			$rowsInBatch = 0;
+		}
+	}
+	$fh->close;
+
+	# If there are any rows left, then prepare a statement for however many are left, and insert them all at once.
+	if ($rowsInBatch > 0) {
+		my $sth = $self->dbh->prepare_cached($insertPrefix . join(', ', ($rowPlaceholders) x $rowsInBatch), undef, 3);
+		$sth->execute(@batchValues);
+		$sth->finish;
+	}
+
+	$batchSth->finish;
+
+	$self->dbh->do('ALTER TABLE `' . $self->sql_table_name . '` ENABLE KEYS');
+	$self->dbh->do('UNLOCK TABLES');
+	$self->dbh->do('SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS');
+	$self->dbh->do('SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS');
+
+	return 1;
+}
+
+# Backwards compatibility for course archives created with mysqldump.
+sub restore_table_mysql {
 	my ($self, $dumpfile_path) = @_;
 
 	my ($my_cnf, $database) = $self->_get_db_info;
@@ -221,7 +314,7 @@ sub restore_table {
 		. ' --defaults-file='
 		. shell_quote($my_cnf->filename) . ' '
 		. shell_quote($database) . ' < '
-		. shell_quote($dumpfile_path);
+		. shell_quote($dumpfile_path->to_string);
 	my $restore_out = readpipe $restore_cmd;
 	if ($?) {
 		my $exit   = $? >> 8;
