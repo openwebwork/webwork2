@@ -217,26 +217,62 @@
 				<%= maketext('course institution (will override "Institution" input above)') =%>
 			</label>
 		</div>
-		<div class="form-check mt-3 mb-2">
-			<label class="form-check-label">
-				<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
-				<%= maketext('course configuration file') =%>
-				<a class="help-popup" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
-					 data-bs-content="<%= maketext('Copying the course configuration file may copy configuration '
-						. 'settings that are specific to the original course instructor. If this is a new course '
-						. 'for a new instructor, use the fields above to add the new instructor and do not copy '
-						. 'the course configuration file. Then if there is something in the course configuration '
-						. 'file that should be carried into the new course, the administrator can copy that manually. '
-						. 'Alternatively, do copy the course configuration file, but then the administrator should '
-						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>"
-					>
-					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden">
-						<%= maketext('Notes regarding copying the course configuration file') =%>
-					</span>
-				</a>
-			</label>
-		</div>
+		% my $addOnConfFolder = $ce->{webworkDirs}{addOnConf};
+		% my @addOnConfFiles;
+		% if (-d $addOnConfFolder) {
+			% @addOnConfFiles = glob "$addOnConfFolder/*.conf";
+			% for (0..$#addOnConfFiles){
+				% $addOnConfFiles[$_] =~ s/^.*\/|\.conf$//g;
+			% }
+		% }
+		% if (@addOnConfFiles) {
+			<div class="row my-2">
+				<%= label_for add_on_conf => maketext('Configuration File:'),
+					class => 'col-auto col-form-label fw-bold' =%>
+				<div class="col-auto">
+					<%= select_field add_on_conf => [
+							c(
+								maketext('Use Default')
+									=> [ [ maketext('Distribution Default Config File') => '' ] ]
+							),
+							c(
+								maketext('Source Course')
+									=> [ [ maketext("Source Course's Config File") => '*' ] ]
+							),
+							c(
+								maketext('Append to Distribution Default')
+									=> [ map { [ $_ => "$_.conf" ] } @addOnConfFiles ]
+							)
+						],
+						id       => 'add_on_conf',
+						multiple => undef,
+						size     => 8,
+						class    => 'form-select' =%>
+				</div>
+			</div>
+		% } else {
+			<div class="form-check mt-3 mb-2">
+				<label class="form-check-label">
+					<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
+					<%= maketext('course configuration file') =%>
+					<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+						data-bs-toggle="popover" data-bs-content="<%= maketext('Copying the course configuration '
+							. 'file may copy configuration settings that are specific to the original course '
+							. 'instructor. If this is a new course for a new instructor, use the fields above to '
+							. 'add the new instructor and do not copy the course configuration file. Then if '
+							. 'there is something in the course configuration file that should be carried into '
+							. 'the new course, the administrator can copy that manually.  Alternatively, do copy '
+							. 'the course configuration file, but then the administrator should inspect the new '
+							. 'course configuration file and make adjustments for the new instructor.') =%>"
+						>
+						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+						<span class="visually-hidden">
+							<%= maketext('Notes regarding copying the course configuration file') =%>
+						</span>
+					</a>
+				</label>
+			</div>
+		% }
 	</fieldset>
 	<%= hidden_field last_page_was_add_course => 1 =%>
 	<%= $c->hidden_fields('number_of_additional_users') =%>
