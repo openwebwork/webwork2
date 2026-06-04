@@ -13,8 +13,7 @@ use warnings;
 use Carp;
 use DBI;
 use String::ShellQuote;
-use UUID::Tiny            qw(create_uuid_as_string);
-use Mojo::File            qw(path);
+use Mojo::File            qw(path tempfile);
 use Mojo::JSON            qw(decode_json encode_json);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
@@ -856,52 +855,47 @@ sub archiveCourse {
 	my $courseID  = $options{courseID};
 	my $ce        = $options{ce};
 
-	# make sure the user isn't brain damaged
 	croak "The course environment supplied doesn't appear to match the course $courseID. Can't proceed"
 		unless $ce->{courseName} eq $courseID;
 
-	# grab some values we'll need
 	my $course_dir = $ce->{courseDirs}{root};
 
 	# tmp_archive_path is used as the target of the tar.gz operation.
 	# After this is done the final tar.gz file is moved either to the admin course archives directory
 	# course/$ce->{admin_course_id}/archives or the supplied archive_path option if it is present.
-	# This prevents us from tarring a directory to which we have just added a file
-	# see bug #2022 -- for error messages on some operating systems
-	my $uuidStub         = create_uuid_as_string();
-	my $tmp_archive_path = $ce->{webworkDirs}{courses} . "/${uuidStub}_$courseID.tar.gz";
-	my $data_dir         = $ce->{courseDirs}{DATA};
-	my $dump_dir         = "$data_dir/mysqldump";
+	# This prevents us from tarring a directory to which we have just added a file.
+	my $tmp_archive_path =
+		tempfile(TEMPLATE => "$courseID-XXXX", DIR => $ce->{webworkDirs}{courses}, SUFFIX => '.tar.gz');
+
 	my $archive_path;
 	if (defined $options{archive_path} && $options{archive_path} =~ /\S/) {
-		$archive_path = $options{archive_path};
+		$archive_path = path($options{archive_path});
 	} else {
-		$archive_path = "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$courseID.tar.gz";
+		$archive_path = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$courseID.tar.gz");
 		surePathToFile($ce->{webworkDirs}{courses}, $archive_path);
 	}
 
-	# fail if the source course does not exist
-	unless (-e $course_dir) {
-		croak "$courseID: course not found";
-	}
+	# Fail if the source course does not exist.
+	croak "$courseID: course not found" unless -e $course_dir;
 
 	my $message = '';
 
-	# replace previous archived file if it exists.
+	# Replace previous archived file if it exists.
 	if (-e $archive_path) {
-		unlink($archive_path) if (-w $archive_path);
+		$archive_path->remove if -w $archive_path;
 		unless (-e $archive_path) {
-			$message .= "The archival version of '$courseID' has been replaced'.";
+			$message .= qq{The archival version of "$courseID" has been replaced.};
 		} else {
-			croak "Unable to replace the archival version of '$courseID'";
+			croak qq{Unable to replace the archival version of "$courseID".};
 		}
 	}
 
-	#### step 1: dump tables #####
+	# Step 1: Dump tables
 
+	my $dump_dir = path("$ce->{courseDirs}{DATA}/dbdump");
 	unless (-e $dump_dir) {
-		eval { path($dump_dir)->make_path };
-		croak "Failed to create course database dump directory '$dump_dir': $@" if $@;
+		eval { $dump_dir->make_path };
+		croak qq{Failed to create course database dump directory "$dump_dir": $@} if $@;
 	}
 
 	my $db             = WeBWorK::DB->new($ce);
@@ -911,7 +905,7 @@ sub archiveCourse {
 		croak "$courseID: course database dump failed.\n";
 	}
 
-	##### step 2: tar and gzip course directory (including dumped database) #####
+	# Step 2: Tar and gzip course directory (including dumped database)
 
 	my $parent_dir = $ce->{webworkDirs}{courses};
 	my $files      = path($course_dir)->list_tree({ dir => 1, hidden => 1 })->map('to_abs');
@@ -920,23 +914,21 @@ sub archiveCourse {
 	for ($tar->get_files) {
 		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
 	}
-	my $ok = $tar->write($tmp_archive_path, COMPRESS_GZIP);
+	my $ok = $tar->write($tmp_archive_path->to_string, COMPRESS_GZIP);
 
 	unless ($ok) {
 		_archiveCourse_remove_dump_dir($ce, $dump_dir);
 		croak "Failed to archive course directory '$course_dir': $!";
 	}
 
-	##### step 3: cleanup -- remove database dump files from course directory #####
+	# Step 3: Cleanup. Remove database dump files from course directory.
 
 	unless (-e $archive_path) {
-		eval { path($tmp_archive_path)->move_to($archive_path) };
+		eval { $tmp_archive_path->move_to($archive_path) };
 		if ($@) {
-			eval { path($tmp_archive_path)->remove };
 			croak "Failed to rename archived file to '$archive_path': $@";
 		}
 	} else {
-		eval { path($tmp_archive_path)->remove };
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
@@ -950,7 +942,7 @@ sub archiveCourse {
 		my $archiveData = eval { decode_json($archiveDataFile->slurp) } || {};
 		$archiveData->{"$courseID.tar.gz"} = {
 			courseID     => $courseID,
-			size         => getHumanReadableFileSize(path($archive_path)),
+			size         => getHumanReadableFileSize($archive_path),
 			lastModified => time
 		};
 		$archiveDataFile->spew(encode_json($archiveData));
@@ -961,7 +953,7 @@ sub archiveCourse {
 
 sub _archiveCourse_remove_dump_dir {
 	my ($ce, $dump_dir) = @_;
-	path($dump_dir)->remove_tree({ error => \my $err });
+	$dump_dir->remove_tree({ error => \my $err });
 
 	if ($err && @$err) {
 		for my $diag (@$err) {
@@ -1008,27 +1000,24 @@ sub unarchiveCourse {
 
 	my $coursesDir = $ce->{webworkDirs}{courses};
 
-	# Double check that the new course does not exist
-	if (-e "$coursesDir/$newCourseID") {
-		die "Cannot overwrite existing course $coursesDir/$newCourseID";
-	}
+	# Make sure that the new course does not exist.
+	die "Cannot overwrite existing course $coursesDir/$newCourseID" if -e "$coursesDir/$newCourseID";
 
-	# fail if the target courseID is too long
-	croak "New course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
-		if (length($newCourseID) > $ce->{maxCourseIdLength});
+	# Fail if the target courseID is too long.
+	croak "New course ID cannot exceed $ce->{maxCourseIdLength} characters."
+		if length($newCourseID) > $ce->{maxCourseIdLength};
 
-	##### step 1: open the tarball and determine the archived course ID #####
-
-	my $arch = Archive::Tar->new($archivePath);
-	die "The tar file $archivePath is not valid." unless $arch;
-	$arch->setcwd($coursesDir);
+	# Step 1: Open the tarball and determine the archived course ID.
+	my $archive = Archive::Tar->new($archivePath);
+	die "The tar file $archivePath is not valid." unless $archive;
+	$archive->setcwd($coursesDir);
 
 	# Archive::Tar extracts to the directory name stored in the archive, so the
 	# source course ID must come from there and not from the caller-supplied name
 	# -- otherwise a renamed .tar.gz restores files under one name while the
 	# database dump is sought under another.
 	my %top_level;
-	for my $file ($arch->get_files) {
+	for my $file ($archive->get_files) {
 		(my $first = $file->full_path) =~ s{/.*}{}s;
 		$top_level{$first} = 1 if length $first;
 	}
@@ -1036,25 +1025,23 @@ sub unarchiveCourse {
 		unless keys %top_level == 1;
 	my ($currCourseID) = keys %top_level;
 
-	##### step 2: move a conflicting course away #####
-
-	# if this function returns undef, it means there was no course in the way
+	# Step 2: Move a conflicting course away.
 	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
 
-	##### step 3: crack open the tarball #####
+	# Step 3: Extract the tarball.
 
 	# Secure extract mode refuses symbolic/hard links whose targets leave the
 	# course directory (CVE-2026-42496/-42497), which the standard template links
 	# do. Extract the files under secure mode, then recreate the symbolic links.
-	my @symlinks = grep { $_->is_symlink } $arch->get_files;
-	$arch->remove(map { $_->full_path } grep { $_->is_symlink || $_->is_hardlink } $arch->get_files);
-	$arch->extract();
+	my @symlinks = grep { $_->is_symlink } $archive->get_files;
+	$archive->remove(map { $_->full_path } grep { $_->is_symlink || $_->is_hardlink } $archive->get_files);
+	$archive->extract();
 
-	if ($arch->error) {
+	if ($archive->error) {
 		# Remove the partial extraction so move_back can restore a displaced course.
 		path("$coursesDir/$currCourseID")->remove_tree if -e "$coursesDir/$currCourseID";
 		_unarchiveCourse_move_back($restoreCourseData);
-		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
+		die "Failed to unarchive course directory for course $newCourseID: $archive->error";
 	}
 
 	for my $symlink (@symlinks) {
@@ -1062,65 +1049,61 @@ sub unarchiveCourse {
 		symlink($symlink->linkname, $link_path) unless -e $link_path;
 	}
 
-	##### step 4: read the course environment for this course #####
-
+	# Step 4: Read the course environment for this course.
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
-	# pull out some useful stuff
-	my $course_dir = $ce2->{courseDirs}{root};
-	my $data_dir   = $ce2->{courseDirs}{DATA};
-	my $dump_dir   = "$data_dir/mysqldump";
-
-	##### step 5: restore the database tables #####
-
+	# Step 5: Restore the database tables and delete the database dump directory.
 	my $no_database;
 	my $restore_db_result = 1;
-	if (-e $dump_dir) {
-		my $db = WeBWorK::DB->new($ce2);
-		$restore_db_result = $db->restore_tables($dump_dir);
+	my $dbdump_dir        = path("$ce2->{courseDirs}{DATA}/dbdump");
+	if (-e $dbdump_dir) {
+		$restore_db_result = WeBWorK::DB->new($ce2)->create_and_restore_tables($dbdump_dir);
+		_archiveCourse_remove_dump_dir($ce, $dbdump_dir);
 	} else {
-		warn "course '$currCourseID' has no database dump in its data directory "
-			. "(checked for $dump_dir). database tables will not be restored.\n";
-		$no_database = 1;
+		# Backwards compatibility for course archives created with mysqldump.
+		my $mysqldump_dir = path("$ce2->{courseDirs}{DATA}/mysqldump");
+		if (-e $mysqldump_dir) {
+			$restore_db_result = WeBWorK::DB->new($ce2)->restore_tables_mysql($mysqldump_dir);
+			_archiveCourse_remove_dump_dir($ce, $mysqldump_dir);
+		} else {
+			warn "course '$currCourseID' has no database dump in its data directory "
+				. "(checked for $dbdump_dir and $mysqldump_dir). database tables will not be restored.\n";
+			$no_database = 1;
+		}
 	}
 
 	unless ($restore_db_result) {
-		warn "database restore of course '$currCourseID' failed: the course will probably not be usable.\n";
+		warn "Database restore of course '$currCourseID' failed. The course will probably not be usable.\n";
 	}
 
-	##### step 6: delete dump_dir #####
-
-	_archiveCourse_remove_dump_dir($ce, $dump_dir) if -e $dump_dir;
-
-	# Create the html_temp folder (since it isn't included in the tarball)
-	my $tmpDir = $ce2->{courseDirs}->{html_temp};
-	if (!-e $tmpDir) {
-		eval { path($tmpDir)->make_path };
-		warn "Failed to create html_temp directory '$tmpDir': $@. You will have to create this directory manually."
+	# Step 6: Create the html_temp folder (since it isn't included in the tarball).
+	if (!-e $ce2->{courseDirs}{html_temp}) {
+		eval { path($ce2->{courseDirs}{html_temp})->make_path };
+		warn qq{Failed to create html_temp directory "$ce2->{courseDirs}{html_temp}": $@\n}
+			. 'You will have to create this directory manually.'
 			if $@;
 	}
 
-	# If the course was given a new name, honor $ce->{new_courses_hidden_status}
+	# Step 7: If the course was given a new name, honor $ce->{new_courses_hidden_status}.
 	if (defined $newCourseID
 		&& $newCourseID ne $currCourseID
 		&& defined $ce->{new_courses_hidden_status}
 		&& $ce->{new_courses_hidden_status} =~ /^(hidden|visible)$/)
 	{
-		my $hideDirFile = "$ce->{webworkDirs}{courses}/$currCourseID/hide_directory";
+		my $hideDirFile = path("$ce->{webworkDirs}{courses}/$currCourseID/hide_directory");
 		if ($ce->{new_courses_hidden_status} eq 'hidden' && !(-f $hideDirFile)) {
-			open(my $HIDEFILE, '>', $hideDirFile);
-			print $HIDEFILE
+			my $hideFile = $hideDirFile->open('>');
+			print $hideFile
 				'Place a file named "hide_directory" in a course or other directory and it will not show up '
 				. 'in the courses list on the WeBWorK home page. It will still appear in the '
 				. 'Course Administration listing.';
-			close $HIDEFILE;
+			$hideFile->close;
 		} elsif ($ce->{new_courses_hidden_status} eq 'visible' && -f $hideDirFile) {
-			unlink $hideDirFile;
+			$hideDirFile->remove;
 		}
 	}
 
-	##### step 7: rename course #####
-
+	# Step 8: Rename the course.
 	if (defined $newCourseID && $newCourseID ne $currCourseID) {
 		renameCourse(
 			courseID     => $currCourseID,
@@ -1130,8 +1113,7 @@ sub unarchiveCourse {
 		);
 	}
 
-	##### step 8: return conflicting course to its rightful place #####
-
+	# Step 9: Return a conflicting course to its rightful place.
 	_unarchiveCourse_move_back($restoreCourseData);
 
 	return;

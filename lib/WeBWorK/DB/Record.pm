@@ -166,4 +166,11 @@ sub _initial_records {
 	return;
 }
 
+# This is the default method that a record uses if there is no actual upgrade to the table.
+# This should be overridden in the record sub class when an upgrade to the data is needed.
+sub upgrade_data {
+	my ($self, $data, $priorFieldData) = @_;
+	return [ @$data{ $self->FIELDS } ];
+}
+
 1;

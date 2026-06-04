@@ -8,7 +8,6 @@ WeBWorK::ContentGenerator::CourseAdmin - Add, rename, and delete courses.
 =cut
 
 use Net::IP;    # needed for location management
-use File::Path 'remove_tree';
 use Mojo::File;
 use File::stat;
 use Time::localtime;
