@@ -1,5 +1,9 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
+% content_for js => begin
+    <%= javascript getAssetURL($ce, 'js/CourseAdmin/restrict_select.js'), defer => undef =%>
+% end
+%
 % # Create an array of permission values for the permission selects.
 % my $permissionLevels = [];
 % for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
@@ -233,11 +237,13 @@
 					<%= select_field add_on_conf => [
 							c(
 								maketext('Use Default')
-									=> [ [ maketext('Distribution Default Config File') => '' ] ]
+									=> [ [ maketext('Distribution Default Config File') => '' ] ],
+								'data-single' => 'true'
 							),
 							c(
 								maketext('Source Course')
-									=> [ [ maketext("Source Course's Config File") => '*' ] ]
+									=> [ [ maketext("Source Course's Config File") => '*' ] ],
+								'data-single' => 'true'
 							),
 							c(
 								maketext('Append to Distribution Default')
