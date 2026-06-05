@@ -443,7 +443,7 @@ sub purge_expired_lti_data ($c, $ce, $db) {
 
 async sub registration ($c) {
 	return $c->render(json => { error => 'invalid configuration request' }, status => 400)
-		unless defined $c->req->param('openid_configuration') && defined $c->req->param('registration_token');
+		unless defined $c->req->param('openid_configuration');
 
 	# If we want to allow options in the configuration such as whether grade passback is enabled or to allow the LMS
 	# administrator to choose a tool name, then this should render a form that the LMS will be presented in an iframe
@@ -477,7 +477,9 @@ async sub registration ($c) {
 	my $registrationResult = (await Mojo::UserAgent->new->post_p(
 		$lmsConfiguration->{registration_endpoint},
 		{
-			Authorization  => 'Bearer ' . $c->req->param('registration_token'),
+			defined $c->req->param('registration_token')
+			? (Authorization => 'Bearer ' . $c->req->param('registration_token'))
+			: (),
 			'Content-Type' => 'application/json'
 		},
 		json => {
