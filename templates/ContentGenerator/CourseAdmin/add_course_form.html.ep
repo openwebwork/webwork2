@@ -221,11 +221,10 @@
 				<%= maketext('course institution (will override "Institution" input above)') =%>
 			</label>
 		</div>
-		% my $addOnConfFolder = $ce->{webworkDirs}{addOnConf};
 		% my @addOnConfFiles;
-		% if (-d $addOnConfFolder) {
-			% @addOnConfFiles = glob "$addOnConfFolder/*.conf";
-			% for (0..$#addOnConfFiles){
+		% if (-d $ce->{webworkDirs}{addOnConf}) {
+			% @addOnConfFiles = glob "$ce->{webworkDirs}{addOnConf}/*.conf";
+			% for (0 .. $#addOnConfFiles){
 				% $addOnConfFiles[$_] =~ s/^.*\/|\.conf$//g;
 			% }
 		% }
