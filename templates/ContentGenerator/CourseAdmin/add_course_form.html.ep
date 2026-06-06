@@ -221,11 +221,10 @@
 				<%= maketext('course institution (will override "Institution" input above)') =%>
 			</label>
 		</div>
-		% my $addOnConfFolder = $ce->{webworkDirs}{addOnConf};
 		% my @addOnConfFiles;
-		% if (-d $addOnConfFolder) {
-			% @addOnConfFiles = glob "$addOnConfFolder/*.conf";
-			% for (0..$#addOnConfFiles){
+		% if (-d $ce->{webworkDirs}{addOnConf}) {
+			% @addOnConfFiles = glob "$ce->{webworkDirs}{addOnConf}/*.conf";
+			% for (0 .. $#addOnConfFiles){
 				% $addOnConfFiles[$_] =~ s/^.*\/|\.conf$//g;
 			% }
 		% }
@@ -236,17 +235,17 @@
 				<div class="col-auto">
 					<%= select_field add_on_conf => [
 							c(
-								maketext('Use Default')
-									=> [ [ maketext('Distribution Default Config File') => '' ] ],
-								'data-single' => 'true'
+								maketext('Default')
+									=> [ [ maketext('Use distribution default config file') => '', selected => undef ] ],
+								'data-single' => 'true',
 							),
 							c(
 								maketext('Source Course')
-									=> [ [ maketext("Source Course's Config File") => '*' ] ],
+									=> [ [ maketext("Use source course's config file") => '*' ] ],
 								'data-single' => 'true'
 							),
 							c(
-								maketext('Append to Distribution Default')
+								maketext('Append to distribution default')
 									=> [ map { [ $_ => "$_.conf" ] } @addOnConfFiles ]
 							)
 						],

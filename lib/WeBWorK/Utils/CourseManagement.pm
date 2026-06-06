@@ -1179,9 +1179,10 @@ sub protectQString {
 
 =item writeCourseConf($fh, $addOnConf)
 
-Writes an essentially empty course.conf file to $fh, a file handle. System
-administrators can use this file to override global settings for a course.
-$addOnConf should be an array reference of config files to tack on at the end.
+Writes the course.conf file to C<$fh>, a file handle. System administrators can
+use this file to override global settings for a course.  If C<$addOnConf> is
+provided, then it should be a reference to an array of config files to be
+included at the end of the course.conf file.
 
 =back
 
@@ -1197,12 +1198,9 @@ sub writeCourseConf {
 
 EOF
 
-	if ($addOnConf ne '') {
+	if (ref $addOnConf eq 'ARRAY') {
 		for my $conf (@$addOnConf) {
-			$content .= <<"EOF";
-
-include('$conf');
-EOF
+			$content .= "\ninclude('$conf');";
 		}
 	}
 
