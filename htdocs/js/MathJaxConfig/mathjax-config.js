@@ -101,7 +101,8 @@ if (!window.MathJax) {
 					AM.symbols.splice(i, 0, { input: trigger, ...newTriggers[trigger].symbols });
 				}
 
-				return MathJax.startup.defaultReady();
+				MathJax.startup.defaultReady();
+				MathJax.startup.document.constructor.ProcessBits.allocate('findScripts');
 			}
 		},
 		options: {
@@ -109,18 +110,23 @@ if (!window.MathJax) {
 				findScript: [
 					10,
 					(doc) => {
-						for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
-							const math = new doc.options.MathItem(
-								node.textContent,
-								doc.inputJax[0],
-								!!node.type.match(/; *mode=display/)
-							);
-							const text = document.createTextNode('');
-							node.parentNode.replaceChild(text, node);
-							math.start = { node: text, delim: '', n: 0 };
-							math.end = { node: text, delim: '', n: 0 };
-							doc.math.push(math);
+						if (doc.processed.isSet('findScripts')) return;
+						const containers = doc.adaptor.getElements(doc.options.elements || [doc.document.body], doc);
+						for (const container of containers) {
+							for (const node of container.querySelectorAll('script[type^="math/tex"]')) {
+								const math = new doc.options.MathItem(
+									node.textContent,
+									doc.inputJax[0],
+									!!node.type.match(/; *mode=display/)
+								);
+								const text = document.createTextNode('');
+								node.parentNode.replaceChild(text, node);
+								math.start = { node: text, delim: '', n: 0 };
+								math.end = { node: text, delim: '', n: 0 };
+								doc.math.push(math);
+							}
 						}
+						doc.processed.set('findScripts');
 					},
 					''
 				]
