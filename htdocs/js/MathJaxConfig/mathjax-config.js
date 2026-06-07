@@ -103,6 +103,13 @@ if (!window.MathJax) {
 
 				MathJax.startup.defaultReady();
 				MathJax.startup.document.constructor.ProcessBits.allocate('findScripts');
+			},
+			pageReady() {
+				return MathJax.startup.defaultPageReady().then(() => {
+					for (const problemBody of document.querySelectorAll('.problem-content')) {
+						problemBody.style.visibility = '';
+					}
+				});
 			}
 		},
 		options: {
@@ -134,4 +141,8 @@ if (!window.MathJax) {
 			ignoreHtmlClass: 'tex2jax_ignore'
 		}
 	};
+
+	for (const problemBody of document.querySelectorAll('.problem-content')) {
+		problemBody.style.visibility = 'hidden';
+	}
 }
