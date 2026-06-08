@@ -1248,19 +1248,14 @@ sub output_misc ($c) {
 		$c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}),
 		$c->hidden_field(displayMode    => $c->{displayMode}));
 
-	push(@$output, $c->hidden_field(editMode => $c->{editMode}))
-		if defined $c->{editMode} && $c->{editMode} eq 'temporaryFile';
-
-	my $permissionLevel          = $c->db->getPermissionLevel($c->param('user'))->permission;
-	my $professorPermissionLevel = $c->ce->{userRoles}{professor};
-
-	# Only allow this for professors
-	push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
-		if defined $c->{problem}{source_file} && $permissionLevel >= $professorPermissionLevel;
-
-	# Only allow this for professors
-	push(@$output, $c->hidden_field(problemSeed => $c->param('problemSeed')))
-		if defined $c->param('problemSeed') && $permissionLevel >= $professorPermissionLevel;
+	# Only allow file editing for users that have the permission to modify problem sets.
+	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')) {
+		push(@$output, $c->hidden_field(editMode => $c->{editMode}))
+			if defined $c->{editMode} && $c->{editMode} eq 'temporaryFile';
+		push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
+			if defined $c->{problem}{source_file};
+		push(@$output, $c->hidden_field(problemSeed => $c->param('problemSeed'))) if defined $c->param('problemSeed');
+	}
 
 	# Make sure the student nav filter setting is preserved when the problem form is submitted.
 	push(@$output, $c->hidden_field(studentNavFilter => $c->param('studentNavFilter')))
