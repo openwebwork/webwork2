@@ -1,4 +1,4 @@
-<div id="footer" role="contentinfo" class="row">
+<footer id="footer" role="contentinfo" class="row">
 	<div class="<%= $footerWidthClass %>">
 		<div id="last-modified"><%= maketext('Page generated [_1]', $c->timestamp) %></div>
 		<div id="copyright">
@@ -12,4 +12,4 @@
 		</div>
 		<a href="https://openwebwork.org/"><%= maketext('The WeBWorK Project') %></a>
 	</div>
-</div>
+</footer>
