@@ -424,7 +424,12 @@ sub addCourse {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
 		open my $fh, ">:utf8", $courseEnvFile
 			or die "failed to open $courseEnvFile for writing.\n";
-		writeCourseConf($fh);
+		my $addOnConf     = $options{addOnConf} // [];
+		my $relConfFolder = File::Spec->abs2rel($ce->{webworkDirs}{addOnConf}, $ce->{webworkDirs}{root});
+		for (@$addOnConf) {
+			$_ = File::Spec->catfile($relConfFolder, $_);
+		}
+		writeCourseConf($fh, $addOnConf);
 		close $fh;
 	}
 
@@ -1172,24 +1177,34 @@ sub protectQString {
 	return $string;
 }
 
-=item writeCourseConf($fh)
+=item writeCourseConf($fh, $addOnConf)
 
-Writes an essentially empty course.conf file to $fh, a file handle. System
-administrators can use this file to override global settings for a course.
+Writes the course.conf file to C<$fh>, a file handle. System administrators can
+use this file to override global settings for a course.  If C<$addOnConf> is
+provided, then it should be a reference to an array of config files to be
+included at the end of the course.conf file.
 
 =back
 
 =cut
 
 sub writeCourseConf {
-	my ($fh) = @_;
+	my ($fh, $addOnConf) = @_;
 
-	print $fh <<'EOF';
+	my $content = <<'EOF';
 #!perl
 
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
+
+	if (ref $addOnConf eq 'ARRAY') {
+		for my $conf (@$addOnConf) {
+			$content .= "\ninclude('$conf');";
+		}
+	}
+
+	print $fh $content;
 }
 
 sub get_SeedCE

@@ -18,10 +18,15 @@
 		. 'creating future courses, or manage and email course users.  Note, by default these new users will be '
 		. '"Dropped" and unable to login to the [_1] course.', $ce->{admin_course_id}) =%>
 </p>
-<p class="mb-0">
+<p>
 	<%= maketext('You may choose a course to copy components from. Select the course and which components to copy.  '
 		. 'If the course is not a true course (like the modelCourse) then only the templates and html folders, '
 		. 'and the simple and course config files can be copied. The "simple config" file contains the settings '
 		. 'made in the "Course Config" page. The "course config" file should only be copied if you know what you '
 		. 'are doing.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('If there are .conf files in the [_1] folder, you may select a number of these to include at the '
+		. 'end of the course.conf file. This only applies when not copying a course.conf file from another course.',
+		$ce->{webworkDirs}{addOnConf}) =%>
 </p>
