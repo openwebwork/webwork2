@@ -613,7 +613,8 @@
 			if (fileType === 'hardcopy_theme') {
 				const contents = webworkConfig?.pgCodeMirror?.source;
 				if (contents) {
-					renderArea.innerHTML = '<pre>' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+					renderArea.innerHTML =
+						'<pre class="text-dark">' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
 				} else
 					renderArea.innerHTML =
 						'<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
