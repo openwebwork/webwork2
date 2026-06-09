@@ -60,493 +60,494 @@ use Pod::Usage;
 
 my %modulesList = (
 	'Archive::Tar' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Archive-Tar'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Archive-Tar'
 		}
 	},
 	'Archive::Zip' => {
-		'package' => {
-			'ubuntu' => 'libarchive-zip-perl',
-			'rhel'   => 'perl-Archive-Zip'
+		package => {
+			ubuntu => 'libarchive-zip-perl',
+			rhel   => 'perl-Archive-Zip'
 		}
 	},
 	'Archive::Zip::SimpleZip' => {
-		'package' => {
-			'rhel' => 'perl-Archive-Zip-SimpleZip'
+		package => {
+			rhel => 'perl-Archive-Zip-SimpleZip'
 		}
 	},
 	'Benchmark' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Benchmark'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Benchmark'
 		}
 	},
 	'Carp' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Carp'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Carp'
 		}
 	},
 	'Class::Accessor' => {
-		'package' => {
-			'ubuntu' => 'libclass-accessor-perl',
-			'rhel'   => 'perl-Class-Accessor'
+		package => {
+			ubuntu => 'libclass-accessor-perl',
+			rhel   => 'perl-Class-Accessor'
 		}
 	},
 	'Crypt::JWT' => {
-		'package' => {
-			'ubuntu' => 'libcrypt-jwt-perl',
-			'rhel'   => 'perl-Crypt-JWT'
+		package => {
+			ubuntu => 'libcrypt-jwt-perl',
+			rhel   => 'perl-Crypt-JWT'
 		}
 	},
 	'Crypt::PK::RSA' => {
-		'package' => {
-			'ubuntu' => 'libcryptx-perl',
-			'rhel'   => 'perl-CryptX'
+		package => {
+			ubuntu => 'libcryptx-perl',
+			rhel   => 'perl-CryptX'
 		}
 	},
 	'DBI' => {
-		'package' => {
-			'ubuntu' => 'libdbi-perl',
-			'rhel'   => 'perl-DBI'
+		package => {
+			ubuntu => 'libdbi-perl',
+			rhel   => 'perl-DBI'
 		}
 	},
 	'Data::Dump' => {
-		'package' => {
-			'ubuntu' => 'libdata-dump-perl',
-			'rhel'   => 'perl-Data-Dump'
+		package => {
+			ubuntu => 'libdata-dump-perl',
+			rhel   => 'perl-Data-Dump'
 		}
 	},
 	'Data::Dumper' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Data-Dumper'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Data-Dumper'
 		}
 	},
 	'Data::Structure::Util' => {
-		'package' => {
-			'ubuntu' => 'libdata-structure-util-perl'
+		package => {
+			ubuntu => 'libdata-structure-util-perl'
 		}
 	},
 	'Data::UUID' => {
-		'package' => {
-			'ubuntu' => 'libossp-uuid-perl',
-			'rhel'   => 'perl-Data-UUID'
+		package => {
+			ubuntu => 'libossp-uuid-perl',
+			rhel   => 'perl-Data-UUID'
 		}
 	},
 	'Date::Format' => {
-		'package' => {
-			'ubuntu' => 'libtimedate-perl',
-			'rhel'   => 'perl-TimeDate'
+		package => {
+			ubuntu => 'libtimedate-perl',
+			rhel   => 'perl-TimeDate'
 		}
 	},
 	'Date::Parse' => {
-		'package' => {
-			'ubuntu' => 'libtimedate-perl',
-			'rhel'   => 'perl-TimeDate'
+		package => {
+			ubuntu => 'libtimedate-perl',
+			rhel   => 'perl-TimeDate'
 		}
 	},
 	'DateTime' => {
-		'package' => {
-			'ubuntu' => 'libdatetime-perl',
-			'rhel'   => 'perl-DateTime'
+		package => {
+			ubuntu => 'libdatetime-perl',
+			rhel   => 'perl-DateTime'
 		}
 	},
 	'Digest::MD5' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Digest-MD5'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Digest-MD5'
 		}
 	},
 	'Digest::SHA' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Digest-SHA'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Digest-SHA'
 		}
 	},
 	'Email::Address::XS' => {
-		'package' => {
-			'ubuntu' => 'libemail-address-xs-perl',
-			'rhel'   => 'perl-Email-Address-XS'
+		package => {
+			ubuntu => 'libemail-address-xs-perl',
+			rhel   => 'perl-Email-Address-XS'
 		}
 	},
 	'Email::Sender::Transport::SMTP' => {
-		'package' => {
-			'ubuntu' => 'libemail-sender-perl',
-			'rhel'   => 'perl-Email-Sender'
+		package => {
+			ubuntu => 'libemail-sender-perl',
+			rhel   => 'perl-Email-Sender'
 		}
 	},
 	'Email::Stuffer' => {
-		'package' => {
-			'ubuntu' => 'libemail-stuffer-perl'
+		package => {
+			ubuntu => 'libemail-stuffer-perl'
 		}
 	},
 	'Errno' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Errno'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Errno'
 		}
 	},
 	'Exception::Class' => {
-		'package' => {
-			'ubuntu' => 'libexception-class-perl',
-			'rhel'   => 'perl-Exception-Class'
+		package => {
+			ubuntu => 'libexception-class-perl',
+			rhel   => 'perl-Exception-Class'
 		}
 	},
 	'File::Copy' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-Copy'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-Copy'
 		}
 	},
 	'File::Copy::Recursive' => {
-		'package' => {
-			'ubuntu' => 'libfile-copy-recursive-perl',
-			'rhel'   => 'perl-File-Copy-Recursive'
+		package => {
+			ubuntu => 'libfile-copy-recursive-perl',
+			rhel   => 'perl-File-Copy-Recursive'
 		}
 	},
 	'File::Fetch' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-Fetch'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-Fetch'
 		}
 	},
 	'File::Find' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-Find'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-Find'
 		}
 	},
 	'File::Find::Rule' => {
-		'package' => {
-			'ubuntu' => 'libfile-find-rule-perl',
-			'rhel'   => 'perl-File-Find-Rule'
+		package => {
+			ubuntu => 'libfile-find-rule-perl',
+			rhel   => 'perl-File-Find-Rule'
 		}
 	},
 	'File::Path' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-Path'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-Path'
 		}
 	},
 	'File::Spec' => {
-		'package' => {
-			'ubuntu' => 'perl-base',
-			'rhel'   => 'perl-PathTools'
+		package => {
+			ubuntu => 'perl-base',
+			rhel   => 'perl-PathTools'
 		}
 	},
 	'File::Temp' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-Temp'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-Temp'
 		}
 	},
 	'File::stat' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-File-stat'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-File-stat'
 		}
 	},
 	'Future::AsyncAwait' => {
-		'minversion' => '0.52',
-		'package'    => {
-			'ubuntu' => 'libfuture-asyncawait-perl'
+		minversion => '0.52',
+		package    => {
+			ubuntu => 'libfuture-asyncawait-perl'
 		}
 	},
 	'GD' => {
-		'package' => {
-			'ubuntu' => 'libgd-perl',
-			'rhel'   => 'perl-GD'
+		package => {
+			ubuntu => 'libgd-perl',
+			rhel   => 'perl-GD'
 		}
 	},
 	'GD::Barcode::QRcode' => {
-		'package' => {
-			'ubuntu' => 'libgd-barcode-perl'
+		package => {
+			ubuntu => 'libgd-barcode-perl'
 		}
 	},
 	'Getopt::Long' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Getopt-Long'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Getopt-Long'
 		}
 	},
 	'Getopt::Std' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Getopt-Std'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Getopt-Std'
 		}
 	},
 	'HTML::Entities' => {
-		'package' => {
-			'ubuntu' => 'libhtml-parser-perl',
-			'rhel'   => 'perl-HTML-Parser'
+		package => {
+			ubuntu => 'libhtml-parser-perl',
+			rhel   => 'perl-HTML-Parser'
 		}
 	},
 	'HTTP::Async' => {
-		'package' => {
-			'ubuntu' => 'libhttp-async-perl'
+		package => {
+			ubuntu => 'libhttp-async-perl'
 		}
 	},
 	'IO::File' => {
-		'package' => {
-			'ubuntu' => 'perl-base',
-			'rhel'   => 'perl-IO'
+		package => {
+			ubuntu => 'perl-base',
+			rhel   => 'perl-IO'
 		}
 	},
 	'Iterator' => {
-		'package' => {
-			'ubuntu' => 'libiterator-perl',
+		package => {
+			ubuntu => 'libiterator-perl',
 		}
 	},
 	'Iterator::Util' => {
-		'package' => {
-			'ubuntu' => 'libiterator-util-perl'
+		package => {
+			ubuntu => 'libiterator-util-perl'
 		}
 	},
 	'LWP::Protocol::https' => {
-		'minversion' => '6.06',
-		'package'    => {
-			'ubuntu' => 'liblwp-protocol-https-perl',
-			'rhel'   => 'perl-LWP-Protocol-https'
+		minversion => '6.06',
+		package    => {
+			ubuntu => 'liblwp-protocol-https-perl',
+			rhel   => 'perl-LWP-Protocol-https'
 		}
 	},
 	'Locale::Maketext::Lexicon' => {
-		'package' => {
-			'ubuntu' => 'liblocale-maketext-lexicon-perl'
+		package => {
+			ubuntu => 'liblocale-maketext-lexicon-perl'
 		}
 	},
 	'Locale::Maketext::Simple' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Locale-Maketext-Simple'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Locale-Maketext-Simple'
 		}
 	},
 	'MIME::Base32' => {
-		'package' => {
-			'ubuntu' => 'libmime-base32-perl'
+		package => {
+			ubuntu => 'libmime-base32-perl'
 		}
 	},
 	'MIME::Base64' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-MIME-Base64'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-MIME-Base64'
 		}
 	},
 	'Math::Random::Secure' => {
-		'package' => {
-			'ubuntu' => 'libmath-random-secure-perl',
-			'rhel'   => 'perl-Math-Random-Secure'
+		package => {
+			ubuntu => 'libmath-random-secure-perl',
+			rhel   => 'perl-Math-Random-Secure'
 		}
 	},
 	'Minion' => {
-		'package' => {
-			'ubuntu' => 'libminion-perl'
+		package => {
+			ubuntu => 'libminion-perl'
 		}
 	},
 	'Minion::Backend::SQLite' => {
-		'package' => {
-			'ubuntu' => 'libminion-backend-sqlite-perl'
+		package => {
+			ubuntu => 'libminion-backend-sqlite-perl'
 		}
 	},
 	'Mojolicious' => {
-		'minversion' => '9.34',
-		'package'    => {
-			'ubuntu' => 'libmojolicious-perl',
-			'rhel'   => 'perl-Mojolicious'
+		minversion           => '9.34',
+		incompatibleVersions => [ '9.43', '9.44', '9.45', '9.46' ],
+		package              => {
+			ubuntu => 'libmojolicious-perl',
+			rhel   => 'perl-Mojolicious'
 		}
 	},
 	'Mojolicious::Plugin::NotYAMLConfig' => {
-		'package' => {
-			'ubuntu' => 'libmojolicious-perl',
-			'rhel'   => 'perl-Mojolicious'
+		package => {
+			ubuntu => 'libmojolicious-perl',
+			rhel   => 'perl-Mojolicious'
 		}
 	},
 	'Mojolicious::Plugin::RenderFile' => {
-		'package' => {
-			'ubuntu' => 'libmojolicious-plugin-renderfile-perl'
+		package => {
+			ubuntu => 'libmojolicious-plugin-renderfile-perl'
 		}
 	},
 	'Net::IP' => {
-		'package' => {
-			'ubuntu' => 'libnet-ip-perl',
-			'rhel'   => 'perl-Net-IP'
+		package => {
+			ubuntu => 'libnet-ip-perl',
+			rhel   => 'perl-Net-IP'
 		}
 	},
 	'Net::OAuth' => {
-		'package' => {
-			'ubuntu' => 'libnet-oauth-perl',
-			'rhel'   => 'perl-Net-OAuth'
+		package => {
+			ubuntu => 'libnet-oauth-perl',
+			rhel   => 'perl-Net-OAuth'
 		}
 	},
 	'Opcode' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Opcode'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Opcode'
 		}
 	},
 	'PHP::Serialization' => {
-		'package' => {
-			'ubuntu' => 'libphp-serialization-perl',
-			'rhel'   => 'perl-PHP-Serialization'
+		package => {
+			ubuntu => 'libphp-serialization-perl',
+			rhel   => 'perl-PHP-Serialization'
 		}
 	},
 	'Pandoc' => {
-		'package' => {
-			'ubuntu' => 'libpandoc-wrapper-perl'
+		package => {
+			ubuntu => 'libpandoc-wrapper-perl'
 		}
 	},
 	'Perl::Critic' => {
-		'package' => {
-			'ubuntu' => 'libperl-critic-perl',
-			'rhel'   => 'perl-Perl-Critic'
+		package => {
+			ubuntu => 'libperl-critic-perl',
+			rhel   => 'perl-Perl-Critic'
 		}
 	},
 	'Perl::Tidy' => {
-		'package' => {
-			'ubuntu' => 'perltidy',
-			'rhel'   => 'perltidy'
+		package => {
+			ubuntu => 'perltidy',
+			rhel   => 'perltidy'
 		}
 	},
 	'Pod::Simple::Search' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Pod-Simple'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Pod-Simple'
 		}
 	},
 	'Pod::Simple::XHTML' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Pod-Simple'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Pod-Simple'
 		}
 	},
 	'Pod::Usage' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Pod-Usage'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Pod-Usage'
 		}
 	},
 	'Pod::WSDL' => {
-		'package' => {
-			'ubuntu' => 'libpod-wsdl-perl'
+		package => {
+			ubuntu => 'libpod-wsdl-perl'
 		}
 	},
 	'SOAP::Lite' => {
-		'package' => {
-			'ubuntu' => 'libsoap-lite-perl',
-			'rhel'   => 'perl-SOAP-Lite'
+		package => {
+			ubuntu => 'libsoap-lite-perl',
+			rhel   => 'perl-SOAP-Lite'
 		}
 	},
 	'SQL::Abstract' => {
-		'minversion' => '2',
-		'package'    => {
-			'ubuntu' => 'libsql-abstract-perl',
-			'rhel'   => 'perl-SQL-Abstract'
+		minversion => '2',
+		package    => {
+			ubuntu => 'libsql-abstract-perl',
+			rhel   => 'perl-SQL-Abstract'
 		}
 	},
 	'SVG' => {
-		'package' => {
-			'ubuntu' => 'libsvg-perl',
+		package => {
+			ubuntu => 'libsvg-perl',
 		}
 	},
 	'Scalar::Util' => {
-		'package' => {
-			'ubuntu' => 'perl-base',
-			'rhel'   => 'perl-Scalar-List-Utils'
+		package => {
+			ubuntu => 'perl-base',
+			rhel   => 'perl-Scalar-List-Utils'
 		}
 	},
 	'Socket' => {
-		'package' => {
-			'ubuntu' => 'perl-base',
-			'rhel'   => 'perl-Socket'
+		package => {
+			ubuntu => 'perl-base',
+			rhel   => 'perl-Socket'
 		}
 	},
 	'String::ShellQuote' => {
-		'package' => {
-			'ubuntu' => 'libstring-shellquote-perl',
-			'rhel'   => 'perl-String-ShellQuote'
+		package => {
+			ubuntu => 'libstring-shellquote-perl',
+			rhel   => 'perl-String-ShellQuote'
 		}
 	},
 	'Text::CSV' => {
-		'package' => {
-			'ubuntu' => 'libtext-csv-perl',
-			'rhel'   => 'perl-Text-CSV'
+		package => {
+			ubuntu => 'libtext-csv-perl',
+			rhel   => 'perl-Text-CSV'
 		}
 	},
 	'Text::Wrap' => {
-		'package' => {
-			'ubuntu' => 'perl-base',
-			'rhel'   => 'perl-Text-Tabs+Wrap'
+		package => {
+			ubuntu => 'perl-base',
+			rhel   => 'perl-Text-Tabs+Wrap'
 		}
 	},
 	'Tie::IxHash' => {
-		'package' => {
-			'ubuntu' => 'libtie-ixhash-perl',
-			'rhel'   => 'perl-Tie-IxHash'
+		package => {
+			ubuntu => 'libtie-ixhash-perl',
+			rhel   => 'perl-Tie-IxHash'
 		}
 	},
 	'Time::HiRes' => {
-		'package' => {
-			'ubuntu' => 'perl',
-			'rhel'   => 'perl-Time-HiRes'
+		package => {
+			ubuntu => 'perl',
+			rhel   => 'perl-Time-HiRes'
 		}
 	},
 	'Time::Zone' => {
-		'package' => {
-			'ubuntu' => 'libtimedate-perl',
-			'rhel'   => 'perl-TimeDate'
+		package => {
+			ubuntu => 'libtimedate-perl',
+			rhel   => 'perl-TimeDate'
 		}
 	},
 	'Types::Serialiser' => {
-		'package' => {
-			'ubuntu' => 'libtypes-serialiser-perl',
-			'rhel'   => 'perl-Types-Serialiser'
+		package => {
+			ubuntu => 'libtypes-serialiser-perl',
+			rhel   => 'perl-Types-Serialiser'
 		}
 	},
 	'URI::Escape' => {
-		'package' => {
-			'ubuntu' => 'liburi-perl',
-			'rhel'   => 'perl-URI'
+		package => {
+			ubuntu => 'liburi-perl',
+			rhel   => 'perl-URI'
 		}
 	},
 	'UUID::Tiny' => {
-		'package' => {
-			'ubuntu' => 'libuuid-tiny-perl',
-			'rhel'   => 'perl-UUID-Tiny'
+		package => {
+			ubuntu => 'libuuid-tiny-perl',
+			rhel   => 'perl-UUID-Tiny'
 		}
 	},
 	'XML::LibXML' => {
-		'package' => {
-			'ubuntu' => 'libxml-libxml-perl',
-			'rhel'   => 'perl-XML-LibXML'
+		package => {
+			ubuntu => 'libxml-libxml-perl',
+			rhel   => 'perl-XML-LibXML'
 		}
 	},
 	'XML::Parser' => {
-		'package' => {
-			'ubuntu' => 'libxml-parser-perl',
-			'rhel'   => 'perl-XML-Parser'
+		package => {
+			ubuntu => 'libxml-parser-perl',
+			rhel   => 'perl-XML-Parser'
 		}
 	},
 	'XML::Parser::EasyTree' => {
-		'package' => {
-			'ubuntu' => 'libxml-parser-easytree-perl'
+		package => {
+			ubuntu => 'libxml-parser-easytree-perl'
 		}
 	},
 	'XML::Writer' => {
-		'package' => {
-			'ubuntu' => 'libxml-writer-perl',
-			'rhel'   => 'perl-XML-Writer'
+		package => {
+			ubuntu => 'libxml-writer-perl',
+			rhel   => 'perl-XML-Writer'
 		}
 	},
 	'YAML::XS' => {
-		'package' => {
-			'ubuntu' => 'libyaml-libyaml-perl',
-			'rhel'   => 'perl-YAML-LibYAML'
+		package => {
+			ubuntu => 'libyaml-libyaml-perl',
+			rhel   => 'perl-YAML-LibYAML'
 		}
 	}
 );
 
-my %cpanm_package = ('ubuntu' => 'cpanminus', 'rhel' => 'perl-App-cpanminus');
+my %cpanm_package = (ubuntu => 'cpanminus', rhel => 'perl-App-cpanminus');
 
 my @programList = qw(
 	convert
@@ -589,7 +590,7 @@ if (!$packagetype) {
 	}
 }
 
-my %packagemgrcommand = ('ubuntu' => 'sudo apt install ', 'rhel' => 'sudo dnf install ');
+my %packagemgrcommand = (ubuntu => 'sudo apt install ', rhel => 'sudo dnf install ');
 
 $test_modules = $test_programs = 1 unless $test_programs || $test_modules;
 
@@ -635,10 +636,10 @@ sub determine_distribution {
 			}
 		}
 		close $fh;
-		if ($os_attrs{'id'} =~ 'ubuntu' || ($os_attrs{'id_like'} && $os_attrs{'id_like'} =~ 'ubuntu')) {
+		if ($os_attrs{id} =~ 'ubuntu' || ($os_attrs{id_like} && $os_attrs{id_like} =~ 'ubuntu')) {
 			$packagetype = 'ubuntu';
 			return 1;
-		} elsif ($os_attrs{'id'} =~ 'fedora' || ($os_attrs{'id_like'} && $os_attrs{'id_like'} =~ 'fedora')) {
+		} elsif ($os_attrs{id} =~ 'fedora' || ($os_attrs{id_like} && $os_attrs{id_like} =~ 'fedora')) {
 			$packagetype = 'rhel';
 			return 1;
 		}
@@ -673,11 +674,20 @@ sub check_modules {
 			} else {
 				say "** $module found, but failed to load: $@";
 			}
-		} elsif (defined($modulesList{$module}{'minversion'})
-			&& version->parse(${ $module . '::VERSION' }) < version->parse($modulesList{$module}{'minversion'}))
+		} elsif (defined($modulesList{$module}{minversion})
+			&& version->parse(${ $module . '::VERSION' }) < version->parse($modulesList{$module}{minversion}))
 		{
 			$moduleNotFound = 1;
-			say "** $module found, but not version $modulesList{$module}{'minversion'} or better";
+			say "** $module found, but not version $modulesList{$module}{minversion} or better";
+		} elsif (
+			ref $modulesList{$module}{incompatibleVersions} eq 'ARRAY'
+			&& (grep { version->parse(${ $module . '::VERSION' }) == version->parse($_) }
+				@{ $modulesList{$module}{incompatibleVersions} })
+			)
+		{
+			$moduleNotFound = 1;
+			say "** $module found, but is an incompatible version (incompatible versions: "
+				. join(', ', @{ $modulesList{$module}{incompatibleVersions} }) . ')';
 		} else {
 			say "   $module found and loaded";
 		}
@@ -690,7 +700,7 @@ sub check_modules {
 
 	if ($moduleNotFound) {
 		say '';
-		say 'Some required modules were not found, could not be loaded, or were not at the sufficient version.';
+		say 'Some required modules were not found, could not be loaded, or were not a sufficient version.';
 		if (@missing_modules || @missing_packages) {
 			say 'You can try to install the missing modules with the following command(s):' . "\n";
 			if (@missing_modules) {
