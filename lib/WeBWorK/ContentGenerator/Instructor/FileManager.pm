@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 
 =cut
 
-use Mojo::File;
+use Mojo::File qw(tempdir);
 use File::Path;
 use File::Copy;
 use File::Spec;
@@ -46,19 +46,28 @@ sub pre_header_initialize ($c) {
 		my $ce       = $c->ce;
 		my $courseID = $c->stash('courseID');
 
-		my $message = eval {
-			WeBWorK::Utils::CourseManagement::archiveCourse(
-				courseID     => $courseID,
-				archive_path => "$ce->{webworkDirs}{courses}/$courseID/templates/$courseID.tar.gz",
-				ce           => $ce
-			);
-		};
+		# Note that it is important that the tempDir is a property on the controller so that it stays in scope as long
+		# as the controller does, i.e., until the request is rendered.  Otherwise the temporary directory will be
+		# automatically removed before the archive file is rendered, and an empty file will be offered for download.
+		$c->{tempDir} = eval { tempdir('archive.XXXX', DIR => "$ce->{webworkDirs}{courses}/$courseID") };
 		if ($@) {
-			$c->addbadmessage($c->maketext('Failed to generate course archive: [_1]', $@));
+			$c->addbadmessage($c->maketext('Unable to created temporary directory for course archive: [_1]', $@));
 		} else {
-			$c->addgoodmessage($c->maketext('Archived course as [_1].tar.gz.', $courseID));
+			my $archiveFile = $c->{tempDir}->child("$courseID.tar.gz");
+			eval {
+				WeBWorK::Utils::CourseManagement::archiveCourse(
+					courseID     => $courseID,
+					archive_path => $archiveFile,
+					ce           => $ce
+				);
+			};
+			if ($@) {
+				$c->addbadmessage($c->maketext('Failed to generate course archive: [_1]', $@));
+			} else {
+				$c->reply_with_file('application/gzip', $archiveFile, $archiveFile->basename, 0);
+				return;
+			}
 		}
-		$c->addbadmessage($message) if ($message);
 	}
 
 	$c->{pwd}        = $c->checkPWD($c->param('pwd') || HOME);
