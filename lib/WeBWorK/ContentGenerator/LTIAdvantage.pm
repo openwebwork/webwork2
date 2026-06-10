@@ -504,7 +504,7 @@ async sub registration ($c) {
 	return $c->render(json => { error => 'invalid registration received' }, status => 400)
 		unless defined $registrationResult->json->{client_id};
 
-	my $configuration = <<~ "END_CONFIG";
+	my $configuration = <<~"END_CONFIG";
 	\$LTI{v1p3}{PlatformID}      = '$lmsConfiguration->{issuer}';
 	\$LTI{v1p3}{ClientID}        = '${\($registrationResult->json->{client_id})}';
 	\$LTI{v1p3}{DeploymentID}    = '${

@@ -130,7 +130,8 @@ sub initialize ($c) {
 		);
 
 		my $email =
-			Email::Stuffer->to(join(',', @recipients))->subject($subject)
+			Email::Stuffer->to(join(',', @recipients))
+			->subject($subject)
 			->text_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', format => 'txt', %data))
 			->html_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', %data))
 			->header('X-Remote-Host' => $data{remote_host});

@@ -85,7 +85,10 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	die $@ if $@;
 
 	my $email =
-		Email::Stuffer->to($user_record->email_address)->from($from)->subject($mail_data->{subject})->text_body($body)
+		Email::Stuffer->to($user_record->email_address)
+		->from($from)
+		->subject($mail_data->{subject})
+		->text_body($body)
 		->header('X-Remote-Host' => $mail_data->{remote_host});
 
 	$email->send_or_die({

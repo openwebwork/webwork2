@@ -5,8 +5,8 @@ use warnings;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use YAML::XS qw(LoadFile);
-	use Env qw(WEBWORK_ROOT PG_ROOT);
+	use YAML::XS   qw(LoadFile);
+	use Env        qw(WEBWORK_ROOT PG_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname->to_string;
 

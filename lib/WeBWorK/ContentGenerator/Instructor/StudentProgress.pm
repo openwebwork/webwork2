@@ -415,7 +415,7 @@ sub displayStudentStats ($c) {
 								)
 							)
 						)
-				)->join('')
+					)->join('')
 				);
 			next;
 		}
@@ -594,7 +594,7 @@ sub displayStudentStats ($c) {
 								)
 							)
 						)
-				)->join('')
+					)->join('')
 				);
 		}
 	}
