@@ -49,8 +49,8 @@ use Mojo::File qw(curfile);
 
 my $webwork_root = curfile->dirname->dirname->dirname;
 
-die "Version 20240903 of perltidy is required for this script.\nThe installed version is $Perl::Tidy::VERSION.\n"
-	unless $Perl::Tidy::VERSION == 20240903;
+die "Version 20260204 of perltidy is required for this script.\nThe installed version is $Perl::Tidy::VERSION.\n"
+	unless $Perl::Tidy::VERSION == 20260204;
 die "The .perltidyrc file in the webwork root directory is not readable.\n"
 	unless -r "$webwork_root/.perltidyrc";
 

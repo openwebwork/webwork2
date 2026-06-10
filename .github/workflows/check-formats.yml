@@ -18,9 +18,9 @@ jobs:
       image: perl:5.38
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install dependencies
-        run: cpanm -n Perl::Tidy@20240903
+        run: cpanm -n Perl::Tidy@20260204
       - name: Run perltidy
         shell: bash
         run: |
@@ -33,11 +33,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install Dependencies
         run: cd htdocs && npm ci --ignore-scripts
       - name: Check formatting with prettier
