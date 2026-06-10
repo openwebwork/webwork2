@@ -611,7 +611,7 @@ sub unpack_archive ($c, $archive) {
 									$c->maketext('[quant,_1,more file,more files] not shown', @outside_files - 30))
 								: ()
 							)
-					)->join('')
+						)->join('')
 					)
 				)
 		);
@@ -654,7 +654,7 @@ sub unpack_archive ($c, $archive) {
 									$c->maketext('[quant,_1,more file,more files] not shown', @existing_files - 30))
 								: ()
 							)
-					)->join('')
+						)->join('')
 					)
 				)
 		);

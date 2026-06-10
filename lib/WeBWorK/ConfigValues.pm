@@ -1210,7 +1210,8 @@ sub getConfigValues ($ce) {
 	# Get list of localization dictionaries.
 	my $languages = eval {
 		my %seen;
-		path($ce->{webworkDirs}{localize})->list->grep(qr/\.mo$|\.po$/)->map(sub { $_->basename =~ s/\.[pm]o$//r })
+		path($ce->{webworkDirs}{localize})->list->grep(qr/\.mo$|\.po$/)
+			->map(sub { $_->basename =~ s/\.[pm]o$//r })
 			->grep(sub { !$seen{$_}++ });
 	};
 	die "Unable to list files in $ce->{webworkDirs}{localize}: $@" if $@;

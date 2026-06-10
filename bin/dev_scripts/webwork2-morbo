@@ -43,7 +43,7 @@ use Mojo::Base -strict;
 use Mojo::Server::Morbo;
 use Mojo::Util qw(extract_usage getopt);
 use Mojo::File qw(curfile);
-use YAML::XS qw(LoadFile);
+use YAML::XS   qw(LoadFile);
 
 getopt
 	'b|backend=s' => \$ENV{MOJO_MORBO_BACKEND},
