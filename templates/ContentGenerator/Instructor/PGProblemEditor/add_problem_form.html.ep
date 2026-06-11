@@ -2,17 +2,15 @@
 %
 % last unless $c->{is_pg} && $c->{file_type} ne 'blank_problem' && $c->{file_type} ne 'sample_problem';
 %
-% my $allSetNames = [ map { $_->[0] =~ s/^set|\.def$//gr } $db->listGlobalSetsWhere({}, 'set_id') ];
-%
 <div>
 	<div class="row align-items-center mb-2">
 		<%= label_for action_add_problem_target_set_id => maketext('Add to what set?'),
 			class => 'col-form-label col-auto' =%>
 		<div class="col-auto">
 			<%= select_field 'action.add_problem.target_set' => [
-					map { [
-						format_set_name_display($_) => $_, $_ eq ($c->{setID} // '') ? (selected => undef) : ()
-					] } @$allSetNames
+					map {
+						[ format_set_name_display($_) => $_, $_ eq ($c->{setID} // '') ? (selected => undef) : () ]
+					} @{ $c->{globalSets} }
 				],
 				id => 'action_add_problem_target_set_id', class => 'form-select form-select-sm d-inline w-auto',
 				dir => 'ltr' =%>

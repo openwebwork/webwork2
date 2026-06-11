@@ -382,6 +382,40 @@
 		}
 	});
 
+	// Validation of the target set for the save as tab.
+	const saveAsSaveModeRadios = document.getElementsByName('action.save_as.saveMode');
+	const saveToTargetSetRadio = Array.from(saveAsSaveModeRadios).find(
+		(r) => r.id === 'action_save_as_saveMode_new_problem_id' || r.id === 'action_save_as_saveMode_set_header_id'
+	);
+	const targetSetSelect = document.getElementsByName('action.save_as.targetSet')?.[0];
+	const actionSaveAs = document.getElementById('save_as');
+	const removeSetSelectErrors = () => {
+		targetSetSelect?.classList.remove('is-invalid');
+		targetSetSelect?.setCustomValidity('');
+	};
+	for (const radio of saveAsSaveModeRadios) {
+		radio.addEventListener('change', removeSetSelectErrors);
+	}
+	const saveToTargetSetSelected = () => {
+		saveToTargetSetRadio.checked = true;
+		if (targetSetSelect?.value) removeSetSelectErrors();
+	};
+	targetSetSelect?.addEventListener('change', saveToTargetSetSelected);
+	targetSetSelect?.addEventListener('focusin', saveToTargetSetSelected);
+
+	document.forms.editor?.addEventListener('submit', (e) => {
+		if (actionSaveAs && actionSaveAs.classList.contains('active')) {
+			if (saveToTargetSetRadio?.checked && !targetSetSelect?.value) {
+				e.preventDefault();
+				targetSetSelect.classList.add('is-invalid');
+				targetSetSelect.setCustomValidity(targetSetSelect.dataset.errorMessage ?? 'Please select a set.');
+				targetSetSelect.reportValidity();
+				return;
+			}
+			removeSetSelectErrors();
+		}
+	});
+
 	const fileType = document.getElementsByName('file_type')[0]?.value;
 
 	// This is either the div containing the CodeMirror editor or the problemContents textarea in the case that
