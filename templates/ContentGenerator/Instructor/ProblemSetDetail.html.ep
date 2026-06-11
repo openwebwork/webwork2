@@ -488,7 +488,7 @@
 									</button>
 									<%= link_to $c->systemLink(url_for(
 											'instructor_problem_editor_withset_withproblem',
-											setID => $fullSetID, problemID => $problemID
+											setID => $setID, problemID => $problemID
 										)),
 										class  => 'psd_edit btn btn-secondary btn-sm',
 										target => 'WW_Editor',

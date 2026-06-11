@@ -1298,7 +1298,6 @@ sub initialize ($c) {
 	my $setID = $c->stash('setID');
 
 	# Make sure these are defined for the templates.
-	$c->stash->{fullSetID}           = $setID;
 	$c->stash->{headers}             = HEADER_ORDER();
 	$c->stash->{field_properties}    = FIELD_PROPERTIES();
 	$c->stash->{display_modes}       = WeBWorK::PG::DISPLAY_MODES();

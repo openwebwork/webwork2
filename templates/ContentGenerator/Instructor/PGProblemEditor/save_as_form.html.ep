@@ -1,38 +1,28 @@
-% use File::Basename qw(dirname);
+% use File::Basename qw(dirname basename);
 %
-% use WeBWorK::Utils qw(not_blank);
 % use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % # Don't show the save as form when editing an existing course info file.
 % last if $c->{file_type} eq 'course_info' && -e $c->{editFilePath};
 %
-% my $isBlank         = $c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem';
+% my $isTemplate      = $c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem';
 % my $isHardcopyTheme = $c->{file_type} eq 'hardcopy_theme';
-% my $templatesDir    = $ce->{courseDirs}{templates};
 % my $shortFilePath   =
-	% $isBlank           ? 'newProblem.pg'
+	% $c->{file_type} eq 'blank_problem' ? 'newProblem.pg'
+	% : $c->{file_type} eq 'sample_problem' ? basename($c->{editFilePath})
 	% : $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r)
-	                   % : $c->{editFilePath} =~ s|^$templatesDir/||r;
+		% : ($c->{editFilePath} =~ s|^$ce->{courseDirs}{templates}/||r) =~ s|^$ce->{webworkDirs}{assets}/pg/||r;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-% $shortFilePath = "local/$shortFilePath" unless $isBlank || $isHardcopyTheme || -w dirname($c->{editFilePath});
+% $shortFilePath = "local/$shortFilePath" unless $isTemplate || $isHardcopyTheme || -w dirname($c->{editFilePath});
 %
 % # If it is an absolute path make it relative.
 % $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
 %
-% my $probNum = $c->{file_type} eq 'problem' ? $c->{problemID} : 'header';
-%
-% # Don't add or replace problems to sets if the set is the Undefined_Set or
+% # Don't add to or replace problems in sets or replace set/hardcopy headers if the set is the Undefined_Set or
 % # if the problem is the blank_problem or a sample problem.
-% my $can_add_problem_to_set = not_blank($c->{setID}) && $c->{setID} ne 'Undefined_Set' && !$isBlank;
-%
-% my $prettyProbNum = $probNum;
-% if ($c->{setID}) {
-	% my $set = $db->getGlobalSet($c->{setID});
-	% $prettyProbNum = join('.', jitar_id_to_seq($probNum))
-		% if ($c->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
-% }
+% my $fileIsAsociatedWithSet = $c->{setID} && $c->{setID} ne 'Undefined_Set' && !$isTemplate;
 %
 <div>
 	<div class="row align-items-center mb-2">
@@ -52,45 +42,79 @@
 		<%= hidden_field 'action.save_as.source_file' => $c->{editFilePath} =%>
 		<%= hidden_field 'action.save_as.file_type' => $c->{file_type} =%>
 	</div>
-	<div class="form-check">
-		% param('copyAuxFiles', 1) unless defined param('copyAuxFiles');
-		<%= check_box copyAuxFiles => 1, id => 'copyAuxFiles', class => 'form-check-input' =%>
-		<%= hidden_field copyAuxFiles => 0 =%>
-		<%= label_for copyAuxFiles => maketext('Copy auxiliary files.'), class => 'form-check-label' =%>
-	</div>
-	% if ($can_add_problem_to_set) {
+	% if ($c->{file_type} =~ /problem/) {
 		<div class="form-check">
-			<%= radio_button 'action.save_as.saveMode' => 'rename', id => 'action_save_as_saveMode_rename_id',
-				checked => undef, class   => 'form-check-input' =%>
-			<%= label_for 'action_save_as_saveMode_rename_id', class => 'form-check-label', begin =%>
-				<%== maketext('Replace current problem: [_1]',
-					tag(
-						'strong',
-						c(
-							tag('span', dir => 'ltr', format_set_name_display($c->{fullSetID})),
-							"/$prettyProbNum"
-						)->join('')
-					)
-				) =%>
-			<% end =%>
+			% param('copyAuxFiles', 1) unless defined param('copyAuxFiles');
+			<%= check_box copyAuxFiles => 1, id => 'copyAuxFiles', class => 'form-check-input' =%>
+			<%= hidden_field copyAuxFiles => 0 =%>
+			<%= label_for copyAuxFiles => maketext('Copy auxiliary files.'), class => 'form-check-label' =%>
 		</div>
+		% if ($fileIsAsociatedWithSet) {
+			<div class="form-check">
+				<%= radio_button 'action.save_as.saveMode' => 'rename', id => 'action_save_as_saveMode_rename_id',
+					checked => undef, class => 'form-check-input' =%>
+				<%= label_for 'action_save_as_saveMode_rename_id', class => 'form-check-label', begin =%>
+					<%== maketext('Replace current problem [_1] of set [_2]',
+						tag('strong',
+							$c->{set} && $c->{set}->assignment_type eq 'jitar'
+							? join('.', jitar_id_to_seq($c->{problemID}))
+							: $c->{problemID}),
+						tag('strong', tag('span', dir => 'ltr', format_set_name_display($c->{setID})))
+					) =%>
+				<% end =%>
+			</div>
+		% }
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'add_to_set_as_new_problem',
 				id => 'action_save_as_saveMode_new_problem_id', class => 'form-check-input' =%>
-			<%= label_for 'action_save_as_saveMode_new_problem_id', class => 'form-check-label', begin =%>
-				<%== maketext(
-					'Append to end of [_1] set',
-					tag('strong', dir => 'ltr', format_set_name_display($c->{fullSetID}))
-				) =%>
-			<% end =%>
+			<%= label_for action_save_as_saveMode_new_problem_id => maketext('Append to end of'),
+				class => 'form-check-label' %>
+			<%= label_for action_save_as_target_set_id => maketext('set:'), class => 'form-check-label' =%>
+			<div class="d-inline align-middle">
+				<%= select_field 'action.save_as.targetSet' => [
+						[ maketext('Select a Set') => '', disabled => undef, selected => undef ],
+						map {
+							[ format_set_name_display($_) => $_, $_ eq ($c->{setID} // '') ? (selected => undef) : () ]
+						} @{ $c->{globalSets} }
+					],
+					id   => 'action_save_as_target_set_id', class => 'form-select form-select-sm d-inline w-auto',
+					data => { error_message => maketext('Please select a set.') },
+					dir  => 'ltr' =%>
+			</div>
 		</div>
-	% }
-	% if ($c->{is_pg}) {
 		<div class="form-check">
-			<%= radio_button 'action.save_as.saveMode' => 'new_independent_problem',
+			<%= radio_button 'action.save_as.saveMode' => 'new_independent_file',
 				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',
-				$can_add_problem_to_set ? () : (checked => undef) =%>
+				$fileIsAsociatedWithSet ? () : (checked => undef) =%>
 			<%= label_for action_save_as_saveMode_independent_problem_id => maketext('Create unattached problem'),
+				class => 'form-check-label' =%>
+		</div>
+	% } elsif ($c->{file_type} =~ /header/) {
+		% my $headerLabel = $c->{file_type} eq 'hardcopy_header' ? maketext('hardcopy header') : maketext('set header');
+		<div class="form-check">
+			<%= radio_button 'action.save_as.saveMode' => 'set_as_heaader_for_set',
+				id => 'action_save_as_saveMode_set_header_id', class => 'form-check-input',
+				$fileIsAsociatedWithSet ? (checked => undef) : () =%>
+			<%= label_for action_save_as_saveMode_set_header_id => maketext('Set as [_1] for', $headerLabel),
+				class => 'form-check-label' %>
+			<%= label_for action_save_as_target_set_id => maketext('set:'), class => 'form-check-label' =%>
+			<div class="d-inline align-middle">
+				<%= select_field 'action.save_as.targetSet' => [
+						[ maketext('Select a Set') => '', disabled => undef, selected => undef ],
+						map {
+							[ format_set_name_display($_) => $_, $_ eq ($c->{setID} // '') ? (selected => undef) : () ]
+						} @{ $c->{globalSets} }
+					],
+					id   => 'action_save_as_target_set_id', class => 'form-select form-select-sm d-inline w-auto',
+					data => { error_message => maketext('Please select a set.') },
+					dir  => 'ltr' =%>
+			</div>
+		</div>
+		<div class="form-check">
+			<%= radio_button 'action.save_as.saveMode' => 'new_independent_file',
+				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',
+				$fileIsAsociatedWithSet ? () : (checked => undef) =%>
+			<%= label_for action_save_as_saveMode_independent_problem_id => maketext('Create unattached header file'),
 				class => 'form-check-label' =%>
 		</div>
 	% }
