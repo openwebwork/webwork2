@@ -183,8 +183,8 @@
 		<p>
 			<%= maketext(q{Makes a new copy of the file you are editing at the location relative to the course's }
 				. 'templates (~[TMPL~]) directory. You may choose to replace the current problem in the current set, '
-				. 'append to the end to then end of the current set as a new problem, or create a problem that is not '
-				. 'attached to a problem set.') =%>
+				. 'append to the end of an existing set as a new problem, or create a problem that is not attached '
+				. 'to a problem set.') =%>
 		</p>
 		<p>
 			<%= maketext('When saving the problem in a new location (directory), by default all auxiliary files, such '
@@ -196,15 +196,11 @@
 				. 'for a new problem. You can add the new file to a homework set from the Library Browser or via the '
 				. 'set detail page of the "Sets Manager".') =%>
 		</p>
-		<p>
+		<p class="mb-0">
 			<%= maketext('If the original problem cannot be edited than the path name must be changed in order to be '
 				. 'allowed to save the problem. Adding "local/" to the beginning of the original path is the default '
 				. 'solution. All locally created and edited files will then appear in a subdirectory named '
 				. '"local".') =%>
-		</p>
-		<p class="mb-0">
-			<%= maketext('A new problem whose path ends in newProblem.pg should be given a new name, for example, '
-				. '"myNewProblem.pg".') =%>
 		</p>
 	</dd>
 
