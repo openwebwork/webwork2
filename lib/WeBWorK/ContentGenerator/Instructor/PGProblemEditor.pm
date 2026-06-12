@@ -129,8 +129,6 @@ use constant ACTION_FORM_TITLES => {
 	revert           => x('Revert'),
 };
 
-my $BLANKPROBLEM = 'newProblem.pg';
-
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
@@ -247,14 +245,11 @@ sub initialize ($c) {
 		));
 	}
 
-	if ($c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem') {
-		$c->addbadmessage($c->maketext('This file is a template. You may use "Save As" to create a new file.'));
-	} elsif ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
-		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is a template. You may use "Save As" to create a new file.',
-			$c->shortPath($c->{inputFilePath})
-		));
-	}
+	$c->addbadmessage($c->maketext(
+		'The file "[_1]" is a template. You may use "Save As" to create a new file.',
+		$c->shortPath($c->{inputFilePath})
+	))
+		if !path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates});
 
 	# Find the text for the editor, either in the temporary file if it exists, in the original file in the template
 	# directory, or in the problem contents gathered in the initialization phase.
@@ -1280,7 +1275,7 @@ sub save_as_handler ($c) {
 			setID     => $c->{setID},
 			problemID => $do_not_save ? $c->{problemID} : max($db->listGlobalProblems($c->{setID}))
 		);
-		$new_file_type = $file_type;
+		$new_file_type = 'problem';
 	} else {
 		$c->addbadmessage($c->maketext(
 			'Please use radio buttons to choose the method for saving this file. Unknown saveMode: [_1].', $saveMode
