@@ -382,6 +382,29 @@
 		}
 	});
 
+	const removeValidationErrors = (input) => {
+		input?.classList.remove('is-invalid');
+		input.setCustomValidity('');
+	};
+
+	const validateInput = (e, input, isInvalid, defaultMessage, report) => {
+		if (isInvalid) {
+			e.preventDefault();
+			input.classList.add('is-invalid');
+			input.setCustomValidity(input.dataset.errorMessage ?? defaultMessage);
+			if (report) input.reportValidity();
+			return false;
+		}
+		removeValidationErrors(input);
+		return true;
+	};
+
+	// Validation of the target file for the save as tab.
+	const saveAsTargetFile = document.getElementsByName('action.save_as.target_file')?.[0];
+	saveAsTargetFile?.addEventListener('keyup', () => {
+		if (saveAsTargetFile.value) removeValidationErrors(saveAsTargetFile);
+	});
+
 	// Validation of the target set for the save as tab.
 	const saveAsSaveModeRadios = document.getElementsByName('action.save_as.saveMode');
 	const saveToTargetSetRadio = Array.from(saveAsSaveModeRadios).find(
@@ -389,30 +412,25 @@
 	);
 	const targetSetSelect = document.getElementsByName('action.save_as.targetSet')?.[0];
 	const actionSaveAs = document.getElementById('save_as');
-	const removeSetSelectErrors = () => {
-		targetSetSelect?.classList.remove('is-invalid');
-		targetSetSelect?.setCustomValidity('');
-	};
 	for (const radio of saveAsSaveModeRadios) {
-		radio.addEventListener('change', removeSetSelectErrors);
+		radio.addEventListener('change', () => removeValidationErrors(targetSetSelect));
 	}
 	const saveToTargetSetSelected = () => {
 		saveToTargetSetRadio.checked = true;
-		if (targetSetSelect?.value) removeSetSelectErrors();
+		if (targetSetSelect?.value) removeValidationErrors(targetSetSelect);
 	};
 	targetSetSelect?.addEventListener('change', saveToTargetSetSelected);
 	targetSetSelect?.addEventListener('focusin', saveToTargetSetSelected);
 
 	document.forms.editor?.addEventListener('submit', (e) => {
 		if (actionSaveAs && actionSaveAs.classList.contains('active')) {
-			if (saveToTargetSetRadio?.checked && !targetSetSelect?.value) {
-				e.preventDefault();
-				targetSetSelect.classList.add('is-invalid');
-				targetSetSelect.setCustomValidity(targetSetSelect.dataset.errorMessage ?? 'Please select a set.');
-				targetSetSelect.reportValidity();
-				return;
+			let report = true;
+			for (const validationData of [
+				[saveAsTargetFile, saveAsTargetFile?.value === '', 'Please enter a filename.'],
+				[targetSetSelect, saveToTargetSetRadio?.checked && !targetSetSelect?.value, 'Please select a set.']
+			]) {
+				if (!validateInput(e, ...validationData, report)) report = false;
 			}
-			removeSetSelectErrors();
 		}
 	});
 
