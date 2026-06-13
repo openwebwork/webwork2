@@ -260,7 +260,7 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 						response_obj => unbless($pg->{pgcore}{PG_ANSWERS_HASH}{$_}->response_obj),
 						rh_ans       => $pg->{pgcore}{PG_ANSWERS_HASH}{$_}{ans_eval}{rh_ans}
 					}
-				}
+					}
 					keys %{ $pg->{pgcore}{PG_ANSWERS_HASH} }
 			};
 			$ret->{resource_list} = {

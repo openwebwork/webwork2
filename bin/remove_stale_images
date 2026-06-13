@@ -56,7 +56,7 @@ use DBI;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -69,200 +69,204 @@ use WeBWorK::Utils::Files qw(readFile);
 use constant ACCESSED => 8;
 use constant MODIFIED => 9;
 
-my $now = time();
+my $now   = time();
 my $which = ACCESSED;
 
 ##### global variables to hold information from the find
 
 my $num_removed = 0;
-my %kept = ();
-my %days=();
-my %week=();
-my %depths=();
-my $grandtotal=0;
+my %kept        = ();
+my %days        = ();
+my %week        = ();
+my %depths      = ();
+my $grandtotal  = 0;
 my $depthConnection;
 
 ##### get command-line options #####
 
-my $start = $now; # way too big, but definitely before the beginning of the epoch
-my $end = -1;
-my $help = 0;
-my $deloption = 0;
+my $start        = $now;    # way too big, but definitely before the beginning of the epoch
+my $end          = -1;
+my $help         = 0;
+my $deloption    = 0;
 my $reportoption = 0;
-my $modifydate = 0;
-my $accessdate = 0;
+my $modifydate   = 0;
+my $accessdate   = 0;
 
-GetOptions('from=s' => \$start,
-           'days=s' => \$end,
-	   'delete|remove' => \$deloption,
-	   'report' => \$reportoption,
-	   'modify-dates' => \$modifydate,
-	   'access-dates' => \$accessdate,
-           'help' => \$help) or pod2usage(1);
+GetOptions(
+	'from=s'        => \$start,
+	'days=s'        => \$end,
+	'delete|remove' => \$deloption,
+	'report'        => \$reportoption,
+	'modify-dates'  => \$modifydate,
+	'access-dates'  => \$accessdate,
+	'help'          => \$help
+) or pod2usage(1);
 
 pod2usage(1) if $help;
 
-$reportoption = 1 if(not $deloption);
+$reportoption = 1 if (not $deloption);
 
-if($modifydate and $accessdate) {
-  print "You cannot specify using both access dates and modify dates\n";
-  pod2usage(1);
+if ($modifydate and $accessdate) {
+	print "You cannot specify using both access dates and modify dates\n";
+	pod2usage(1);
 }
 
 ## now fix up type
 my $type = $accessdate ? ACCESSED : MODIFIED;
 
-if(scalar(@ARGV)>0) {
-  if(scalar(@ARGV)>1) {
-    print "Too many arguments given\n";
-    pod2usage(1);
-  }
-  $end = $ARGV[0];
+if (scalar(@ARGV) > 0) {
+	if (scalar(@ARGV) > 1) {
+		print "Too many arguments given\n";
+		pod2usage(1);
+	}
+	$end = $ARGV[0];
 }
 
-$end = 7 if($end == -1 and $deloption);
+$end = 7 if ($end == -1 and $deloption);
 
-if($start<= $end) {
-  print "The start time must be greater than the end length\n";
-  exit();
+if ($start <= $end) {
+	print "The start time must be greater than the end length\n";
+	exit();
 }
 ## Fix up the start and end times
 
-$start = $now - 24*60*60*$start;
-$end = $now - 24*60*60*$end;
+$start = $now - 24 * 60 * 60 * $start;
+$end   = $now - 24 * 60 * 60 * $end;
 
 ##### "wanted" function for find #####
 
 sub wanted {
-  if(-f $File::Find::name and $File::Find::name =~ /\.png$/) {
-    my @stat = stat(_);
+	if (-f $File::Find::name and $File::Find::name =~ /\.png$/) {
+		my @stat = stat(_);
 
-    if($deloption) {
-      my $fullmd5 = $File::Find::name;
-      if(length($_) > (4+32)) { # this is an old style path
-	$fullmd5 = $_;
-	$fullmd5 =~ s/\.png$//;
-      } else {
-	$fullmd5 =~ s|.*/([^/]+)/([^/]+)$|$1$2|;
-	$fullmd5 =~ s/\.png$//;
-      }
-      if($stat[$type]<$start or $stat[$type]>$end) {
-	$kept{$fullmd5} = '';
-	if($depthConnection) { # hold dvipng depths
-		my $fetchdepth = $depthConnection->selectall_arrayref("
+		if ($deloption) {
+			my $fullmd5 = $File::Find::name;
+			if (length($_) > (4 + 32)) {    # this is an old style path
+				$fullmd5 = $_;
+				$fullmd5 =~ s/\.png$//;
+			} else {
+				$fullmd5 =~ s|.*/([^/]+)/([^/]+)$|$1$2|;
+				$fullmd5 =~ s/\.png$//;
+			}
+			if ($stat[$type] < $start or $stat[$type] > $end) {
+				$kept{$fullmd5} = '';
+				if ($depthConnection) {    # hold dvipng depths
+					my $fetchdepth = $depthConnection->selectall_arrayref("
 			SELECT depth FROM depths WHERE md5=\"$fullmd5\"");
-		my $fetchdepthval = $fetchdepth->[0]->[0];
-		$depths{$fullmd5} = $fetchdepthval if($fetchdepthval);
+					my $fetchdepthval = $fetchdepth->[0]->[0];
+					$depths{$fullmd5} = $fetchdepthval if ($fetchdepthval);
+				}
+			} else {
+				my $result = unlink($File::Find::name);
+				if ($result) {
+					$num_removed++;
+					return ();
+				} else {
+					# If you don't have permissions to delete a file, you will probably
+					# mess up the permissions on the equation cache
+					die "Tried, but could not remove $File::Find::name\n";
+				}
+			}
+		}
+
+		if ($reportoption) {
+			return () if (not $deloption and ($stat[$type] < $start or $stat[$type] > $end));
+			my $lapse = $now - $stat[$type];
+			my $val   = int(($lapse) / (60 * 60 * 24));
+			$val = " " . $val if ($val < 10);
+			$val = " " . $val if ($val < 100);
+			if (defined($days{$val})) { $days{$val} += 1; }
+			else                      { $days{$val} = 1; }
+			$val = int($val / 7);
+			if (defined($week{$val})) { $week{$val} += 1; }
+			else                      { $week{$val} = 1; }
+			$grandtotal++;
+		}
+
 	}
-      } else {
-        my $result = unlink($File::Find::name);
-        if($result) {
-          $num_removed++;
-          return();
-        } else {
-          # If you don't have permissions to delete a file, you will probably
-          # mess up the permissions on the equation cache
-          die "Tried, but could not remove $File::Find::name\n";
-        }
-      }
-    }
-
-    if($reportoption) {
-      return() if(not $deloption and ($stat[$type]<$start or $stat[$type]>$end));
-      my $lapse = $now - $stat[$type];
-      my $val = int(($lapse)/(60*60*24));
-      $val = " ".$val if($val<10);
-      $val = " ".$val if($val<100);
-      if(defined($days{$val})) {$days{$val} += 1;} else {$days{$val} = 1;}
-      $val = int($val/7);
-      if(defined($week{$val})) {$week{$val} += 1;} else {$week{$val} = 1;}
-      $grandtotal++;
-    }
-
-  }
 }
 
 ##### reporting function #####
 
 sub count_report {
-  my $j;
-  print "Days\n";
-  for $j (sort {$a <=> $b} keys(%days)) {
-    print "$j  $days{$j}\n";
-  }
+	my $j;
+	print "Days\n";
+	for $j (sort { $a <=> $b } keys(%days)) {
+		print "$j  $days{$j}\n";
+	}
 
-  print "\nWeeks\n";
-  for $j (sort {$a <=> $b} keys(%week)) {
-    print " $j  $week{$j}\n";
-  }
+	print "\nWeeks\n";
+	for $j (sort { $a <=> $b } keys(%week)) {
+		print " $j  $week{$j}\n";
+	}
 
-  print "\nTotal: $grandtotal\n";
+	print "\nTotal: $grandtotal\n";
 }
 
 ##### main function #####
 
-
 # bring up a minimal course environment
 my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 
-my $dirHead = $ce->{webworkDirs}->{equationCache};
+my $dirHead   = $ce->{webworkDirs}->{equationCache};
 my $cachePath = $ce->{webworkFiles}->{equationCacheDB};
-my $tmpdir = $ce->{webworkDirs}->{tmp};
-my $tmpfile = "$tmpdir/equationcache.tmp";
+my $tmpdir    = $ce->{webworkDirs}->{tmp};
+my $tmpfile   = "$tmpdir/equationcache.tmp";
 
 # Prepare to handle depths database table
 my $alignType = $ce->{pg}->{displayModeOptions}->{images}->{dvipng_align};
-if($alignType eq 'mysql' and $deloption) {
+if ($alignType eq 'mysql' and $deloption) {
 	my $dbinfo = $ce->{pg}->{displayModeOptions}->{images}->{dvipng_depth_db};
-	$depthConnection = DBI->connect_cached(
-		$dbinfo->{dbsource},
-		$dbinfo->{user},
-		$dbinfo->{passwd},
-		{ PrintError => 0, RaiseError => 1 },
-	);
+	$depthConnection =
+		DBI->connect_cached($dbinfo->{dbsource}, $dbinfo->{user}, $dbinfo->{passwd},
+			{ PrintError => 0, RaiseError => 1 },
+		);
 	print "Could not make database connection for dvipng image depths.\n" unless defined $depthConnection;
 }
 
-find({wanted => \&wanted, follow_fast => 1}, $dirHead);
+find({ wanted => \&wanted, follow_fast => 1 }, $dirHead);
 
-print "Removed $num_removed images.\n\n" if($deloption);
-count_report() if($reportoption);
-
+print "Removed $num_removed images.\n\n" if ($deloption);
+count_report()                           if ($reportoption);
 
 # For depth database, empty it and insert only values for the images
 # we kept.
 my $ent;
-if($depthConnection) { # clean out database and put back in good values
+if ($depthConnection) {    # clean out database and put back in good values
 	$depthConnection->do("TRUNCATE depths");
 	for my $ent (keys %depths) {
-		$depthConnection->do("INSERT INTO `depths` VALUES(
-			\"$ent\", \"$depths{$ent}\")");
+		$depthConnection->do(
+			"INSERT INTO `depths` VALUES(
+			\"$ent\", \"$depths{$ent}\")"
+		);
 	}
 }
 
 ## The rest is updating the equation cache if we deleted images and there is a cache
-exit() unless($deloption and $num_removed);
+exit() unless ($deloption and $num_removed);
 exit() unless ($cachePath);
 print "Updating the equation cache\n";
-my ($perms, $uid, $groupID) = (stat $cachePath)[2,4,5]; #Get values from current cache file
+my ($perms, $uid, $groupID) = (stat $cachePath)[ 2, 4, 5 ];    #Get values from current cache file
 my $cachevalues = readFile($cachePath);
-my @cachelines = split "\n", $cachevalues;
+my @cachelines  = split "\n", $cachevalues;
 for $ent (@cachelines) {
-  chomp($ent);
-  my $entmd5 = $ent;
-  $entmd5 =~ s/^(\S+)\s+(\S+)\s+.*$/$1$2/;
-  if(defined($kept{$entmd5})) {
-    $kept{$entmd5} = $ent;
-  }
+	chomp($ent);
+	my $entmd5 = $ent;
+	$entmd5 =~ s/^(\S+)\s+(\S+)\s+.*$/$1$2/;
+	if (defined($kept{$entmd5})) {
+		$kept{$entmd5} = $ent;
+	}
 }
 
 #print "Temp file $tmpfile\n";
 #print "Cache file had group $groupID and perms $perms\n";
 open(OUTF, ">$tmpfile") or die "Could not write to temp file $tmpfile";
 for $ent (keys %kept) {
-  if($kept{$ent}) {
-    print OUTF $kept{$ent}."\n";
-  } else {print "could not find $ent\n";}
+	if ($kept{$ent}) {
+		print OUTF $kept{$ent} . "\n";
+	} else {
+		print "could not find $ent\n";
+	}
 }
 close(OUTF);
 rename($tmpfile, $cachePath);
@@ -270,8 +274,5 @@ rename($tmpfile, $cachePath);
 # the web server in which case it wasn't needed
 chmod $perms, $cachePath;
 chown $uid, $groupID, $cachePath;
-
-
-
 
 1;

@@ -616,7 +616,8 @@ sub setup_content_generator_routes_recursive {
 			ref($routeParameters{$child}{path}) eq 'HASH'
 			? %{ $routeParameters{$child}{path} }
 			: $routeParameters{$child}{path})->name($child);
-		$child_route->any($routeParameters{$child}{methods} // (), '/')->to("$routeParameters{$child}{module}#$action")
+		$child_route->any($routeParameters{$child}{methods} // (), '/')
+			->to("$routeParameters{$child}{module}#$action")
 			->name($child);
 		for (@{ $routeParameters{$child}{children} }) {
 			setup_content_generator_routes_recursive($child_route, $_);

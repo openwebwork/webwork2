@@ -1006,7 +1006,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			$c->c(
 				$c->tag('i',    class => 'icon fas fa-question-circle', 'aria-hidden' => 'true'),
 				$c->tag('span', class => 'visually-hidden',             $c->maketext('[_1] Help', $properties{name}))
-		)->join('')
+			)->join('')
 		)
 		: '';
 

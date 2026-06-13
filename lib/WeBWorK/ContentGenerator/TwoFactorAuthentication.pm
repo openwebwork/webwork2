@@ -56,8 +56,10 @@ sub pre_header_initialize ($c) {
 			# gmail (and probably other email providers as well) strips any links with hrefs that don't start with
 			# http[s]://.  The otpauth:// protocol of course does not.
 			my $mail =
-				Email::Stuffer->to($recipient)->from($ce->{twoFA}{email_sender})
-				->subject($c->maketext('Setup One-Time Password Authentication'))->html_body(
+				Email::Stuffer->to($recipient)
+				->from($ce->{twoFA}{email_sender})
+				->subject($c->maketext('Setup One-Time Password Authentication'))
+				->html_body(
 					'<DOCTYPE html><html '
 					. $c->output_course_lang_and_dir
 					. '><body>'
@@ -90,7 +92,8 @@ sub pre_header_initialize ($c) {
 						)
 					)->join('')->to_string
 					. '</body></html>'
-			)->attach($img_data, filename => 'QRCode.png')
+				)
+				->attach($img_data, filename => 'QRCode.png')
 				->header('X-Remote-Host' => $c->tx->remote_address || 'UNKNOWN')
 				->transport(createEmailSenderTransportSMTP($ce));
 
