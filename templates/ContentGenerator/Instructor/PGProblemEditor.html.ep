@@ -47,8 +47,7 @@
 	% source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]".')
 % );
 %
-% my $setName     = stash('setID')  // '';
-% my $fullSetName = $c->{fullSetID} // $setName;
+% my $setName = stash('setID') // '';
 %
 % my $fileInfo = begin
 	<div class="mb-2">
@@ -59,7 +58,7 @@
 					? maketext(
 						'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
 						$c->{prettyProblemNumber},
-						tag('span', dir => 'ltr', format_set_name_display($fullSetName)),
+						tag('span', dir => 'ltr', format_set_name_display($setName)),
 						tag('span', dir => 'ltr', class => 'current-file',
 							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
 							$c->shortPath($c->{inputFilePath}))
@@ -77,11 +76,11 @@
 <%= $fileInfo->() %>
 %
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
-	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
+	enctype => 'application/x-www-form-urlencoded', class => 'col-12', novalidate => undef, begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>
-	% if (defined $setName) {
+	% if ($setName ne '') {
 		<%= hidden_field hidden_set_id => $setName =%>
 	% }
 	% if (not_blank($c->{sourceFilePath})) {

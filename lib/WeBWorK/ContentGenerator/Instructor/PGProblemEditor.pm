@@ -129,8 +129,6 @@ use constant ACTION_FORM_TITLES => {
 	revert           => x('Revert'),
 };
 
-my $BLANKPROBLEM = 'newProblem.pg';
-
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
@@ -145,25 +143,11 @@ sub pre_header_initialize ($c) {
 	$c->{setID}     = $c->stash('setID');
 	$c->{problemID} = $c->stash('problemID');
 
-	# Parse setID which may come in with version data
-	$c->{fullSetID} = $c->{setID};
-	if (defined $c->{fullSetID} && $c->{fullSetID} =~ /^([^,]*),v(\d+)$/) {
-		$c->{setID}     = $1;
-		$c->{versionID} = $2;
-	}
-
 	# Determine displayMode and problemSeed that are needed for viewing the problem.
 	# They are also two of the parameters which can be set by the editor.
 	# Note that the problem seed may be overridden by the value obtained from the problem record later.
 	$c->{displayMode} = $c->param('displayMode') // $ce->{pg}{options}{displayMode};
 	$c->{problemSeed} = (($c->param('problemSeed') // '') =~ s/^\s*|\s*$//gr) || DEFAULT_SEED();
-
-	# Save file to permanent or temporary file, then redirect for viewing if it was requested to view in a new window.
-	# Any problem file "saved as" should be assigned to "Undefined_Set" and redirected to be viewed again in the editor.
-	# Problems "saved" or 'refreshed' are to be redirected to the Problem.pm module
-	# Set headers which are "saved" are to be redirected to the ProblemSet.pm page
-	# Hardcopy headers which are "saved" are also to be redirected to the ProblemSet.pm page
-	# Course info files are redirected to the ProblemSets.pm page
 
 	# Insure that file_type is defined
 	$c->{file_type} = ($c->param('file_type') // '') =~ s/^\s*|\s*$//gr;
@@ -239,7 +223,7 @@ sub initialize ($c) {
 	}
 
 	# Tell the templates if we are working on a PG file
-	$c->{is_pg} = !$c->{file_type} || ($c->{file_type} ne 'course_info' && $c->{file_type} ne 'hardcopy_theme');
+	$c->{is_pg} = $c->{file_type} =~ /problem/ || $c->{file_type} =~ /header/;
 
 	# Check permissions
 	return
@@ -261,14 +245,11 @@ sub initialize ($c) {
 		));
 	}
 
-	if ($c->{file_type} eq 'blank_problem' || $c->{file_type} eq 'sample_problem') {
-		$c->addbadmessage($c->maketext('This file is a template. You may use "Save As" to create a new file.'));
-	} elsif ($c->{inputFilePath} =~ /$BLANKPROBLEM$/) {
-		$c->addbadmessage($c->maketext(
-			'The file "[_1]" is a template. You may use "Save As" to create a new file.',
-			$c->shortPath($c->{inputFilePath})
-		));
-	}
+	$c->addbadmessage($c->maketext(
+		'The file "[_1]" is a template. You may use "Save As" to create a new file.',
+		$c->shortPath($c->{inputFilePath})
+	))
+		if !path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates});
 
 	# Find the text for the editor, either in the temporary file if it exists, in the original file in the template
 	# directory, or in the problem contents gathered in the initialization phase.
@@ -340,6 +321,8 @@ sub initialize ($c) {
 	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};
 	$c->{prettyProblemNumber} = join('.', jitar_id_to_seq($c->{prettyProblemNumber}))
 		if $c->{set} && $c->{set}->assignment_type eq 'jitar';
+
+	$c->{globalSets} = [ map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id') ] if $c->{is_pg};
 
 	return;
 }
@@ -523,36 +506,28 @@ sub getFilePaths ($c) {
 	} elsif ($c->{file_type} eq 'set_header' || $c->{file_type} eq 'hardcopy_header') {
 		my $set_record = $db->getGlobalSet($c->{setID});
 
-		if (defined $set_record) {
-			my $header_file = $set_record->{ $c->{file_type} };
-			if ($header_file && $header_file ne 'defaultHeader') {
-				if ($header_file =~ m|^/|) {
-					# Absolute address
-					$editFilePath = $header_file;
-				} else {
-					$editFilePath = "$ce->{courseDirs}{templates}/$header_file";
-				}
+		my $header_file = defined $set_record ? $set_record->{ $c->{file_type} } : '';
+		if ($header_file && $header_file ne 'defaultHeader') {
+			if ($header_file =~ m|^/|) {
+				# Absolute address
+				$editFilePath = $header_file;
 			} else {
-				# If the set record doesn't specify the filename for a header or it specifies the defaultHeader,
-				# then the set uses the default from assets/pg.
-				$editFilePath = $ce->{webworkFiles}{screenSnippets}{setHeader}
-					if $c->{file_type} eq 'set_header';
-				$editFilePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader}
-					if $c->{file_type} eq 'hardcopy_header';
+				$editFilePath = "$ce->{courseDirs}{templates}/$header_file";
 			}
 		} else {
-			$c->addbadmessage("Cannot find a set record for set $c->{setID}");
-			return;
+			# If the set record does not exist, or the set record doesn't specify the filename for a header or it
+			# specifies the defaultHeader, then the set uses the default from assets/pg.
+			$editFilePath = $ce->{webworkFiles}{screenSnippets}{setHeader}
+				if $c->{file_type} eq 'set_header';
+			$editFilePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader}
+				if $c->{file_type} eq 'hardcopy_header';
 		}
 	} elsif ($c->{file_type} eq 'problem') {
-		# First try getting the merged problem for the effective user.
-		my $effectiveUserName = $c->param('effectiveUser');
-		my $problem_record =
-			$c->{versionID}
-			? $db->getMergedProblemVersion($effectiveUserName, $c->{setID}, $c->{versionID}, $c->{problemID})
-			: $db->getMergedProblem($effectiveUserName, $c->{setID}, $c->{problemID});
+		# First try getting the merged problem for the current user.
+		my $problem_record = $db->getMergedProblem($c->param('user'), $c->{setID}, $c->{problemID});
 
-		# If that doesn't work, then the problem is not yet assigned. So get the global record.
+		# If that doesn't work, then the problem is not assigned to this user (or this problem belongs to a gateway
+		# test, since the problem editor can not deal with problems from versioned sets). So get the global record.
 		$problem_record = $db->getGlobalProblem($c->{setID}, $c->{problemID}) unless defined $problem_record;
 
 		if (defined $problem_record) {
@@ -866,6 +841,7 @@ sub hardcopy_handler ($c) {
 			hardcopy_theme => $c->param('action.hardcopy.theme')
 		}
 	));
+	return;
 }
 
 sub add_problem_handler ($c) {
@@ -1131,9 +1107,6 @@ sub save_as_handler ($c) {
 			'File "[_1]" exists. File not saved. No changes have been made.',
 			$c->shortPath($outputFilePath)
 		));
-		$c->addbadmessage(
-			$c->maketext('You can change the file path for this problem manually from the "Sets Manager" page'))
-			if defined $c->{setID};
 	}
 
 	if ($do_not_save) {
@@ -1141,9 +1114,13 @@ sub save_as_handler ($c) {
 			'The text box now contains the source of the original problem. '
 				. 'You can recover lost edits by using the Back button on your browser.'
 		));
-	}
 
-	unless ($do_not_save) {
+		# If the save mode is 'add_to_set_as_new_problem', but this problem is not in a set (for example for a sample
+		# problem), then the redirect for this save mode will fail since there is no set or problem id. So switch to the
+		# 'new_independent_file' save mode. That will work since it fills in the 'Undefined_Set' for the set id and 1
+		# for the problem id.
+		$saveMode = 'new_independent_file' if $saveMode eq 'add_to_set_as_new_problem' && !defined $c->{setID};
+	} else {
 		$c->{editFilePath} = $outputFilePath;
 		# saveFileChanges will update the tempFilePath and inputFilePath as needed.  Don't do that here.
 
@@ -1155,91 +1132,108 @@ sub save_as_handler ($c) {
 			# presented in the form.  So set that here so that the correct redirect is chosen below.
 			$saveMode = "new_$file_type";
 		} elsif ($saveMode eq 'rename' && -r $outputFilePath) {
-			# Modify source file path in problem.
-			if ($file_type eq 'set_header') {
-				my $setRecord = $db->getGlobalSet($c->{setID});
-				$setRecord->set_header($new_file_name);
-				if ($db->putGlobalSet($setRecord)) {
-					$c->addgoodmessage($c->maketext(
-						'The set header for set [_1] has been renamed to "[_2]".', $c->{setID},
-						$c->shortPath($outputFilePath)
-					));
-				} else {
-					$c->addbadmessage($c->maketext(
-						'Unable to change the set header for set [_1]. Unknown error.', $c->{setID}));
-				}
-			} elsif ($file_type eq 'hardcopy_header') {
-				my $setRecord = $db->getGlobalSet($c->{setID});
-				$setRecord->hardcopy_header($new_file_name);
-				if ($db->putGlobalSet($setRecord)) {
-					$c->addgoodmessage($c->maketext(
-						'The hardcopy header for set [_1] has been renamed to "[_2]".', $c->{setID},
-						$c->shortPath($outputFilePath)
-					));
-				} else {
-					$c->addbadmessage($c->maketext(
-						'Unable to change the hardcopy header for set [_1]. Unknown error.',
-						$c->{setID}
-					));
+			my $problemRecord = $db->getGlobalProblem($c->{setID}, $c->{problemID});
+			$problemRecord->source_file($new_file_name);
+			if ($db->putGlobalProblem($problemRecord)) {
+				$c->addgoodmessage($c->maketext(
+					'The source file for "set [_1] / problem [_2]" has been changed from "[_3]" to "[_4]".',
+					$c->{setID},
+					$c->{prettyProblemNumber},
+					$c->shortPath($c->{sourceFilePath}),
+					$c->shortPath($outputFilePath)
+				));
+			} else {
+				$c->addbadmessage($c->maketext(
+					'Unable to change the source file path for set [_1], problem [_2]. Unknown error.',
+					$c->{setID}, $c->{prettyProblemNumber}
+				));
+			}
+		} elsif ($saveMode eq 'set_as_heaader_for_set' && -r $outputFilePath) {
+			my $setID = $c->param('action.save_as.targetSet');
+			if (defined $setID && $setID =~ /\S/) {
+				$c->{setID} = $setID;
+				if ($file_type eq 'set_header') {
+					my $setRecord = $db->getGlobalSet($c->{setID});
+					$setRecord->set_header($new_file_name);
+					if ($db->putGlobalSet($setRecord)) {
+						$c->addgoodmessage($c->maketext(
+							'The set header for set [_1] has been set to "[_2]".', $c->{setID},
+							$c->shortPath($outputFilePath)
+						));
+					} else {
+						$c->addbadmessage($c->maketext(
+							'Unable to change the set header for set [_1]. Unknown error.',
+							$c->{setID}
+						));
+					}
+				} elsif ($file_type eq 'hardcopy_header') {
+					my $setRecord = $db->getGlobalSet($c->{setID});
+					$setRecord->hardcopy_header($new_file_name);
+					if ($db->putGlobalSet($setRecord)) {
+						$c->addgoodmessage($c->maketext(
+							'The hardcopy header for set [_1] has been set to "[_2]".', $c->{setID},
+							$c->shortPath($outputFilePath)
+						));
+					} else {
+						$c->addbadmessage($c->maketext(
+							'Unable to change the hardcopy header for set [_1]. Unknown error.',
+							$c->{setID}
+						));
+					}
 				}
 			} else {
-				my $problemRecord;
-				if ($c->{versionID}) {
-					$problemRecord =
-						$db->getMergedProblemVersion($c->param('effectiveUser'), $c->{setID}, $1, $c->{problemID});
-				} else {
-					$problemRecord = $db->getGlobalProblem($c->{setID}, $c->{problemID});
-				}
-				$problemRecord->source_file($new_file_name);
-				my $result =
-					$c->{versionID} ? $db->putProblemVersion($problemRecord) : $db->putGlobalProblem($problemRecord);
-
-				if ($result) {
-					$c->addgoodmessage($c->maketext(
-						'The source file for "set [_1] / problem [_2]" has been changed from "[_3]" to "[_4]".',
-						$c->{fullSetID},
-						$c->{prettyProblemNumber},
-						$c->shortPath($c->{sourceFilePath}),
-						$c->shortPath($outputFilePath)
-					));
-				} else {
-					$c->addbadmessage($c->maketext(
-						'Unable to change the source file path for set [_1], problem [_2]. Unknown error.',
-						$c->{fullSetID}, $c->{prettyProblemNumber}
-					));
-				}
+				my $headerType =
+					$file_type eq 'set_header' ? $c->maketext('set header') : $c->maketext('hardcopy header');
+				$c->addbadmessage($c->maketext(
+					'A new file has been created at "[_1]" with the contents below. However, '
+						. 'the file has not been set as the [_2] for a set, since no target set was specified.',
+					$c->shortPath($outputFilePath),
+					$headerType
+				));
+				$saveMode = 'new_independent_file';
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-			my $set = $db->getGlobalSet($c->{setID});
+			my $setID = $c->param('action.save_as.targetSet');
+			if (defined $setID && $setID =~ /\S/) {
+				$c->{setID} = $c->param('action.save_as.targetSet');
+				my $set = $db->getGlobalSet($c->{setID});
 
-			# For jitar sets new problems are put as top level problems at the end.
-			if ($set->assignment_type eq 'jitar') {
-				my @problemIDs = $db->listGlobalProblems($c->{setID});
-				@problemIDs = sort { $a <=> $b } @problemIDs;
-				my @seq = jitar_id_to_seq($problemIDs[-1]);
-				$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
+				# For jitar sets new problems are put as top level problems at the end.
+				if ($set->assignment_type eq 'jitar') {
+					my @problemIDs = $db->listGlobalProblems($c->{setID});
+					@problemIDs = sort { $a <=> $b } @problemIDs;
+					my @seq = jitar_id_to_seq($problemIDs[-1]);
+					$targetProblemNumber = seq_to_jitar_id($seq[0] + 1);
+				} else {
+					$targetProblemNumber = 1 + max($db->listGlobalProblems($c->{setID}));
+				}
+
+				my $problemRecord = addProblemToSet(
+					$db, $c->ce->{problemDefaults},
+					setName    => $c->{setID},
+					sourceFile => $new_file_name,
+					problemID  => $targetProblemNumber,
+				);
+				assignProblemToAllSetUsers($db, $problemRecord);
+				$c->addgoodmessage($c->maketext(
+					'Added [_1] to [_2] as problem [_3].',
+					$new_file_name,
+					$c->{setID},
+					(
+						$set->assignment_type eq 'jitar'
+						? join('.', jitar_id_to_seq($targetProblemNumber))
+						: $targetProblemNumber
+					)
+				));
 			} else {
-				$targetProblemNumber = 1 + max($db->listGlobalProblems($c->{setID}));
+				$c->addbadmessage($c->maketext(
+					'A new file has been created at "[_1]" with the contents below. '
+						. 'However, the problem has not been added to a set, since no target set was specified.',
+					$c->shortPath($outputFilePath)
+				));
+				$saveMode = 'new_independent_file';
 			}
-
-			my $problemRecord = addProblemToSet(
-				$db, $c->ce->{problemDefaults},
-				setName    => $c->{setID},
-				sourceFile => $new_file_name,
-				problemID  => $targetProblemNumber,    # Added to end of set
-			);
-			assignProblemToAllSetUsers($db, $problemRecord);
-			$c->addgoodmessage($c->maketext(
-				'Added [_1] to [_2] as problem [_3].',
-				$new_file_name,
-				$c->{setID},
-				(
-					$set->assignment_type eq 'jitar'
-					? join('.', jitar_id_to_seq($targetProblemNumber))
-					: $targetProblemNumber
-				)
-			));
-		} elsif ($saveMode eq 'new_independent_problem') {
+		} elsif ($saveMode eq 'new_independent_file') {
 			$c->addgoodmessage($c->maketext(
 				'A new file has been created at "[_1]" with the contents below.',
 				$c->shortPath($outputFilePath)
@@ -1260,15 +1254,15 @@ sub save_as_handler ($c) {
 	if ($saveMode eq 'new_course_info') {
 		$problemPage   = $c->url_for('instructor_problem_editor');
 		$new_file_type = 'course_info';
-	} elsif ($saveMode eq 'new_independent_problem') {
+	} elsif ($saveMode eq 'new_independent_file') {
 		$problemPage =
 			$c->url_for('instructor_problem_editor_withset_withproblem', setID => 'Undefined_Set', problemID => 1);
-		$new_file_type = 'source_path_for_problem_file';
+		$new_file_type = $file_type =~ /header/ ? $file_type : 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'new_hardcopy_theme') {
 		$problemPage                  = $c->url_for('instructor_problem_editor');
 		$new_file_type                = 'hardcopy_theme';
 		$extra_params{hardcopy_theme} = $new_file_name =~ s|^.*\/([^/]*\.xml)|$1|r;
-	} elsif ($saveMode eq 'rename') {
+	} elsif ($saveMode eq 'rename' || $saveMode eq 'set_as_heaader_for_set') {
 		$problemPage = $c->url_for(
 			'instructor_problem_editor_withset_withproblem',
 			setID     => $c->{setID},
@@ -1281,7 +1275,7 @@ sub save_as_handler ($c) {
 			setID     => $c->{setID},
 			problemID => $do_not_save ? $c->{problemID} : max($db->listGlobalProblems($c->{setID}))
 		);
-		$new_file_type = $file_type;
+		$new_file_type = 'problem';
 	} else {
 		$c->addbadmessage($c->maketext(
 			'Please use radio buttons to choose the method for saving this file. Unknown saveMode: [_1].', $saveMode
