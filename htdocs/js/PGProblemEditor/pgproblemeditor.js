@@ -242,11 +242,13 @@
 				}
 				if (request_object.pgCode === data.result_data.tidiedPGCode) {
 					showMessage('There were no changes to the code.', true);
+					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				} else {
 					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.tidiedPGCode;
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
 					showMessage('Successfully perltidied code.', true);
+					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
