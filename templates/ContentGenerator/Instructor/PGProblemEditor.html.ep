@@ -204,11 +204,12 @@
 		% my $line_contents = include("ContentGenerator/Instructor/PGProblemEditor/${actionID}_form");
 		% my $active        = '';
 		% my $disabled =
-			% $actionID eq 'revert'
-			% && (!defined($c->{tempFilePath}) || !-e $c->{tempFilePath})
-			% && !$c->getBackupTimes ? ' disabled' : '';
+			% ($actionID eq 'revert' && (!defined($c->{tempFilePath}) || !-e $c->{tempFilePath}) && !$c->getBackupTimes)
+			% || ($actionID eq 'save' && $line_contents eq '')
+			% || ($actionID eq 'add_problem' && $c->{is_pg} && $line_contents eq '')
+				% ? ' disabled' : '';
 		%
-		% if (($line_contents && $line_contents ne '') || $actionID eq 'revert') {
+		% if (($line_contents && $line_contents ne '') || $disabled) {
 			% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
 			% content_for 'tab-list' => begin
 				<li class="nav-item" role="presentation">
