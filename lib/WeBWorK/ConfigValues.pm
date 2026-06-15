@@ -1087,6 +1087,21 @@ sub getConfigValues ($ce) {
 			),
 			type => 'boolean'
 		},
+		'LTI{v1p1}{round_score_digits}' => {
+			var => 'LTI{v1p1}{round_score_digits}',
+			doc => x(
+				'Number of digits to round the score (between 0 and 1) sent to the LMS using LTI 1.1. '
+					. '(0 => disable rounding)'
+			),
+			doc2 => x(
+				'This sets the number of decimal digits to round the set score (a value between 0 and 1) sent to the '
+					. 'LMS using LTI 1.1.  A setting of 2 means the score is rounded to 2 digits or the nearest whole '
+					. 'percent.  Setting this to a number less than 2 will disable rounding.  Note that there maybe '
+					. 'some rounding since floats are used to compute and save scores in the database and the LMS may '
+					. 'round the score it recives.'
+			),
+			type => 'number'
+		},
 		'LTI{v1p1}{BasicConsumerSecret}' => {
 			var  => 'LTI{v1p1}{BasicConsumerSecret}',
 			doc  => x('LMS shared secret for LTI 1.1 authentication'),
