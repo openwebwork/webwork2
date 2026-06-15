@@ -19,6 +19,13 @@ $LTI{v1p1}{LMS_name} = 'the LMS';
 $LTI{v1p1}{LMS_url} = '';
 #$LTI{v1p1}{LMS_url} = 'https://myschool.edu/lms/';
 
+# This sets the number of decimal digits to round the score (a value between 0 and 1) sent to the LMS.
+# A setting of 2 means the score is rounded to 2 digits or the nearest whole percent. Setting this to
+# a number less than 2 will disable rounding. Note that there maybe some rounding since floats are
+# used to compute and save scores in the database and LMS may round the score received.
+$LTI{v1p1}{round_score_digits} = 2;
+#$LTI{v1p1}{round_score_digits} = 0;  # Disable rounding.
+
 ################################################################################################
 # LTI 1.1 preferred and fallback source of WW user_id
 ################################################################################################
