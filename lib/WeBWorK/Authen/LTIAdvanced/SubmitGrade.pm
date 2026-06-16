@@ -168,11 +168,13 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 
 # Submits a score of $score to the lms with $sourcedid as the identifier.
 async sub submit_grade ($self, $sourcedid, $score) {
-	my $c  = $self->{c};
-	my $ce = $c->{ce};
-	my $db = $c->{db};
+	my $c      = $self->{c};
+	my $ce     = $c->{ce};
+	my $db     = $c->{db};
+	my $digits = $ce->{LTI}{v1p1}{round_score_digits} // 2;
 
-	$score = wwRound(2, $score);
+	# Disable rounding unless rounding to two or more digits, which is the nearest whole percent.
+	$score = wwRound($digits, $score) if $digits > 1;
 
 	my $request_url = $db->getSettingValue('lis_outcome_service_url');
 	if (!$request_url) {
