@@ -1096,9 +1096,9 @@ sub getConfigValues ($ce) {
 			doc2 => x(
 				'This sets the number of decimal digits to round the set score (a value between 0 and 1) sent to the '
 					. 'LMS using LTI 1.1.  A setting of 2 means the score is rounded to 2 digits or the nearest whole '
-					. 'percent.  Setting this to a number less than 2 will disable rounding.  Note that there maybe '
+					. 'percent.  Setting this to a number less than 2 will disable rounding.  Note that there may be '
 					. 'some rounding since floats are used to compute and save scores in the database and the LMS may '
-					. 'round the score it recives.'
+					. 'round the score it receives.'
 			),
 			type => 'number'
 		},
