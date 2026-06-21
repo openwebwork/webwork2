@@ -1,5 +1,6 @@
 % # There are three things you can do with a new achievement editor.
 % # You can replace the current achievement, use it in a new achievement, or not use it at all.
+% param('action.save_as.saveMode', 'use_in_current') unless param('action.save_as.saveMode');
 <div>
 	<div class="row align-items-center mb-2">
 		<%= label_for 'action.save_as.target_file_id' => maketext('Save as:'), class => 'col-form-label col-auto' =%>
