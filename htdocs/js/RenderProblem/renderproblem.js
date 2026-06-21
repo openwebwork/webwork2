@@ -1,4 +1,17 @@
 (() => {
+	const renderedIframes = [];
+
+	window.addEventListener('message', (event) => {
+		if (event.data !== 'render-iframe-ready') return;
+		renderedIframes
+			.find((i) => i.contentWindow === event.source)
+			?.contentWindow.postMessage({
+				theme:
+					localStorage.getItem('WW.color-scheme') ??
+					(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+			});
+	});
+
 	// renderElement may either be the id of an html element, or directly an html element.
 	// If it is an html element, then that element must have an id.
 	webworkConfig.renderProblem = (renderElement, renderOptions) =>
@@ -28,7 +41,10 @@
 				send_pg_flags: 1,
 				extra_header_text:
 					'<style>' +
-					'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
+					'html{overflow-y:hidden;}' +
+					'body{padding:1px;background:#f5f5f5;}' +
+					'[data-bs-theme="dark"] body{background:var(--bs-primary-bg-subtle);}' +
+					'.container-fluid{padding:0px;}' +
 					'</style>',
 				...renderOptions
 			};
@@ -70,6 +86,7 @@
 						iframe.style.border = 'none';
 						while (renderArea.firstChild) renderArea.firstChild.remove();
 						renderArea.append(iframe);
+						renderedIframes.push(iframe);
 
 						if (data.pg_flags && data.pg_flags.comment) {
 							const container = document.createElement('div');

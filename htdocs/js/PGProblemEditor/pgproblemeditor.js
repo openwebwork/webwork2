@@ -593,6 +593,15 @@
 	iframe.title = 'Rendered content';
 	iframe.id = 'pgedit-render-iframe';
 
+	window.addEventListener('message', (event) => {
+		if (event.data !== 'render-iframe-ready' || iframe.contentWindow !== event.source) return;
+		iframe.contentWindow.postMessage({
+			theme:
+				localStorage.getItem('WW.color-scheme') ??
+				(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+		});
+	});
+
 	// Adjust editor dimensions when the window is resized and when the iframe loads.
 	const adjustIFrameHeight = () => {
 		if (document.body.clientWidth < 992) {

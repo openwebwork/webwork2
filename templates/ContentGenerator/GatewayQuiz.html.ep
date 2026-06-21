@@ -657,10 +657,9 @@
 						% delete stash->{briefErrorOutput};
 					% } else {
 						<div
-							class="problem-content text-dark col-lg-10"
+							class="problem-content col-lg-10"
 							<%== get_problem_lang_and_dir($pg->{flags}, $ce->{perProblemLangAndDirSettingMode},
 								$ce->{language}) %>
-							data-bs-theme="light"
 						>
 							<%== $pg->{body_text} =%>
 						</div>
