@@ -457,7 +457,7 @@ The parameter C<$c> must be a WeBWorK::Controller object.
 
 Returns an array of hash references with the keys "filepath" which is the
 relative file path in the OPL, "morelt" which is true if there are more problems
-like this one, "pgid" which is the internal datbase index of the problem,
+like this one, "pgid" which is the internal database index of the problem,
 "static" which is true if the problem is declared static (which it should be if
 it has no random parameters), and "MO" if the problem is declared to use
 MathObjects.

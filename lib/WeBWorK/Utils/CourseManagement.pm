@@ -690,7 +690,7 @@ Options must contain:
  ce => $ce,
 
 $ce is a WeBWorK::CourseEnvironment object that describes the course's
-environment. It is your responsability to pass a course environment object that
+environment. It is your responsibility to pass a course environment object that
 describes the course to be deleted. Do not pass the course environment object
 associated with the request, unless you are deleting the course you're currently
 using.
