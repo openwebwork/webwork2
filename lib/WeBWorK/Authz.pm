@@ -36,7 +36,7 @@ levels. The definitive list of activities is contained in the default version of
 
 A user is able to engage in an activity if their permission level is greater
 than or equal to the level associated with the activity. If the level associated
-with an activity is undefiend, then no user is permitted to perform the
+with an activity is undefined, then no user is permitted to perform the
 activity, regardless of their permission level.
 
 =cut
