@@ -790,7 +790,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 			$properties{help_text} =
 				'A test is broken up into pages with this many problems on each page.  Students can '
 				. 'move from page to page without clicking to grade the test, and their temporary answers will be '
-				. "saved. The site administator has capped this setting at $max. If only using 1 problem per page, "
+				. "saved. The site administrator has capped this setting at $max. If only using 1 problem per page, "
 				. 'the student has many pages and may be frustrated trying to reach a particular problem. However, '
 				. 'their answers will be saved more frequently as they move from page to page.';
 		}

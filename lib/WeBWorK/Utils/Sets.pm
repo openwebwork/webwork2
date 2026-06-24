@@ -367,7 +367,7 @@ the database, and must either return a reference to a hash containing the keys
 totalRight and total with the grade for the set, or C<undef>. If it returns
 C<undef> then the set will not be included in the grade computation.  Otherwise
 the values for totalRight and total that are returned will be added into the
-grade.  If the optional last arugment is not provided, then a default method
+grade.  If the optional last argument is not provided, then a default method
 will be used that returns the set grade if after the open date, and C<undef>
 otherwise.
 
