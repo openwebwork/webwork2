@@ -606,6 +606,17 @@ sub getConfigValues ($ce) {
 				type => 'permission'
 			},
 			{
+				var  => 'permissionLevels{override_indicator}',
+				doc  => x('Indicate each date overriding an assignment date'),
+				doc2 => x(
+					"On the Assignments page, if a primary date is shown for an assignment, and if the user's value of "
+						. 'that date is overriding the course assignment data, then show an indicator that this is the '
+						. 'case. This will happen for all users at permission level at or above the selected '
+						. 'permission level.'
+				),
+				type => 'permission'
+			},
+			{
 				var  => 'permissionLevels{view_unopened_sets}',
 				doc  => x('Allowed to view problems in sets which are not open yet'),
 				type => 'permission'
