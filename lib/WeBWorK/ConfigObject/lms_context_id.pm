@@ -22,7 +22,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 		my @courseMaps = $c->db->getLTICourseMapsWhere;
 
 		# If a context id is going to be set and the course is configured for LTI 1.3, then make sure it has all of the
-		# valid LTI 1.3 authentication parameters. Note that it is not neccessary to check that the LTIVersion is set.
+		# valid LTI 1.3 authentication parameters. Note that it is not necessary to check that the LTIVersion is set.
 		# If it were not, then this configuration setting would not be listed.
 		if ($ce->{LTIVersion} eq 'v1p3'
 			&& !($ce->{LTI}{v1p3}{PlatformID} && $ce->{LTI}{v1p3}{ClientID} && $ce->{LTI}{v1p3}{DeploymentID}))

@@ -32,7 +32,7 @@ our @EXPORT_OK = qw(
 # Performs functions of processing and recording the answer given in the page.
 # Returns the appropriate scoreRecordedMessage.
 # Note that $c must be a WeBWorK::ContentGenerator object whose associated route is parented by the set_list route.
-# In addition $c must have the neccessary hash data values set for this method.
+# In addition $c must have the necessary hash data values set for this method.
 # Those are 'will', 'problem', 'pg', and 'set'.
 async sub process_and_log_answer ($c) {
 	my $ce            = $c->ce;

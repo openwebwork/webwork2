@@ -62,7 +62,7 @@
 </p>
 <p class="mb-0">
 	<%== maketext('If you upload your file on the web with the name: [_1] and also create an email message with the '
-		. 'name [_2] with the approriate [_3] variables then not only can you email the message with the embedded '
+		. 'name [_2] with the appropriate [_3] variables then not only can you email the message with the embedded '
 		. 'grades to the students, but files with those exact names are automatically appended to the "Grades" page '
 		. 'seen by the students.',
 		'<code>report_grades_data.csv</code>', '<code>report_grade.msg</code>', '<code>$COL</code>') =%>

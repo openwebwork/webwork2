@@ -1148,7 +1148,7 @@ sub save_as_handler ($c) {
 					$c->{setID}, $c->{prettyProblemNumber}
 				));
 			}
-		} elsif ($saveMode eq 'set_as_heaader_for_set' && -r $outputFilePath) {
+		} elsif ($saveMode eq 'set_as_header_for_set' && -r $outputFilePath) {
 			my $setID = $c->param('action.save_as.targetSet');
 			if (defined $setID && $setID =~ /\S/) {
 				$c->{setID} = $setID;
@@ -1262,7 +1262,7 @@ sub save_as_handler ($c) {
 		$problemPage                  = $c->url_for('instructor_problem_editor');
 		$new_file_type                = 'hardcopy_theme';
 		$extra_params{hardcopy_theme} = $new_file_name =~ s|^.*\/([^/]*\.xml)|$1|r;
-	} elsif ($saveMode eq 'rename' || $saveMode eq 'set_as_heaader_for_set') {
+	} elsif ($saveMode eq 'rename' || $saveMode eq 'set_as_header_for_set') {
 		$problemPage = $c->url_for(
 			'instructor_problem_editor_withset_withproblem',
 			setID     => $c->{setID},
