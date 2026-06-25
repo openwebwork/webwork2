@@ -1,5 +1,5 @@
 To use achievement items you should import the default_achievement_items.axp
-achievements using the editor.  
+achievements using the editor.
 
 If you want to change which items are given at which levels you need to do two 
 things.  
@@ -62,6 +62,6 @@ The available items are:
 	id : Surprise
 	name : Mysterious Package (with Ribbons)
 	description : What could be inside?
-        this opens the file suprise_message.txt in the achievements 
+        this opens the file surprise_message.txt in the achievements
         folder and then prints the contetnts of the file.  
 

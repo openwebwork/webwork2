@@ -14,7 +14,7 @@
 	% # Display information about the current test and a continue open test button.
 	% if ($continueVersion->version_time_limit > 0) {
 		% if ($timeNow >= $continueVersion->due_date) {
-			% # If the currently open test is in the grace period, display a mesage stating this.
+			% # If the currently open test is in the grace period, display a message stating this.
 			<div class="alert alert-danger">
 				<%= maketext(
 					'There is no time remaining on the currently open test. '

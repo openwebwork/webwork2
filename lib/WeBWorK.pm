@@ -152,7 +152,7 @@ async sub dispatch ($c) {
 
 		if ($authen->verify) {
 			# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
-			# module will render and submit the login repost form.  This does not contain the neccessary information
+			# module will render and submit the login repost form.  This does not contain the necessary information
 			# to continue here.
 			return 1 if $c->current_route eq 'ltiadvantage_login';
 

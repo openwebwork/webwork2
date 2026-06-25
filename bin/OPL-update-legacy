@@ -532,7 +532,7 @@ if (open(IN, '<:encoding(UTF-8)', "$libraryRoot/Taxonomy2")) {
 # Taxonomy is a subset of Taxonomy2, so we can use the same code either way
 if ($canopenfile) {
 	my ($cursub, $curchap);      # these are strings
-	my ($subj, $chap, $sect);    # these are indeces
+	my ($subj, $chap, $sect);    # these are indices
 	while (my $line = <IN>) {
 		$line =~ /^(\t*)/;
 		my $count = length($1);
@@ -1019,7 +1019,7 @@ for my $chap (@{$dbchaps}) {
 }
 
 # Note: this used to build some JSON versions of the textbooks, subjects and directory trees
-# that could be used in the library browswer. It's functionality is now
+# that could be used in the library browser. It's functionality is now
 # in the updateOPLextras.pl script.
 
 $dbh->disconnect;

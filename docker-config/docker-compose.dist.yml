@@ -28,7 +28,7 @@ services:
       # Provides read only access to the host system's /etc/localtime - tested on Linux hosts
       #- "/etc/localtime:/etc/localtime:ro"
 
-      # The ulimits lines were only tested on Linux hosts in conjuction woth the limits.conf file
+      # The ulimits lines were only tested on Linux hosts in conjunction with the limits.conf file
       #ulimits:
       #  nofile:
       #    soft: 4096

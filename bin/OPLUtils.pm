@@ -5,8 +5,8 @@ use base qw(Exporter);
 #
 #  The following files are created:
 #		1. $webwork_htdocs/DATA/library-directory-tree.json  (the directory structure of the library)
-#		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section struture of the library)
-#		3. $webwork_htdocs/DATA/textbook-tree.json  (the subject/chapter/section struture of the library)
+#		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section structure of the library)
+#		3. $webwork_htdocs/DATA/textbook-tree.json  (the subject/chapter/section structure of the library)
 
 # the above JSON files can be used to load and more quickly lookup OPL information
 #

@@ -72,7 +72,7 @@
 	<dd>
 		<%= maketext('This is done by first entering the user as a student and then changing the permission level of '
 			. 'the user. First edit the user by clicking on the pencil next to their name (or using the technique '
-			. 'above for several users), then change their permssion level -- an entry blank at the far right of the '
+			. 'above for several users), then change their permission level -- an entry blank at the far right of the '
 			. 'screen, you may have to scroll to see it. The permission levels are') =%>
 		<ul>
 			<li><%= maketext('Guest:') %> -5</li>
@@ -174,7 +174,7 @@
 			. 'page or the "Instructor Tools" page.') =%>
 	</dd>
 
-	<dt><%= maketext('Change the number of atttempts allowed on a problem.') %></dt>
+	<dt><%= maketext('Change the number of attempts allowed on a problem.') %></dt>
 	<dd><%= maketext('This is done from the "Sets Manager" page or the "Instructor tools" page.') %></dd>
 </dl>
 
@@ -190,15 +190,15 @@
 <ul>
 	<li>
 		<%= maketext('Clicking on any active link at the top of the column sorts the page by that column. You can do '
-			. 'lexigraphic sorts: click on "First name" then "Last name" to sort by last name, sorting those with the '
-			. 'same last name by their first name.') =%>
+			. 'lexicographic sorts: click on "First name" then "Last name" to sort by last name, sorting those with '
+			. 'the same last name by their first name.') =%>
 	</li>
 	<li><%== maketext('The <strong>login name</strong> column links allow you to "act as" a student.') %></li>
 	<li>
 		<%== maketext(q{The <strong>pencil</strong> in the login column allows you to edit that student's data.}) =%>
 	</li>
 	<li>
-		<%== maketext('The <strong>Assigned sets</strong> column (x/y) indicates that x sets out of y sets avaiable '
+		<%== maketext('The <strong>Assigned sets</strong> column (x/y) indicates that x sets out of y sets available '
 			. 'have been assigned to this student. Click this link to assign or unassign sets to this student, to '
 			. 'adjust due dates, or to adjust the grades on an assignment for a student.') =%>
 	</li>

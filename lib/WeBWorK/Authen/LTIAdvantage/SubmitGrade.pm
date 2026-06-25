@@ -93,7 +93,7 @@ sub update_passback_data ($self, $userID) {
 		}
 	}
 
-	# Update the access token if neccessary.  No need to wait for it to finish here since the token is not needed yet.
+	# Update the access token if necessary.  No need to wait for it to finish here since the token is not needed yet.
 	# This just obtains it if needed for later.
 	$self->get_access_token;
 
