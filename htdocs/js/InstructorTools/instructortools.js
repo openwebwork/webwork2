@@ -9,7 +9,7 @@
 			(option) => option.selected
 		);
 
-		// Check for the neccessary data for the requested module.
+		// Check for the necessary data for the requested module.
 		// Show a message and prevent submission if it is missing.
 		const messages = [];
 

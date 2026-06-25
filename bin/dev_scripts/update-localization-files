@@ -6,7 +6,7 @@ function print_help_exit
 	printf " Update the webwork2.pot and language .po files with translation strings from the code.\n" >&2
 	printf "  options:\n" >&2
 	printf "    -p|--po-update  Update po files as well.  By default only the webwork2.pot file is updated.\n" >&2
-	printf "    -l|--langauge   Update the only given language in addition to updating the webwork2.pot file.\n" >&2
+	printf "    -l|--language   Update the only given language in addition to updating the webwork2.pot file.\n" >&2
 	printf "    -h|--help       Show this help.\n" >&2
 	exit 1
 }
