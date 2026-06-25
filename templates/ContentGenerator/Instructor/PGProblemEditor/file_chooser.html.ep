@@ -26,7 +26,7 @@
 				<%= text_field sourceFilePath => '',
 					id => 'source_file_path', class => 'form-control form-control-sm', size => 60, dir  => 'ltr' =%>
 				<div class="invalid-feedback">
-					<%= maketext('Plese enter a file with path relative to the course templates directory.') %>
+					<%= maketext('Please enter a file with path relative to the course templates directory.') %>
 				</div>
 			</div>
 		</div>

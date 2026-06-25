@@ -91,7 +91,7 @@ $saml2{sp}{entity_id} = 'http://localhost:8080/webwork2/saml2';
 # https://webwork.yourschool.edu/webwork2/saml2/metadata?courseID=myTestCourse
 # Further note that if multiple courses use that same identity provider then
 # just pick any one of the courses to use in the metadata URL. All of the other
-# courses share the same metedata.
+# courses share the same metadata.
 $saml2{sp}{org} = {
 	contact      => 'webwork@example.edu',
 	name         => 'webwork',

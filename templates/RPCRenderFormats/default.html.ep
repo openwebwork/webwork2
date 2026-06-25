@@ -159,7 +159,7 @@
 			</div>
 		% }
 	</main>
-	% # Show the footer unless it is explicity disabled.
+	% # Show the footer unless it is explicitly disabled.
 	% if ($showFooter ne '0') {
 		<footer id="footer" data-iframe-height="1">
 			WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 'unknown' %> |

@@ -85,7 +85,7 @@ done
 # Check first if the admin courses directory exists then check that at least one
 # of the tables associated with the course (the admin_user table) exists.
 #
-# The check for the database tables for the admin course is neccessary for the
+# The check for the database tables for the admin course is necessary for the
 # following situation. In rebuilding a docker box one might clear out the docker
 # containers, images and volumes including mariaDB, BUT leave the contents of
 # ww-docker-data directory in place.  It now holds the shell of the courses

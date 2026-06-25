@@ -17,7 +17,7 @@
 				<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
 					data-bs-content="<%= maketext(
 						'This gives the status and dates of the main set. '
-							. 'Indvidual students may have different settings.'
+							. 'Individual students may have different settings.'
 					) %>">
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Set Status Help') =%></span>
@@ -173,7 +173,7 @@
 	barLinks    => [ map { $_->{statsLink} } @$problems ],
 ) =%>
 %
-% # Table showing indvidual problem stats.
+% # Table showing individual problem stats.
 <div class="table-responsive">
 	<table class="table table-bordered">
 		<tr>

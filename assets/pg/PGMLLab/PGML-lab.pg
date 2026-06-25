@@ -286,7 +286,7 @@ TEXT(tag(
 						'External ANS' => [
 							<<~'ENDPG',
 								Context('Vector');
-								ANS(Vector(1, 2, 3)->cmp(showCoodinateHints => 0));
+								ANS(Vector(1, 2, 3)->cmp(showCoordinateHints => 0));
 								ENDPG
 							<<~'ENDPGML'
 								[:<1,2,3>:]* = [__________]

@@ -5,7 +5,7 @@
 			<%== maketext(
 				'WeBWorK &copy; [_1] | theme: [_2] | ww_version: [_3] | pg_version [_4]',
 				$ce->{WW_COPYRIGHT_YEARS} || 'unknown',
-				$ce->{defaultTheme}       || 'unknown -- set defaultTheme in localOverides.conf',
+				$ce->{defaultTheme}       || 'unknown -- set defaultTheme in localOverrides.conf',
 				$ce->{WW_VERSION}         || 'unknown -- set WW_VERSION in VERSION',
 				$ce->{PG_VERSION}         || 'unknown -- set PG_VERSION in ../pg/VERSION'
 			) %>
