@@ -15,7 +15,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
 
  render_rpc                          /render_rpc
  instructor_rpc                      /instructor_rpc
- html2xml                            /html2xml
 
  ltiadvanced_content_selection       /ltiadvanced/content_selection
 
@@ -140,7 +139,6 @@ my %routeParameters = (
 		# 'course_admin' is also a child of 'root' but that is a special case that is setup separately.
 		children => [ qw(
 			render_rpc
-			html2xml
 			instructor_rpc
 			ltiadvanced_content_selection
 			ltiadvantage_login
@@ -175,14 +173,6 @@ my %routeParameters = (
 		title  => 'instructor_rpc',
 		module => 'InstructorRPCHandler',
 		path   => '/instructor_rpc'
-	},
-
-	# The html2xml route is an deprecated alias to the render_rpc route above.
-	# It no longer has anything to do with xml, and so the route title does not make sense anymore.
-	html2xml => {
-		title  => 'html2xml',
-		module => 'RenderViaRPC',
-		path   => '/html2xml'
 	},
 
 	ltiadvanced_content_selection => {
