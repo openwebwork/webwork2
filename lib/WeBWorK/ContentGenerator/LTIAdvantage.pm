@@ -132,7 +132,6 @@ sub login ($c) {
 		'ContentGenerator/LTI/self_posting_form',
 		form_target => $c->ce->{LTI}{v1p3}{AuthReqURL},
 		form_params => {
-			repost           => 1,
 			response_type    => 'id_token',
 			response_mode    => 'form_post',
 			scope            => 'openid',
