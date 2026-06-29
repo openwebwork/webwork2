@@ -107,29 +107,31 @@
 			}
 
 			// Save the score.
-			const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
+			const apiURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/api`;
 
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 			try {
-				const response = await fetch(basicWebserviceURL, {
-					method: 'post',
-					mode: 'same-origin',
-					body: new URLSearchParams({
-						...authenParams,
-						rpc_command: saveData.versionId !== '0' ? 'putProblemVersion' : 'putUserProblem',
-						courseID: saveData.courseId,
-						user_id: saveData.studentId,
-						set_id: saveData.setId,
-						version_id: saveData.versionId,
-						problem_id: saveData.problemId,
-						status: parseInt(scoreInput.value) / 100,
-						...(saveData.saveSubStatus === '1' ? { sub_status: parseInt(scoreInput.value) / 100 } : {}),
-						mark_graded: true
-					}),
-					signal: controller.signal
-				});
+				const response = await fetch(
+					`${apiURL}/${saveData.versionId !== '0' ? 'putProblemVersion' : 'putUserProblem'}`,
+					{
+						method: 'post',
+						mode: 'same-origin',
+						body: new URLSearchParams({
+							...authenParams,
+							courseID: saveData.courseId,
+							user_id: saveData.studentId,
+							set_id: saveData.setId,
+							version_id: saveData.versionId,
+							problem_id: saveData.problemId,
+							status: parseInt(scoreInput.value) / 100,
+							...(saveData.saveSubStatus === '1' ? { sub_status: parseInt(scoreInput.value) / 100 } : {}),
+							mark_graded: true
+						}),
+						signal: controller.signal
+					}
+				);
 
 				clearTimeout(timeoutId);
 
@@ -170,11 +172,10 @@
 							const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 							try {
-								const response = await fetch(basicWebserviceURL, {
+								const response = await fetch(`${apiURL}/putPastAnswer`, {
 									method: 'post',
 									body: new URLSearchParams({
 										...authenParams,
-										rpc_command: 'putPastAnswer',
 										courseID: saveData.courseId,
 										answer_id: saveData.pastAnswerId,
 										comment_string: comment

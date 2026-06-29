@@ -1,6 +1,5 @@
 (() => {
-	const webworkURL = webworkConfig?.webwork_url ?? '/webwork2';
-	const basicWebserviceURL = `${webworkURL}/instructor_rpc`;
+	const apiURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/api`;
 
 	let unloading = false;
 	window.addEventListener('beforeunload', () => (unloading = true));
@@ -68,7 +67,7 @@
 		});
 	};
 
-	const init_webservice = (command) => {
+	const init_webservice = () => {
 		const authenParams = {};
 		const user = document.getElementsByName('user')[0];
 		if (user) authenParams.user = user.value;
@@ -76,12 +75,9 @@
 		if (sessionKey) authenParams.key = sessionKey.value;
 
 		return {
-			rpc_command: 'listLib',
 			library_name: 'Library',
-			command: 'buildtree',
 			...authenParams,
-			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
-			rpc_command: command
+			courseID: document.getElementsByName('hidden_course_id')[0]?.value
 		};
 	};
 
@@ -114,7 +110,7 @@
 	const lib_update = async (who, what) => {
 		const child = { subject: 'chapter', chapter: 'section', section: 'count' };
 
-		const requestObject = init_webservice('searchLib');
+		const requestObject = init_webservice();
 		requestObject.library_subject = librarySubject?.value ?? '';
 		requestObject.library_chapter = libraryChapter?.value ?? '';
 		requestObject.library_section = librarySection?.value ?? '';
@@ -140,7 +136,7 @@
 			const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 			try {
-				const response = await fetch(basicWebserviceURL, {
+				const response = await fetch(`${apiURL}/searchLib`, {
 					method: 'post',
 					mode: 'same-origin',
 					body: new URLSearchParams(requestObject),
@@ -156,7 +152,7 @@
 					if (data.error) {
 						throw data.error;
 					} else {
-						const num = data.result_data[0];
+						const num = data[0];
 						countLine.firstElementChild.innerHTML =
 							num === '1'
 								? 'There is 1 matching WeBWorK problem'
@@ -164,7 +160,7 @@
 					}
 				}
 			} catch (e) {
-				alertToast(basicWebserviceURL, e?.message ?? e);
+				alertToast(`${apiURL}/searchLib`, e?.message ?? e);
 			}
 			return;
 		}
@@ -190,7 +186,7 @@
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 		try {
-			const response = await fetch(basicWebserviceURL, {
+			const response = await fetch(`${apiURL}/searchLib`, {
 				method: 'post',
 				mode: 'same-origin',
 				body: new URLSearchParams(requestObject),
@@ -206,12 +202,12 @@
 				if (data.error) {
 					throw data.error;
 				} else {
-					setselect(`library_${who}`, data.result_data);
+					setselect(`library_${who}`, data);
 					lib_update(child[who], 'clear');
 				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e?.message ?? e);
+			alertToast(`${apiURL}/searchLib`, e?.message ?? e);
 		}
 	};
 
@@ -268,7 +264,7 @@
 			return;
 		}
 
-		const request = init_webservice('addProblem');
+		const request = init_webservice();
 		request.set_id = target;
 
 		const pathlist = [];
@@ -281,14 +277,14 @@
 
 		try {
 			// The requests must be awaited in the for loop so that the problems are added in the correct order.
-			// FIXME: It would be better to add a WebworkWebservice method to add multiple problems in one request.
+			// FIXME: It would be better to add a api call to add multiple problems in one request.
 			for (const path of pathlist) {
 				request.problemPath = path;
 
 				const controller = new AbortController();
 				const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-				const response = await fetch(basicWebserviceURL, {
+				const response = await fetch(`${apiURL}/addProblem`, {
 					method: 'post',
 					mode: 'same-origin',
 					body: new URLSearchParams(request),
@@ -305,7 +301,7 @@
 				}
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e?.message ?? e);
+			alertToast(`${apiURL}/addProblem`, e?.message ?? e);
 			return;
 		}
 
@@ -330,15 +326,14 @@
 
 	// Update the messages about which problems are in the current set.
 	const markinset = async () => {
-		const ro = init_webservice('listGlobalSetProblems');
+		const ro = init_webservice();
 		ro.set_id = document.getElementById('local_sets')?.value;
-		ro.command = 'true';
 
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 		try {
-			const response = await fetch(basicWebserviceURL, {
+			const response = await fetch(`${apiURL}/listGlobalSetProblems`, {
 				method: 'post',
 				mode: 'same-origin',
 				body: new URLSearchParams(ro),
@@ -352,7 +347,7 @@
 				if (data.error) {
 					throw data.error;
 				} else {
-					const paths = data.result_data.map((problem) => problem.path);
+					const paths = data.map((problem) => problem.source_file);
 					const shownProbs = document.querySelectorAll('[name^="filetrial"]');
 					for (const shownProb of shownProbs) {
 						const inset = document.getElementById(`inset${shownProb.name.replace('filetrial', '')}`);
@@ -364,7 +359,7 @@
 				throw 'Unknown server communication error.';
 			}
 		} catch (e) {
-			alertToast(basicWebserviceURL, e?.message ?? e);
+			alertToast(`${apiURL}/listGlobalSetProblems`, e?.message ?? e);
 		}
 	};
 

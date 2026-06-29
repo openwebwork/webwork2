@@ -6,9 +6,7 @@ FormatRenderedProblem.pm
 =cut
 
 package FormatRenderedProblem;
-
-use strict;
-use warnings;
+use Mojo::Base -signatures;
 
 use Digest::SHA qw(sha1_base64);
 use Mojo::Util  qw(xml_escape);
@@ -18,11 +16,10 @@ use Mojo::DOM;
 use WeBWorK::Utils                       qw(getAssetURL);
 use WeBWorK::Utils::LanguageAndDirection qw(get_lang_and_dir get_problem_lang_and_dir);
 
-sub formatRenderedProblem {
-	my $ws = shift;     # $ws is a WebworkWebservice object.
-	my $ce = $ws->ce;
+sub formatRenderedProblem ($c, $renderedProblem) {
+	my $ce = $c->ce;
 
-	my $rh_result = $ws->return_object;
+	my $inputsRef = $c->req->params->to_hash;
 
 	my $forbidGradePassback = 1;    # Default is to forbid, due to the security issue
 
@@ -37,19 +34,19 @@ sub formatRenderedProblem {
 
 	my $renderErrorOccurred = 0;
 
-	my $problemText = $rh_result->{text} // '';
-	if ($rh_result->{flags}{error_flag}) {
-		$rh_result->{problem_result}{score} = 0;    # force score to 0 for such errors.
-		$renderErrorOccurred                = 1;
-		$forbidGradePassback                = 1;    # due to render error
+	my $problemText = $renderedProblem->{text} // '';
+	if ($renderedProblem->{flags}{error_flag}) {
+		$renderedProblem->{problem_result}{score} = 0;    # force score to 0 for such errors.
+		$renderErrorOccurred                      = 1;
+		$forbidGradePassback                      = 1;    # due to render error
 	}
 
-	my $SITE_URL = $ws->c->server_root_url;
+	my $SITE_URL = $c->server_root_url;
 
-	my $displayMode = $ws->{inputs_ref}{displayMode} // 'MathJax';
+	my $displayMode = $inputsRef->{displayMode} // 'MathJax';
 
 	# HTML document language setting
-	my $formLanguage = $ws->{inputs_ref}{language} // 'en';
+	my $formLanguage = $inputsRef->{language} // 'en';
 
 	# Third party CSS
 	# The second element of each array in the following is whether or not the file is a theme file.
@@ -68,8 +65,8 @@ sub formatRenderedProblem {
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
-	if (ref($rh_result->{flags}{extra_css_files}) eq 'ARRAY') {
-		push @cssFiles, @{ $rh_result->{flags}{extra_css_files} };
+	if (ref($renderedProblem->{flags}{extra_css_files}) eq 'ARRAY') {
+		push @cssFiles, @{ $renderedProblem->{flags}{extra_css_files} };
 	}
 	my %cssFilesAdded;    # Used to avoid duplicates
 	my @extra_css_files;
@@ -99,13 +96,13 @@ sub formatRenderedProblem {
 	);
 
 	# Get the requested format.
-	my $formatName = $ws->{inputs_ref}{outputformat} // 'simple';
+	my $formatName = $inputsRef->{outputformat} // 'simple';
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my @extra_js_files;
-	if (ref($rh_result->{flags}{extra_js_files}) eq 'ARRAY') {
+	if (ref($renderedProblem->{flags}{extra_js_files}) eq 'ARRAY') {
 		my %jsFiles;
-		for (@{ $rh_result->{flags}{extra_js_files} }) {
+		for (@{ $renderedProblem->{flags}{extra_js_files} }) {
 			next if $jsFiles{ $_->{file} };
 			$jsFiles{ $_->{file} } = 1;
 			my %attributes = ref($_->{attributes}) eq 'HASH' ? %{ $_->{attributes} } : ();
@@ -122,17 +119,17 @@ sub formatRenderedProblem {
 	# PG files can request their language and text direction be set.  If we do not have access to a default course
 	# language, fall back to the $formLanguage instead.
 	my %PROBLEM_LANG_AND_DIR =
-		get_problem_lang_and_dir($rh_result->{flags}, $ce->{perProblemLangAndDirSettingMode}, $formLanguage);
+		get_problem_lang_and_dir($renderedProblem->{flags}, $ce->{perProblemLangAndDirSettingMode}, $formLanguage);
 	my $PROBLEM_LANG_AND_DIR = join(' ', map {qq{$_="$PROBLEM_LANG_AND_DIR{$_}"}} keys %PROBLEM_LANG_AND_DIR);
 
-	my $previewMode     = defined($ws->{inputs_ref}{previewAnswers}) || 0;
-	my $submitMode      = defined($ws->{inputs_ref}{WWsubmit})       || 0;
-	my $showCorrectMode = defined($ws->{inputs_ref}{WWcorrectAns})   || 0;
+	my $previewMode     = defined($inputsRef->{previewAnswers}) || 0;
+	my $submitMode      = defined($inputsRef->{WWsubmit})       || 0;
+	my $showCorrectMode = defined($inputsRef->{WWcorrectAns})   || 0;
 	# A problemUUID should be added to the request as a parameter.  It is used by PG to create a proper UUID for use in
 	# aliases for resources.  It should be unique for a course, user, set, problem, and version.
-	my $problemUUID   = $ws->{inputs_ref}{problemUUID} // '';
-	my $problemResult = $rh_result->{problem_result}   // {};
-	my $showSummary   = $ws->{inputs_ref}{showSummary} // 1;
+	my $problemUUID   = $inputsRef->{problemUUID}          // '';
+	my $problemResult = $renderedProblem->{problem_result} // {};
+	my $showSummary   = $inputsRef->{showSummary}          // 1;
 
 	# Result summary
 	my $resultSummary = '';
@@ -146,13 +143,13 @@ sub formatRenderedProblem {
 		&& ($submitMode || $showCorrectMode)
 		&& $problemResult->{summary})
 	{
-		$resultSummary = $ws->c->c(
-			$ws->c->tag(
+		$resultSummary = $c->c(
+			$c->tag(
 				'h2',
 				class => 'fs-3 mb-2',
-				$ws->c->maketext('Results for this submission')
+				$c->maketext('Results for this submission')
 				)
-				. $ws->c->tag('div', role => 'alert', $ws->c->b($problemResult->{summary}))
+				. $c->tag('div', role => 'alert', $c->b($problemResult->{summary}))
 		)->join('');
 	}
 
@@ -160,26 +157,27 @@ sub formatRenderedProblem {
 	my $answerhashXML = '';
 	if ($formatName eq 'ptx') {
 		my $dom = Mojo::DOM->new->xml(1);
-		for my $answer (sort keys %{ $rh_result->{answers} }) {
+		for my $answer (sort keys %{ $renderedProblem->{answers} }) {
 			$dom->append_content($dom->new_tag(
 				$answer,
-				map { $_ => ($rh_result->{answers}{$answer}{$_} // '') } keys %{ $rh_result->{answers}{$answer} }
+				map { $_ => ($renderedProblem->{answers}{$answer}{$_} // '') }
+					keys %{ $renderedProblem->{answers}{$answer} }
 			));
 		}
 		$dom->wrap_content('<answerhashes></answerhashes>');
 		$answerhashXML = $dom->to_string;
 
-		$ws->c->res->headers->content_type('text/xml; charset=utf-8')
-			if $ws->c->current_route eq 'render_rpc' && ($ws->c->param('displayMode') // '') eq 'PTX';
+		$c->res->headers->content_type('text/xml; charset=utf-8')
+			if $c->current_route eq 'render_rpc' && ($inputsRef->{displayMode} // '') eq 'PTX';
 	}
 
-	# Make sure $rh_result->{debug_messages} an array reference as saveGradeToLTI might add to it.
-	$rh_result->{debug_messages} = [] unless ref $rh_result->{debug_messages} eq 'ARRAY';
+	# Make sure $renderedProblem->{debug_messages} an array reference as saveGradeToLTI might add to it.
+	$renderedProblem->{debug_messages} = [] unless ref $renderedProblem->{debug_messages} eq 'ARRAY';
 
 	$forbidGradePassback = 1 if !$forbidGradePassback && !$submitMode;
 
 	# Try to save the grade to an LTI if one provided us data (depending on $forbidGradePassback)
-	my $LTIGradeMessage = saveGradeToLTI($ws, $ce, $rh_result, $forbidGradePassback);
+	my $LTIGradeMessage = saveGradeToLTI($c, $ce, $renderedProblem, $forbidGradePassback);
 
 	# Execute and return the interpolated problem template
 
@@ -191,9 +189,9 @@ sub formatRenderedProblem {
 		my $output = {};
 
 		# Everything that ships out with other formats can be constructed from these
-		$output->{rh_result}  = $rh_result;
-		$output->{inputs_ref} = $ws->{inputs_ref};
-		$output->{input}      = $ws->{input};
+		$output->{rh_result}  = $renderedProblem;
+		$output->{inputs_ref} = $inputsRef;
+		$output->{input}      = $c->{input};        # FIXME: What is this?
 
 		# The following could be constructed from the above, but this is a convenience
 		$output->{resultSummary}     = $resultSummary->to_string if $resultSummary;
@@ -201,7 +199,7 @@ sub formatRenderedProblem {
 		$output->{dir}               = $PROBLEM_LANG_AND_DIR{dir};
 		$output->{extra_css_files}   = \@extra_css_files;
 		$output->{extra_js_files}    = \@extra_js_files;
-		$output->{webwork_js_config} = $ws->c->webwork_js_config($ws->{inputs_ref}{showMathJaxErrors} // 0);
+		$output->{webwork_js_config} = $c->webwork_js_config($inputsRef->{showMathJaxErrors} // 0);
 
 		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
 		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.
@@ -214,7 +212,7 @@ sub formatRenderedProblem {
 		$output->{pg_version} = $ce->{PG_VERSION};
 
 		# Convert to JSON and render.
-		return $ws->c->render(data => encode_json($output));
+		return $c->render(data => encode_json($output));
 	}
 
 	# Setup arnd render the appropriate template in the templates/RPCRenderFormats folder depending on the outputformat.
@@ -223,22 +221,21 @@ sub formatRenderedProblem {
 		template => $formatName eq 'ptx' ? 'RPCRenderFormats/ptx' : 'RPCRenderFormats/default',
 		$formatName eq 'json' ? (format => 'json') : (),
 		formatName                   => $formatName,
-		ws                           => $ws,
 		ce                           => $ce,
 		lh                           => $lh,
-		rh_result                    => $rh_result,
+		rh_result                    => $renderedProblem,
 		SITE_URL                     => $SITE_URL,
-		FORM_ACTION_URL              => $SITE_URL . $ws->c->webwork_url . '/' . $ws->c->current_route,
+		FORM_ACTION_URL              => $SITE_URL . $c->webwork_url . '/' . $c->current_route,
 		COURSE_LANG_AND_DIR          => get_lang_and_dir($formLanguage),
-		theme                        => $ws->{inputs_ref}{theme} || $ce->{defaultTheme},
-		courseID                     => $ws->{inputs_ref}{courseID}       // '',
-		user                         => $ws->{inputs_ref}{user}           // '',
-		passwd                       => $ws->{inputs_ref}{passwd}         // '',
-		disableCookies               => $ws->{inputs_ref}{disableCookies} // '',
-		key                          => $ws->authen->{session_key},
+		theme                        => $inputsRef->{theme} || $ce->{defaultTheme},
+		courseID                     => $inputsRef->{courseID}       // '',
+		user                         => $inputsRef->{user}           // '',
+		passwd                       => $inputsRef->{passwd}         // '',
+		disableCookies               => $inputsRef->{disableCookies} // '',
+		key                          => $c->authen->{session_key},
 		PROBLEM_LANG_AND_DIR         => $PROBLEM_LANG_AND_DIR,
-		problemSeed                  => $rh_result->{problem_seed} // $ws->{inputs_ref}{problemSeed} // 6666,
-		psvn                         => $rh_result->{psvn}         // $ws->{inputs_ref}{psvn}        // 54321,
+		problemSeed                  => $renderedProblem->{problem_seed} // $inputsRef->{problemSeed} // 6666,
+		psvn                         => $renderedProblem->{psvn}         // $inputsRef->{psvn}        // 54321,
 		problemUUID                  => $problemUUID,
 		displayMode                  => $displayMode,
 		third_party_css              => \@third_party_css,
@@ -246,55 +243,55 @@ sub formatRenderedProblem {
 		third_party_js               => \@third_party_js,
 		extra_js_files               => \@extra_js_files,
 		problemText                  => $problemText,
-		extra_header_text            => $ws->{inputs_ref}{extra_header_text} // '',
+		extra_header_text            => $inputsRef->{extra_header_text} // '',
 		resultSummary                => $resultSummary,
 		showScoreSummary             => $submitMode && !$renderErrorOccurred && $problemResult,
 		answerhashXML                => $answerhashXML,
 		LTIGradeMessage              => $LTIGradeMessage,
-		sourceFilePath               => $ws->{inputs_ref}{sourceFilePath}          // '',
-		problemSource                => $ws->{inputs_ref}{problemSource}           // '',
-		rawProblemSource             => $ws->{inputs_ref}{rawProblemSource}        // '',
-		uriEncodedProblemSource      => $ws->{inputs_ref}{uriEncodedProblemSource} // '',
-		fileName                     => $ws->{inputs_ref}{fileName}                // '',
+		sourceFilePath               => $inputsRef->{sourceFilePath}          // '',
+		problemSource                => $inputsRef->{problemSource}           // '',
+		rawProblemSource             => $inputsRef->{rawProblemSource}        // '',
+		uriEncodedProblemSource      => $inputsRef->{uriEncodedProblemSource} // '',
+		fileName                     => $inputsRef->{fileName}                // '',
 		formLanguage                 => $formLanguage,
-		isInstructor                 => $ws->{inputs_ref}{isInstructor}       // '',
-		forceScaffoldsOpen           => $ws->{inputs_ref}{forceScaffoldsOpen} // '',
+		isInstructor                 => $inputsRef->{isInstructor}       // '',
+		forceScaffoldsOpen           => $inputsRef->{forceScaffoldsOpen} // '',
 		showSummary                  => $showSummary,
-		showHints                    => $ws->{inputs_ref}{showHints}                    // '',
-		showSolutions                => $ws->{inputs_ref}{showSolutions}                // '',
-		showPreviewButton            => $ws->{inputs_ref}{showPreviewButton}            // '',
-		showCheckAnswersButton       => $ws->{inputs_ref}{showCheckAnswersButton}       // '',
-		showCorrectAnswersButton     => $ws->{inputs_ref}{showCorrectAnswersButton}     // '',
-		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
-		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
-		problem_data                 => encode_json($rh_result->{PERSISTENCE_HASH}),
-		showMathJaxErrors            => $ws->{inputs_ref}{showMathJaxErrors} // 0,
-		pretty_print                 => \&pretty_print
+		showHints                    => $inputsRef->{showHints}                    // '',
+		showSolutions                => $inputsRef->{showSolutions}                // '',
+		showPreviewButton            => $inputsRef->{showPreviewButton}            // '',
+		showCheckAnswersButton       => $inputsRef->{showCheckAnswersButton}       // '',
+		showCorrectAnswersButton     => $inputsRef->{showCorrectAnswersButton}     // '',
+		showCorrectAnswersOnlyButton => $inputsRef->{showCorrectAnswersOnlyButton} // 0,
+		showFooter                   => $inputsRef->{showFooter}                   // '',
+		problem_data                 => encode_json($renderedProblem->{PERSISTENCE_HASH}),
+		showMathJaxErrors            => $inputsRef->{showMathJaxErrors} // 0,
 	);
 
-	return $ws->c->render(%template_params) if $formatName eq 'json' || !$ws->{inputs_ref}{send_pg_flags};
-	return $ws->c->render(
-		json => { html => $ws->c->render_to_string(%template_params)->to_string, pg_flags => $rh_result->{flags} });
+	return $c->render(%template_params) if $formatName eq 'json' || !$inputsRef->{send_pg_flags};
+	return $c->render(json =>
+			{ html => $c->render_to_string(%template_params)->to_string, pg_flags => $renderedProblem->{flags} });
 }
 
-sub saveGradeToLTI {
-	my ($ws, $ce, $rh_result, $forbidGradePassback) = @_;
+sub saveGradeToLTI ($c, $ce, $renderedProblem, $forbidGradePassback) {
 	# When $forbidGradePassback is set, we will block the actual submission,
 	# but we still provide the LTI data in the hidden fields.
 
-	return ''
-		if !(defined($ws->{inputs_ref}{lis_outcome_service_url})
-			&& defined($ws->{inputs_ref}{'oauth_consumer_key'})
-			&& defined($ws->{inputs_ref}{'oauth_signature_method'})
-			&& defined($ws->{inputs_ref}{'lis_result_sourcedid'})
-			&& defined($ce->{'LISConsumerKeyHash'}{ $ws->{inputs_ref}{'oauth_consumer_key'} }));
+	my $inputsRef = $c->req->params->to_hash;
 
-	my $request_url      = $ws->{inputs_ref}{lis_outcome_service_url};
-	my $consumer_key     = $ws->{inputs_ref}{'oauth_consumer_key'};
-	my $signature_method = $ws->{inputs_ref}{'oauth_signature_method'};
-	my $sourcedid        = $ws->{inputs_ref}{'lis_result_sourcedid'};
+	return ''
+		if !(defined($inputsRef->{lis_outcome_service_url})
+			&& defined($inputsRef->{'oauth_consumer_key'})
+			&& defined($inputsRef->{'oauth_signature_method'})
+			&& defined($inputsRef->{'lis_result_sourcedid'})
+			&& defined($ce->{'LISConsumerKeyHash'}{ $inputsRef->{'oauth_consumer_key'} }));
+
+	my $request_url      = $inputsRef->{lis_outcome_service_url};
+	my $consumer_key     = $inputsRef->{'oauth_consumer_key'};
+	my $signature_method = $inputsRef->{'oauth_signature_method'};
+	my $sourcedid        = $inputsRef->{'lis_result_sourcedid'};
 	my $consumer_secret  = $ce->{'LISConsumerKeyHash'}{$consumer_key};
-	my $score            = $rh_result->{problem_result} ? $rh_result->{problem_result}{score} : 0;
+	my $score            = $renderedProblem->{problem_result} ? $renderedProblem->{problem_result}{score} : 0;
 
 	my $LTIGradeMessage = '';
 
@@ -367,80 +364,24 @@ EOS
 			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
 			if ($message ne 'success') {
-				$LTIGradeMessage = $ws->c->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
-				push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
+				$LTIGradeMessage = $c->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
+				push(@{ $renderedProblem->{debug_messages} }, xml_escape($response->content));
 			} else {
-				$LTIGradeMessage = $ws->c->tag('p', 'Grade successfully saved.')->to_string;
+				$LTIGradeMessage = $c->tag('p', 'Grade successfully saved.')->to_string;
 			}
 		} else {
-			$LTIGradeMessage = $ws->c->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;
-			push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
+			$LTIGradeMessage = $c->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;
+			push(@{ $renderedProblem->{debug_messages} }, xml_escape($response->content));
 		}
 	}
 
 	# save parameters for next time
-	$LTIGradeMessage .= $ws->c->hidden_field(lis_outcome_service_url => $request_url)->to_string;
-	$LTIGradeMessage .= $ws->c->hidden_field(oauth_consumer_key      => $consumer_key)->to_string;
-	$LTIGradeMessage .= $ws->c->hidden_field(oauth_signature_method  => $signature_method)->to_string;
-	$LTIGradeMessage .= $ws->c->hidden_field(lis_result_sourcedid    => $sourcedid)->to_string;
+	$LTIGradeMessage .= $c->hidden_field(lis_outcome_service_url => $request_url)->to_string;
+	$LTIGradeMessage .= $c->hidden_field(oauth_consumer_key      => $consumer_key)->to_string;
+	$LTIGradeMessage .= $c->hidden_field(oauth_signature_method  => $signature_method)->to_string;
+	$LTIGradeMessage .= $c->hidden_field(lis_result_sourcedid    => $sourcedid)->to_string;
 
 	return $LTIGradeMessage;
-}
-
-# Nice output for debugging
-sub pretty_print {
-	my ($r_input, $level) = @_;
-	return 'undef' unless defined $r_input;
-
-	$level //= 4;
-	$level--;
-	return 'too deep' unless $level > 0;
-
-	my $ref = ref($r_input);
-
-	if (!$ref) {
-		return xml_escape($r_input);
-	} elsif (eval { %$r_input || 1 }) {
-		# `eval { %$r_input || 1 }` will pick up all objectes that can be accessed like a hash and so works better than
-		# `ref $r_input`.  Do not use `"$r_input" =~ /hash/i` because that will pick up strings containing the word
-		# hash, and that will cause an error below.
-		my $out =
-			'<div style="display:table;border:1px solid black;background-color:#fff;">'
-			. ($ref eq 'HASH'
-				? ''
-				: '<div style="'
-				. 'display:table-caption;padding:3px;border:1px solid black;background-color:#fff;text-align:center;">'
-				. "$ref</div>")
-			. '<div style="display:table-row-group">';
-		for my $key (sort keys %$r_input) {
-			# Safety feature - we do not want to display the contents of %seed_ce which
-			# contains the database password and lots of other things, and explicitly hide
-			# certain internals of the CourseEnvironment in case one slips in.
-			next
-				if (($key =~ /database/)
-					|| ($key eq "ConfigValues")
-					|| ($key eq "ENV")
-					|| ($key eq "externalPrograms")
-					|| ($key eq "permissionLevels")
-					|| ($key eq "seed_ce"));
-			$out .=
-				'<div style="display:table-row"><div style="display:table-cell;vertical-align:middle;padding:3px">'
-				. xml_escape($key)
-				. '</div>'
-				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">=&gt;</div>}
-				. qq{<div style="display:table-cell;vertical-align:middle;padding:3px">}
-				. pretty_print($r_input->{$key}, $level)
-				. '</div></div>';
-		}
-		$out .= '</div></div>';
-		return $out;
-	} elsif ($ref eq 'ARRAY') {
-		return '[ ' . join(', ', map { pretty_print($_, $level) } @$r_input) . ' ]';
-	} elsif ($ref eq 'CODE') {
-		return 'CODE';
-	} else {
-		return xml_escape($r_input);
-	}
 }
 
 1;

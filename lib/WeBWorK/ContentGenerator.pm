@@ -93,11 +93,9 @@ The method content() is called to send the page content to client.
 =cut
 
 async sub go ($c) {
-	my $ce = $c->ce;
-
 	# If grades are being passed back to the lti, then periodically update all of the
 	# grades because things can get out of sync if instructors add or modify sets.
-	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $ce->{LTIGradeMode};
+	massUpdate($c) if $c->stash('courseID') && ref($c->db) && $c->ce->{LTIGradeMode};
 
 	# Check to determine if this is a problem set response.  Individual content generators must check
 	# $c->{invalidSet} and react appropriately.
@@ -105,7 +103,7 @@ async sub go ($c) {
 
 	# We only write to the activity log if it has been defined and if we are in a specific course.  The latter check is
 	# to prevent attempts to write to a course log file when viewing the top-level list of courses page.
-	writeCourseLog($ce, 'activity_log', $c->prepare_activity_entry)
+	writeCourseLog($c->ce, 'activity_log', $c->prepare_activity_entry)
 		if ($c->stash('courseID') && $c->ce->{courseFiles}{logs}{activity_log});
 
 	my $tx = $c->render_later->tx;

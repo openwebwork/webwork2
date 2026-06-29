@@ -3,14 +3,12 @@
 
 HardcopyRenderedProblem.pm -- Generate a pdf file or zip file containing a tex
 file and the necessary files to generate the pdf file from the result of the
-renderProblem method.
+C<WeBWorK::ContentGenerator::RenderViaRPC::renderProblem> method.
 
 =cut
 
 package HardcopyRenderedProblem;
-
-use strict;
-use warnings;
+use Mojo::Base -signatures;
 
 use File::Path;
 use String::ShellQuote;
@@ -18,22 +16,18 @@ use Archive::Zip qw(:ERROR_CODES);
 use Mojo::File   qw(path tempdir);
 use XML::LibXML;
 
-sub hardcopyRenderedProblem {
-	my $ws = shift;     # $ws is a WebworkWebservice object.
-	my $c  = $ws->c;
-	my $ce = $ws->ce;
-
-	my $rh_result = $ws->return_object;
+sub hardcopyRenderedProblem ($c, $renderedProblem) {
+	my $ce = $c->ce;
 
 	# Deal with PG errors
-	return $rh_result->{errors} if $rh_result->{flags}{error_flag};
+	return $renderedProblem->{errors} if $renderedProblem->{flags}{error_flag};
 
-	return 'This problem has no content.' unless $rh_result->{text};
+	return 'This problem has no content.' unless $renderedProblem->{text};
 
 	my @errors;
 
-	my $courseID = $ws->{inputs_ref}{courseID};
-	my $userID   = $ws->{inputs_ref}{user};
+	my $courseID = $c->req->param('courseID');
+	my $userID   = $c->req->param('user');
 
 	# Create the parent directory for the temporary working directory.
 	my $temp_dir_parent_path = path("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
@@ -53,7 +47,7 @@ sub hardcopyRenderedProblem {
 	# Use the basename of the source file path without the extension prefixed with the course id and user id for the
 	# working directory name and download filename.
 	my $returnFileName =
-		"$courseID.$userID." . ((($ws->{inputs_ref}{sourceFilePath} =~ s/^.*\///r) =~ s/\.[^.]*$//r) || 'hardcopy');
+		"$courseID.$userID." . ((($c->req->param('sourceFilePath') =~ s/^.*\///r) =~ s/\.[^.]*$//r) || 'hardcopy');
 
 	# Create a subdirectory of that to do all of the work in.  This directory will be zipped
 	# if the tex outputformat is specified or if pdf generation fails or has errors.
@@ -71,12 +65,12 @@ sub hardcopyRenderedProblem {
 		push(@errors, qq{Failed to open file "$tex_file" for writing: $!});
 		return join("\n", @errors);
 	}
-	write_tex($ws, $fh, \@errors);
+	write_tex($c, $renderedProblem, $fh, \@errors);
 	$fh->close;
 
 	# Call the pdf generation subroutine if the pdf outputformat was specified or if no outputformat was specified.
-	if (!$ws->{inputs_ref}{outputformat} || $ws->{inputs_ref}{outputformat} eq 'pdf') {
-		generate_hardcopy_pdf($ws, $working_dir, \@errors);
+	if (!$c->req->param('outputformat') || $c->req->param('outputformat') eq 'pdf') {
+		generate_hardcopy_pdf($c, $working_dir, \@errors);
 
 		# Send the pdf file if it was successfully generated with no errors.
 		my $pdf_file = $working_dir->child('hardcopy.pdf');
@@ -90,7 +84,7 @@ sub hardcopyRenderedProblem {
 
 	# Call the tex generation subroutine if the tex outputformat was specified,
 	# or if there were errors in generating the pdf file.
-	generate_hardcopy_tex($ws, $working_dir, \@errors);
+	generate_hardcopy_tex($c, $renderedProblem, $working_dir, \@errors);
 
 	# Send the zip file if it exists.
 	my $zip_file = $temp_dir_path->child('hardcopy.zip');
@@ -107,12 +101,11 @@ sub hardcopyRenderedProblem {
 }
 
 # This subroutine assumes that the TeX source file is located at $working_dir/hardcopy.tex.
-sub generate_hardcopy_tex {
-	my ($ws, $working_dir, $errors) = @_;
+sub generate_hardcopy_tex ($c, $renderedProblem, $working_dir, $errors) {
 	my $src_file = $working_dir->child('hardcopy.tex');
 
 	# Copy the common tex files into the working directory
-	my $ce            = $ws->c->ce;
+	my $ce            = $c->ce;
 	my $assetsTex_dir = path($ce->{webworkDirs}{assetsTex});
 	for (qw{webwork2.sty webwork_logo.png}) {
 		eval { $assetsTex_dir->child($_)->copy_to($working_dir) };
@@ -131,7 +124,7 @@ sub generate_hardcopy_tex {
 		if $@;
 
 	# Attempt to copy image files used into the working directory.
-	my $resource_list = $ws->return_object->{resource_list};
+	my $resource_list = $renderedProblem->{resource_list};
 	if ($resource_list && keys %$resource_list) {
 		my $data = eval { $src_file->slurp };
 		unless ($@) {
@@ -166,9 +159,7 @@ sub generate_hardcopy_tex {
 }
 
 # This subroutine assumes that the TeX source file is located at $working_dir/hardcopy.tex.
-sub generate_hardcopy_pdf {
-	my ($ws, $working_dir, $errors) = @_;
-
+sub generate_hardcopy_pdf ($c, $working_dir, $errors) {
 	# Save the current working directory and change to the temporary directory.
 	my $cwd = path->to_abs;
 	chdir($working_dir);
@@ -176,9 +167,9 @@ sub generate_hardcopy_pdf {
 	# Generate the pdf file with the configured LaTeX external command.
 	my $latex_cmd =
 		'TEXINPUTS=.:'
-		. shell_quote($ws->c->ce->{webworkDirs}{assetsTex}) . ':'
-		. shell_quote($ws->c->ce->{pg}{directories}{assetsTex}) . ': '
-		. $ws->c->ce->{externalPrograms}{latex2pdf}
+		. shell_quote($c->ce->{webworkDirs}{assetsTex}) . ':'
+		. shell_quote($c->ce->{pg}{directories}{assetsTex}) . ': '
+		. $c->ce->{externalPrograms}{latex2pdf}
 		. ' > latex.stdout 2> latex.stderr hardcopy';
 
 	if (my $rawexit = system $latex_cmd) {
@@ -196,13 +187,11 @@ sub generate_hardcopy_pdf {
 	return;
 }
 
-sub write_tex {
-	my ($ws, $FH, $errors) = @_;
-	my $c  = $ws->c;
+sub write_tex ($c, $renderedProblem, $FH, $errors) {
 	my $ce = $c->ce;
 
 	# get theme
-	my $theme = $c->param('hardcopy_theme') // $ce->{hardcopyThemePGEditor};
+	my $theme = $c->req->param('hardcopy_theme') // $ce->{hardcopyThemePGEditor};
 	my $themeFile;
 	if (-e "$ce->{courseDirs}{hardcopyThemes}/$theme") {
 		$themeFile = "$ce->{courseDirs}{hardcopyThemes}/$theme";
@@ -219,7 +208,7 @@ sub write_tex {
 	print $FH $themeTree->findvalue('/theme/presetheader');
 	print $FH $themeTree->findvalue('/theme/postsetheader');
 	print $FH $themeTree->findvalue('/theme/problemheader');
-	write_problem_tex($ws, $FH);
+	write_problem_tex($c, $renderedProblem, $FH);
 	print $FH $themeTree->findvalue('/theme/problemfooter');
 	print $FH $themeTree->findvalue('/theme/setfooter');
 	print $FH $themeTree->findvalue('/theme/postamble');
@@ -227,20 +216,17 @@ sub write_tex {
 	return;
 }
 
-sub write_problem_tex {
-	my ($ws, $FH) = @_;
-	my $c = $ws->c;
+sub write_problem_tex ($c, $renderedProblem, $FH) {
+	if ($c->req->param('showSourceFile')) {
+		my $sourceFilePath = $c->req->param('sourceFilePath');
+		print $FH " {\\footnotesize\\path|$sourceFilePath|}\n\n\\vspace{\\baselineskip}";
+	}
 
-	my $rh_result = $ws->return_object;
-
-	print $FH " {\\footnotesize\\path|$ws->{inputs_ref}{sourceFilePath}|}\n\n\\vspace{\\baselineskip}"
-		if ($ws->{inputs_ref}{showSourceFile});
-
-	print $FH $rh_result->{text};
+	print $FH $renderedProblem->{text};
 
 	# Write the correct answers if requested and there are answers to write.
-	if ($ws->{inputs_ref}{WWcorrectAns}) {
-		my @ans_entry_order = @{ $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [] };
+	if ($c->req->param('WWcorrectAns')) {
+		my @ans_entry_order = @{ $renderedProblem->{flags}{ANSWER_ENTRY_ORDER} // [] };
 		if (@ans_entry_order) {
 			my $correctTeX =
 				"\n\n\\vspace{\\baselineskip}\\par{\\small{\\it "
@@ -250,8 +236,8 @@ sub write_problem_tex {
 			for (@ans_entry_order) {
 				$correctTeX .=
 					"\\item\n\$\\displaystyle "
-					. ($rh_result->{answers}{$_}{correct_ans_latex_string}
-						|| "\\text{$rh_result->{answers}{$_}{correct_ans}}") . "\$\n";
+					. ($renderedProblem->{answers}{$_}{correct_ans_latex_string}
+						|| "\\text{$renderedProblem->{answers}{$_}{correct_ans}}") . "\$\n";
 			}
 
 			$correctTeX .= "\\end{itemize}}\\par\n";
@@ -262,9 +248,9 @@ sub write_problem_tex {
 
 	# If there are any PG warnings and the view_problem_debugging_info parameter was set,
 	# then append the warnings to end of the tex file.
-	if ($ws->{inputs_ref}{view_problem_debugging_info} && $rh_result->{pg_warnings}) {
+	if ($c->req->param('view_problem_debugging_info') && $renderedProblem->{pg_warnings}) {
 		print $FH "\n\n\\vspace{\\baselineskip}\\par\n" . $c->maketext('Warning messages:') . "\n\\begin{itemize}\n";
-		for (split("\n", $rh_result->{pg_warnings})) {
+		for (split("\n", $renderedProblem->{pg_warnings})) {
 			print $FH "\\item \\verb|$_|\n";
 		}
 		print $FH "\\end{itemize}\n";

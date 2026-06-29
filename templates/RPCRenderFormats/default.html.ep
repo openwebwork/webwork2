@@ -116,13 +116,9 @@
 						%= hidden_field showFooter => $showFooter
 						%= hidden_field extra_header_text => $extra_header_text
 						%= hidden_field problem_data => $problem_data
-						% if ($ws->{inputs_ref}{answerPrefix}) {
-							%= hidden_field answerPrefix => $ws->{inputs_ref}{answerPrefix}
+						% if ($c->req->param('answerPrefix')) {
+							%= hidden_field answerPrefix => $c->req->param('answerPrefix')
 						% }
-						% if ($formatName eq 'debug' && $ws->{inputs_ref}{clientDebug}) {
-							%= hidden_field clientDebug => $ws->{inputs_ref}{clientDebug}
-						% }
-						%
 						% if ($displayMode ne 'PTX' && $displayMode ne 'tex') {
 							<div class="submit-buttons-container col-12 mb-2">
 								% # Submit buttons (all are shown by default except the correct answer only button)
@@ -161,13 +157,6 @@
 				: [],
 				debug_messages => $formatName eq 'debug'
 				&& ref $rh_result->{debug_messages} eq 'ARRAY' ? $rh_result->{debug_messages} : [] =%>
-			% # Additional information output only for the debug format.
-			% if ($formatName eq 'debug') {
-				% if ($ws->{inputs_ref}{clientDebug}) {
-					<h3>Webwork client data</h3>
-					%== $pretty_print->($ws)
-				% }
-			% }
 			% # Translator errors.
 			% if ($rh_result->{flags}{error_flag}) {
 				<div class="alert alert-danger p-1">

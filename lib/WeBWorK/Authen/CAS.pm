@@ -54,11 +54,11 @@ sub get_credentials {
 	$self->{external_auth} = 1;
 
 	# This next part is necessary because some parts of webwork (e.g.,
-	# WebworkWebservice.pm) need to replace the get_credentials() routine,
+	# the API) need to replace the get_credentials() routine,
 	# but only replace the one in the parent class (out of caution,
 	# presumably).  Therefore, we end up here even when authenticating
-	# for WebworkWebservice.pm.  This would cause authentication failures
-	# when authenticating javascript web service requests (e.g., the
+	# for the API.  This would cause authentication failures
+	# when authenticating javascript api requests (e.g., the
 	# Library Browser).
 
 	if ($c->{rpc}) {
