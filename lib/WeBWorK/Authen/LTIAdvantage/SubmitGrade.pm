@@ -93,6 +93,11 @@ sub update_passback_data ($self, $userID) {
 		}
 	}
 
+	# Save the general lineitems URL and namesroleservice URL if they were in the request.
+	$db->setSettingValue('LTILineitemsURL', $c->stash->{lti_lms_lineitems_url}) if ($c->stash->{lti_lms_lineitems_url});
+	$db->setSettingValue('LTINamesRolesServiceURL', $c->stash->{lti_lms_namesrolesservice_url})
+		if ($c->stash->{lti_lms_namesrolesservice_url});
+
 	# Update the access token if neccessary.  No need to wait for it to finish here since the token is not needed yet.
 	# This just obtains it if needed for later.
 	$self->get_access_token;
@@ -154,7 +159,8 @@ async sub get_access_token ($self) {
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-				'https://purl.imsglobal.org/spec/lti-ags/scope/score'),
+				'https://purl.imsglobal.org/spec/lti-ags/scope/score',
+				'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'),
 			client_assertion => $jwt
 		}
 	)->catch(sub ($err) {
@@ -193,8 +199,13 @@ async sub submit_course_grade ($self, $userID, $submittedSet = undef) {
 
 	my $lineitem = $db->getSettingValue('LTIAdvantageCourseLineitem');
 	unless ($lineitem) {
-		$self->warning('LMS lineitem is not available for the course.');
-		return 0;
+		my $updatedLineitems = await $self->get_lineitems;
+		if (defined $updatedLineitems->{course}) {
+			$lineitem = $updatedLineitems->{course};
+		} else {
+			$self->warning('LMS lineitem is not available for the course.');
+			return 0;
+		}
 	}
 
 	unless ($user->lis_source_did) {
@@ -237,8 +248,13 @@ async sub submit_set_grade ($self, $userID, $setID, $submittedSet = undef) {
 
 	my $userSet = $submittedSet // $db->getMergedSet($userID, $setID);
 	unless ($userSet->lis_source_did) {
-		$self->warning('LMS lineitem is not available for this set.');
-		return 0;
+		my $updatedLineitems = await $self->get_lineitems;
+		if (defined $updatedLineitems->{ $userSet->set_id }) {
+			$userSet->lis_source_did($updatedLineitems->{ $userSet->set_id });
+		} else {
+			$self->warning('LMS lineitem is not available for this set.');
+			return 0;
+		}
 	}
 
 	my $score = getSetPassbackScore($db, $ce, $userID, $userSet, !$self->{post_processing_mode});
@@ -347,6 +363,52 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 
 	$self->warning(join("\n", 'Failed to send grade:', $response->message));
 	return 0;
+}
+
+# If $LTIGradeMode is 'homework', then this gets all lineitem URLs for links to sets created via deep linking from the
+# LMS and updates them in the database,  or if $LTIGradeMode is 'course' and a link for the course grade was created via
+# deep linking, then this gets the lineitem URL for the course grade and updates it in the course settings.  A hash of
+# set_id and lineitem URLs is returned if $LTIGradeMode is 'homework, and a hash with 'course' and the grade lineitem
+# URL is returned if $LTIGradeMode is 'course'. If no lineitem URLs can be identified, then an empty hash is returned.
+async sub get_lineitems ($self) {
+	return $self->{lineitemURLs} if $self->{lineitemURLs};
+	$self->{lineitemURLs} = {};
+
+	my $db = $self->{c}{db};
+
+	my $lineitemsURL = $db->getSettingValue('LTILineitemsURL');
+	return $self->{lineitemURLs} unless $lineitemsURL;
+
+	return $self->{lineitemURLs} unless (my $accessToken = await $self->get_access_token);
+
+	my $ua = Mojo::UserAgent->new;
+
+	my $lineitemsResult =
+		(
+			await $ua->get_p($lineitemsURL,
+				{ Authorization => "$accessToken->{token_type} $accessToken->{access_token}" }))->result;
+
+	if ($lineitemsResult->is_success) {
+		my $lineitems = $lineitemsResult->json;
+		for my $lineitem (@$lineitems) {
+			next unless $lineitem->{resourceId};
+			if ($self->{c}{ce}{LTIGradeMode} eq 'homework') {
+				next unless (my $set = $db->getGlobalSet($lineitem->{resourceId}));
+				if (!defined $set->lis_source_did || $set->lis_source_did ne $lineitem->{id}) {
+					$set->lis_source_did($lineitem->{id});
+					$db->putGlobalSet($set);
+				}
+				$self->{lineitemURLs}{ $set->{set_id} } = $lineitem->{id};
+			} elsif ($self->{c}{ce}{LTIGradeMode} eq 'course' && $lineitem->{resourceId} eq 'course_grade') {
+				$db->setSettingValue('LTIAdvantageCourseLineitem', $lineitem->{id});
+				$self->{lineitemURLs}{course} = $lineitem->{id};
+			}
+		}
+	} else {
+		$self->warning("Unable to obtain lineitems from the lineitems URL:\n" . $lineitemsResult->message);
+	}
+
+	return $self->{lineitemURLs};
 }
 
 # Load and possibly generate private/public keys for the site.  This is only generates new keys if the files do not

@@ -242,6 +242,8 @@ $LTIMassUpdateInterval = 86400;
 	#'LMSManageUserData',
 	#'LTI{v1p1}{round_score_digits}',
 	#'LTI{v1p1}{BasicConsumerSecret}',
+	#'LTI{v1p3}{ignoreMissingSourcedID}',
+	#'LTI{v1p3}{autoSyncSetDatesToLMS}',
 	#'LTI{v1p3}{PlatformID}',
 	#'LTI{v1p3}{ClientID}',
 	#'LTI{v1p3}{DeploymentID}',

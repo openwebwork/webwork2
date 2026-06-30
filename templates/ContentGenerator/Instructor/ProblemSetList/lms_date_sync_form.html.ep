@@ -1,0 +1,29 @@
+<div>
+	<div class="row mb-2">
+		<%= label_for lms_date_sync_select => maketext('Synchronize dates for which sets?'),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.lms_date_sync.scope' => [
+					[ maketext('all course sets') => 'all' ],
+					[ maketext('selected sets')   => 'selected', selected => undef ]
+				],
+				id => 'lms_date_sync_select', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for lms_date_sync_direction => maketext('Synchronize dates in which direction?'),
+			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<div class="col-auto">
+			<%= select_field 'action.lms_date_sync.direction' => [
+					[ maketext('to the LMS')   => 'to', selected => undef ],
+					[ maketext('from the LMS') => 'from' ]
+				],
+				id => 'lms_date_sync_direction', class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="d-inline-block alert alert-info p-1 mb-2">
+		<em>
+			<%= maketext('Note: Only dates of sets for which the linitem URL is available can be synchronized.') =%>
+		</em>
+	</div>
+</div>

@@ -76,4 +76,22 @@
 	</dd>
 	<dt><%= maketext('Delete') %></dt>
 	<dd><%= maketext('Delete the sets checked below. Be careful, this cannot be undone.') %></dd>
+
+	% if (
+		% $ce->{LTIVersion}
+		% && $ce->{LTIVersion} eq 'v1p3'
+		% && $ce->{LTIGradeMode} eq 'homework'
+		% && $db->getSettingValue('LTILineitemsURL')
+	% ) {
+		<dt><%= maketext('Synchronize Set Dates with LMS.') %></dt>
+		<dd>
+			<%= maketext('Synchronize the dates for a single set or multiple sets to or from the LMS. This task is '
+				. 'performed in the job queue, and this page only enqueus that task. Go to the Job Manager to see the '
+				. 'status of the enqueued job. This will only work for sets for which the lineitem for the set is '
+				. 'available or can be obtained. That is all sets that are created via content selection from the LMS, '
+				. 'or manually created links in the LMS that have been used at least once. Note that date '
+				. 'synchronization via LTI is not supported by all LMSs.'
+				) =%>
+		</dd>
+	% }
 </dl>

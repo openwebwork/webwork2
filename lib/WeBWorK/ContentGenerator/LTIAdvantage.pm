@@ -180,7 +180,6 @@ sub launch ($c) {
 			%{ Mojo::URL->new($c->stash->{LTILaunchRedirect})->query->to_hash },
 			$c->stash->{isContentSelection}
 			? (
-
 				courseID        => $c->stash->{courseID},
 				initial_request => 1,
 				accept_multiple =>
@@ -257,7 +256,9 @@ sub content_selection ($c) {
 							type  => 'ltiResourceLink',
 							title => $c->maketext('WeBWorK Assignments'),
 							url   => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string,
-							$c->ce->{LTIGradeMode} eq 'course' ? (lineItem => { scoreMaximum => 100 }) : ()
+							$c->ce->{LTIGradeMode} eq 'course'
+							? (lineItem => { resourceId => 'course_grade', scoreMaximum => 100 })
+							: ()
 							}
 						: (),
 						map { {
@@ -268,7 +269,19 @@ sub content_selection ($c) {
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
 								->to_abs->to_string,
 							$c->ce->{LTIGradeMode} eq 'homework'
-							? (lineItem => { scoreMaximum => $setMaxScores{ $_->set_id } })
+							? (
+								lineItem => {
+									resourceId   => $_->set_id,
+									scoreMaximum => $setMaxScores{ $_->set_id }
+								},
+								available => {
+									startDateTime => $c->formatDateTime($_->open_date, '%Y-%m-%dT%H:%M:%S%z')
+								},
+								submission => {
+									endDateTime => $c->formatDateTime($_->due_date, '%Y-%m-%dT%H:%M:%S%z')
+								},
+								window => { targetName => '_blank' }
+								)
 							: ()
 						} } @selectedSets
 					]
@@ -430,7 +443,7 @@ sub purge_expired_lti_data ($c, $ce, $db) {
 
 async sub registration ($c) {
 	return $c->render(json => { error => 'invalid configuration request' }, status => 400)
-		unless defined $c->req->param('openid_configuration') && defined $c->req->param('registration_token');
+		unless defined $c->req->param('openid_configuration');
 
 	# If we want to allow options in the configuration such as whether grade passback is enabled or to allow the LMS
 	# administrator to choose a tool name, then this should render a form that the LMS will be presented in an iframe
@@ -464,7 +477,9 @@ async sub registration ($c) {
 	my $registrationResult = (await Mojo::UserAgent->new->post_p(
 		$lmsConfiguration->{registration_endpoint},
 		{
-			Authorization  => 'Bearer ' . $c->req->param('registration_token'),
+			defined $c->req->param('registration_token')
+			? (Authorization => 'Bearer ' . $c->req->param('registration_token'))
+			: (),
 			'Content-Type' => 'application/json'
 		},
 		json => {
@@ -481,7 +496,8 @@ async sub registration ($c) {
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-				'https://purl.imsglobal.org/spec/lti-ags/scope/score'),
+				'https://purl.imsglobal.org/spec/lti-ags/scope/score',
+				'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'),
 			'https://purl.imsglobal.org/spec/lti-tool-configuration' => {
 				domain          => $rootURL->host_port,
 				target_link_uri => $rootURL->to_string,

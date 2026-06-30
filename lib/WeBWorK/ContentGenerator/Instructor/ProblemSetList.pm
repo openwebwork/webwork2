@@ -73,7 +73,7 @@ use WeBWorK::File::SetDef      qw(importSetsFromDef exportSetsToDef);
 use constant HIDE_SETS_THRESHOLD => 500;
 
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
-use constant VIEW_FORMS   => [qw(filter sort edit publish import export score create delete)];
+use constant VIEW_FORMS   => [qw(filter sort edit publish import export score create delete lms_date_sync)];
 use constant EXPORT_FORMS => [qw(save_export cancel_export)];
 
 # Prepare the tab titles for translation by maketext
@@ -90,7 +90,8 @@ use constant FORM_TITLES => {
 	create        => x("Create"),
 	delete        => x("Delete"),
 	save_export   => x("Save Export"),
-	cancel_export => x("Cancel Export")
+	cancel_export => x("Cancel Export"),
+	lms_date_sync => x("Synchronize Set Dates with LMS")
 };
 
 use constant VIEW_FIELD_ORDER =>
@@ -101,15 +102,16 @@ use constant EXPORT_FIELD_ORDER => [qw(set_id problems users)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	save_edit   => "modify_problem_sets",
-	edit        => "modify_problem_sets",
-	publish     => "modify_problem_sets",
-	import      => "create_and_delete_problem_sets",
-	export      => "modify_set_def_files",
-	save_export => "modify_set_def_files",
-	score       => "score_sets",
-	create      => "create_and_delete_problem_sets",
-	delete      => "create_and_delete_problem_sets",
+	save_edit     => "modify_problem_sets",
+	edit          => "modify_problem_sets",
+	publish       => "modify_problem_sets",
+	import        => "create_and_delete_problem_sets",
+	export        => "modify_set_def_files",
+	save_export   => "modify_set_def_files",
+	score         => "score_sets",
+	create        => "create_and_delete_problem_sets",
+	delete        => "create_and_delete_problem_sets",
+	lms_date_sync => "modify_problem_sets"
 };
 
 # Note that these are the only fields that are ever shown on this page.
@@ -617,20 +619,24 @@ sub save_edit_handler ($c) {
 	my $db = $c->db;
 	my $ce = $c->ce;
 
+	my @setsToSyncToLMS;
+
 	my @visibleSetIDs = @{ $c->{visibleSetIDs} };
-	foreach my $setID (@visibleSetIDs) {
+	for my $setID (@visibleSetIDs) {
 		next unless defined($setID);
 		my $Set = $db->getGlobalSet($setID);
-		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
-		die "record for visible set $setID not found" unless $Set;
+		next unless $Set;
 
-		foreach my $field ($Set->NONKEYFIELDS()) {
+		my $originalOpenDate = $Set->open_date;
+		my $originalDueDate  = $Set->due_date;
+
+		for my $field ($Set->NONKEYFIELDS()) {
 			my $value = $c->param("set.$setID.$field");
 			if (defined $value) {
 				if ($field =~ /_date/) {
 					$Set->$field($value);
 				} elsif ($field eq 'enable_reduced_scoring') {
-					# If we are enableing reduced scoring, make sure the reduced scoring date
+					# If we are enabling reduced scoring, make sure the reduced scoring date
 					# is set and in a proper interval.
 					$Set->enable_reduced_scoring($value);
 					if (!$Set->reduced_scoring_date) {
@@ -652,7 +658,7 @@ sub save_edit_handler ($c) {
 			return (0, $c->maketext('Error: Answer date must come after close date in set [_1].', $setID));
 		}
 
-		# check that the reduced scoring date is in the right place
+		# Check that the reduced scoring date is in the right place.
 		my $enable_reduced_scoring = $ce->{pg}{ansEvalDefaults}{enableReducedScoring}
 			&& (
 				defined($c->param("set.$setID.enable_reduced_scoring"))
@@ -675,7 +681,22 @@ sub save_edit_handler ($c) {
 			);
 		}
 
+		push(@setsToSyncToLMS, $setID)
+			if $Set->open_date != $originalOpenDate || $Set->due_date != $originalDueDate;
+
 		$db->putGlobalSet($Set);
+	}
+
+	if (@setsToSyncToLMS
+		&& $ce->{LTIVersion}
+		&& $ce->{LTIVersion} eq 'v1p3'
+		&& $ce->{LTIGradeMode} eq 'homework'
+		&& $ce->{LTI}{v1p3}{autoSyncSetDatesToLMS})
+	{
+		$c->minion->enqueue(
+			lti_set_date_sync => [ \@setsToSyncToLMS ],
+			{ notes => { courseID => $ce->{courseName} } }
+		);
 	}
 
 	if (defined $c->param("prev_visible_sets")) {
@@ -689,6 +710,27 @@ sub save_edit_handler ($c) {
 	$c->{editMode} = 0;
 
 	return (1, $c->maketext('Changes saved.'));
+}
+
+sub lms_date_sync_handler ($c) {
+	my $ce = $c->ce;
+
+	return (0, $c->maketext('This course is not configured to synchronize set dates with the LMS via LTI.'))
+		if !$ce->{LTIVersion} || $ce->{LTIVersion} ne 'v1p3' || $ce->{LTIGradeMode} ne 'homework';
+
+	my $lineitemsURL = $c->db->getSettingValue('LTILineitemsURL');
+	return (0, $c->maketext('Unable to perform date synchronization as the lineitems URL is not available.'))
+		unless $lineitemsURL;
+
+	$c->minion->enqueue(
+		lti_set_date_sync => [
+			$c->param('action.lms_date_sync.scope') eq 'all' ? $c->{allSetIDs} : [ $c->param('selected_sets') ],
+			$c->param('action.lms_date_sync.direction') eq 'to'
+		],
+		{ notes => { courseID => $ce->{courseName} } }
+	);
+
+	return (1, $c->maketext('Date synchronization for the requested sets queued.'));
 }
 
 1;
