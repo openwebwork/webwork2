@@ -1112,6 +1112,31 @@ sub getConfigValues ($ce) {
 			type   => 'text',
 			secret => 1
 		},
+		'LTI{v1p3}{ignoreMissingSourcedID}' => {
+			var  => 'LTI{v1p3}{ignoreMissingSourcedID}',
+			doc  => x('Allow set access when the lineitem URL for a set is missing'),
+			doc2 => x(
+				'When grade passback mode is "homework", WeBWorK needs to have the lineitem URL for a set in order '
+					. 'for grade passback to occur. If WeBWorK has not yet stored this lineitem URL, then by default '
+					. 'students will not be able to access and work a set, and a message will be displayed for '
+					. 'students stating that the assignment must be accessed from the LMS before the assignment can '
+					. 'be worked. Set this option to true to disable that message and allow students to access and '
+					. 'work the set regardless of if WeBWorK has stored the lineitem URL.'
+			),
+			type => 'boolean'
+		},
+		'LTI{v1p3}{autoSyncSetDatesToLMS}' => {
+			var  => 'LTI{v1p3}{autoSyncSetDatesToLMS}',
+			doc  => x('Automatically synchronize set dates to LMS'),
+			doc2 => x(
+				'Set this to true if you want WeBWorK to automatically synchronize set dates to the LMS anytime that '
+					. q{a set's open or close date is changed in WeBWorK. Note that this will only work for sets for }
+					. 'which WeBWorK has or can obtain the lineitem URL. This will always work for sets created via '
+					. 'content selection from the LMS, but will only work for a manually created link in the LMS after '
+					. 'the link has been used.'
+			),
+			type => 'boolean'
+		},
 		'LTI{v1p3}{PlatfromID}' => {
 			var    => 'LTI{v1p3}{PlatformID}',
 			doc    => x('LMS platform ID for LTI 1.3'),

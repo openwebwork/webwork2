@@ -61,16 +61,19 @@ sub initializeRoute ($c, $routeCaptures) {
 			{
 				$c->stash->{isContentSelection} = 1;
 
+				my $siteEnvironment = WeBWorK::CourseEnvironment->new;
+
 				# The database object used here is not associated to any course,
 				# and so the only has access to non-native tables.
-				my @matchingCourses = WeBWorK::DB->new(WeBWorK::CourseEnvironment->new)->getLTICourseMapsWhere({
+				my $nonNativeDB     = WeBWorK::DB->new($siteEnvironment);
+				my @matchingCourses = $nonNativeDB->getLTICourseMapsWhere({
 					lms_context_id =>
 						$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
 				});
 
 				if (@matchingCourses == 1) {
 					$c->stash->{courseID} = $matchingCourses[0]->course_id;
-				} else {
+				} elsif ($siteEnvironment->{LTI}{v1p3}{allowCourseSelection}) {
 					for (@matchingCourses) {
 						my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_->course_id }) };
 						if ($@) { warn "Failed to initialize course environment for $_: $@\n"; next; }
@@ -84,6 +87,98 @@ sub initializeRoute ($c, $routeCaptures) {
 						{
 							$c->stash->{courseID} = $_->course_id;
 							last;
+						}
+					}
+
+					# If a matching course was not found in the LTI course map and the site is configured to allow
+					# course selection, then construct a list of all courses for which the LTI 1.3 authentication
+					# parameters match and that have a user that has the email address set that matches the email
+					# address sent from the LMS, and that has access_instructor_tools and modify_problem_sets
+					# permissions.
+					unless (defined $c->stash->{courseID}) {
+						my @userCourses;
+
+						my $claims        = $c->stash->{lti_jwt_claims};
+						my $extract_claim = sub ($key) {
+							my $value = $claims;
+							for (split '#', $key) {
+								if (defined $value->{$_}) {
+									$value = $value->{$_};
+								} else {
+									return;
+								}
+							}
+							return $value;
+						};
+
+						my %mappedCourses = map { $_->course_id => 1 } $nonNativeDB->getLTICourseMapsWhere;
+
+						my $firstFoundUserId;
+
+						for (listCourses(WeBWorK::CourseEnvironment->new)) {
+							next if $mappedCourses{$_};
+
+							my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $_ }) };
+							if ($@) { $c->log->error("Failed to initialize course environment for $_: $@"); next; }
+
+							if (($ce->{LTIVersion} // '') eq 'v1p3'
+								&& $ce->{LTI}{v1p3}{PlatformID}
+								&& $ce->{LTI}{v1p3}{PlatformID} eq $c->stash->{LTILaunchData}->data->{PlatformID}
+								&& $ce->{LTI}{v1p3}{ClientID}
+								&& $ce->{LTI}{v1p3}{ClientID} eq $c->stash->{LTILaunchData}->data->{ClientID}
+								&& $ce->{LTI}{v1p3}{DeploymentID}
+								&& $ce->{LTI}{v1p3}{DeploymentID} eq
+								$c->stash->{LTILaunchData}->data->{DeploymentID}
+								&& $ce->{LTI}{v1p3}{preferred_source_of_username})
+							{
+								my $userIdSource = '';
+								my $userId       = $extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_username});
+								$userIdSource = $ce->{LTI}{v1p3}{preferred_source_of_username} if $userId;
+								if (!defined $userId && $ce->{LTI}{v1p3}{fallback_source_of_username}) {
+									$userId       = $extract_claim->($ce->{LTI}{v1p3}{fallback_source_of_username});
+									$userIdSource = $ce->{LTI}{v1p3}{fallback_source_of_username} if $userId;
+								}
+								next unless defined $userId;
+								$userId =~ s/@.*$//
+									if $userIdSource eq 'email' && $ce->{LTI}{v1p3}{strip_domain_from_email};
+								$userId = lc($userId) if $ce->{LTI}{v1p3}{lowercase_username};
+
+								# Assert that the user id for the user is the same in all courses offered for selection.
+								# Otherwise things will fall apart when the content_selection method attempts to sign
+								# the user out of the intial guess course and into a different selected course.
+								$firstFoundUserId = $userId unless defined $firstFoundUserId;
+								next                        unless $userId eq $firstFoundUserId;
+
+								my $db   = WeBWorK::DB->new($ce);
+								my $user = $db->getUser($userId);
+
+								# Only allow courses for which the user has the email address set, and the email address
+								# matches the email address sent from the LMS. This means that if one course has the LTI
+								# user selection parameters set differently than another, then not all courses for the
+								# user will actually be listed. This should be considered a configuration error, and the
+								# system administrator should not set courses up this way.
+								next unless $user && $user->email_address && $claims->{email} eq $user->email_address;
+
+								# Only allow courses for which the user has the access_instructor_tools and
+								# modify_problem_sets permissions.  The WeBWorK::Authz object for this request has not
+								# yet been constructed, so the permissions check has to be performed manually.
+								my $permission = $db->getPermissionLevel($userId);
+								next
+									unless $permission
+									&& $permission->permission >=
+									$ce->{userRoles}{ $ce->{permissionLevels}{access_instructor_tools} }
+									&& $permission->permission >=
+									$ce->{userRoles}{ $ce->{permissionLevels}{modify_problem_sets} };
+
+								push(@userCourses, $_);
+							}
+						}
+						if (@userCourses) {
+							# Use the first matching course for initial authentication. All matching courses have the
+							# same LTI 1.3 authentication parameters, and so presumably authentication will work an any
+							# of them.
+							$c->stash->{courseID}      = $userCourses[0];
+							$c->stash->{courseChoices} = \@userCourses;
 						}
 					}
 				}
@@ -180,9 +275,15 @@ sub launch ($c) {
 			%{ Mojo::URL->new($c->stash->{LTILaunchRedirect})->query->to_hash },
 			$c->stash->{isContentSelection}
 			? (
-
 				courseID        => $c->stash->{courseID},
 				initial_request => 1,
+				$c->stash->{courseChoices}
+				? (
+					course_choices => $c->stash->{courseChoices},
+					lms_context_id =>
+						$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id}
+					)
+				: (),
 				accept_multiple =>
 					$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'}
 					{accept_multiple},
@@ -210,6 +311,61 @@ sub content_selection ($c) {
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets');
 
 	if ($c->param('initial_request')) {
+		my @courseChoices = $c->param('course_choices');
+		if (@courseChoices > 1) {
+			return $c->render(
+				'ContentGenerator/LTI/content_item_course_selection',
+				courseChoices => \@courseChoices,
+				forwardParams => {
+					accept_multiple      => $c->param('accept_multiple'),
+					deep_link_return_url => $c->param('deep_link_return_url'),
+					lms_context_id       => $c->param('lms_context_id'),
+					$c->param('data') ? (data => $c->param('data')) : (),
+				}
+			);
+		} elsif (@courseChoices) {
+			# If only one course matched for this user, then just use it.
+			# Add it to the course map and skip course selection.
+			$c->db->setLTICourseMap($courseChoices[0], $c->param('lms_context_id'));
+		}
+
+		my $selectedCourse = $c->param('selected_course');
+		if ($selectedCourse && $selectedCourse ne $c->ce->{courseName}) {
+			# The user has selected a course that is not the initial guess (the first course found that the user fit
+			# into), and the user was authenticated into that inital guess course. So sign the user out of that course,
+			# and sign the user into the selected course.  This does not go through the entire authentication process,
+			# but presumably that would succeed since the authhentication parameters for the two courses match and the
+			# permissions of the user were checked in both courses already.
+			my $key = $c->db->getKey($c->authen->{user_id});
+			$c->db->deleteKey($c->authen->{user_id});
+			$c->signed_cookie(
+				'WeBWorKCourseSession.' . $c->ce->{courseName},
+				'',
+				{
+					domain   => $c->app->sessions->cookie_domain,
+					expires  => time,
+					httponly => 1,
+					path     => $c->app->sessions->cookie_path,
+					samesite => $c->app->sessions->samesite,
+					secure   => $c->app->sessions->secure
+				}
+			);
+
+			$c->stash->{courseID} = $selectedCourse;
+			my $ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $selectedCourse }) };
+			if ($@) {
+				$c->log->error("Failed to initialize course environment for $selectedCourse: $@");
+				return $c->render('ContentGenerator/LTI/content_item_selection_error',
+					errorMessage => $c->maketext('The course [_1] is not correctly configured.', $selectedCourse));
+			}
+			$c->ce($ce);
+			my $db = WeBWorK::DB->new($ce);
+			$c->db($db);
+			$c->setSessionParams;
+
+			$c->db->setLTICourseMap($selectedCourse, $c->param('lms_context_id'));
+		}
+
 		return $c->render(
 			'ContentGenerator/LTI/content_item_selection',
 			visibleSets    => [ $c->db->getGlobalSetsWhere({ visible => 1 }, [qw(due_date set_id)]) ],
@@ -257,7 +413,9 @@ sub content_selection ($c) {
 							type  => 'ltiResourceLink',
 							title => $c->maketext('WeBWorK Assignments'),
 							url   => $c->url_for('set_list', courseID => $c->stash->{courseID})->to_abs->to_string,
-							$c->ce->{LTIGradeMode} eq 'course' ? (lineItem => { scoreMaximum => 100 }) : ()
+							$c->ce->{LTIGradeMode} eq 'course'
+							? (lineItem => { resourceId => 'course_grade', scoreMaximum => 100 })
+							: ()
 							}
 						: (),
 						map { {
@@ -268,7 +426,19 @@ sub content_selection ($c) {
 								$c->url_for('problem_list', courseID => $c->stash->{courseID}, setID => $_->set_id)
 								->to_abs->to_string,
 							$c->ce->{LTIGradeMode} eq 'homework'
-							? (lineItem => { scoreMaximum => $setMaxScores{ $_->set_id } })
+							? (
+								lineItem => {
+									resourceId   => $_->set_id,
+									scoreMaximum => $setMaxScores{ $_->set_id }
+								},
+								available => {
+									startDateTime => $c->formatDateTime($_->open_date, '%Y-%m-%dT%H:%M:%S%z')
+								},
+								submission => {
+									endDateTime => $c->formatDateTime($_->due_date, '%Y-%m-%dT%H:%M:%S%z')
+								},
+								window => { targetName => '_blank' }
+								)
 							: ()
 						} } @selectedSets
 					]
@@ -430,7 +600,7 @@ sub purge_expired_lti_data ($c, $ce, $db) {
 
 async sub registration ($c) {
 	return $c->render(json => { error => 'invalid configuration request' }, status => 400)
-		unless defined $c->req->param('openid_configuration') && defined $c->req->param('registration_token');
+		unless defined $c->req->param('openid_configuration');
 
 	# If we want to allow options in the configuration such as whether grade passback is enabled or to allow the LMS
 	# administrator to choose a tool name, then this should render a form that the LMS will be presented in an iframe
@@ -464,7 +634,9 @@ async sub registration ($c) {
 	my $registrationResult = (await Mojo::UserAgent->new->post_p(
 		$lmsConfiguration->{registration_endpoint},
 		{
-			Authorization  => 'Bearer ' . $c->req->param('registration_token'),
+			defined $c->req->param('registration_token')
+			? (Authorization => 'Bearer ' . $c->req->param('registration_token'))
+			: (),
 			'Content-Type' => 'application/json'
 		},
 		json => {
@@ -481,7 +653,8 @@ async sub registration ($c) {
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
 				'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-				'https://purl.imsglobal.org/spec/lti-ags/scope/score'),
+				'https://purl.imsglobal.org/spec/lti-ags/scope/score',
+				'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'),
 			'https://purl.imsglobal.org/spec/lti-tool-configuration' => {
 				domain          => $rootURL->host_port,
 				target_link_uri => $rootURL->to_string,

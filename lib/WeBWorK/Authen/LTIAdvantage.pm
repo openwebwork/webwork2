@@ -197,6 +197,10 @@ sub get_credentials ($self) {
 		$c->stash->{lti_lms_user_id} = $claims->{sub};
 		$c->stash->{lti_lms_lineitem} =
 			$extract_claim->('https://purl.imsglobal.org/spec/lti-ags/claim/endpoint#lineitem');
+		$c->stash->{lti_lms_lineitems_url} =
+			$extract_claim->('https://purl.imsglobal.org/spec/lti-ags/claim/endpoint#lineitems');
+		$c->stash->{lti_lms_namesrolesservice_url} =
+			$extract_claim->('https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice#context_memberships_url');
 
 		# Extract a possible setID from the target_link_uri.  This may not be an actual setID.
 		# That will be verified later in WeBWorK::Authen::LTIAdvantage::SubmitGrade::update_sourcedid.

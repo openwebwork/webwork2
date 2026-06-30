@@ -78,6 +78,13 @@
 	% my $default_choice;
 	%
 	% for my $actionID (@$formsToShow) {
+		% next
+			% if $actionID eq 'lms_roster_sync' && (
+				% !$ce->{LTIVersion}
+				% || $ce->{LTIVersion} ne 'v1p3'
+				% || $ce->{LTIGradeMode} ne 'homework'
+				% || !$db->getSettingValue('LTILineitemsURL')
+			% );
 		% # Check permissions
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
