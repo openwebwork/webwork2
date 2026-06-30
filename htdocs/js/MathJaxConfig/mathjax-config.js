@@ -132,6 +132,15 @@ if (!window.MathJax) {
 				]
 			},
 			ignoreHtmlClass: 'tex2jax_ignore'
+		},
+		output: {
+			displayOverflow: 'linebreak',
+			linebreaks: {
+				inline: true,
+				width: '100%',
+				lineleading: 0.2,
+				LinebreakVisitor: null
+			}
 		}
 	};
 }
