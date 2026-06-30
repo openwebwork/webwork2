@@ -28,7 +28,21 @@
 				</a>
 			% }
 		</div>
-		<div class="font-sm"><%= $status_msg %></div>
+		<div class="font-sm">
+		% if (ref $status_msg) {
+			<%= $status_msg->{msg} %>
+			% if ($status_msg->{override}) {
+				<a class="set-id-tooltip px-1" role="button" tabindex="0" data-bs-placement="right"
+						data-bs-toggle="tooltip" data-fallback-placements="top bottom"
+						data-bs-title="<%= maketext('This date overrides the assignment date.') =%>">
+					<i class="icon fas fa-calendar-plus" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Date override alert') =%></span>
+				</a>
+			% }
+		% } else {
+			<%= $status_msg %>
+		% }
+		</div>
 		% if (!$set->visible && $authz->hasPermissions(param('user'), 'view_unopened_sets')) {
 			<div class="font-sm"><em><%= maketext('(This set is hidden from students.)') %></em></div>
 		% }
