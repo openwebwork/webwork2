@@ -83,6 +83,27 @@ $LTI{v1p3}{strip_domain_from_email} = 0;
 # lowercase.
 $LTI{v1p3}{lowercase_username} = 0;
 
+# When the names/roles service URL is used for roster synchronization the LMS may use a
+# different key in the sent data than is used when a user signs in via LTI authentication. Set
+# the following keys to the correct key for your LMS that provides the same identifier via the
+# names/roles service URL as when LTI authentication is used if the key for the
+# preferred_source_of_username or fallback_source_of_username is different. Note that the
+# 'email' key is the same for all LMSs according to the LTI 1.3 specification. So if
+# preferred_source_of_username or fallback_source_of_username is 'email', then you should not
+# set the respective setting below. Also, the 'sub' key obtained during LTI authentication will
+# always match the 'user_id' key obtained from the names/roles service URL according to the LTI
+# 1.3 specification.  So if preferred_source_of_username or fallback_source_of_username is
+# 'sub', then set the respective setting to 'user_id' below. For any other values of
+# preferred_source_of_username or fallback_source_of_username, set debug_lti_parameters to 1,
+# and compare the results when LTI authentication is performed and when using LMS roster
+# synchronization in the accounts manager to determine what (if anything) will work here.
+# Unfortunately, for values other than 'email' or 'sub', there is no guarantee that there will
+# be any valid key provided from the names/roles service URL, and so if you do not see anything
+# valid to use using debug_lti_parameters, then LTI roster synchronization in the accounts
+# manager is just not going to work for you.
+$LTI{v1p3}{namesroles_service_preferred_source_of_username} = '';
+$LTI{v1p3}{namesroles_service_fallback_source_of_username}  = '';
+
 ################################################################################################
 # LTI 1.3 Preferred source of Student Id
 ################################################################################################
@@ -91,6 +112,11 @@ $LTI{v1p3}{lowercase_username} = 0;
 # string. You should use debug_lti_parameters in order to determine the value to use for your
 # LMS.  There may be no claim value that provides this.
 $LTI{v1p3}{preferred_source_of_student_id} = '';
+
+# This is much the same as the namesroles_service_preferred_source_of_username and
+# namesroles_service_fallback_source_of_username above. See the documentation for those to
+# understand this setting.
+$LTI{v1p3}{namesroles_service_preferred_source_of_student_id} = '';
 
 ################################################################################################
 # LTI 1.3 Basic Authentication Parameters
@@ -212,14 +238,49 @@ $LTI{v1p3}{AllowInstitutionRoles} = 0;
 # Miscellaneous
 ################################################################################################
 
-# When grade passback mode is 'homework', someone must use a set-specific link from the LMS in
-# order for grade passback to begin happening for that set. Use of the set-specific link lets
-# WeBWorK store the set's "sourced_ID". So if there is no sourced_ID, the default behavior is
-# that a user in WeBWorK sees the sets as disabled and there is a message about needing to
-# access the set from the LMS. The following option can be set to allow users to work on the set
-# anyway. There will be no grade passback until some later time when an LMS user clicks the
-# set-specific link. In some LMSs, it is possible for the instructor to activate the link.
+# When grade passback mode is 'homework', webwork2 needs to have the lineitem URL for a set in
+# order for grade passback to occur. For manually created links to a webwork2 set in the LMS,
+# webwork2 obtains that URL the first time that someone uses the link, but for links created via
+# deep linking (content selection in the LMS), webwork2 can obtain that URL anytime it is
+# needed.  If webwork2 does not have the lineitem URL stored in the database, the default
+# behavior is that a user in webwork2 sees the sets as disabled, and there is a message about
+# needing to access the set from the LMS. The following option can be set to allow users to work
+# on the set anyway. For manually created links, there will be no grade passback until some
+# later time when an LMS user uses the set-specific link. Note that in most LMSs, the instructor
+# can activate a link by using it. For links created via deep linking, grade passback will
+# always work, but webwork2 will not store the lineitem URL until the first time that grade
+# passback occurs, someone uses the set-specific link, or set dates are synchronized to the LMS.
+# So if you create all links in the LMS using deep linking (content selection), then you will
+# most likely want to set the following option, because the message about needing to access the
+# set from the LMS that is shown in the LMS is simply not true anyway.
 
 $LTI{v1p3}{ignoreMissingSourcedID} = 0;
+
+# Set the following option if you want webwork2 to automatically synchronize set dates to the
+# LMS anytime that a set's open and close dates are changed.
+
+$LTI{v1p3}{autoSyncSetDatesToLMS} = 0;
+
+# If this is set then authentication into a webwork course is only allowed if the LMS context id
+# is set in the LTI course map for the site and that matches that of the LMS course from which
+# the current user is attempting to sign in.
+$LTI{v1p3}{restrictAuthenticationByCourseMap} = 0;
+
+# If this is set and an instructor attempts to use content selection from an LMS course that is
+# that is not in the LTI course map, then the instructor will be offered a list of WeBWorK
+# courses to choose from.  The WeBWorK courses that will be listed for the instructor are
+# courses that
+#
+# 1. have LTI 1.3 authentication parameters that match those sent by the LMS,
+# 2. have a user for the instructor, that
+#    - has the email address set that matches the email address sent from the LMS, and
+#    - has access_instructor_tools and modify_problem_sets permissions.
+#
+# Note that if only one course is found that satisfies the above conditions, then it will
+# be used automatically.
+#
+# This is a site wide setting only, and cannot be configured per course
+# (in the course.conf file of a course).
+$LTI{v1p3}{allowCourseSelection} = 0;
 
 1;    # final line of the file to reassure perl that it was read properly.

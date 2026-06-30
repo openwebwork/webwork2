@@ -101,6 +101,23 @@ sub get_credentials ($self) {
 		return 0;
 	}
 
+	if ($ce->{LTI}{v1p3}{restrictAuthenticationByCourseMap} && !$c->stash->{courseChoices}) {
+		my $courseMap = $c->db->getLTICourseMap($ce->{courseName});
+		unless ($courseMap
+			&& $courseMap->lms_context_id eq
+			$c->stash->{lti_jwt_claims}{'https://purl.imsglobal.org/spec/lti/claim/context'}{id})
+		{
+			warn 'LTI authentication into incorrect course attempted. '
+				. "Please contact your instructor or system administrator.\n";
+			$self->{error} = $c->maketext(
+				'There was an error during the login process.  Please speak to your instructor or system administrator.'
+			);
+			debug("LTI authentication into $ce->{courseName} attempted, but this course is not in the LTI course map "
+					. 'or the context id of the LMS course from which the user came does not match.');
+			return 0;
+		}
+	}
+
 	# Determine the user_id to use, if possible.
 	if (!$ce->{LTI}{v1p3}{preferred_source_of_username}) {
 		warn 'LTI is not properly configured (no preferred_source_of_username). '
@@ -197,6 +214,10 @@ sub get_credentials ($self) {
 		$c->stash->{lti_lms_user_id} = $claims->{sub};
 		$c->stash->{lti_lms_lineitem} =
 			$extract_claim->('https://purl.imsglobal.org/spec/lti-ags/claim/endpoint#lineitem');
+		$c->stash->{lti_lms_lineitems_url} =
+			$extract_claim->('https://purl.imsglobal.org/spec/lti-ags/claim/endpoint#lineitems');
+		$c->stash->{lti_lms_namesrolesservice_url} =
+			$extract_claim->('https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice#context_memberships_url');
 
 		# Extract a possible setID from the target_link_uri.  This may not be an actual setID.
 		# That will be verified later in WeBWorK::Authen::LTIAdvantage::SubmitGrade::update_sourcedid.

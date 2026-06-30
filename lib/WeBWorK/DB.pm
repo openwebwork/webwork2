@@ -976,6 +976,16 @@ BEGIN {
 	*deleteLTICourseMapWhere = gen_delete_where("lti_course_map");
 }
 
+sub getLTICourseMap {
+	my ($self, $courseID) = shift->checkArgs(\@_, qw/course_id/);
+	return ($self->getLTICourseMaps($courseID))[0];
+}
+
+sub getLTICourseMaps {
+	my ($self, @courseIDs) = shift->checkArgs(\@_, qw/course_id*/);
+	return $self->{lti_course_map}->gets(map { [$_] } @courseIDs);
+}
+
 sub setLTICourseMap {
 	my ($self, $course_id, $lms_context_id) = shift->checkArgs(\@_, qw/course_id lms_context_id/);
 	if ($self->existsLTICourseMapWhere({ course_id => $course_id })) {
