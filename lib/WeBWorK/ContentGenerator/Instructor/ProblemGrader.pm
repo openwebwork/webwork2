@@ -13,6 +13,7 @@ use HTML::Entities;
 use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Utils::Sets      qw(get_test_problem_position format_set_name_display);
+use WeBWorK::Utils::DateTime  qw(before);
 
 async sub initialize ($c) {
 	my $authz      = $c->authz;
@@ -96,6 +97,17 @@ async sub initialize ($c) {
 	if ($c->param('assignGrades')) {
 		$c->addgoodmessage($c->maketext('Grades have been saved for all current users.'));
 
+		# Get all of the merged user sets for this set.  These are needed to determine if the problem sub_status also
+		# needs to be set.  The sub_status must be set if reduced scoring is not enabled for the course or set or if it
+		# is before the reduced scoring date.
+		my %mergedSets;
+		if ($c->stash->{set}->assignment_type =~ /gateway/) {
+			$mergedSets{ $_->user_id }{ $_->version_id } = $_
+				for $db->getMergedSetVersionsWhere({ set_id => { like => "$setID,v\%" } });
+		} else {
+			%mergedSets = map { $_->user_id => { 0 => $_ } } $db->getMergedSetsWhere({ set_id => $setID });
+		}
+
 		for my $user (@{ $c->stash->{users} }) {
 			my $userID = $user->user_id;
 			for (@{ $user->{data} }) {
@@ -115,9 +127,16 @@ async sub initialize ($c) {
 				$_->{problem}{flags} =~ s/:needs_grading$//;
 				if ($c->param("$userID.$versionID.mark_correct")) {
 					$_->{problem}->status(1);
+					$_->{problem}->sub_status(1);
 				} elsif (defined $c->param("$userID.$versionID.score")) {
 					my $newscore = $c->param("$userID.$versionID.score") / 100;
-					if ($newscore != $_->{problem}->status) { $_->{problem}->status($newscore); }
+					if ($newscore != $_->{problem}->status) {
+						$_->{problem}->status($newscore);
+						$_->{problem}->sub_status($newscore)
+							if !$ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+							|| !$mergedSets{$userID}{$versionID}->enable_reduced_scoring
+							|| before($mergedSets{$userID}{$versionID}->reduced_scoring_date);
+					}
 				}
 
 				if   ($versionID) { $db->putProblemVersion($_->{problem}); }

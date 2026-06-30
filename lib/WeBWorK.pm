@@ -140,10 +140,11 @@ async sub dispatch ($c) {
 		# This route could have the courseID set, but does not need authentication.
 		return 1 if $c->current_route eq 'saml2_metadata';
 
-		return (0, 'This course does not exist.')
+		return (0, "The course $routeCaptures{courseID} does not exist.")
 			unless (-e $ce->{courseDirs}{root}
 				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
-		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
+		return (0, "The course $routeCaptures{courseID} has been archived and closed.")
+			unless -e $ce->{courseDirs}{root};
 
 		my $db = WeBWorK::DB->new($ce);
 		debug("(here's the DB handle: $db)\n");

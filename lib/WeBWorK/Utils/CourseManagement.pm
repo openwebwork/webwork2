@@ -126,10 +126,9 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID      => course ID for the new course,
- ce            => a course environment for the new course,
- courseOptions => hash ref explained below
- users         => array ref explained below
+ courseID => course ID for the new course,
+ ce       => a course environment for the new course,
+ users    => array ref explained below
 
 %options may contain:
 
@@ -149,12 +148,6 @@ Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
 environment.
-
-$courseOptions is a reference to a hash containing the following options:
-
-    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}
-
-C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -187,11 +180,10 @@ sub addCourse {
 		debug("$key  : $value");
 	}
 
-	my $courseID      = $options{courseID};
-	my $sourceCourse  = $options{copyFrom} // '';
-	my $ce            = $options{ce};
-	my %courseOptions = %{ $options{courseOptions} // {} };
-	my @users         = exists $options{users} ? @{ $options{users} } : ();
+	my $courseID     = $options{courseID};
+	my $sourceCourse = $options{copyFrom} // '';
+	my $ce           = $options{ce};
+	my @users        = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
 
@@ -432,7 +424,12 @@ sub addCourse {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
 		open my $fh, ">:utf8", $courseEnvFile
 			or die "failed to open $courseEnvFile for writing.\n";
-		writeCourseConf($fh, $ce, %courseOptions);
+		my $addOnConf     = $options{addOnConf} // [];
+		my $relConfFolder = File::Spec->abs2rel($ce->{webworkDirs}{addOnConf}, $ce->{webworkDirs}{root});
+		for (@$addOnConf) {
+			$_ = File::Spec->catfile($relConfFolder, $_);
+		}
+		writeCourseConf($fh, $addOnConf);
 		close $fh;
 	}
 
@@ -498,9 +495,9 @@ sub addCourse {
 %options may also contain:
 
  skipDBRename => $skipDBRename,
- courseTitle => $courseTitle
- courseInstitution => $courseInstitution
-
+ courseTitle => $courseTitle,
+ courseInstitution => $courseInstitution,
+ updateLTICourseMap => $updateLTICourseMap
 
 Rename the course named $courseID to $newCourseID.
 
@@ -509,15 +506,15 @@ environment.
 
 The name of the course's directory is changed to $newCourseID.
 
-If the course's database layout is C<sql_single> or C<sql_moodle>, new tables
-are created in the current database, course data is copied from the old tables
-to the new tables, and the old tables are deleted.
-
-If the course's database layout is something else, no database changes are made.
+New tables are created in the current database, course data is copied from the
+old tables to the new tables, and the old tables are deleted.
 
 If $skipDBRename is true, no database changes are made. This is useful if a
 course is being unarchived and no database was found, or for renaming the
 modelCourse.
+
+If $updateLTICourseMap is true, then the LTI course map is updated to associate
+the LMS context id to the new course name.
 
 Any errors encountered while renaming the course are returned.
 
@@ -635,6 +632,16 @@ sub renameCourse {
 			}
 		};
 		warn "Problems from resetting course title and institution = $@" if $@;
+
+		# Remap the LTI course mapping for the renamed course to the new course if that is requested.
+		if ($options{updateLTICourseMap}) {
+			my @ltiCourseMaps = $newDB->getLTICourseMapsWhere({ course_id => $oldCE->{courseName} });
+			$newDB->deleteLTICourseMapWhere({ course_id => $oldCE->{courseName} });
+			for (@ltiCourseMaps) {
+				$newDB->setLTICourseMap($newCE->{courseName}, $_->lms_context_id);
+				last;
+			}
+		}
 	}
 }
 
@@ -683,7 +690,7 @@ Options must contain:
  ce => $ce,
 
 $ce is a WeBWorK::CourseEnvironment object that describes the course's
-environment. It is your responsability to pass a course environment object that
+environment. It is your responsibility to pass a course environment object that
 describes the course to be deleted. Do not pass the course environment object
 associated with the request, unless you are deleting the course you're currently
 using.
@@ -1170,45 +1177,34 @@ sub protectQString {
 	return $string;
 }
 
-=item writeCourseConf($fh, $ce, %options)
+=item writeCourseConf($fh, $addOnConf)
 
-Writes a course.conf file to $fh, a file handle, using defaults from the course
-environment object $ce and overrides from %options. %options can contain any of
-the pairs accepted in %courseOptions by addCourse(), above.
+Writes the course.conf file to C<$fh>, a file handle. System administrators can
+use this file to override global settings for a course.  If C<$addOnConf> is
+provided, then it should be a reference to an array of config files to be
+included at the end of the course.conf file.
 
 =back
 
 =cut
 
 sub writeCourseConf {
-	my ($fh, $ce, %options) = @_;
+	my ($fh, $addOnConf) = @_;
 
-	print $fh <<'EOF';
+	my $content = <<'EOF';
 #!perl
 
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
 
-	print $fh <<'EOF';
-# Users for whom to label problems with the PG file name (global value typically "professor")
-# For users in this list, PG will display the source file name when rendering a problem.
-# defaults.config values:
-EOF
-
-	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ",
-			map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }),
-			'];', "\n";
-	} else {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ ];', "\n";
+	if (ref $addOnConf eq 'ARRAY') {
+		for my $conf (@$addOnConf) {
+			$content .= "\ninclude('$conf');";
+		}
 	}
 
-	if (defined $options{PRINT_FILE_NAMES_FOR}) {
-		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
-	}
+	print $fh $content;
 }
 
 sub get_SeedCE

@@ -11,13 +11,12 @@
 	<dd class="list-group-item">
 		<dl>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques" target="techniques_window">
-					<%= maketext('Problem Techniques') =%>
-				</a>
+				<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
+					target => 'techniques_window' =%>
 			</dt>
-			<dd><%= maketext('This links to a list of problem authoring techniques.') %></dd>
+			<dd><%= maketext('Sample problem code with documentation.') %></dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:MathObjects" target="math_objects">
+				<a href="https://wiki.openwebwork.org/wiki/Category:MathObjects" target="math_objects">
 					<%= maketext('Math Objects') %>
 				</a>
 			</dt>
@@ -28,29 +27,16 @@
 					. 'macro files themselves.') =%>
 			</dd>
 			<dt>
-				% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-					<%= link_to maketext('PGML') => $c->systemLink(
-							url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-							params => {
-								displayMode    => $ce->{pg}{options}{displayMode},
-								problemSeed    => 1234,
-								editMode       => 'temporaryFile',
-								sourceFilePath => 'PGMLLab/PGML-lab.pg'
-							}
-						),
-						target => 'PGML' =%>
-					% } else {
-						<a><%= maketext('PGML') %></a>
-					% }
+				<%= link_to PGML => '#', class  => 'pgml-lab', target => 'PGML',
+					data => { source => url_escape(readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg")) } =%>
 			</dt>
 			<dd>
-				<%= maketext('This links to a WeBWorK "problem" which allows you to try out fragments of PGML code. '
-					. 'This link will not be available if the file [_1] is not located in the templates directory of '
-					. 'the course.',
-					'PGMLLab/PGML-lab.pg') =%>
+				<%= maketext(
+					'This links to a WeBWorK "problem" which allows you to try out fragments of PGML code.'
+				) =%>
 			</dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Authors" target="author_info">
+				<a href="https://wiki.openwebwork.org/wiki/Category:Authors" target="author_info">
 					<%= maketext('Author Info') %>
 				</a>
 			</dt>
@@ -72,7 +58,7 @@
 			<tbody class="table-group-divider">
 				<tr>
 					<td>Ctrl-m</td>
-					<td>Alt-Shift-m</td>
+					<td>Option-Shift-m</td>
 					<td>
 						<%= maketext('Enable or disable tab-focus mode. When tab-focus mode is off, pressing Tab '
 							. 'inside the editor window indents the current line. When tab-focus mode is on '
@@ -80,7 +66,7 @@
 					</td>
 				<tr>
 					<td>Ctrl-Shift-[</td>
-					<td>Cmd-Shift-[</td>
+					<td>Cmd-Option-[</td>
 					<td>
 						<%= maketext('Fold the region that begins on the current line. Triangles in the gutter '
 						. 'next to line numbers indicate which regions can be folded.') %>
@@ -88,24 +74,31 @@
 				</tr>
 				<tr>
 					<td>Ctrl-Shift-]</td>
-					<td>Cmd-Shift-]</td>
+					<td>Cmd-Option-]</td>
 					<td><%= maketext('Unfold the region that begins on the current line.') %></td>
 				</tr>
-				<tr><td>Ctrl-Alt-[</td><td>Cmd-Alt-[</td><td><%= maketext('Fold all regions.') %></td></tr>
-				<tr><td>Cmd-Alt-]</td><td>Cmd-Alt-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-[</td><td>Ctrl-Option-[</td><td><%= maketext('Fold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-]</td><td>Ctrl-Option-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
 				<tr><td>Ctrl-/</td><td>Cmd-/</td><td><%= maketext('Toggle comment.') %></td></tr>
 				<tr>
 					<td>Shift-Alt-a</td>
-					<td></td>
+					<td>Shift-Option-a</td>
 					<td><%= maketext('Toggle block comment. (Only has effect inside PGML blocks.)') %></td>
 				</tr>
 				<tr>
 					<td>Ctrl-Space</td>
-					<td>Alt-`</td>
+					<td>Option-`</td>
 					<td><%= maketext('Show available autocompletions at the current cursor location.') %></td>
 				</tr>
 			</tbody>
 		</table>
+		<%= maketext('There are resize grips that can be moved to resize the editor windows.  This can be done by '
+			. 'clicking and dragging or by focusing the resize grip and using the arrow keys. If the resize grip is '
+			. 'focused and the Ctrl key (Ctrl + Cmd keys on Mac) is held down then the size is only changed by one '
+			. 'pixel for each arrow key press, and if the Alt key (Option key for Mac) is held down then the size is '
+			. 'changed by 50 pixels for each arrow key press. With no modifier key the size is changed by 20 pixels. '
+			. 'Double clicking on a resize grip or pressing Enter or Space while a resize grip is focused resets the '
+			. 'windows to their default sizes.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
 	<dd class="list-group-item">
@@ -156,19 +149,22 @@
 			. 'generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
-		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
-			. 'the templates/hardcopyThemes folder.') =%>
+		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved '
+			. 'to the templates/hardcopyThemes folder.') =%>
 		</p>
 	</dd>
 
-	<dt><%= maketext('Format Code') %></dt>
+	<dt><%= maketext('Code Maintenance') %></dt>
 	<dd>
-		<%= maketext('Reformat the code using perltidy or a conversion to PGML. Using perltidy will change the code '
-			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
-			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
-			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
-			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
-			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
+		<%= maketext('Three code maintenance tools can be utilized. First, the code can be reformatted using perltidy. '
+		. 'Using perltidy will change the code in the editor window, and save changes to the temporary file. In some '
+		. 'cases (if the code contains backslashes or double tildes) this can result in odd spacing in the code. '
+		. 'Second the code can be converted to PGML. This changes the code in text blocks to use PGML features. '
+		. 'Generally the conversion of much of the formatting and LaTeX is performed correctly. However, answer '
+		. 'blanks need attention. In any case, make sure to inspect the formatted code, and edit further or revert '
+		. 'if needed. Third, the code can be analyzed by the "PG Critic." This checks that the code does not use '
+		. 'old or deprecated features of PG and conforms to current best-practices in problem authoring, and offers '
+		. 'suggestions on how to fix issues that are found.') =%>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>
@@ -187,23 +183,24 @@
 		<p>
 			<%= maketext(q{Makes a new copy of the file you are editing at the location relative to the course's }
 				. 'templates (~[TMPL~]) directory. You may choose to replace the current problem in the current set, '
-				. 'append to the end to then end of the current set as a new problem, or create a problem that is not '
-				. 'attached to a problem set.') =%>
+				. 'append to the end of an existing set as a new problem, or create a problem that is not attached '
+				. 'to a problem set.') =%>
+		</p>
+		<p>
+			<%= maketext('When saving the problem in a new location (directory), by default all auxiliary files, such '
+				. 'as images, or other files that do not end in ".pg", will also be copied to the new location.  To '
+				. 'stop this behavior, uncheck the "Copy auxiliary files" option.') =%>
 		</p>
 		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '
 				. 'for a new problem. You can add the new file to a homework set from the Library Browser or via the '
 				. 'set detail page of the "Sets Manager".') =%>
 		</p>
-		<p>
+		<p class="mb-0">
 			<%= maketext('If the original problem cannot be edited than the path name must be changed in order to be '
 				. 'allowed to save the problem. Adding "local/" to the beginning of the original path is the default '
 				. 'solution. All locally created and edited files will then appear in a subdirectory named '
 				. '"local".') =%>
-		</p>
-		<p class="mb-0">
-			<%= maketext('A new problem whose path ends in newProblem.pg should be given a new name, for example, '
-				. '"myNewProblem.pg".') =%>
 		</p>
 	</dd>
 

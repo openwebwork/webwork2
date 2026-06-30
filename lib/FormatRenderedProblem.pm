@@ -63,7 +63,7 @@ sub formatRenderedProblem {
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
-	# which can be set in course.conf (the value should be an anonomous array).
+	# which can be set in course.conf (the value should be an anonymous array).
 	my @cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq 'ARRAY') {
 		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
@@ -90,12 +90,12 @@ sub formatRenderedProblem {
 		[ 'node_modules/jquery/dist/jquery.min.js',                            0, {} ],
 		[ 'node_modules/jquery-ui-dist/jquery-ui.min.js',                      0, {} ],
 		[ 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', 0, {} ],
-		[ 'js/MathJaxConfig/mathjax-config.js',                     0, { defer => undef } ],
-		[ 'node_modules/mathjax/es5/tex-svg.js',                    0, { defer => undef, id => 'MathJax-script' } ],
-		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js', 0, { defer => undef } ],
-		[ 'js/Problem/problem.js',                                  0, { defer => undef } ],
-		[ 'js/System/system.js',                                    0, { defer => undef } ],
-		[ 'math4-overrides.js',                                     1, { defer => undef } ]
+		[ 'js/MathJaxConfig/mathjax-config.js',                                0, { defer => undef } ],
+		[ 'node_modules/mathjax/tex-svg.js',                                   0, { defer => undef } ],
+		[ 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js',            0, { defer => undef } ],
+		[ 'js/Problem/problem.js',                                             0, { defer => undef } ],
+		[ 'js/System/system.js',                                               0, { defer => undef } ],
+		[ 'math4-overrides.js',                                                1, { defer => undef } ]
 	);
 
 	# Get the requested format.
@@ -196,11 +196,12 @@ sub formatRenderedProblem {
 		$output->{input}      = $ws->{input};
 
 		# The following could be constructed from the above, but this is a convenience
-		$output->{resultSummary}   = $resultSummary->to_string if $resultSummary;
-		$output->{lang}            = $PROBLEM_LANG_AND_DIR{lang};
-		$output->{dir}             = $PROBLEM_LANG_AND_DIR{dir};
-		$output->{extra_css_files} = \@extra_css_files;
-		$output->{extra_js_files}  = \@extra_js_files;
+		$output->{resultSummary}     = $resultSummary->to_string if $resultSummary;
+		$output->{lang}              = $PROBLEM_LANG_AND_DIR{lang};
+		$output->{dir}               = $PROBLEM_LANG_AND_DIR{dir};
+		$output->{extra_css_files}   = \@extra_css_files;
+		$output->{extra_js_files}    = \@extra_js_files;
+		$output->{webwork_js_config} = $ws->c->webwork_js_config($ws->{inputs_ref}{showMathJaxErrors} // 0);
 
 		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
 		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.
@@ -267,6 +268,7 @@ sub formatRenderedProblem {
 		showCorrectAnswersOnlyButton => $ws->{inputs_ref}{showCorrectAnswersOnlyButton} // 0,
 		showFooter                   => $ws->{inputs_ref}{showFooter}                   // '',
 		problem_data                 => encode_json($rh_result->{PERSISTENCE_HASH}),
+		showMathJaxErrors            => $ws->{inputs_ref}{showMathJaxErrors} // 0,
 		pretty_print                 => \&pretty_print
 	);
 
@@ -368,7 +370,7 @@ EOS
 				$LTIGradeMessage = $ws->c->tag('p', "Unable to update LMS grade. Error: $message")->to_string;
 				push(@{ $rh_result->{debug_messages} }, xml_escape($response->content));
 			} else {
-				$LTIGradeMessage = $ws->c->tag('p', 'Grade sucessfully saved.')->to_string;
+				$LTIGradeMessage = $ws->c->tag('p', 'Grade successfully saved.')->to_string;
 			}
 		} else {
 			$LTIGradeMessage = $ws->c->tag('p', 'Unable to update LMS grade. Error: ' . $response->message)->to_string;

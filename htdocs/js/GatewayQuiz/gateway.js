@@ -188,6 +188,41 @@
 
 			if (actuallySubmit) return;
 
+			const inputs = Array.from(document.querySelectorAll('input, select'));
+
+			// All problem numbers are represented by a probstatus hidden input. Use those to determine the problem
+			// numbers of problems in the test. Note that problem numbering displayed on the page will not match these
+			// numbers in the cases that the test definition has non-consecutive numbering or that problem order is
+			// randomized. But the problem numbering will always match the quiz prefix numbering.
+			const problems = [];
+			for (const input of inputs.filter((i) => /^probstatus\d*/.test(i.name))) {
+				problems[parseInt(input.name.replace('probstatus', ''))] = {};
+			}
+
+			// Determine which questions have been answered.  Note that there can be multiple inputs for a
+			// given question (for example for checkbox or radio answers).
+			for (const input of inputs.filter(
+				(i) => /Q\d{4}_/.test(i.name) && !/^MaThQuIlL_/.test(i.name) && !/^previous_/.test(i.name)
+			)) {
+				const answered =
+					input.type === 'radio' || input.type === 'checkbox' ? !!input.checked : /\S/.test(input.value);
+				const match = /Q(\d{4})_/.exec(input.name);
+				const problemNumber = parseInt(match?.[1] ?? '0');
+				if (!(input.name in problems[problemNumber])) problems[problemNumber][input.name] = answered;
+				else if (answered) problems[problemNumber][input.name] = 1;
+			}
+
+			// Determine if there are any unanswered questions in each problem.
+			let numProblemsWithUnanswered = 0;
+			for (const problem of problems) {
+				// Skip problem 0 and any problems that don't exist in the test
+				// due to non-consecutive numbering in the test definition.
+				if (!problem) continue;
+
+				if (!Object.keys(problem).length || !Object.values(problem).every((answered) => answered))
+					++numProblemsWithUnanswered;
+			}
+
 			// Prevent the gwquiz form from being submitted until after confirmation.
 			evt.preventDefault();
 
@@ -219,8 +254,25 @@
 
 			const modalBody = document.createElement('div');
 			modalBody.classList.add('modal-body');
-			const modalBodyContent = document.createElement('div');
 
+			if (numProblemsWithUnanswered) {
+				const modalSecondaryContent = document.createElement('div');
+				modalSecondaryContent.classList.add('mb-3');
+				modalSecondaryContent.textContent =
+					(numProblemsWithUnanswered > 1
+						? submitAnswers.dataset.unansweredQuestionsMessage
+							? submitAnswers.dataset.unansweredQuestionsMessage.replace('%d', numProblemsWithUnanswered)
+							: `There are ${numProblemsWithUnanswered} problems with unanswered questions.`
+						: (submitAnswers.dataset.unansweredQuestionMessage ??
+							'There is a problem with unanswered questions.')) +
+					' ' +
+					(submitAnswers.dataset.returnToTestMessage ??
+						'Are you sure you want to grade the test? ' +
+							'Select "No" if you would like to return to the test to enter more answers.');
+				modalBody.append(modalSecondaryContent);
+			}
+
+			const modalBodyContent = document.createElement('div');
 			modalBodyContent.textContent = submitAnswers.dataset.confirmDialogMessage;
 			modalBody.append(modalBodyContent);
 

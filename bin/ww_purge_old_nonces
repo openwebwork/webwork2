@@ -32,7 +32,7 @@ use warnings;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -42,7 +42,7 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
-use constant NONCE_LIFETIME => 21600; # 6 hours
+use constant NONCE_LIFETIME => 21600;    # 6 hours
 
 sub usage {
 	print STDERR "usage: $0  course \n";
@@ -51,7 +51,7 @@ sub usage {
 
 my ($course) = @ARGV;
 
-usage() unless $course ;
+usage() unless $course;
 
 my $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
@@ -62,24 +62,23 @@ my $db = WeBWorK::DB->new($ce);
 
 my @errors;
 
-my @listKeys = $db -> listKeys();
+my @listKeys = $db->listKeys();
 
 foreach my $user_id (@listKeys) {
 	my $Key;
-	eval { $Key = $db->getKey($user_id);};
-	if ($@) { push @errors, "$user_id: ". $@ ;}
+	eval { $Key = $db->getKey($user_id); };
+	if ($@) { push @errors, "$user_id: " . $@; }
 	else {
-		if ($Key->key eq "nonce" &&
-			(time()-$Key->timestamp > NONCE_LIFETIME)
-		) {
-			eval {$db->deleteKey($user_id);};
-			if ($@) { push @errors, "$user_id: ". $@ ;}
+		if ($Key->key eq "nonce"
+			&& (time() - $Key->timestamp > NONCE_LIFETIME))
+		{
+			eval { $db->deleteKey($user_id); };
+			if ($@) { push @errors, "$user_id: " . $@; }
 		}
 	}
 }
 
-
 if (@errors) {
-	warn "The following errors occurred:\n", map { "* $_\n" } @errors;
+	warn "The following errors occurred:\n", map {"* $_\n"} @errors;
 	exit 1;
 }

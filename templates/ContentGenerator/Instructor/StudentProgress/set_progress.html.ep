@@ -16,6 +16,7 @@
 		% show_section    => $showColumns->{section},
 		% show_recitation => $showColumns->{recit},
 		% show_login      => $showColumns->{login},
+		% returning       => 1
 		% )
 	% : ()
 % );

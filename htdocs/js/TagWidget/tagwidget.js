@@ -48,7 +48,7 @@
 
 	// Load the library taxonomy from the JSON file.
 	const response = await fetch(tagWidgetScript.dataset.taxonomy).catch(
-		(err) => `Could not load the OPL taxonomy from the server: ${err.messsage ?? err}`
+		(err) => `Could not load the OPL taxonomy from the server: ${err.message ?? err}`
 	);
 	if (typeof response === 'string') return showMessage(response);
 	if (!response.ok) return showMessage('Could not load the OPL taxonomy from the server.');

@@ -100,13 +100,24 @@ sub startup ($app) {
 	);
 
 	# Add a hook to add extra headers if set in the config file.
-	if (ref $config->{extra_headers} eq 'HASH') {
+	if (ref $config->{extra_headers} eq 'HASH' || ref $config->{extra_ssl_headers} eq 'HASH') {
+		my $extraHeaders    = ref $config->{extra_headers} eq 'HASH'     ? $config->{extra_headers}     : {};
+		my $extraSSLHeaders = ref $config->{extra_ssl_headers} eq 'HASH' ? $config->{extra_ssl_headers} : {};
 		$app->hook(
 			before_dispatch => sub ($c) {
-				for my $path (keys %{ $config->{extra_headers} }) {
+				for my $path (keys %$extraHeaders) {
 					if ($c->req->url->path =~ /^$path/) {
-						for (keys %{ $config->{extra_headers}{$path} }) {
-							$c->res->headers->header($_ => $config->{extra_headers}{$path}{$_});
+						for (keys %{ $extraHeaders->{$path} }) {
+							$c->res->headers->header($_ => $extraHeaders->{$path}{$_});
+						}
+					}
+				}
+				if ($c->req->is_secure) {
+					for my $path (keys %$extraSSLHeaders) {
+						if ($c->req->url->path =~ /^$path/) {
+							for (keys %{ $extraSSLHeaders->{$path} }) {
+								$c->res->headers->header($_ => $extraSSLHeaders->{$path}{$_});
+							}
 						}
 					}
 				}
@@ -251,7 +262,8 @@ sub startup ($app) {
 	$cg_r->get('/')->to('Home#go')->name('root');
 
 	# The course admin route is set up here because of its special stash value.
-	$cg_r->any("/$ce->{admin_course_id}")->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
+	$cg_r->any("/$ce->{admin_course_id}")
+		->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
 		->name('course_admin');
 
 	setup_content_generator_routes($cg_r);

@@ -17,10 +17,6 @@ $headings-font-weight: 600;
 $link-decoration: none;
 $link-hover-decoration: underline;
 
-// Make breadcrumb dividers and active items a bit darker.
-$breadcrumb-divider-color: #495057;
-$breadcrumb-active-color: #495057;
-
 @import './theme-colors';
 
 // Include the remainder of bootstrap's scss configuration
@@ -75,14 +71,55 @@ $breadcrumb-active-color: #495057;
 	--ww-primary-foreground-color: #{color-contrast($primary)};
 	--ww-achievement-level-color: #{$ww-achievement-level-color};
 	--ww-site-nav-link-active-background-color: #{$primary};
+	--ww-site-nav-link-hover-background-color: #e1e1e1;
+	--ww-layout-divider-color: #aaa;
+	--ww-layout-border-color: #e6e6e6;
+	--ww-course-config-tab-link-focus-outline-color: #{rgba($primary, $focus-ring-opacity)};
 }
 
 // Overrides
+
 a:not(.btn):focus {
-	color: $link-hover-color;
 	outline-style: solid;
-	outline-color: #{lighten($link-hover-color, 8%)};
 	outline-width: 1px;
+	outline-color: #{$link_hover_color};
+	box-shadow: none;
+}
+
+@include color-mode(dark) {
+	--ww-site-nav-link-hover-background-color: #{shade-color($primary, 40%)};
+	--ww-layout-divider-color: #666;
+	--ww-layout-border-color: #495057;
+	--ww-course-config-tab-link-focus-outline-color: #{rgba(color-contrast($body-bg-dark), $focus-ring-opacity)};
+
+	.bg-light {
+		color: var(--bs-body-color) !important;
+		background-color: var(--bs-primary-bg-subtle) !important;
+	}
+
+	.btn-outline-primary {
+		--#{$prefix}btn-color: #{tint_color($primary, 60%)};
+		--#{$prefix}btn-border-color: #{tint_color($primary, 20%)};
+	}
+
+	.text-danger {
+		color: var(--bs-danger-text-emphasis) !important;
+	}
+
+	.text-success {
+		color: var(--bs-success-text-emphasis) !important;
+	}
+
+	a:not(.btn):focus {
+		outline-color: #{$link_hover_color-dark};
+	}
+}
+
+.masthead {
+	a:not(.btn):focus {
+		outline-color: #{$link_hover_color_dark};
+		outline-width: 2px;
+	}
 }
 
 @import 'theme-overrides';

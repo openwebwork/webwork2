@@ -4,7 +4,7 @@ package WebworkWebservice;
 
 WebworkWebservice
 
-=head1 SYNPOSIS
+=head1 SYNOPSIS
 
     my $rpc_service = WebworkWebservice->new($c);
     await $rpc_service->rpc_execute('command_to_execute');
@@ -248,16 +248,17 @@ sub command_permission {
 
 		# WebworkWebservice::ProblemActions
 		getUserProblem => 'access_instructor_tools',
-		# Note: The modify_student_data permission is checked in the following three methods and only the status and
-		# comment_string can actually be modified by users with the problem_grader permission only.
+		# Note: The modify_student_data permission is checked in the following three methods and only the status,
+		# sub_status, and comment_string can actually be modified by users with the problem_grader permission only.
 		putUserProblem    => 'problem_grader',
 		putProblemVersion => 'problem_grader',
 		putPastAnswer     => 'problem_grader',
 		tidyPGCode        => 'access_instructor_tools',
 		convertCodeToPGML => 'access_instructor_tools',
+		runPGCritic       => 'access_instructor_tools',
 
 		# WebworkWebservice::RenderProblem
-		renderProblem => 'proctor_quiz_login',
+		renderProblem => 'webservice_render_problem',
 
 		# WebworkWebservice::SetActions
 		listGlobalSets        => 'access_instructor_tools',

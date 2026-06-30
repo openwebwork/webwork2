@@ -226,7 +226,7 @@ sub pre_header_initialize ($c) {
 				$method_to_call = 'do_registration';
 			}
 		} else {
-			@errors = "Unrecognized sub-display @{[ $c->tag('b', $subDisplay) ]}.";
+			@errors = "Unrecognized sub-display $subDisplay.";
 		}
 	}
 
@@ -293,8 +293,6 @@ sub do_add_course ($c) {
 	my $copy_from_course = trim_spaces($c->param('copy_from_course')) // '';
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $add_courseID });
-
-	my %courseOptions;
 
 	my @users;
 
@@ -376,15 +374,15 @@ sub do_add_course ($c) {
 		}
 	}
 
-	push @{ $courseOptions{PRINT_FILE_NAMES_FOR} },
-		map { $_->[0]->user_id } grep { $_->[2]->permission >= $ce->{userRoles}{professor} } @users;
-
 	# Include any optional arguments, including a template course and the course title and course institution.
 	my %optional_arguments;
 	if ($copy_from_course ne '') {
-		%optional_arguments             = map { $_ => 1 } $c->param('copy_component');
-		$optional_arguments{copyFrom}   = $copy_from_course;
-		$optional_arguments{copyConfig} = $c->param('copy_config_file');
+		%optional_arguments = map { $_ => 1 } $c->param('copy_component');
+		$optional_arguments{copyFrom} = $copy_from_course;
+		$optional_arguments{copyConfig} =
+			$c->param('copy_config_file') || ($c->param('add_on_conf') && $c->param('add_on_conf') eq '*');
+		$optional_arguments{addOnConf} =
+			$c->param('add_on_conf') && $c->param('add_on_conf') ne '*' ? [ $c->param('add_on_conf') ] : [];
 	}
 	if ($add_courseTitle ne '') {
 		$optional_arguments{courseTitle} = $add_courseTitle;
@@ -395,15 +393,7 @@ sub do_add_course ($c) {
 
 	my $output = $c->c;
 
-	eval {
-		addCourse(
-			courseID      => $add_courseID,
-			ce            => $ce2,
-			courseOptions => \%courseOptions,
-			users         => \@users,
-			%optional_arguments,
-		);
-	};
+	eval { addCourse(courseID => $add_courseID, ce => $ce2, users => \@users, %optional_arguments,); };
 	if ($@) {
 		my $error = $@;
 		push(
@@ -707,9 +697,10 @@ sub do_rename_course ($c) {
 
 	eval {
 		renameCourse(
-			courseID    => $rename_oldCourseID,
-			ce          => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
-			newCourseID => $rename_newCourseID,
+			courseID           => $rename_oldCourseID,
+			ce                 => WeBWorK::CourseEnvironment->new({ courseName => $rename_oldCourseID }),
+			newCourseID        => $rename_newCourseID,
+			updateLTICourseMap => 1,
 			%optional_arguments
 		);
 	};

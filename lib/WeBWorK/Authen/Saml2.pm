@@ -64,7 +64,7 @@ sub do_verify ($self) {
 		my $idpCertificateFile = $self->idp(1);
 		unless ($idpCertificateFile) {
 			$c->stash->{authen_error} = $c->maketext(
-				'An internal server error occured. Please contact the system administrator for assistance.');
+				'An internal server error occurred. Please contact the system administrator for assistance.');
 			return 0;
 		}
 
@@ -242,7 +242,7 @@ sub sendLoginRequest ($self) {
 	my $idp = $self->idp;
 	unless ($idp) {
 		$c->stash->{authen_error} =
-			$c->maketext('An internal server error occured. Please contact the system administrator for assistance.');
+			$c->maketext('An internal server error occurred. Please contact the system administrator for assistance.');
 		return 0;
 	}
 

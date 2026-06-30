@@ -30,10 +30,10 @@ if [ "$SYSTEM_TIMEZONE" != "UTC" ]; then
 fi
 
 # Modify default papersize based on environment variable PAPERSIZE
-echo "Setting libpaper1 papersize to $PAPERSIZE"
-echo "libpaper1 libpaper/defaultpaper select $PAPERSIZE\nlibpaper1:amd64 libpaper/defaultpaper select $PAPERSIZE\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt
+echo "Setting libpaper2 papersize to $PAPERSIZE"
+echo "libpaper2 libpaper/defaultpaper select $PAPERSIZE\nlibpaper2:amd64 libpaper/defaultpaper select $PAPERSIZE\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt
 debconf-set-selections /tmp/preseed.txt
-dpkg-reconfigure -f noninteractive libpaper1
+dpkg-reconfigure -f noninteractive libpaper2
 
 # Install some extra packages
 if [ "$ADD_APT_PACKAGES" != "0" ]; then
@@ -102,7 +102,7 @@ if [ ! -d "$APP_ROOT/courses/admin" ]; then
 	umask 2
 	cd $APP_ROOT/courses
 	wait_for_db
-	$WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
+	$WEBWORK_ROOT/bin/addcourse admin --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
 	chown www-data:www-data -R $APP_ROOT/courses
 	echo "Admin course is created."
 	echo "user: admin password: admin added to course admin and tables upgraded"

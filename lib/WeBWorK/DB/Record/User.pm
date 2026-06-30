@@ -12,20 +12,21 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id        => { type => "VARCHAR(100) NOT NULL", key => 1 },
-		first_name     => { type => "TEXT" },
-		last_name      => { type => "TEXT" },
-		email_address  => { type => "TEXT" },
-		student_id     => { type => "TEXT" },
-		status         => { type => "TEXT" },
-		section        => { type => "TEXT" },
-		recitation     => { type => "TEXT" },
-		comment        => { type => "TEXT" },
-		displayMode    => { type => "TEXT" },
-		showOldAnswers => { type => "INT" },
-		useMathView    => { type => "INT" },
-		useMathQuill   => { type => "INT" },
-		lis_source_did => { type => "TEXT" },
+		user_id                   => { type => "VARCHAR(100) NOT NULL", key => 1 },
+		first_name                => { type => "TEXT" },
+		last_name                 => { type => "TEXT" },
+		email_address             => { type => "TEXT" },
+		student_id                => { type => "TEXT" },
+		status                    => { type => "TEXT" },
+		accommodation_time_factor => { type => "FLOAT NOT NULL DEFAULT 1" },
+		section                   => { type => "TEXT" },
+		recitation                => { type => "TEXT" },
+		comment                   => { type => "TEXT" },
+		displayMode               => { type => "TEXT" },
+		showOldAnswers            => { type => "INT" },
+		useMathView               => { type => "INT" },
+		useMathQuill              => { type => "INT" },
+		lis_source_did            => { type => "TEXT" },
 	);
 }
 

@@ -1,5 +1,43 @@
 (() => {
+	const renderURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
+
+	for (const pgmlLabButton of document.querySelectorAll('.pgml-lab')) {
+		pgmlLabButton.addEventListener('click', (e) => {
+			e.preventDefault();
+			const form = document.createElement('form');
+			form.style.display = 'none';
+			form.target = 'PGML';
+			form.action = renderURL;
+			form.method = 'post';
+
+			const inputs = [
+				['courseID', document.getElementsByName('courseID')[0]?.value],
+				['displayMode', document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax'],
+				['fileName', 'PGMLLab/PGML-lab.pg'],
+				['uriEncodedProblemSource', pgmlLabButton.dataset.source]
+			];
+
+			const user = document.getElementsByName('user')[0];
+			if (user) inputs.push(['user', user.value]);
+			const sessionKey = document.getElementsByName('key')[0];
+			if (sessionKey) inputs.push(['key', sessionKey.value]);
+
+			for (const [name, value] of inputs) {
+				const input = document.createElement('input');
+				input.name = name;
+				input.value = value;
+				input.type = 'hidden';
+				form.append(input);
+			}
+
+			document.body.append(form);
+			form.submit();
+			form.remove();
+		});
+	}
+
 	const fileChooserForm = document.forms['pg-editor-file-chooser'];
+
 	if (fileChooserForm) {
 		const newProblemRadio = document.getElementById('new_problem');
 
@@ -161,6 +199,15 @@
 			?.addEventListener('change', () => (deleteBackupCheck.checked = true));
 	}
 
+	const renderArea = document.getElementById('pgedit-render-area');
+
+	const scrollToRenderArea = () => {
+		// Scroll to the top of the render window if the current scroll position is below that.
+		const renderAreaRect = renderArea.getBoundingClientRect();
+		const topBarHeight = document.querySelector('.webwork-logo')?.getBoundingClientRect().height ?? 0;
+		if (renderAreaRect.top < topBarHeight) window.scrollBy(0, renderAreaRect.top - topBarHeight);
+	};
+
 	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
 	const tidyPGCode = () => {
 		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
@@ -195,11 +242,13 @@
 				}
 				if (request_object.pgCode === data.result_data.tidiedPGCode) {
 					showMessage('There were no changes to the code.', true);
+					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				} else {
 					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.tidiedPGCode;
 					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
 					saveTempFile();
-					showMessage('Successfuly perltidied code.', true);
+					showMessage('Successfully perltidied code.', true);
+					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
@@ -235,15 +284,43 @@
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
 	};
 
+	// Send a request to the server to run the PG critic in the CodeMirror editor.
+	const runPGCritic = () => {
+		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+
+		const user = document.getElementsByName('user')[0];
+		if (user) request_object.user = user.value;
+		const sessionKey = document.getElementsByName('key')[0];
+		if (sessionKey) request_object.key = sessionKey.value;
+
+		request_object.rpc_command = 'runPGCritic';
+		request_object.pgCode =
+			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
+
+		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+			.then((response) => response.json())
+			.then((data) => {
+				if (data.error) throw new Error(data.error);
+				if (!data.result_data) throw new Error('An invalid response was received.');
+				renderArea.innerHTML = data.result_data.html;
+				scrollToRenderArea();
+			})
+			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
+	};
+
 	document.getElementById('take_action')?.addEventListener('click', async (e) => {
-		if (document.getElementById('current_action')?.value === 'format_code') {
+		if (document.getElementById('current_action')?.value === 'code_maintenance') {
 			e.preventDefault();
-			if (document.querySelector('input[name="action.format_code"]:checked').value == 'tidyPGCode') {
+			if (document.querySelector('input[name="action.code_maintenance"]:checked').value === 'tidyPGCode') {
 				tidyPGCode();
 			} else if (
-				document.querySelector('input[name="action.format_code"]:checked').value == 'convertCodeToPGML'
+				document.querySelector('input[name="action.code_maintenance"]:checked').value === 'convertCodeToPGML'
 			) {
 				convertCodeToPGML();
+			} else if (
+				document.querySelector('input[name="action.code_maintenance"]:checked').value === 'runPGCritic'
+			) {
+				runPGCritic();
 			}
 			return;
 		}
@@ -305,8 +382,58 @@
 		}
 	});
 
-	const renderURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/render_rpc`;
-	const renderArea = document.getElementById('pgedit-render-area');
+	const removeValidationErrors = (input) => {
+		input?.classList.remove('is-invalid');
+		input.setCustomValidity('');
+	};
+
+	const validateInput = (e, input, isInvalid, defaultMessage, report) => {
+		if (isInvalid) {
+			e.preventDefault();
+			input.classList.add('is-invalid');
+			input.setCustomValidity(input.dataset.errorMessage ?? defaultMessage);
+			if (report) input.reportValidity();
+			return false;
+		}
+		removeValidationErrors(input);
+		return true;
+	};
+
+	// Validation of the target file for the save as tab.
+	const saveAsTargetFile = document.getElementsByName('action.save_as.target_file')?.[0];
+	saveAsTargetFile?.addEventListener('keyup', () => {
+		if (saveAsTargetFile.value) removeValidationErrors(saveAsTargetFile);
+	});
+
+	// Validation of the target set for the save as tab.
+	const saveAsSaveModeRadios = document.getElementsByName('action.save_as.saveMode');
+	const saveToTargetSetRadio = Array.from(saveAsSaveModeRadios).find(
+		(r) => r.id === 'action_save_as_saveMode_new_problem_id' || r.id === 'action_save_as_saveMode_set_header_id'
+	);
+	const targetSetSelect = document.getElementsByName('action.save_as.targetSet')?.[0];
+	const actionSaveAs = document.getElementById('save_as');
+	for (const radio of saveAsSaveModeRadios) {
+		radio.addEventListener('change', () => removeValidationErrors(targetSetSelect));
+	}
+	const saveToTargetSetSelected = () => {
+		saveToTargetSetRadio.checked = true;
+		if (targetSetSelect?.value) removeValidationErrors(targetSetSelect);
+	};
+	targetSetSelect?.addEventListener('change', saveToTargetSetSelected);
+	targetSetSelect?.addEventListener('focusin', saveToTargetSetSelected);
+
+	document.forms.editor?.addEventListener('submit', (e) => {
+		if (actionSaveAs && actionSaveAs.classList.contains('active')) {
+			let report = true;
+			for (const validationData of [
+				[saveAsTargetFile, saveAsTargetFile?.value === '', 'Please enter a filename.'],
+				[targetSetSelect, saveToTargetSetRadio?.checked && !targetSetSelect?.value, 'Please select a set.']
+			]) {
+				if (!validateInput(e, ...validationData, report)) report = false;
+			}
+		}
+	});
+
 	const fileType = document.getElementsByName('file_type')[0]?.value;
 
 	// This is either the div containing the CodeMirror editor or the problemContents textarea in the case that
@@ -322,27 +449,124 @@
 		}
 	});
 
-	// Synchronize the heights of the render area and the editor area for wide windows.
-	if (editorArea && renderArea) {
-		const codeMirrorResizeObserver = new ResizeObserver((entries) => {
-			if (document.body.clientWidth < 992) return;
+	const pgEditContainer = document.getElementById('pgedit-container');
+	const codePanel = pgEditContainer?.querySelector('.pgedit-panel.code');
+	const renderPanel = pgEditContainer?.querySelector('.pgedit-panel.render');
 
-			for (const entry of entries) {
-				if (entry.borderBoxSize) {
-					// Note that the blockSize is the height (since width is not resizable).
-					const height = Array.isArray(entry.borderBoxSize)
-						? entry.borderBoxSize[0].blockSize
-						: entry.borderBoxSize.blockSize;
-					if (window.getComputedStyle(renderArea).getPropertyValue('height') !== `${height}px`)
-						renderArea.style.height = `${height}px`;
-					if (window.getComputedStyle(editorArea).getPropertyValue('height') !== `${height}px`) {
-						editorArea.style.height = `${height}px`;
-					}
-				}
+	if (pgEditContainer && codePanel && renderPanel) {
+		if (document.body.clientWidth < 992) {
+			const initialCodePanelHeight = localStorage.getItem('WW.pgedit.codePanelHeight');
+			if (initialCodePanelHeight) codePanel.style.height = initialCodePanelHeight;
+		} else {
+			const initialResizeContainerHeight = localStorage.getItem('WW.pgedit.containerHeight');
+			if (initialResizeContainerHeight) pgEditContainer.style.height = initialResizeContainerHeight;
+			const initialCodePanelWidth = localStorage.getItem('WW.pgedit.codePanelWidth');
+			if (initialCodePanelWidth) codePanel.style.width = initialCodePanelWidth;
+		}
+
+		const verticalResizer = pgEditContainer.querySelector('.vertical-resizer');
+
+		verticalResizer?.addEventListener('pointerdown', (e) => {
+			verticalResizer.setPointerCapture(e.pointerId);
+
+			const startY = e.clientY;
+			const startHeight =
+				document.body.clientWidth < 992
+					? codePanel.getBoundingClientRect().height
+					: pgEditContainer.getBoundingClientRect().height;
+
+			const onPointerMove =
+				document.body.clientWidth < 992
+					? (moveEvent) => {
+							codePanel.style.height = `${startHeight + (moveEvent.clientY - startY)}px`;
+							localStorage.setItem('WW.pgedit.codePanelHeight', codePanel.style.height);
+						}
+					: (moveEvent) => {
+							pgEditContainer.style.height = `${startHeight + (moveEvent.clientY - startY)}px`;
+							localStorage.setItem('WW.pgedit.containerHeight', pgEditContainer.style.height);
+						};
+			const onPointerUp = () => {
+				verticalResizer.releasePointerCapture(e.pointerId);
+				document.removeEventListener('pointermove', onPointerMove);
+				document.removeEventListener('pointerup', onPointerUp);
+			};
+
+			document.addEventListener('pointermove', onPointerMove);
+			document.addEventListener('pointerup', onPointerUp);
+		});
+
+		const updateHeight = (delta) => {
+			if (document.body.clientWidth < 992) {
+				codePanel.style.height = `${codePanel.getBoundingClientRect().height + delta}px`;
+				localStorage.setItem('WW.pgedit.codePanelHeight', codePanel.style.height);
+			} else {
+				pgEditContainer.style.height = `${pgEditContainer.getBoundingClientRect().height + delta}px`;
+				localStorage.setItem('WW.pgedit.containerHeight', pgEditContainer.style.height);
+			}
+		};
+
+		verticalResizer?.addEventListener('keydown', (e) => {
+			const step = e.ctrlKey ? 1 : e.altKey ? 50 : 20;
+			if (e.key === 'ArrowUp') {
+				updateHeight(-step);
+				e.preventDefault();
+			} else if (e.key === 'ArrowDown') {
+				updateHeight(step);
+				e.preventDefault();
 			}
 		});
-		codeMirrorResizeObserver.observe(editorArea);
-		codeMirrorResizeObserver.observe(renderArea);
+
+		const horizontalResizer = pgEditContainer.querySelector('.horizontal-resizer');
+
+		horizontalResizer?.addEventListener('pointerdown', (e) => {
+			horizontalResizer.setPointerCapture(e.pointerId);
+
+			const startX = e.clientX;
+			const startWidth = codePanel.getBoundingClientRect().width;
+
+			const onPointerMove = (moveEvent) => {
+				codePanel.style.width = `${startWidth + (moveEvent.clientX - startX)}px`;
+				localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+			};
+
+			const onPointerUp = () => {
+				horizontalResizer.releasePointerCapture(e.pointerId);
+				document.removeEventListener('pointermove', onPointerMove);
+				document.removeEventListener('pointerup', onPointerUp);
+			};
+
+			document.addEventListener('pointermove', onPointerMove);
+			document.addEventListener('pointerup', onPointerUp);
+		});
+
+		horizontalResizer?.addEventListener('dblclick', () => {
+			codePanel.style.width = 'calc(50% - 0.5rem + 1px)';
+			localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+		});
+
+		horizontalResizer?.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				codePanel.style.width = 'calc(50% - 0.5rem + 1px)';
+				localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+				e.preventDefault();
+			}
+		});
+
+		const updateWidth = (delta) => {
+			codePanel.style.width = `${codePanel.getBoundingClientRect().width + delta}px`;
+			localStorage.setItem('WW.pgedit.codePanelWidth', codePanel.style.width);
+		};
+
+		horizontalResizer?.addEventListener('keydown', (e) => {
+			const step = e.ctrlKey ? 1 : e.altKey ? 50 : 20;
+			if (e.key === 'ArrowLeft') {
+				updateWidth(-step);
+				e.preventDefault();
+			} else if (e.key === 'ArrowRight') {
+				updateWidth(step);
+				e.preventDefault();
+			}
+		});
 	}
 
 	// Save the initial placeholder content of the render area so that it can be put back when a problem is reloaded.
@@ -350,13 +574,31 @@
 	const iframe = document.createElement('iframe');
 	iframe.title = 'Rendered content';
 	iframe.id = 'pgedit-render-iframe';
+	iframe.style.colorScheme = 'light';
 
-	// Adjust the height of the iframe when the window is resized and when the iframe loads.
+	// Adjust editor dimensions when the window is resized and when the iframe loads.
 	const adjustIFrameHeight = () => {
 		if (document.body.clientWidth < 992) {
-			if (iframe.contentDocument)
-				renderArea.style.height = `${iframe.contentDocument.documentElement.offsetHeight + 2}px`;
-		} else renderArea.style.height = `${editorArea.offsetHeight}px`;
+			if (iframe.contentDocument) {
+				pgEditContainer.style.height = '';
+				codePanel.style.width = '100%';
+				codePanel.style.height = localStorage.getItem('WW.pgedit.codePanelHeight') ?? '';
+				renderArea.style.height = `${
+					iframe.contentDocument.documentElement.offsetHeight +
+					2 +
+					(document.getElementById('author-comment')?.offsetHeight ?? 0)
+				}px`;
+				renderPanel.style.width = '100%';
+				renderPanel.style.height = renderArea.style.height;
+			}
+		} else {
+			pgEditContainer.style.height = localStorage.getItem('WW.pgedit.containerHeight') ?? '';
+			codePanel.style.width = localStorage.getItem('WW.pgedit.codePanelWidth') ?? '';
+			renderPanel.style.width = '';
+			codePanel.style.height = '100%';
+			renderPanel.style.height = '100%';
+			renderArea.style.height = '100%';
+		}
 	};
 	window.addEventListener('resize', adjustIFrameHeight);
 
@@ -382,6 +624,7 @@
 				requestData.set('send_pg_flags', 1);
 				requestData.set(button.name, button.value);
 				requestData.set('set_id', document.getElementsByName('hidden_set_id')[0]?.value ?? 'Unknown Set');
+				requestData.set('showMathJaxErrors', 1);
 
 				await renderProblem(requestData);
 
@@ -390,11 +633,7 @@
 		}
 
 		adjustIFrameHeight();
-
-		// Scroll to the top of the render window if the current scroll position is below that.
-		const renderAreaRect = renderArea.getBoundingClientRect();
-		const topBarHeight = document.querySelector('.webwork-logo')?.getBoundingClientRect().height ?? 0;
-		if (renderAreaRect.top < topBarHeight) window.scrollBy(0, renderAreaRect.top - topBarHeight);
+		scrollToRenderArea();
 	});
 
 	const render = () =>
@@ -428,7 +667,8 @@
 			if (fileType === 'hardcopy_theme') {
 				const contents = webworkConfig?.pgCodeMirror?.source;
 				if (contents) {
-					renderArea.innerHTML = '<pre>' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+					renderArea.innerHTML =
+						'<pre class="text-dark">' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
 				} else
 					renderArea.innerHTML =
 						'<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
@@ -473,7 +713,8 @@
 					displayMode: document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax',
 					language: document.querySelector('input[name="hidden_language"]')?.value ?? 'en',
 					send_pg_flags: 1,
-					view_problem_debugging_info: 1
+					view_problem_debugging_info: 1,
+					showMathJaxErrors: 1
 				})
 			).then(() => resolve());
 		});
@@ -512,7 +753,8 @@
 					if (data.pg_flags && data.pg_flags.comment) {
 						// The problem has a comment, so show it.
 						const container = document.createElement('div');
-						container.classList.add('px-2', 'mb-2');
+						container.id = 'author-comment';
+						container.classList.add('p-2');
 						container.innerHTML = data.pg_flags.comment;
 						iframe.after(container);
 					}
@@ -616,37 +858,4 @@
 			rendering = false;
 		}
 	};
-
-	const pgmlLabButton = document.getElementById('pgml-lab');
-	pgmlLabButton?.addEventListener('click', () => {
-		const form = document.createElement('form');
-		form.style.display = 'none';
-		form.target = 'PGML';
-		form.action = renderURL;
-		form.method = 'post';
-
-		const inputs = [
-			['courseID', document.getElementsByName('courseID')[0]?.value],
-			['displayMode', document.getElementById('action_view_displayMode_id')?.value ?? 'MathJax'],
-			['fileName', 'PGMLLab/PGML-lab.pg'],
-			['uriEncodedProblemSource', pgmlLabButton.dataset.source]
-		];
-
-		const user = document.getElementsByName('user')[0];
-		if (user) inputs.push(['user', user.value]);
-		const sessionKey = document.getElementsByName('key')[0];
-		if (sessionKey) inputs.push(['key', sessionKey.value]);
-
-		for (const [name, value] of inputs) {
-			const input = document.createElement('input');
-			input.name = name;
-			input.value = value;
-			input.type = 'hidden';
-			form.append(input);
-		}
-
-		document.body.append(form);
-		form.submit();
-		form.remove();
-	});
 })();

@@ -52,6 +52,7 @@
 				<%= include 'ContentGenerator/Instructor/UserList/sort_button', field => 'status' =%>
 			</div>
 		</th>
+		<th><%= maketext('Accommodation Time Factor') %></th>
 		<th>
 			<div class="d-flex justify-content-between align-items-end gap-1">
 				<%= link_to maketext('Section') => '#', class => 'sort-header',

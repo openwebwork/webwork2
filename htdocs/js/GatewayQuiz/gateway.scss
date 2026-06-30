@@ -1,13 +1,5 @@
 /* gateway styles */
 
-div.gwMessage {
-	background-color: #ffeeaa;
-	box-shadow: 3px 3px 3px darkgray;
-	margin: 0 0 1rem 0;
-	padding: 0.25rem;
-	border-radius: 3px;
-}
-
 #gwTimer {
 	position: sticky;
 	width: 15em;
@@ -60,7 +52,12 @@ table.attemptResults {
 	border: 1px solid #ddd;
 	border-radius: 3px;
 
-	h2 {
+	[data-bs-theme='dark'] & {
+		border-color: #555;
+		background-color: var(--bs-primary-bg-subtle, 'black');
+	}
+
+	h2.gw-problem-number {
 		display: inline-block;
 		font-size: 16px;
 		margin-right: 5px;
@@ -85,12 +82,17 @@ table.attemptResults {
 	}
 
 	colgroup.page {
-		border-left: solid 1pt black;
-		border-right: solid 1pt black;
+		border-left: solid 1pt var(--bs-emphasis-color, black);
+		border-right: solid 1pt var(--bs-emphasis-color, black);
 	}
 
 	.page.active {
 		background-color: #ffeeaa;
+
+		[data-bs-theme='dark'] & {
+			color: white;
+			background-color: #80690a;
+		}
 	}
 }
 
@@ -98,8 +100,9 @@ div.gwDivider {
 	margin: 0px 0px 10px 0px;
 }
 
-/* Override the pg style so that the problem-content is not offset in gateway quizzes. */
+/* Override the pg style so that the problem-content is not offset in gateway quizzes and force a light color scheme. */
 .problem-content {
+	color-scheme: light;
 	padding: unset;
 	background-color: unset;
 	border: unset;

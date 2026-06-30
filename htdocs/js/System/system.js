@@ -11,7 +11,7 @@
 			navigation_element.classList.remove('invisible');
 			content.classList.toggle('toggle-width');
 
-			if (currentWidth < threshold) {
+			if (currentWidth <= threshold) {
 				const overlay = document.createElement('div');
 				overlay.classList.add('sidebar-backdrop');
 				document.body.append(overlay);
@@ -27,28 +27,28 @@
 
 		document.getElementById('toggle-sidebar')?.addEventListener('click', toggleSidebar);
 
-		if (currentWidth < threshold) navigation_element.classList.add('invisible');
+		if (currentWidth <= threshold) navigation_element.classList.add('invisible');
 
 		navigation_element.addEventListener('transitionend', () => {
 			if (
-				(window.innerWidth >= threshold && navigation_element.classList.contains('toggle-width')) ||
-				(window.innerWidth < threshold && !navigation_element.classList.contains('toggle-width'))
+				(window.innerWidth > threshold && navigation_element.classList.contains('toggle-width')) ||
+				(window.innerWidth <= threshold && !navigation_element.classList.contains('toggle-width'))
 			)
 				navigation_element.classList.add('invisible');
 		});
 
 		// If the window width changes open or close the sidebar appropriately.
 		window.addEventListener('resize', () => {
-			if (!navigation_element.classList.contains('toggle-width') && window.innerWidth >= threshold)
+			if (!navigation_element.classList.contains('toggle-width') && window.innerWidth > threshold)
 				navigation_element.classList.remove('invisible');
 
 			if (
 				(navigation_element.classList.contains('toggle-width') &&
-					window.innerWidth < threshold &&
-					currentWidth >= threshold) ||
+					window.innerWidth <= threshold &&
+					currentWidth > threshold) ||
 				(navigation_element.classList.contains('toggle-width') &&
-					window.innerWidth >= threshold &&
-					currentWidth < threshold)
+					window.innerWidth > threshold &&
+					currentWidth <= threshold)
 			) {
 				currentWidth = window.innerWidth;
 				toggleSidebar();
@@ -74,7 +74,8 @@
 	// FIXME: These are really general purpose tooltips and not just in the homework sets editor.  So the class name
 	// should be chosen to better reflect this.
 	document.querySelectorAll('.set-id-tooltip').forEach((el) => {
-		if (el.dataset.bsTitle) new bootstrap.Tooltip(el, { fallbackPlacements: [] });
+		if (el.dataset.bsTitle)
+			new bootstrap.Tooltip(el, { fallbackPlacements: el.dataset.fallbackPlacements?.split(' ') || [] });
 	});
 
 	// Hardcopy tooltips shown on the Problem Sets page.

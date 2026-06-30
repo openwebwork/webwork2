@@ -6,7 +6,7 @@ still_not_right,"It's Still Not Right",105,secret,"default,jitar","Input the exa
 persistence,"Persistence is not Futile",106,secret,"default,jitar","Solve a problem after 20 incorrect submissions.",10,,persistence.at,persistence.png
 super_persistence,"Green Never Looked So Good",107,secret,"default,jitar","Solve a problem after 100 incorrect submissions.",10,,super_persistence.at,super_persistence.png
 super_speed_math,"Careful Planning and Quick Fingers",108,secret,default,"Spend less than 10 minutes entering answers to a homework set.",20,,super_speed_math.at,super_speed_math.png
-hows_your_finger,"Hows Your Finger?",109,secret,"default,jitar","Have more than 250 submissions on a homework problem.  ",10,,hows_your_finger.at,hows_your_finger.png
+hows_your_finger,"Hows Your Finger?",109,secret,"default,jitar","Have more than 250 submissions on a homework problem.",10,,hows_your_finger.at,hows_your_finger.png
 third_time,"Third Times the Charm",110,secret,"default,jitar","Solve a problem on the third submission",10,,third_time.at,third_time.png
 one_click,"One Click Is All I Need",201,one_timer,"default,jitar","Earn 100% on a problem in one attempt.",10,,one_click.at,one_click.png
 on_one_hand,"On One Hand",202,one_timer,default,"Finish a homework set with less than 5 incorrect submissions.",10,,on_one_hand.at,on_one_hand.png
@@ -16,20 +16,20 @@ really_early_bird,"The Really Early Bird",205,one_timer,default,"Finish a homewo
 back_for_more,"Back For More",206,one_timer,"default,jitar","Retry a problem after a 8 hour break.",10,,back_for_more.at,back_for_more.png
 chipping_away,"Just Keep Chipping Away",207,one_timer,"default,jitar","Work on a single homework set over the course of 48 hours.",10,,chipping_away.at,chipping_away.png
 speed_mather,"Go Speed Math-er",208,one_timer,default,"Spend less than 1 hour working on a homework set.",10,,speed_mather.at,speed_mather.png
-three_in_a_row,"Three in a Row",209,one_timer,"default,jitar","Complete 3 problems in a row with no incorrect answers.",10,3,three_in_a_row.at,three_in_a_row.png
-on_fire,"You're on Fire!",210,one_timer,"default,jitar","Complete 10 problems in a row with no incorrect answers.",20,10,on_fire.at,on_fire.png
-complete_one_set,"One Set Wonder",401,complete_sets,default,"Get 100% on one homework set.",10,,complete_one_set.at,complete_one_set.png
-complete_five_sets,"High Five",402,complete_sets,default,"Get 100% on five homework sets.",10,5,complete_five_sets.at,complete_five_sets.png
-complete_ten_sets,"One For Each Finger",403,complete_sets,default,"Get 100% on ten homework sets.",10,10,complete_ten_sets.at,complete_ten_sets.png
-complete_twenty_sets,"Mathbox Twenty",404,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
-complete_thirty_sets,"The Long Road",405,complete_sets,default,"Get 100% on thirty homework sets.",20,30,complete_thirty_sets.at,complete_thirty_sets.png
-complete_all_sets,Perfection,406,complete_sets,default,"Get 100% on all homework sets.",30,35,complete_all_sets.at,complete_all_sets.png
-complete_one_problem,"The First Step",501,complete_problems,"default,jitar","Earn 100% on a homework problem.",10,,complete_one_problem.at,complete_one_problem.png
-complete_10_problems,"Perfect 10",502,complete_problems,"default,jitar","Earn 100% on 10 homework problems.",10,10,complete_10_problems.at,complete_10_problems.png
-complete_25_problems,"Twenty-Five Questions",503,complete_problems,"default,jitar","Earn 100% on 25 homework problems.",10,25,complete_25_problems.at,complete_25_problems.png
-complete_50_problems,"50 Ways to Solve a Math Problem",504,complete_problems,"default,jitar","Earn 100% on 50 homework problems.",10,50,complete_50_problems.at,complete_50_problems.png
-complete_100_problems,"Seeing Benjamins",505,complete_problems,"default,jitar","Earn 100% on 100 homework problems.",20,100,complete_100_problems.at,complete_100_problems.png
-complete_150_problems,Sesqui-Centeni-Problems,506,complete_problems,"default,jitar","Earn 100% on 150 homework problems.",20,150,complete_150_problems.at,complete_150_problems.png
+three_in_a_row,"Three in a Row",209,one_timer,"default,jitar","Complete 3 problems in a row with no incorrect answers.",10,3,n_correct_in_a_row.at,three_in_a_row.png
+on_fire,"You're on Fire!",210,one_timer,"default,jitar","Complete 10 problems in a row with no incorrect answers.",20,10,n_correct_in_a_row.at,on_fire.png
+complete_one_set,"One Set Wonder",401,complete_sets,default,"Get 100% on one homework set.",10,1,complete_n_sets.at,complete_one_set.png
+complete_five_sets,"High Five",402,complete_sets,default,"Get 100% on five homework sets.",10,5,complete_n_sets.at,complete_five_sets.png
+complete_ten_sets,"One For Each Finger",403,complete_sets,default,"Get 100% on ten homework sets.",10,10,complete_n_sets.at,complete_ten_sets.png
+complete_twenty_sets,"Mathbox Twenty",404,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_n_sets.at,complete_twenty_sets.png
+complete_thirty_sets,"The Long Road",405,complete_sets,default,"Get 100% on thirty homework sets.",20,30,complete_n_sets.at,complete_thirty_sets.png
+complete_all_sets,Perfection,406,complete_sets,default,"Get 100% on all homework sets.",30,35,complete_n_sets.at,complete_all_sets.png
+complete_one_problem,"The First Step",501,complete_problems,"default,jitar","Earn 100% on a homework problem.",10,1,complete_n_problems.at,complete_one_problem.png
+complete_10_problems,"Perfect 10",502,complete_problems,"default,jitar","Earn 100% on 10 homework problems.",10,10,complete_n_problems.at,complete_10_problems.png
+complete_25_problems,"Twenty-Five Questions",503,complete_problems,"default,jitar","Earn 100% on 25 homework problems.",10,25,complete_n_problems.at,complete_25_problems.png
+complete_50_problems,"50 Ways to Solve a Math Problem",504,complete_problems,"default,jitar","Earn 100% on 50 homework problems.",10,50,complete_n_problems.at,complete_50_problems.png
+complete_100_problems,"Seeing Benjamins",505,complete_problems,"default,jitar","Earn 100% on 100 homework problems.",20,100,complete_n_problems.at,complete_100_problems.png
+complete_150_problems,Sesqui-Centeni-Problems,506,complete_problems,"default,jitar","Earn 100% on 150 homework problems.",20,150,complete_n_problems.at,complete_150_problems.png
 challenge_one,"Challenge One Complete",601,challenge,default,"Finish the first challenge problem.",10,,challenge_one.at,challenge_one.png
 challenge_two,"Challenge Two Complete",602,challenge,default,"Finish the second challenge problem.",10,,challenge_two.at,challenge_two.png
 challenge_three,"Challenge Three Complete",603,challenge,default,"Finish the third challenge problem.",10,,challenge_three.at,challenge_three.png
@@ -40,7 +40,7 @@ challenge_seven,"Challenge Seven Complete",607,challenge,default,"Finish the sev
 challenge_eight,"Challenge Eight Complete",608,challenge,default,"Finish the eighth challenge problem.",10,,challenge_eight.at,challenge_eight.png
 challenge_nine,"Challenge Nine Complete",609,challenge,default,"Finish the ninth challenge problem.",10,,challenge_nine.at,challenge_nine.png
 challenge_ten,"Challenge Ten Complete",610,challenge,default,"Finish the tenth challenge problem.",10,,challenge_ten.at,challenge_ten.png
-challenger,Challenger,611,challenge,default,"Finish all of the challenge problems.",10,20,challenger.at,challenger.png
+challenger,Challenger,611,challenge,default,"Finish all of the challenge problems.",20,10,challenger.at,challenger.png
 earn_10_achievements,"Huzzah!!",9501,achievements,"default,gateway,jitar","Earn ten achievements.",10,10,earn_n_achievements.at,earn_10_achievements.png
 earn_20_achievements,"Achiever",9502,achievements,"default,gateway,jitar","Earn twenty achievements.",10,20,earn_n_achievements.at,earn_20_achievements.png
 earn_30_achievements,"The Collector",9503,achievements,"default,gateway,jitar","Earn thirty achievements.",10,30,earn_n_achievements.at,earn_30_achievements.png

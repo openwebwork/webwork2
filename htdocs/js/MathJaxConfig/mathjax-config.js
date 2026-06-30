@@ -1,7 +1,10 @@
 if (!window.MathJax) {
 	window.MathJax = {
-		tex: { packages: { '[+]': ['noerrors'] } },
-		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
+		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
+		loader: {
+			load: ['input/asciimath', '[tex]/noerrors', '[bs-color-scheme]'],
+			paths: { 'bs-color-scheme': webworkConfig?.mathJaxBSColorSchemeUrl ?? './bs-color-scheme.js' }
+		},
 		startup: {
 			ready() {
 				const AM = MathJax.InputJax.AsciiMath.AM;
@@ -98,25 +101,8 @@ if (!window.MathJax) {
 					AM.symbols.splice(i, 0, { input: trigger, ...newTriggers[trigger].symbols });
 				}
 
-				// The following is a workaround for a bug in MathJax when the math renderer is changed.
-				// Note that this should be removed when we have upgraded to MathJax 4.
-				const { STATE } = MathJax._.core.MathItem;
-				const { Menu } = MathJax._.ui.menu.Menu;
-				const { mathjax } = MathJax._.mathjax;
-				Menu.prototype.rerender = function (start = STATE.TYPESET) {
-					this.rerenderStart = Math.min(start, this.rerenderStart);
-					if (!Menu.loading) {
-						if (this.rerenderStart <= STATE.COMPILED) this.document.reset({ inputJax: [] });
-						MathJax.startup.promise.then(() => {
-							mathjax.handleRetriesFor(() => {
-								this.document.rerender(this.rerenderStart);
-								this.rerenderStart = STATE.LAST;
-							});
-						});
-					}
-				};
-
-				return MathJax.startup.defaultReady();
+				MathJax.startup.defaultReady();
+				MathJax.startup.document.constructor.ProcessBits.allocate('findScripts');
 			}
 		},
 		options: {
@@ -124,18 +110,23 @@ if (!window.MathJax) {
 				findScript: [
 					10,
 					(doc) => {
-						for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
-							const math = new doc.options.MathItem(
-								node.textContent,
-								doc.inputJax[0],
-								!!node.type.match(/; *mode=display/)
-							);
-							const text = document.createTextNode('');
-							node.parentNode.replaceChild(text, node);
-							math.start = { node: text, delim: '', n: 0 };
-							math.end = { node: text, delim: '', n: 0 };
-							doc.math.push(math);
+						if (doc.processed.isSet('findScripts')) return;
+						const containers = doc.adaptor.getElements(doc.options.elements || [doc.document.body], doc);
+						for (const container of containers) {
+							for (const node of container.querySelectorAll('script[type^="math/tex"]')) {
+								const math = new doc.options.MathItem(
+									node.textContent,
+									doc.inputJax[0],
+									!!node.type.match(/; *mode=display/)
+								);
+								const text = document.createTextNode('');
+								node.parentNode.replaceChild(text, node);
+								math.start = { node: text, delim: '', n: 0 };
+								math.end = { node: text, delim: '', n: 0 };
+								doc.math.push(math);
+							}
 						}
+						doc.processed.set('findScripts');
 					},
 					''
 				]

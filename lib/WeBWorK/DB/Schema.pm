@@ -124,7 +124,7 @@ no record matches. All elements of C<@keyparts> must be defined.
 
 =item gets(@keypartsRefs)
 
-Returns a list of records matching the keyparts refered to in each element of
+Returns a list of records matching the keyparts referred to in each element of
 C<@keypartsRef>. Each element of the returned list will contain either a record
 object (if there was a match) or the value C<undef> (if there was no match). All
 elements of C<@keyparts> must be defined.

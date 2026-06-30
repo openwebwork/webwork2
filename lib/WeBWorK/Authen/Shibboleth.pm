@@ -11,7 +11,7 @@ To use this module copy C<conf/authen_shibboleth.conf.dist> to
 C<conf/authen_shibboleth.dist>, and uncomment the line in C<conf/localOverrides.conf>
 that reads C<include("conf/authen_shibboleth.conf");>.
 
-Refer to the L<external Shibboleth authentication|http://webwork.maa.org/wiki/External_(Shibboleth)_Authentication>
+Refer to the L<external Shibboleth authentication|https://wiki.openwebwork.org/wiki/External_(Shibboleth)_Authentication>
 documentation on the WeBWorK wiki and the instructions in the comments of the
 C<conf/authen_shibboleth.conf.dist> file.
 

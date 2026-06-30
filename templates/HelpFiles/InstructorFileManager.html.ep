@@ -34,7 +34,7 @@
 			. 'and are created when exporting a problem set from the "Sets Manager". Each set definition file '
 			. 'contains a list of problems used and the dates and times. These definitions can be imported into the '
 			. 'current course.',
-			'href="https://webwork.maa.org/wiki/Set_Definition_Files" target="Webworkdocs"') =%>
+			'href="https://wiki.openwebwork.org/wiki/Set_Definition_Files" target="Webworkdocs"') =%>
 	</dd>
 	<dt><%= maketext('Class list (".lst") files') %></dt>
 	<dd>
@@ -44,7 +44,7 @@
 			. 'ClassList files can be prepared using a spreadsheet and then saved as [_3] (comma separated values) '
 			. 'text files. However, to access as a classlist file, the file suffix needs to be changed to [_4], '
 			. 'which can be done with the "Rename" button.',
-			'href="http://webwork.maa.org/wiki/Classlist_Files#Format_of_classlist_files" target="Webworkdocs"',
+			'href="https://wiki.openwebwork.org/wiki/Classlist_Files#Format_of_classlist_files" target="Webworkdocs"',
 			'<code>demoCourse.lst</code>', '<code>.csv</code>', '<code>.lst</code>') =%>
 	</dd>
 	<dt><%= maketext('Scoring (".csv") files') %></dt>

@@ -6,15 +6,15 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x wwRound);
 use WeBWorK::Utils::DateTime qw(after);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'HalfCreditSet',
 		name        => x('Lesser Tome of Enlightenment'),
-		description => x('Increases the score of every problem in an assignment by 50%, to a maximum of 100%.')
+		description => [ x('Increases the score of every problem in an assignment by 50%, to a maximum of 100%.') ]
 	}, $class;
 }
 
-sub can_use($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return 0
 		unless $set->assignment_type eq 'default'
 		&& after($set->open_date);
@@ -27,6 +27,8 @@ sub can_use($self, $set, $records) {
 		$new_grade += ($problem->status > 0.5 ? 1 : $problem->status + 0.5) * $problem->value;
 		$total     += $problem->value;
 	}
+	return 0 unless $total;
+
 	$self->{old_grade} = 100 * wwRound(2, $old_grade / $total);
 	$self->{new_grade} = 100 * wwRound(2, $new_grade / $total);
 	return $self->{old_grade} == 100 ? 0 : 1;

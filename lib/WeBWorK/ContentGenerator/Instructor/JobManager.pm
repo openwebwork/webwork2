@@ -106,7 +106,7 @@ sub initialize ($c) {
 	# first three sorts do not determine a proper order.
 	$c->stash->{sortedJobs} = [
 		map  { $_->{id} }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byJobID }
+		sort { $primarySortSub->() || $secondarySortSub->() || $ternarySortSub->() || byJobID() }
 		grep { $c->stash->{visibleJobs}{ $_->{id} } } (values %{ $c->stash->{jobs} })
 	];
 

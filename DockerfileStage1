@@ -1,7 +1,7 @@
 # This is the Stage 1 Dockerfile, which builds a base OS image (webwork-base)
 # on top of which the WeBWorK parts will be installed by the Stage 2 Dockerfile.
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # ==================================================================
 # Phase 1 - Set base OS image install stage ENV variables
@@ -41,12 +41,17 @@ RUN apt-get update \
 	libclass-tiny-antlers-perl \
 	libclass-tiny-perl \
 	libcpanel-json-xs-perl \
+	libcrypt-dev \
 	libcrypt-jwt-perl \
+	libcrypt-openssl-x509-perl \
 	libcryptx-perl \
 	libdata-dump-perl \
 	libdata-structure-util-perl \
 	libdatetime-perl \
+	libdatetime-format-xsd-perl \
+	libdatetime-hires-perl \
 	libdbd-mysql-perl \
+	libdbd-mariadb-perl \
 	libdevel-checklib-perl \
 	libemail-address-xs-perl \
 	libemail-date-format-perl \
@@ -60,16 +65,17 @@ RUN apt-get update \
 	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
+	libfile-slurper-perl \
 	libfuture-asyncawait-perl \
 	libgd-barcode-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
 	libhttp-async-perl \
+	libio-compress-perl \
 	libiterator-perl \
 	libiterator-util-perl \
 	liblocale-maketext-lexicon-perl \
-	libmariadb-dev \
 	libmath-random-secure-perl \
 	libmime-base32-perl \
 	libmime-tools-perl \
@@ -79,6 +85,11 @@ RUN apt-get update \
 	libmodule-pluggable-perl \
 	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
+	libmoose-perl \
+	libmoosex-types-common-perl \
+	libmoosex-types-datetime-perl \
+	libmoosex-types-perl \
+	libmoosex-types-uri-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
 	libnet-ldap-perl \
@@ -88,10 +99,12 @@ RUN apt-get update \
 	libpandoc-wrapper-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
+	libperl-critic-perl \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
 	libsql-abstract-perl \
+	libssl-dev \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
 	libsvg-perl \
@@ -107,9 +120,12 @@ RUN apt-get update \
 	libtext-csv-perl \
 	libthrowable-perl \
 	libtimedate-perl \
+	libtypes-serialiser-perl \
 	libuniversal-can-perl \
 	libuniversal-isa-perl \
+	liburi-encode-perl \
 	libuuid-tiny-perl \
+	libxml-generator-perl \
 	libxml-parser-easytree-perl \
 	libxml-parser-perl \
 	libxml-semanticdiff-perl \
@@ -135,8 +151,10 @@ RUN apt-get update \
 	texlive-science \
 	texlive-xetex \
 	tzdata \
+	util-linux-extra \
+	zlib1g-dev \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -144,10 +162,8 @@ RUN apt-get update \
 # ==================================================================
 # Phase 3 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install -n \
-	Statistics::R::IO \
-	DBD::MariaDB \
-	Perl::Tidy@20220613 \
+RUN cpanm -n \
+	Perl::Tidy@20260204 \
 	Archive::Zip::SimpleZip \
 	Net::SAML2 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*

@@ -2,6 +2,7 @@
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/themes/dark.css'), id => 'flatpickr-dark-theme' =%>
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
 % end
 %

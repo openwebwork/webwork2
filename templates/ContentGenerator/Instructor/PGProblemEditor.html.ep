@@ -12,6 +12,10 @@
 	<%= javascript getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
 %
+% content_for css => begin
+	<%= stylesheet getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.css') =%>
+% end
+%
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
 	% last;
@@ -43,8 +47,7 @@
 	% source_path_for_problem_file => x('Editing <strong>unassigned problem</strong> file "[_1]".')
 % );
 %
-% my $setName     = stash('setID')  // '';
-% my $fullSetName = $c->{fullSetID} // $setName;
+% my $setName = stash('setID') // '';
 %
 % my $fileInfo = begin
 	<div class="mb-2">
@@ -55,7 +58,7 @@
 					? maketext(
 						'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
 						$c->{prettyProblemNumber},
-						tag('span', dir => 'ltr', format_set_name_display($fullSetName)),
+						tag('span', dir => 'ltr', format_set_name_display($setName)),
 						tag('span', dir => 'ltr', class => 'current-file',
 							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
 							$c->shortPath($c->{inputFilePath}))
@@ -73,11 +76,11 @@
 <%= $fileInfo->() %>
 %
 <%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
-	enctype => 'application/x-www-form-urlencoded', class => 'col-12', begin =%>
+	enctype => 'application/x-www-form-urlencoded', class => 'col-12', novalidate => undef, begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>
-	% if (defined $setName) {
+	% if ($setName ne '') {
 		<%= hidden_field hidden_set_id => $setName =%>
 	% }
 	% if (not_blank($c->{sourceFilePath})) {
@@ -103,10 +106,9 @@
 		<div class="mb-2">
 			<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
 				target => 'techniques_window',
-				title  => maketext('POD for macros and sample problem code and snippets'),
+				title  => maketext('Sample problem code with documentation.'),
 				class  => 'reference-link btn btn-sm btn-info',
 				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
-			% # http://webwork.maa.org/wiki/Category:MathObjects
 			<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
 				target => 'math_objects',
 				title  => maketext('Wiki summary page for MathObjects'),
@@ -125,11 +127,9 @@
 					'PG markdown syntax used to format WeBWorK questions. '
 					. 'This interactive lab can help you to learn the techniques.'
 				),
-				id => 'pgml-lab',
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
+				class => 'reference-link pgml-lab btn btn-sm btn-info',
+				data  => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
 				'PGML' =%>
-			% # http://webwork.maa.org/wiki/Category:Authors
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
 				target => 'author_info',
 				title  => maketext('Top level of author information on the wiki.'),
@@ -157,23 +157,42 @@
 			% }
 		</div>
 	% }
-	<div class="row mb-2">
-		<div class="col-lg-6 col-md-12 order-last order-lg-first">
-			<%= generate_codemirror_html(
-				$c,
-				'problemContents',
-				$problemContents,
-				{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
-			) =%>
-		</div>
-		<div class="col-lg-6 col-md-12 mb-lg-0 mb-2 order-first order-lg-last">
-			<div class="p-0" id="pgedit-render-area">
-				<div class="placeholder d-flex flex-column justify-content-center
-					 align-items-center bg-secondary h-100">
-					<div class="fs-1"><%= maketext('Loading...') %></div>
-					<i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+	<div id="pgedit-container" class="mb-2">
+		<div class="pgedit-inner-container">
+			<div class="pgedit-panel code order-last order-lg-first">
+				<%= generate_codemirror_html(
+					$c,
+					'problemContents',
+					$problemContents,
+					{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
+				) =%>
+			</div>
+            <div class="pgedit-resizer horizontal-resizer"
+                tabindex="0"
+                role="separator"
+                aria-hidden="vertical"
+                aria-label="horizontally resize panels"
+            >
+				<i class="fa-solid fa-grip-lines-vertical fa-lg" aria-hidden="true"></i>
+			</div>
+			<div class="pgedit-panel render mb-lg-0 order-first order-lg-last bg-white">
+				<div class="p-0" id="pgedit-render-area">
+					<div class="placeholder d-flex flex-column justify-content-center
+						 align-items-center bg-secondary-subtle h-100">
+						<div class="fs-1"><%= maketext('Loading...') %></div>
+						<i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+					</div>
 				</div>
 			</div>
+		</div>
+        <div
+            class="pgedit-resizer vertical-resizer"
+            tabindex="0"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="vertically resize panels"
+        >
+			<i class="fa-solid fa-grip-lines fa-lg" aria-hidden="true"></i>
 		</div>
 	</div>
 	<%= $fileInfo->() %>

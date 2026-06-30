@@ -34,7 +34,7 @@ sub request_has_data_for_this_verification_module ($self) {
 		return 1;
 	}
 
-	debug('LTIAdvantage returning that it has insufficent data');
+	debug('LTIAdvantage returning that it has insufficient data');
 	return 0;
 }
 
@@ -141,7 +141,8 @@ sub get_credentials ($self) {
 		}
 
 		# Fallback if necessary
-		if (!defined $self->{user_id}
+		if ($ce->{LTI}{v1p3}{fallback_source_of_username}
+			&& !defined $self->{user_id}
 			&& (my $user_id = $extract_claim->($ce->{LTI}{v1p3}{fallback_source_of_username})))
 		{
 			$user_id_source  = $ce->{LTI}{v1p3}{fallback_source_of_username};
@@ -235,21 +236,21 @@ sub check_user ($self) {
 		return 0;
 	}
 
-	my $User = $db->getUser($user_id);
+	$self->{user} = $db->getUser($user_id);
 
-	if (!$User) {
-		debug("User |$user_id| is unknown but may be an new user from an LMS via LTI.");
+	if (!$self->{user}) {
+		debug("User |$user_id| is unknown but may be a new user from an LMS via LTI.");
 		return 1;
 	}
 
-	unless ($ce->status_abbrev_has_behavior($User->status, 'allow_course_access')) {
-		$self->{log_error} .= "LOGIN FAILED $user_id - course access denied";
+	unless ($ce->status_abbrev_has_behavior($self->{user}->status, 'allow_course_access')) {
+		$self->{log_error} .= "$user_id - course access denied";
 		$self->{error} = $c->maketext('Authentication failed.  Please speak to your instructor.');
 		return 0;
 	}
 
 	unless ($authz->hasPermissions($user_id, 'login')) {
-		$self->{log_error} .= "LOGIN FAILED $user_id - no permission to login";
+		$self->{log_error} .= "$user_id - no permission to login";
 		$self->{error} = $c->maketext('Authentication failed.  Please speak to your instructor.');
 		return 0;
 	}
@@ -290,11 +291,9 @@ sub authenticate ($self) {
 
 	# The actual authentication for this module has already been done.  This just creates and updates users if needed.
 
-	my $ce         = $c->ce;
-	my $db         = $c->db;
-	my $courseName = $c->ce->{courseName};
+	my $ce = $c->ce;
 
-	if (!$db->existsUser($self->{user_id})) {
+	if (!$self->{user}) {
 		# New User. Create User record.
 		if ($ce->{block_lti_create_user}) {
 			$self->{log_error} .=
@@ -303,12 +302,15 @@ sub authenticate ($self) {
 				warn $c->maketext('Account creation is currently disabled in this course.  '
 						. 'Please speak to your instructor or system administrator.') . "\n";
 			}
-			return 0;
+			return $c->maketext("Account creation is currently disabled in this course.  "
+					. "Please speak to your instructor or system administrator.");
 		} else {
 			# Attempt to create the user, and warn if that fails.
 			unless ($self->create_user) {
 				$self->{log_error} .= "Failed to create user $self->{user_id}.";
-				warn "Failed to create user $self->{user_id}.\n" if ($ce->{debug_lti_parameters});
+				warn "Failed to create user $self->{user_id}.\n" if $ce->{debug_lti_parameters};
+				return $c->maketext('Unable to create a WeBWorK user. '
+						. 'Please speak to your instructor or system administrator.');
 			}
 		}
 	} elsif ($ce->{LMSManageUserData}) {
@@ -360,7 +362,10 @@ sub create_user ($self) {
 	}
 
 	if (!defined($ce->{userRoles}{ $ce->{LTI}{v1p3}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } })) {
-		die "Cannot find a WeBWorK role that corresponds to the LMS role of $LTIroles[0].\n";
+		$self->{log_error} = "Cannot find a WeBWorK role that corresponds to the LMS role of $LTIroles[0].\n";
+		warn "Cannot find a WeBWorK role that corresponds to the LMS role of $LTIroles[0].\n"
+			if $ce->{debug_lti_parameters};
+		return 0;
 	}
 
 	my $LTI_webwork_permissionLevel = $ce->{userRoles}{ $ce->{LTI}{v1p3}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } };
@@ -378,11 +383,19 @@ sub create_user ($self) {
 
 	# We dont create users with too high of a permission level for security reasons.
 	if ($LTI_webwork_permissionLevel > $ce->{userRoles}{ $ce->{LTIAccountCreationCutoff} }) {
-		die $c->maketext(
-			'The instructor account with user id [_1] does not exist.  '
-				. 'Instructor accounts must be created manually.',
-			$userID
-		) . "\n";
+		$self->{log_error} =
+			"The instructor account with user id $userID does not exist.  "
+			. 'Instructor accounts must be created manually.';
+		warn "The instructor account with user id $userID does not exist.  "
+			. "Instructor accounts must be created manually.\n"
+			if $ce->{debug_lti_parameters};
+		return 0;
+	}
+
+	# Don't create a user that does not have permission to login.
+	if ($LTI_webwork_permissionLevel < $ce->{userRoles}{ $ce->{permissionLevels}{login} }) {
+		$self->{log_error} .= "$userID - no permission to login";
+		return 0;
 	}
 
 	my $newUser = $db->newUser;
@@ -401,6 +414,7 @@ sub create_user ($self) {
 	$ce->{LTI}{v1p3}{modify_user}($self, $newUser) if ref($ce->{LTI}{v1p3}{modify_user}) eq 'CODE';
 
 	$db->addUser($newUser);
+	$self->{user} = $newUser;
 	$self->write_log_entry("New user $userID added via LTIAdvantange login");
 
 	# Set permission level.
@@ -466,7 +480,6 @@ sub maybe_update_user ($self) {
 	my $userID     = $self->{user_id};
 	my $courseName = $ce->{courseName};
 
-	my $user            = $db->getUser($userID);
 	my $permissionLevel = $db->getPermissionLevel($userID);
 
 	# We don't alter records of users with too high a permission.
@@ -492,10 +505,10 @@ sub maybe_update_user ($self) {
 
 		my $change_made = 0;
 		for my $element (qw(last_name first_name email_address status section recitation student_id)) {
-			if ($user->$element ne $tempUser->$element) {
+			if ($self->{user}->$element ne $tempUser->$element) {
 				$change_made = 1;
 				warn "WeBWorK User has $element: "
-					. $user->$element
+					. $self->{user}->$element
 					. " but LMS user has $element "
 					. $tempUser->$element . "\n"
 					if ($ce->{debug_lti_parameters});

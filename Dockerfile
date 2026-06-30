@@ -30,7 +30,7 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 
 # We need to change FROM before setting the ENV variables.
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ENV WEBWORK_URL=/webwork2 \
 	WEBWORK_ROOT_URL=http://localhost:8080 \
@@ -79,12 +79,17 @@ RUN apt-get update \
 	libclass-tiny-antlers-perl \
 	libclass-tiny-perl \
 	libcpanel-json-xs-perl \
+	libcrypt-dev \
 	libcrypt-jwt-perl \
+	libcrypt-openssl-x509-perl \
 	libcryptx-perl \
 	libdata-dump-perl \
 	libdata-structure-util-perl \
 	libdatetime-perl \
+	libdatetime-format-xsd-perl \
+	libdatetime-hires-perl \
 	libdbd-mysql-perl \
+	libdbd-mariadb-perl \
 	libdevel-checklib-perl \
 	libemail-address-xs-perl \
 	libemail-date-format-perl \
@@ -98,12 +103,14 @@ RUN apt-get update \
 	libfile-copy-recursive-perl \
 	libfile-find-rule-perl-perl \
 	libfile-sharedir-install-perl \
+	libfile-slurper-perl \
 	libfuture-asyncawait-perl \
 	libgd-barcode-perl \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
 	libhttp-async-perl \
+	libio-compress-perl \
 	libiterator-perl \
 	libiterator-util-perl \
 	liblocale-maketext-lexicon-perl \
@@ -117,6 +124,11 @@ RUN apt-get update \
 	libmodule-pluggable-perl \
 	libmojolicious-perl \
 	libmojolicious-plugin-renderfile-perl \
+	libmoose-perl \
+	libmoosex-types-common-perl \
+	libmoosex-types-datetime-perl \
+	libmoosex-types-perl \
+	libmoosex-types-uri-perl \
 	libnet-https-nb-perl \
 	libnet-ip-perl \
 	libnet-ldap-perl \
@@ -126,10 +138,12 @@ RUN apt-get update \
 	libpandoc-wrapper-perl \
 	libpath-class-perl \
 	libpath-tiny-perl \
+	libperl-critic-perl \
 	libphp-serialization-perl \
 	libpod-wsdl-perl \
 	libsoap-lite-perl \
 	libsql-abstract-perl \
+	libssl-dev \
 	libstring-shellquote-perl \
 	libsub-uplevel-perl \
 	libsvg-perl \
@@ -145,9 +159,12 @@ RUN apt-get update \
 	libtext-csv-perl \
 	libthrowable-perl \
 	libtimedate-perl \
+	libtypes-serialiser-perl \
 	libuniversal-can-perl \
 	libuniversal-isa-perl \
+	liburi-encode-perl \
 	libuuid-tiny-perl \
+	libxml-generator-perl \
 	libxml-parser-easytree-perl \
 	libxml-parser-perl \
 	libxml-semanticdiff-perl \
@@ -173,8 +190,10 @@ RUN apt-get update \
 	texlive-science \
 	texlive-xetex \
 	tzdata \
+	util-linux-extra \
+	zlib1g-dev \
 	zip $ADDITIONAL_BASE_IMAGE_PACKAGES \
-	&& curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+	&& curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 	&& apt-get install -y --no-install-recommends --no-install-suggests nodejs \
 	&& apt-get clean \
 	&& rm -fr /var/lib/apt/lists/* /tmp/*
@@ -182,10 +201,8 @@ RUN apt-get update \
 # ==================================================================
 # Phase 4 - Install additional Perl modules from CPAN that are not packaged for Ubuntu or are outdated in Ubuntu.
 
-RUN cpanm install -n \
-	Statistics::R::IO \
-	DBD::MariaDB \
-	Perl::Tidy@20220613 \
+RUN cpanm -n \
+	Perl::Tidy@20260204 \
 	Archive::Zip::SimpleZip \
 	Net::SAML2 \
 	&& rm -fr ./cpanm /root/.cpanm /tmp/*
@@ -213,9 +230,6 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 # 6. Install third party javascript files.
 # 7. Apply patches
 
-# Patch files that are applied below
-COPY docker-config/pgfsys-dvisvmg-bbox-fix.patch /tmp
-
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& mkdir /run/webwork2 /etc/ssl/local \
 	&& cd $APP_ROOT/webwork2/ \
@@ -225,14 +239,12 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 		&& /usr/sbin/locale-gen \
 		&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
 		&& debconf-set-selections /tmp/preseed.txt \
-	&& rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
+	&& rm -f /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
 		&& dpkg-reconfigure -f noninteractive tzdata \
 	&& cd $WEBWORK_ROOT/htdocs \
 		&& npm install \
 	&& cd $PG_ROOT/htdocs \
-		&& npm install \
-	&& patch -p1 -d / < /tmp/pgfsys-dvisvmg-bbox-fix.patch \
-	&& rm /tmp/pgfsys-dvisvmg-bbox-fix.patch
+		&& npm install
 
 # ==================================================================
 # Phase 7 - Final setup and prepare docker-entrypoint.sh

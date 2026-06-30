@@ -221,31 +221,8 @@
 			% # Statistics
 			<li class="list-group-item nav-item">
 				<%= $makelink->('instructor_statistics') %>
-				% if ($userID ne $eUserID || defined $setID || defined $urlUserID) {
-				<ul class="nav flex-column">
-					% if (defined $urlUserID) {
-						<li class="nav-item">
-							<%= $makelink->(
-								'instructor_user_statistics',
-								text     => $urlUserID,
-								captures => { userID => $urlUserID },
-								link_attrs => { dir => 'ltr' }
-							) %>
-						</li>
-					% }
-					% if ($userID ne $eUserID && (!defined $urlUserID || $urlUserID ne $eUserID)) {
-						<li class="nav-item">
-							<%=	$makelink->(
-								'instructor_user_statistics',
-								text     => $eUserID,
-								captures => { userID => $eUserID },
-								active   => current_route eq 'instructor_user_statistics'
-									&& !defined $urlUserID,
-								link_attrs => { dir => 'ltr' }
-							) %>
-						</li>
-					% }
-					% if (defined $setID) {
+				% if (defined $setID) {
+					<ul class="nav flex-column">
 						<li class="nav-item" dir="ltr">
 							<%= $makelink->(
 								'instructor_set_statistics',
@@ -270,8 +247,7 @@
 								</ul>
 							</li>
 						% }
-					% }
-				</ul>
+					</ul>
 				% }
 			</li>
 			% # Student Progress
