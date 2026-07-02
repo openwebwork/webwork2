@@ -49,14 +49,9 @@ JSON_ERROR_LOG: 0
 # origins without an explicit directive from the server that it is safe.
 # Uncomment the extra_headers setting as is to set the header to enable
 # Cross-Origin Resource Sharing (CORS) for url responses to requests to urls
-# that start with /webwork2/render_rpc, /webwork2/html2xml, and /webwork2_files.
-# This may be needed to use the client formats if they are accessed from a
-# *remote* server.
-#
-# Note that the /webwork2/html2xml url is deprecated, and code should be adapted
-# to use the /webwork2/render_rpc path instead.  They both do the same thing
-# that the /webwork2/html2xml endpoint did before, but they no longer pass
-# through the XMLRPC middle man.
+# that start with /webwork2/render_rpc, /webwork2_files, and /pg_files.  This
+# may be needed to use the client formats if they are accessed from a *remote*
+# server.
 #
 # Additional urls may also be added, and multiple headers may be set per url.
 # The headers will be added to all responses to urls that start with the url
@@ -64,8 +59,6 @@ JSON_ERROR_LOG: 0
 
 #extra_headers:
 #  /webwork2/render_rpc:
-#    Access-Control-Allow-Origin: '*'
-#  /webwork2/html2xml:
 #    Access-Control-Allow-Origin: '*'
 #  /webwork2_files:
 #    Access-Control-Allow-Origin: '*'
@@ -212,10 +205,13 @@ hypnotoad:
   # Try to set to provide enough spare time to avoid such problems!
   graceful_timeout: 120
 
-  # The following timeout settings will be sufficient in most cases.  However, if you have large class sizes they may
-  # not be enough.  If you are seeing long requests fail then increase these.  This may happen, for example, if you have
-  # a class with thousands of users and try to assign a set to all users.  In that case you may need much larger values.
-  # Note that if you are serving via a proxy, you may also need to increase the timeouts for the proxy server.
+  # The following timeout settings will be sufficient in most cases.  However,
+  # if you have large class sizes they may not be enough.  If you are seeing
+  # long requests fail then increase these.  This may happen, for example, if
+  # you have a class with thousands of users and try to assign a set to all
+  # users.  In that case you may need much larger values.  Note that if you are
+  # serving via a proxy, you may also need to increase the timeouts for the
+  # proxy server.
   inactivity_timeout: 60
   heartbeat_timeout: 60
 
@@ -250,12 +246,11 @@ hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
 
-# Set this to 1 to allow the html2xml and render_rpc endpoints to disable
-# cookies and thus skip two factor authentication for all courses. To disable
-# cookies for a single course, set this to a hash whose keys are the course
-# IDs with a value of 1. Further to only disable cookies for specific users
-# in a course, set the course ID to a hash whose keys are user IDs with a
-# value of 1. For example:
+# Set this to 1 to allow the render_rpc endpoint to disable cookies and thus
+# skip two factor authentication for all courses. To disable cookies for a
+# single course, set this to a hash whose keys are the course IDs with a value
+# of 1. Further to only disable cookies for specific users in a course, set the
+# course ID to a hash whose keys are user IDs with a value of 1. For example:
 # allow_unsecured_rpc:
 #   # Disable cookies for full PreTeXt course.
 #   PreTeXt: 1
