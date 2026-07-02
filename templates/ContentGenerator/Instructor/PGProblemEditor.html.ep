@@ -175,7 +175,7 @@
             >
 				<i class="fa-solid fa-grip-lines-vertical fa-lg" aria-hidden="true"></i>
 			</div>
-			<div class="pgedit-panel render mb-lg-0 order-first order-lg-last bg-white">
+			<div class="pgedit-panel render mb-lg-0 order-first order-lg-last">
 				<div class="p-0" id="pgedit-render-area">
 					<div class="placeholder d-flex flex-column justify-content-center
 						 align-items-center bg-secondary-subtle h-100">

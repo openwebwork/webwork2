@@ -574,7 +574,6 @@
 	const iframe = document.createElement('iframe');
 	iframe.title = 'Rendered content';
 	iframe.id = 'pgedit-render-iframe';
-	iframe.style.colorScheme = 'light';
 
 	// Adjust editor dimensions when the window is resized and when the iframe loads.
 	const adjustIFrameHeight = () => {
@@ -667,8 +666,7 @@
 			if (fileType === 'hardcopy_theme') {
 				const contents = webworkConfig?.pgCodeMirror?.source;
 				if (contents) {
-					renderArea.innerHTML =
-						'<pre class="text-dark">' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+					renderArea.innerHTML = '<pre>' + contents.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
 				} else
 					renderArea.innerHTML =
 						'<div class="alert alert-danger p-1 m-2 fw-bold">The file has no content.</div>';
