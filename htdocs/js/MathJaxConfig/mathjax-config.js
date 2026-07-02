@@ -1,4 +1,6 @@
 if (!window.MathJax) {
+	const problems = [];
+
 	window.MathJax = {
 		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
 		loader: {
@@ -103,6 +105,16 @@ if (!window.MathJax) {
 
 				MathJax.startup.defaultReady();
 				MathJax.startup.document.constructor.ProcessBits.allocate('findScripts');
+			},
+			pageReady() {
+				return MathJax.startup.defaultPageReady().then(() => {
+					for (const [problemContent, loaderOverlay, resizeObserver] of problems) {
+						resizeObserver.disconnect();
+						loaderOverlay.remove();
+						problemContent.style.visibility = '';
+					}
+					problems.length = 0;
+				});
 			}
 		},
 		options: {
@@ -134,4 +146,35 @@ if (!window.MathJax) {
 			ignoreHtmlClass: 'tex2jax_ignore'
 		}
 	};
+
+	for (const problemContent of document.querySelectorAll('.problem-content')) {
+		problemContent.style.visibility = 'hidden';
+		const loaderOverlay = document.createElement('div');
+		loaderOverlay.classList.add('problem-content');
+		const bodyRectangle = problemContent.getBoundingClientRect();
+		loaderOverlay.style.position = 'absolute';
+		loaderOverlay.style.top = `${bodyRectangle.y}px`;
+		loaderOverlay.style.left = `${bodyRectangle.x}px`;
+		loaderOverlay.style.width = `${bodyRectangle.width}px`;
+		loaderOverlay.style.height = `${bodyRectangle.height}px`;
+		loaderOverlay.style.overflow = 'clip';
+		loaderOverlay.style.transition = 'height 0.3s ease';
+		loaderOverlay.animate([{ opacity: 1 }, { opacity: 0.2 }, { opacity: 1 }], {
+			duration: 2000,
+			iterations: Infinity,
+			easing: 'ease-in-out'
+		});
+		loaderOverlay.style.cursor = 'wait';
+
+		problemContent.after(loaderOverlay);
+		const resizeObserver = new ResizeObserver(() => {
+			const bodyRectangle = problemContent.getBoundingClientRect();
+			loaderOverlay.style.top = `${bodyRectangle.top}px`;
+			loaderOverlay.style.left = `${bodyRectangle.left}px`;
+			loaderOverlay.style.width = `${bodyRectangle.width}px`;
+			loaderOverlay.style.height = `${bodyRectangle.height}px`;
+		});
+		resizeObserver.observe(problemContent);
+		problems.push([problemContent, loaderOverlay, resizeObserver]);
+	}
 }
