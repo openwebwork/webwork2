@@ -427,17 +427,6 @@ my %modulesList = (
 			rhel   => 'perl-Pod-Usage'
 		}
 	},
-	'Pod::WSDL' => {
-		package => {
-			ubuntu => 'libpod-wsdl-perl'
-		}
-	},
-	'SOAP::Lite' => {
-		package => {
-			ubuntu => 'libsoap-lite-perl',
-			rhel   => 'perl-SOAP-Lite'
-		}
-	},
 	'SQL::Abstract' => {
 		minversion => '2',
 		package    => {

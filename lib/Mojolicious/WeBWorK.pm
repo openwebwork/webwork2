@@ -228,23 +228,6 @@ sub startup ($app) {
 		}
 	);
 
-	if ($config->{soap_authen_key}) {
-		# Only allow an authen key that consists entirely of digits.  The WebworkSOAP module uses a numeric != for
-		# comparison, and in perl all strings containing alphabetic characters are numerically equal.  So if this is not
-		# numeric all keys that are passed in will succeed in authentication.  Very dangerous!
-		if ($config->{soap_authen_key} =~ /^\d*$/) {
-			$app->log->info('SOAP endpoints enabled');
-			$WeBWorK::SeedCE{soap_authen_key} = $config->{soap_authen_key};
-
-			push(@{ $r->namespaces }, 'WebworkSOAP');
-			$r->any('/webwork2_wsdl')->to('SOAP#wsdl');
-			$r->post('/webwork2_rpc')->to('SOAP#dispatch');
-		} else {
-			$app->log->info(qq{Invalid soap_authen_key "$config->{soap_authen_key}". }
-					. 'It must consist entirely of digits.  SOAP endpoints NOT enabled.');
-		}
-	}
-
 	# Letsencrypt renewal route.
 	if ($config->{enable_certbot_webroot_routes}) {
 		$r->any(
