@@ -578,7 +578,15 @@ sub unpack_archive ($c, $archive) {
 				next;
 			}
 
-			unless ($tar->extract_file($_)) {
+			my ($member) = $tar->get_files($_);
+			if ($member && $member->is_symlink) {
+				# Secure extract mode refuses links whose targets leave the directory;
+				# recreate them directly (location already validated above).
+				unless (symlink($member->linkname, $out_file->to_string)) {
+					$c->addbadmessage($c->maketext(q{Unable to extract "[_1]": [_2]}, $_, $!));
+					next;
+				}
+			} elsif (!$tar->extract_file($_)) {
 				$c->addbadmessage($tar->error);
 				next;
 			}
