@@ -981,6 +981,8 @@ sub unarchiveCourse {
 	$arch->extract();
 
 	if ($arch->error) {
+		# Remove the partial extraction so move_back can restore a displaced course.
+		path("$coursesDir/$currCourseID")->remove_tree if -e "$coursesDir/$currCourseID";
 		_unarchiveCourse_move_back($restoreCourseData);
 		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
 	}
