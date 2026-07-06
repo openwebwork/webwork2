@@ -48,7 +48,7 @@
 	<h2><%= maketext('Future Assignments') %></h2>
 	<ul class="list-group">
 		% for my $item (@$notOpen) {
-			<li class="list-group-item">
+			<li class="list-group-item mb-3">
 				<div>
 					% if ($item->{link}) {
 						<%= link_to $item->{name} => $item->{link}, class => "fw-bold" %>
