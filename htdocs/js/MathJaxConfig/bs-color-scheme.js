@@ -1,4 +1,4 @@
-if (MathJax.loader) MathJax.loader.checkVersion('[bs-color-scheme]', '4.1.2', 'extension');
+if (MathJax.loader) MathJax.loader.checkVersion('[bs-color-scheme]', '4.1.3', 'extension');
 
 const switchToBSStyle = (obj, key = '@media (prefers-color-scheme: dark)') => {
 	obj["[data-bs-theme='dark']"] = obj[key];
@@ -23,12 +23,6 @@ for (const [immediate, extension, ready] of [
 			for (const region of ['LiveRegion', 'HoverRegion', 'ToolTip']) {
 				if (':root' in Region[region].style.styles) {
 					Region[region].style.styles["[data-bs-theme='light']"] = Region[region].style.styles[':root'];
-
-					// The variable --mjx-bg1-color is defined to be 'rgba(var(--mjx-bg-blue), var(--mjx-bg-alpha))'.
-					// I suspect this is a typo as the variable -mjx-bg-alpha is not defined anywhere. In any case this
-					// change is needed to get the correct background color on the focused element in the explorer.
-					Region[region].style.styles["[data-bs-theme='light']"]['--mjx-bg1-color'] =
-						'rgba(var(--mjx-bg-blue), var(--mjx-bg1-alpha))';
 				}
 				Region[region].style.styles["[data-bs-theme='dark']"] =
 					Region[region].style.styles['@media (prefers-color-scheme: dark)'];
