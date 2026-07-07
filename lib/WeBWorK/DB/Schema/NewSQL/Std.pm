@@ -200,10 +200,10 @@ sub dump_table {
 		my $exit   = $? >> 8;
 		my $signal = $? & 127;
 		my $core   = $? & 128;
-		warn "Warning: Failed to dump table '"
+		warn "Failed to dump table '"
 			. $self->sql_table_name
 			. "' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
-		warn "This can be expected if the course was created with an earlier version of WeBWorK.";
+		return 0;
 	}
 
 	return 1;
