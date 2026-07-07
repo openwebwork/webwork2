@@ -39,6 +39,8 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  set_list                            /$courseID
 
  logout                              /$courseID/logout
+ forgot_password                     /$courseID/forgot_password
+ reset_password                      /$courseID/reset_password
  options                             /$courseID/options
  grades                              /$courseID/grades
  achievements                        /$courseID/achievements
@@ -281,10 +283,22 @@ my %routeParameters = (
 
 	set_list => {
 		title    => '[_4]',
-		children => [
-			qw(equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
-				logout options instructor_tools problem_list)
-		],
+		children => [ qw(
+			equation_display
+			feedback
+			gateway_quiz
+			proctored_gateway_quiz
+			answer_log
+			grades
+			hardcopy
+			achievements
+			logout
+			forgot_password
+			reset_password
+			options
+			instructor_tools
+			problem_list
+		) ],
 		module => 'ProblemSets',
 		path   => { '/#courseID' => [ courseID => qr/[\w-]*/ ] }
 	},
@@ -293,6 +307,16 @@ my %routeParameters = (
 		title  => x('Logout'),
 		module => 'Logout',
 		path   => '/logout'
+	},
+	forgot_password => {
+		title  => x('Forgot Password'),
+		module => 'ForgotPassword',
+		path   => '/forgot_password'
+	},
+	reset_password => {
+		title  => x('Reset Password'),
+		module => 'ResetPassword',
+		path   => '/reset_password'
 	},
 	options => {
 		title        => x('Account Settings'),

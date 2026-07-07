@@ -74,7 +74,7 @@ async sub dispatch ($c) {
 
 	debug("The raw params:\n");
 	for my $key ($c->param) {
-		# Make it so we dont debug plain text passwords
+		# Make it so we do not debug plain text passwords.
 		my $vals;
 		if ($key eq 'passwd'
 			|| $key eq 'confirmPassword'
@@ -149,6 +149,10 @@ async sub dispatch ($c) {
 		my $db = WeBWorK::DB->new($ce);
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);
+
+		# The "forgot_password" and "reset_password" routes must have a valid courseID and the database,
+		# but will not be able to authenticate.
+		return 1 if $c->current_route eq 'forgot_password' || $c->current_route eq 'reset_password';
 
 		if ($authen->verify) {
 			# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
