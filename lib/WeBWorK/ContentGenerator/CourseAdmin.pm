@@ -1202,7 +1202,6 @@ sub do_unarchive_course ($c) {
 
 	unarchiveCourse(
 		newCourseID => $new_courseID,
-		oldCourseID => $unarchive_courseID =~ s/\.tar\.gz$//r,
 		archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
 		ce          => $ce,
 	);
