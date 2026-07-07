@@ -359,19 +359,22 @@ sub delete_tables {
 sub dump_tables {
 	my ($self, $dump_dir) = @_;
 
+	my $success = 1;
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
-		if ($schema_obj->can("dump_table")) {
-			my $dump_file = "$dump_dir/$table.sql";
-			$schema_obj->dump_table($dump_file);
-		} else {
+		unless ($schema_obj->can("dump_table")) {
 			warn "skipping dump of '$table' table: no dump_table method\n";
+			next;
 		}
+		# A course created with an earlier version of WeBWorK may not have every
+		# table; skip the missing ones rather than counting them as failures.
+		next         unless $schema_obj->tableExists;
+		$success = 0 unless $schema_obj->dump_table("$dump_dir/$table.sql");
 	}
 
-	return 1;
+	return $success;
 }
 
 sub restore_tables {
@@ -383,6 +386,9 @@ sub restore_tables {
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("restore_table")) {
 			my $dump_file = "$dump_dir/$table.sql";
+			# Tables absent when the course was archived have no dump file; skip
+			# them rather than restoring from a nonexistent file.
+			next unless -e $dump_file;
 			$schema_obj->restore_table($dump_file);
 		} else {
 			warn "skipping restore of '$table' table: no restore_table method\n";
