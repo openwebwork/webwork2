@@ -972,11 +972,24 @@ sub unarchiveCourse {
 	my $arch = Archive::Tar->new($archivePath);
 	die "The tar file $archivePath is not valid." unless $arch;
 	$arch->setcwd($coursesDir);
+
+	# Secure extract mode refuses symbolic/hard links whose targets leave the
+	# course directory (CVE-2026-42496/-42497), which the standard template links
+	# do. Extract the files under secure mode, then recreate the symbolic links.
+	my @symlinks = grep { $_->is_symlink } $arch->get_files;
+	$arch->remove(map { $_->full_path } grep { $_->is_symlink || $_->is_hardlink } $arch->get_files);
 	$arch->extract();
 
 	if ($arch->error) {
+		# Remove the partial extraction so move_back can restore a displaced course.
+		path("$coursesDir/$currCourseID")->remove_tree if -e "$coursesDir/$currCourseID";
 		_unarchiveCourse_move_back($restoreCourseData);
 		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
+	}
+
+	for my $symlink (@symlinks) {
+		my $link_path = "$coursesDir/" . $symlink->full_path;
+		symlink($symlink->linkname, $link_path) unless -e $link_path;
 	}
 
 	##### step 3: read the course environment for this course #####
