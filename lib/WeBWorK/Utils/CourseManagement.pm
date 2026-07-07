@@ -918,7 +918,6 @@ sub _archiveCourse_remove_dump_dir {
 
 %options must contain:
 
- oldCourseID => $oldCourseID,
  archivePath => $archivePath,
  ce          => $ce,
 
@@ -926,12 +925,13 @@ sub _archiveCourse_remove_dump_dir {
 
  newCourseID => $newCourseID,
 
-Restores course $oldCourseID from a gzipped tar archive (.tar.gz) located at
-$archivePath. After unarchiving, the course database is restored from a
-subdirectory of the course's DATA directory.
+Restores the course contained in the gzipped tar archive (.tar.gz) located at
+$archivePath. The ID of the course being restored is taken from the archive's
+top-level directory, not from the file name. After unarchiving, the course
+database is restored from a subdirectory of the course's DATA directory.
 
-If $newCourseID is defined and differs from $oldCourseID, the course is renamed
-after unarchiving.
+If $newCourseID is defined and differs from the archived course ID, the course
+is renamed after unarchiving.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the some course's
 environment. (Usually this would be the admin course.) This is used to access
@@ -944,10 +944,9 @@ If an error occurs, an exception is thrown.
 sub unarchiveCourse {
 	my (%options) = @_;
 
-	my $newCourseID  = $options{newCourseID};
-	my $currCourseID = $options{oldCourseID};
-	my $archivePath  = $options{archivePath};
-	my $ce           = $options{ce};
+	my $newCourseID = $options{newCourseID};
+	my $archivePath = $options{archivePath};
+	my $ce          = $options{ce};
 
 	my $coursesDir = $ce->{webworkDirs}{courses};
 
@@ -960,16 +959,31 @@ sub unarchiveCourse {
 	croak "New course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
 		if (length($newCourseID) > $ce->{maxCourseIdLength});
 
-	##### step 1: move a conflicting course away #####
-
-	# if this function returns undef, it means there was no course in the way
-	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
-
-	##### step 2: crack open the tarball #####
+	##### step 1: open the tarball and determine the archived course ID #####
 
 	my $arch = Archive::Tar->new($archivePath);
 	die "The tar file $archivePath is not valid." unless $arch;
 	$arch->setcwd($coursesDir);
+
+	# Archive::Tar extracts to the directory name stored in the archive, so the
+	# source course ID must come from there and not from the caller-supplied name
+	# -- otherwise a renamed .tar.gz restores files under one name while the
+	# database dump is sought under another.
+	my %top_level;
+	for my $file ($arch->get_files) {
+		(my $first = $file->full_path) =~ s{/.*}{}s;
+		$top_level{$first} = 1 if length $first;
+	}
+	die "The archive $archivePath does not contain a single top-level course directory.\n"
+		unless keys %top_level == 1;
+	my ($currCourseID) = keys %top_level;
+
+	##### step 2: move a conflicting course away #####
+
+	# if this function returns undef, it means there was no course in the way
+	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
+
+	##### step 3: crack open the tarball #####
 
 	# Secure extract mode refuses symbolic/hard links whose targets leave the
 	# course directory (CVE-2026-42496/-42497), which the standard template links
@@ -990,7 +1004,7 @@ sub unarchiveCourse {
 		symlink($symlink->linkname, $link_path) unless -e $link_path;
 	}
 
-	##### step 3: read the course environment for this course #####
+	##### step 4: read the course environment for this course #####
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
@@ -999,7 +1013,7 @@ sub unarchiveCourse {
 	my $data_dir   = $ce2->{courseDirs}{DATA};
 	my $dump_dir   = "$data_dir/mysqldump";
 
-	##### step 4: restore the database tables #####
+	##### step 5: restore the database tables #####
 
 	my $no_database;
 	my $restore_db_result = 1;
@@ -1016,7 +1030,7 @@ sub unarchiveCourse {
 		warn "database restore of course '$currCourseID' failed: the course will probably not be usable.\n";
 	}
 
-	##### step 5: delete dump_dir #####
+	##### step 6: delete dump_dir #####
 
 	_archiveCourse_remove_dump_dir($ce, $dump_dir) if -e $dump_dir;
 
@@ -1047,7 +1061,7 @@ sub unarchiveCourse {
 		}
 	}
 
-	##### step 6: rename course #####
+	##### step 7: rename course #####
 
 	if (defined $newCourseID && $newCourseID ne $currCourseID) {
 		renameCourse(
@@ -1058,7 +1072,7 @@ sub unarchiveCourse {
 		);
 	}
 
-	##### step 7: return conflicting course to its rightful place #####
+	##### step 8: return conflicting course to its rightful place #####
 
 	_unarchiveCourse_move_back($restoreCourseData);
 }
