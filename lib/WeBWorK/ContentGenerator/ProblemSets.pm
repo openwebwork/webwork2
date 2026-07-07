@@ -125,9 +125,13 @@ sub getSetStatus ($c, $set) {
 	my $status         = 'past-due';
 	my $other_messages = $c->c;
 	if ($c->submitTime < $set->open_date) {
-		$status = 'not-open';
-		$status_msg =
-			$c->maketext('Will open on [_1].', $c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat}));
+		$status     = 'not-open';
+		$status_msg = {
+			msg => $c->maketext(
+				'Will open on [_1].', $c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
+			),
+			override => $set->open_date != $c->db->getGlobalSet($set->set_id)->open_date
+		};
 		push(@$other_messages, $restricted_msg) if $restricted_msg;
 	} elsif ($c->submitTime < $set->due_date) {
 		$status = 'open';
@@ -141,7 +145,10 @@ sub getSetStatus ($c, $set) {
 		my $beginReducedScoringPeriod = $c->formatDateTime($set->reduced_scoring_date, $ce->{studentDateDisplayFormat});
 
 		if ($enable_reduced_scoring && $c->submitTime < $set->reduced_scoring_date) {
-			$status_msg = $c->maketext('Open. Due [_1].', $beginReducedScoringPeriod);
+			$status_msg = {
+				msg      => $c->maketext('Open. Due [_1].', $beginReducedScoringPeriod),
+				override => $set->reduced_scoring_date != $c->db->getGlobalSet($set->set_id)->reduced_scoring_date
+			};
 			push(
 				@$other_messages,
 				$c->maketext(
@@ -151,7 +158,10 @@ sub getSetStatus ($c, $set) {
 			);
 		} elsif ($enable_reduced_scoring && $set->reduced_scoring_date && $c->submitTime > $set->reduced_scoring_date) {
 			$status     = 'reduced';
-			$status_msg = $c->maketext('Due date [_1] has passed.', $beginReducedScoringPeriod);
+			$status_msg = {
+				msg      => $c->maketext('Due date [_1] has passed.', $beginReducedScoringPeriod),
+				override => $set->reduced_scoring_date != $c->db->getGlobalSet($set->set_id)->reduced_scoring_date
+			};
 			push(
 				@$other_messages,
 				$c->maketext(
@@ -160,16 +170,25 @@ sub getSetStatus ($c, $set) {
 				)
 			);
 		} else {
-			$status_msg =
-				$c->maketext('Open. Due [_1].', $c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat}));
+			$status_msg = {
+				msg => $c->maketext(
+					'Open. Due [_1].', $c->formatDateTime($set->due_date, $ce->{studentDateDisplayFormat})
+				),
+				override => $set->due_date != $c->db->getGlobalSet($set->set_id)->due_date
+			};
 		}
 
 		if ($restricted_msg) {
 			push(@$other_messages, $restricted_msg);
 		}
 	} elsif ($c->submitTime < $set->answer_date) {
-		$status_msg = $c->maketext('Answers available for review on [_1].',
-			$c->formatDateTime($set->answer_date, $ce->{studentDateDisplayFormat}));
+		$status_msg = {
+			msg => $c->maketext(
+				'Answers available for review on [_1].',
+				$c->formatDateTime($set->answer_date, $ce->{studentDateDisplayFormat})
+			),
+			override => $set->answer_date != $c->db->getGlobalSet($set->set_id)->answer_date
+		};
 	} else {
 		$status_msg = $c->maketext('Answers available for review.');
 	}
