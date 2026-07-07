@@ -2,7 +2,7 @@
 # of ExtendDueDate, SuperExtendDueDate, and ResurrectHW reward items. How many of
 # each is specified below.  This could also give other extension type reward items
 # such as AddNewTestGW, ExtendDueDateGW, ExtendReducedDate, NoReducedCred, ReducedCred,
-# RessurectGW, and SuperExtendReducedDate.
+# ResurrectGW, and SuperExtendReducedDate.
 
 $globalData->{ExtendDueDate}      += 10;
 $globalData->{SuperExtendDueDate} += 5;

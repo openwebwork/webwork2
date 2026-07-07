@@ -50,7 +50,7 @@
 					data-bs-content="<%= maketext(
 						'Global data on problem usage is contributed by many institutions using '
 							. 'WeBWorK all over the world. The Usage figure is the total number of  '
-							. 'individuals who have attemped this problem at least once. A high figure '
+							. 'individuals who have attempted this problem at least once. A high figure '
 							. 'represents a problem which has been assigned to many students and is  '
 							. 'both popular with instructors and likely bug free.'
 					) %>"
@@ -106,7 +106,7 @@
 					data-bs-content="<%= tag('p', maketext(
 						'Local data on problem usage is generated and maintained by your institution. '
 							. 'The Usage figure is the total number of local '
-							. 'individuals who have attemped this problem at least once. A high figure '
+							. 'individuals who have attempted this problem at least once. A high figure '
 							. 'represents a problem which has been assigned to many students and is  '
 							. 'both popular with instructors and likely bug free.'
 					))

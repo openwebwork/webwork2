@@ -1,5 +1,5 @@
 % layout 'help_macro';
-% title maketext('Library Broswer Help');
+% title maketext('Library Browser Help');
 %
 <p>
 	<%= maketext('This page is used to browse problems that will be used to fill problem sets. '
@@ -8,10 +8,10 @@
 		. 'Then choose which set you want to work on in the drop down menu.') =%>
 </p>
 <p>
-	<%= maketext('Use the options in the second box to pick a collection of problems decribed below. In each '
+	<%= maketext('Use the options in the second box to pick a collection of problems described below. In each '
 		. 'case, clicking "View Problems" will render a fixed number of problems (default of 20). After '
 		. 'problems are shown, there will be options to show the next/previous batch of problems, add all problems '
-		. 'to the target set (set at the top of the page) or clear the curent batch of problems.') =%>
+		. 'to the target set (set at the top of the page) or clear the current batch of problems.') =%>
 </p>
 <dl>
 	<dt><%= maketext('Open Problem Library') %></dt>

@@ -14,7 +14,7 @@
 	% : $isHardcopyTheme ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r)
 		% : ($c->{editFilePath} =~ s|^$ce->{courseDirs}{templates}/||r) =~ s|^$ce->{webworkDirs}{assets}/pg/||r;
 %
-% # Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
+% # Suggest that modifications be saved to the "local" subdirectory if its not in a writable directory
 % $shortFilePath = "local/$shortFilePath" unless $isTemplate || $isHardcopyTheme || -w dirname($c->{editFilePath});
 %
 % # If it is an absolute path make it relative.
@@ -22,7 +22,7 @@
 %
 % # Don't add to or replace problems in sets or replace set/hardcopy headers if the set is the Undefined_Set or
 % # if the problem is the blank_problem or a sample problem.
-% my $fileIsAsociatedWithSet = $c->{setID} && $c->{setID} ne 'Undefined_Set' && !$isTemplate;
+% my $fileIsAssociatedWithSet = $c->{setID} && $c->{setID} ne 'Undefined_Set' && !$isTemplate;
 %
 <div>
 	<div class="row align-items-center mb-2">
@@ -50,7 +50,7 @@
 			<%= hidden_field copyAuxFiles => 0 =%>
 			<%= label_for copyAuxFiles => maketext('Copy auxiliary files.'), class => 'form-check-label' =%>
 		</div>
-		% if ($fileIsAsociatedWithSet) {
+		% if ($fileIsAssociatedWithSet) {
 			<div class="form-check">
 				<%= radio_button 'action.save_as.saveMode' => 'rename', id => 'action_save_as_saveMode_rename_id',
 					checked => undef, class => 'form-check-input' =%>
@@ -86,16 +86,16 @@
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'new_independent_file',
 				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',
-				$fileIsAsociatedWithSet ? () : (checked => undef) =%>
+				$fileIsAssociatedWithSet ? () : (checked => undef) =%>
 			<%= label_for action_save_as_saveMode_independent_problem_id => maketext('Create unattached problem'),
 				class => 'form-check-label' =%>
 		</div>
 	% } elsif ($c->{file_type} =~ /header/) {
 		% my $headerLabel = $c->{file_type} eq 'hardcopy_header' ? maketext('hardcopy header') : maketext('set header');
 		<div class="form-check">
-			<%= radio_button 'action.save_as.saveMode' => 'set_as_heaader_for_set',
+			<%= radio_button 'action.save_as.saveMode' => 'set_as_header_for_set',
 				id => 'action_save_as_saveMode_set_header_id', class => 'form-check-input',
-				$fileIsAsociatedWithSet ? (checked => undef) : () =%>
+				$fileIsAssociatedWithSet ? (checked => undef) : () =%>
 			<%= label_for action_save_as_saveMode_set_header_id => maketext('Set as [_1] for', $headerLabel),
 				class => 'form-check-label' %>
 			<%= label_for action_save_as_target_set_id => maketext('set:'), class => 'form-check-label' =%>
@@ -114,7 +114,7 @@
 		<div class="form-check">
 			<%= radio_button 'action.save_as.saveMode' => 'new_independent_file',
 				id => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-input',
-				$fileIsAsociatedWithSet ? () : (checked => undef) =%>
+				$fileIsAssociatedWithSet ? () : (checked => undef) =%>
 			<%= label_for action_save_as_saveMode_independent_problem_id => maketext('Create unattached header file'),
 				class => 'form-check-label' =%>
 		</div>

@@ -39,7 +39,7 @@
 	<dt><%= maketext('Statistics') %></dt>
 	<dd><%= maketext(q{View statistics of students' performance on homework either by individual or by set.}) %></dd>
 	<dt><%= maketext('Student Progress') %></dt>
-	<dd><%= maketext('View details of student perofrmance either by individual or by set.') %></dd>
+	<dd><%= maketext('View details of student performance either by individual or by set.') %></dd>
 	<dt><%= maketext('Scoring Tools') %></dt>
 	<dd>
 		<%= maketext('Score one or more sets. This can also be done from the "Sets Manager" or from the '
@@ -52,7 +52,7 @@
 	</dd>
 	<dt><%= maketext('Achievements Manager') %></dt>
 	<dd>
-		<%= maketext('Edit achivements for the course. This link is only present if achievements '
+		<%= maketext('Edit achievements for the course. This link is only present if achievements '
 			. 'are enabled for the course.') =%>
 	</dd>
 	<dt><%= maketext('Email') %></dt>
