@@ -267,7 +267,7 @@ sub compute_unreduced_score ($ce, $problem, $set) {
 		&& defined $problem->sub_status
 		&& $problem->sub_status < $problem->status)
 	{
-		# Note that if the status has been modified by an instructor using a problem grader or an achivement, then the
+		# Note that if the status has been modified by an instructor using a problem grader or an achievement, then the
 		# computed unreduced score can be greater than one.  So make sure to cap the score.
 		my $unreducedScore =
 			($problem->status - $problem->sub_status) / $ce->{pg}{ansEvalDefaults}{reducedScoringValue} +

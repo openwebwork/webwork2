@@ -227,13 +227,12 @@ sub addCourse {
 	{
 		# does the directory already exist?
 		-e $root and croak "Can't create the course '$courseID' because the root directory '$root' already exists.";
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @rootElements = File::Spec->splitdir($root);
 		pop @rootElements;
 		my $rootParent = File::Spec->catdir(@rootElements);
 		-w $rootParent
-			or croak
-			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+			or croak "Can't create the course '$courseID' because the courses directory '$rootParent' is not writable.";
 		# try to create it
 		eval { path($root)->make_path };
 		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
@@ -252,12 +251,12 @@ sub addCourse {
 			next;
 		}
 
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @courseDirElements = File::Spec->splitdir($courseDir);
 		pop @courseDirElements;
 		my $courseDirParent = File::Spec->catdir(@courseDirElements);
 		unless (-w $courseDirParent) {
-			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. "
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writable. "
 				. "You will have to create this directory manually.\n";
 			next;
 		}
@@ -585,23 +584,23 @@ sub renameCourse {
 				next;
 			}
 
-			# is oldDir's parent writeable
+			# is oldDir's parent writable
 			my @oldDirElements = File::Spec->splitdir($oldDir);
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
 				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
-					. "writeable. You will have to move this directory manually.\n";
+					. "writable. You will have to move this directory manually.\n";
 				next;
 			}
 
-			# is newDir's parent writeable?
+			# is newDir's parent writable?
 			my @newDirElements = File::Spec->splitdir($newDir);
 			pop @newDirElements;
 			my $newDirParent = File::Spec->catdir(@newDirElements);
 			unless (-w $newDirParent) {
 				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is "
-					. "not writeable. You will have to move this directory manually.\n";
+					. "not writable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -713,7 +712,7 @@ sub deleteCourse {
 
 	my %courseDirs = %{ $ce->{courseDirs} };
 
-	##### step 0: make sure course directory is deleteable #####
+	##### step 0: make sure course directory is deletable #####
 
 	# deal with root directory first -- if we won't be able to delete it, we have to give up.
 
@@ -722,13 +721,12 @@ sub deleteCourse {
 		"Can't delete the course '$courseID' because no root directory is specified in the '%courseDirs' hash.";
 	my $root = $courseDirs{root};
 	if (-e $root) {
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @rootElements = File::Spec->splitdir($root);
 		pop @rootElements;
 		my $rootParent = File::Spec->catdir(@rootElements);
 		-w $rootParent
-			or croak
-			"Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+			or croak "Can't delete the course '$courseID' because the courses directory '$rootParent' is not writable.";
 	} else {
 		warn "Warning: the course root directory '$root' does not exist. "
 			. "Attempting to delete the course database and other course directories...\n";
@@ -760,13 +758,13 @@ sub deleteCourse {
 				next;
 			}
 
-			# is the parent writeable
+			# is the parent writable
 			my @courseDirElements = File::Spec->splitdir($courseDir);
 			pop @courseDirElements;
 			my $courseDirParent = File::Spec->catdir(@courseDirElements);
 			unless (-w $courseDirParent) {
 				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not "
-					. "writeable. If it is not wanted, you will have to delete it manually.\n";
+					. "writable. If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 

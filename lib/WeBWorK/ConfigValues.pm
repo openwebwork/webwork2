@@ -1123,7 +1123,7 @@ sub getConfigValues ($ce) {
 			type   => 'text',
 			secret => 1
 		},
-		'LTI{v1p3}{PlatfromID}' => {
+		'LTI{v1p3}{PlatformID}' => {
 			var    => 'LTI{v1p3}{PlatformID}',
 			doc    => x('LMS platform ID for LTI 1.3'),
 			doc2   => x('LMS platform ID used to validate logins from an LMS using LTI 1.3.'),

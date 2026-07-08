@@ -1,4 +1,4 @@
-package Caliper::ResourseIri;
+package Caliper::ResourceIri;
 
 ##### Library Imports #####
 use strict;

@@ -125,7 +125,7 @@ sub keyparts_to_where {
 # overrides to fake version_id field
 ################################################################################
 
-# replace the virutal set_id and version_id fields with expressions that extract
+# replace the virtual set_id and version_id fields with expressions that extract
 # the set and version IDs from the real set_id field
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;

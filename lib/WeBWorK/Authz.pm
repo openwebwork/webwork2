@@ -165,7 +165,7 @@ sub setCachedUser {
 
 Checks the %permissionLevels hash in the course environment to determine if the
 user $userID has permission to engage in the activity $activity. If the user's
-permission level is greater than or equal to the level associated with $activty,
+permission level is greater than or equal to the level associated with $activity,
 a true value is returned. Otherwise, a false value is returned.
 
 If $userID has been cached using the setCachedUser() call, the cached data is
@@ -272,7 +272,7 @@ sub hasPermissions {
 			}
 		} else {
 			#			warn "Undefined Role, -- assuming no one has permission to perform $activity.";
-			return 0;    # undefiend $activity_role, no one has permission to perform $activity
+			return 0;    # undefined $activity_role, no one has permission to perform $activity
 		}
 	} else {
 		#		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.";

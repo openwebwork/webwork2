@@ -17,7 +17,7 @@ use Caliper::Actor;
 
 sub webwork_app {
 	my ($ce, $db) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	# $ce doesn't have WW_VERSION when doing login/logout for some reason
 	my $seed_ce    = WeBWorK::CourseEnvironment->new;
@@ -33,7 +33,7 @@ sub webwork_app {
 
 sub session {
 	my ($ce, $db, $actor, $session_key) = @_;
-	my $resource_iri     = Caliper::ResourseIri->new($ce);
+	my $resource_iri     = Caliper::ResourceIri->new($ce);
 	my $session_key_hash = sha1_base64($session_key);
 
 	return {
@@ -46,7 +46,7 @@ sub session {
 
 sub client {
 	my ($ce, $db, $session_key_hash) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $ip_address = '';
 	if ($ENV{HTTP_X_FORWARDED_FOR}) {
@@ -68,7 +68,7 @@ sub client {
 
 sub membership {
 	my ($ce, $db, $actor, $user_id) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $user       = $db->getUser($user_id);
 	my $permission = $db->getPermissionLevel($user_id);
@@ -112,7 +112,7 @@ sub membership {
 
 sub course {
 	my ($ce, $db) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $course_entity = {
 		'id'   => $resource_iri->course(),
@@ -128,7 +128,7 @@ sub course {
 
 sub problem_set {
 	my ($ce, $db, $set_id) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $problem_set = $db->getGlobalSet($set_id);
 
@@ -189,7 +189,7 @@ sub problem_set {
 
 sub problem {
 	my ($ce, $db, $set_id, $problem_id) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $problem = $db->getGlobalProblem($set_id, $problem_id);
 
@@ -226,7 +226,7 @@ sub problem {
 
 sub problem_user {
 	my ($ce, $db, $set_id, $version_id, $problem_id, $user_id, $pg) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $problem_user =
 		$version_id
@@ -282,7 +282,7 @@ sub problem_user {
 
 sub answer {
 	my ($ce, $db, $set_id, $version_id, $problem_id, $user_id, $pg, $start_time, $end_time) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $last_answer_id =
 		$db->latestProblemPastAnswer($user_id, ($version_id ? "$set_id,v$version_id" : $set_id), $problem_id);
@@ -314,7 +314,7 @@ sub answer {
 
 sub answer_attempt {
 	my ($ce, $db, $set_id, $version_id, $problem_id, $user_id, $pg, $start_time, $end_time) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $problem_user =
 		$version_id
@@ -353,7 +353,7 @@ sub answer_attempt {
 
 sub problem_set_attempt {
 	my ($ce, $db, $set_id, $version_id, $user_id, $start_time, $end_time) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	my $problem_set_user =
 		$version_id ? $db->getMergedSetVersion($user_id, $set_id, $version_id) : $db->getMergedSet($user_id, $set_id);

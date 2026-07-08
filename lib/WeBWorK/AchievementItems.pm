@@ -122,7 +122,7 @@ sub remaining_title ($self, $c) {
 	}
 }
 
-# Utility method for outputing a form row with a label and popup menu.
+# Utility method for outputting a form row with a label and popup menu.
 # The id, label_text, and values are required parameters.
 sub form_popup_menu_row ($c, %options) {
 	my %params = (

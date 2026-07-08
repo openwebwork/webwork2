@@ -1,7 +1,7 @@
 package WeBWorK::AchievementItems::Surprise;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to print a suprise message
+# Item to print a surprise message
 
 use WeBWorK::Utils qw(x);
 

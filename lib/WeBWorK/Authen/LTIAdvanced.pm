@@ -577,7 +577,7 @@ sub create_user {
 	$self->{user} = $newUser;
 	$self->write_log_entry("New user $userID added via LTIAdvanced login");
 
-	# Assign permssion level
+	# Assign permission level
 	my $newPermissionLevel = $db->newPermissionLevel();
 	$newPermissionLevel->user_id($userID);
 	$newPermissionLevel->permission($LTI_webwork_permissionLevel);

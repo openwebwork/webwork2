@@ -237,7 +237,7 @@ sub dispose {
 
 =head3 disposeTo
 
-    $upload->diposeTo($path);
+    $upload->disposeTo($path);
 
 Remove the file from the upload cache, and move it to C<$path>. Returns the
 destination as a C<Mojo::File> object if the upload was successfully moved, or

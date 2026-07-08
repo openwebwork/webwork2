@@ -19,7 +19,7 @@ sub generate_anonymous_actor {
 
 sub generate_default_actor {
 	my ($ce, $db, $user) = @_;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 
 	return {
 		'id'   => $resource_iri->actor_homepage($user->user_id()),
