@@ -532,7 +532,7 @@ sub save_export_handler ($c) {
 
 	my $csv = Text::CSV->new({ eol => "\n" });
 
-	# Iterate over achievements outputing data as csv list.  This format is not documented anywhere.
+	# Iterate over achievements outputting data as csv list.  This format is not documented anywhere.
 	for my $achievement ($db->getAchievements(@achievementIDsToExport)) {
 		my $line = [
 			$achievement->achievement_id, $achievement->name,            $achievement->number,

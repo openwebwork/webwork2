@@ -2647,7 +2647,7 @@ sub copy_otp_secrets_confirm ($c) {
 					}
 				} elsif ($d_user_password->otp_secret) {
 					$dest_error    = 'danger';
-					$error_message = $c->maketext('OTP Secret is not empty - Overwritting');
+					$error_message = $c->maketext('OTP Secret is not empty - Overwriting');
 				}
 			}
 
