@@ -272,6 +272,19 @@
 			.then((data) => {
 				if (data.error) throw new Error(data.error);
 				if (!data.result_data) throw new Error('An invalid response was received.');
+				if (data.result_data.errors) {
+					renderArea.innerHTML =
+						'<div class="alert alert-danger p-1 m-2">' +
+						'<p class="fw-bold">PGML conversion errors:</p>' +
+						'<pre><code>' +
+						data.result_data.errors
+							.replace(/^[\s\S]*Begin Error Output Stream\n\n/, '')
+							.replace(/\n\d*: To save a full \.LOG file rerun with -g/, '') +
+						'</code></pre>';
+
+					showMessage('Errors occurred when converting code to PGML.', false);
+					return;
+				}
 				if (request_object.pgCode === data.result_data.pgmlCode) {
 					showMessage('There were no changes to the code.', true);
 				} else {
@@ -279,6 +292,7 @@
 					else document.getElementById('problemContents').value = data.result_data.pgmlCode;
 					saveTempFile();
 					showMessage('Successfully converted code to PGML', true);
+					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				}
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));
