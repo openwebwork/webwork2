@@ -441,7 +441,7 @@ async sub registration ($c) {
 	$c->render_later;
 
 	my $configurationResult = (await Mojo::UserAgent->new->get_p($c->req->param('openid_configuration')))->result;
-	return $c->render(json => { error => 'unabled to obtain openid configuration' }, status => 400)
+	return $c->render(json => { error => 'unable to obtain openid configuration' }, status => 400)
 		unless $configurationResult->is_success;
 	my $lmsConfiguration = $configurationResult->json;
 

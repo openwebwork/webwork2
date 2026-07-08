@@ -14,7 +14,7 @@ use Try::Tiny;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients formatEmailSubject);
 
-# request paramaters used
+# request parameters used
 #
 # user
 # key

@@ -306,13 +306,13 @@ sub process_search ($c, @dbsearch) {
 	# Build a hash of MLT entries keyed by morelt_id
 	my %mlt = ();
 	my $mltind;
-	for my $indx (0 .. $#dbsearch) {
-		$dbsearch[$indx]{oindex} = $indx;
-		if ($mltind = $dbsearch[$indx]{morelt}) {
+	for my $index (0 .. $#dbsearch) {
+		$dbsearch[$index]{oindex} = $index;
+		if ($mltind = $dbsearch[$index]{morelt}) {
 			if (defined($mlt{$mltind})) {
-				push @{ $mlt{$mltind} }, $indx;
+				push @{ $mlt{$mltind} }, $index;
 			} else {
-				$mlt{$mltind} = [$indx];
+				$mlt{$mltind} = [$index];
 			}
 		}
 	}
@@ -325,12 +325,12 @@ sub process_search ($c, @dbsearch) {
 		if (scalar(@idlist) > 1) {
 			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($c, $mltid) || 0;
 			my $hold   = undef;
-			for my $subindx (@idlist) {
-				if ($dbsearch[$subindx]->{pgid} == $leader) {
-					$dbsearch[$subindx]->{children} = [];
-					$hold = $subindx;
+			for my $subindex (@idlist) {
+				if ($dbsearch[$subindex]->{pgid} == $leader) {
+					$dbsearch[$subindex]->{children} = [];
+					$hold = $subindex;
 				} else {
-					$dbsearch[$subindx]->{noshow} = 1;
+					$dbsearch[$subindex]->{noshow} = 1;
 				}
 			}
 			do {    # we did not find the leader
@@ -689,7 +689,7 @@ sub pre_header_initialize ($c) {
 		}
 	}
 
-	# Now store data in self for retreival by body
+	# Now store data in self for retrieval by body
 	$c->{first_shown}           = $first_shown;
 	$c->{last_shown}            = $last_shown;
 	$c->{first_index}           = $first_index;

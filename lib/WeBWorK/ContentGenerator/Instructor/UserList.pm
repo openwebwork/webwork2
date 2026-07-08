@@ -50,9 +50,9 @@ use Mojo::File;
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils           qw(cryptPassword x);
 
-use constant HIDE_USERS_THRESHHOLD => 200;
-use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
-use constant VIEW_FORMS            => [qw(filter sort edit import export add delete reset_2fa)];
+use constant HIDE_USERS_THRESHOLD => 200;
+use constant EDIT_FORMS           => [qw(save_edit cancel_edit)];
+use constant VIEW_FORMS           => [qw(filter sort edit import export add delete reset_2fa)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
@@ -123,7 +123,7 @@ use constant FIELD_PROPERTIES => {
 			my $value = shift;
 			return $value !~ /^(\d+(\.\d*)?|\.\d+)$/ || $value <= 0
 				? (x(
-					'Accomodation time factor for [_1] unchanged. '
+					'Accommodation time factor for [_1] unchanged. '
 					. 'A value was given that is not a decimal number or is not greater than or equal to 1.'
 				))[0]
 				: 0;
@@ -197,7 +197,7 @@ sub pre_header_initialize ($c) {
 
 	if (defined $c->param('visible_users')) {
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('visible_users') } };
-	} elsif (@allUsersDB > HIDE_USERS_THRESHHOLD || defined $c->param('no_visible_users')) {
+	} elsif (@allUsersDB > HIDE_USERS_THRESHOLD || defined $c->param('no_visible_users')) {
 		$c->{visibleUserIDs} = {};
 	} else {
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };

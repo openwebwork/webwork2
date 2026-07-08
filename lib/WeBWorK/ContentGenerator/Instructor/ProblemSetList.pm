@@ -168,7 +168,7 @@ sub initialize ($c) {
 	my $setID      = $c->stash('setID');
 	my $user       = $c->param('user');
 
-	# Make sure these are defined for the templats.
+	# Make sure these are defined for the templates.
 	$c->stash->{fieldNames}     = VIEW_FIELD_ORDER();
 	$c->stash->{formsToShow}    = VIEW_FORMS();
 	$c->stash->{formTitles}     = FORM_TITLES();
@@ -178,7 +178,7 @@ sub initialize ($c) {
 	$c->stash->{sets}           = [];
 	$c->stash->{setDefList}     = [];
 
-	# Determine if the user has permisson to do anything here.
+	# Determine if the user has permission to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	# Determine if edit mode or export mode is request, and check permissions for these modes.
@@ -581,7 +581,7 @@ sub save_export_handler ($c) {
 
 	if (defined $c->param('prev_visible_sets')) {
 		$c->{visibleSetIDs} = [ $c->param('prev_visible_sets') ];
-	} elsif (defined $c->param('no_prev_visble_sets')) {
+	} elsif (defined $c->param('no_prev_visible_sets')) {
 		$c->{visibleSetIDs} = [];
 	}
 
@@ -630,7 +630,7 @@ sub save_edit_handler ($c) {
 				if ($field =~ /_date/) {
 					$Set->$field($value);
 				} elsif ($field eq 'enable_reduced_scoring') {
-					# If we are enableing reduced scoring, make sure the reduced scoring date
+					# If we are enabling reduced scoring, make sure the reduced scoring date
 					# is set and in a proper interval.
 					$Set->enable_reduced_scoring($value);
 					if (!$Set->reduced_scoring_date) {
@@ -680,7 +680,7 @@ sub save_edit_handler ($c) {
 
 	if (defined $c->param("prev_visible_sets")) {
 		$c->{visibleSetIDs} = [ $c->param("prev_visible_sets") ];
-	} elsif (defined $c->param("no_prev_visble_sets")) {
+	} elsif (defined $c->param("no_prev_visible_sets")) {
 		$c->{visibleSetIDs} = [];
 	} else {
 		# leave it alone

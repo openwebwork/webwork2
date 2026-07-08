@@ -103,7 +103,7 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 }
 
 # saveFileChanges does most of the work. It is a separate method so that it can
-# be called from either pre_header_initialize or initilize, depending on
+# be called from either pre_header_initialize or initialize, depending on
 # whether a redirect is needed or not.
 sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	my $ce = $c->ce;
@@ -121,7 +121,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	my $do_not_save = 0;                            # flag to prevent saving of file
 	my $editErrors  = '';
 
-	# write changes to the approriate files
+	# write changes to the appropriate files
 	# FIXME  make sure that the permissions are set correctly!!!
 	# Make sure that the warning is being transmitted properly.
 

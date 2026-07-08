@@ -73,7 +73,7 @@ sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $
 	);
 }
 
-# This version is the same as the above version except that it ignores elevated permisions. So it will be true if this
+# This version is the same as the above version except that it ignores elevated permissions. So it will be true if this
 # set is in the state that anyone can show correct answers regardless of if they have the
 # show_correct_answers_before_answer_date or view_hidden_work permissions.  In this case, feedback is shown even without
 # a form submission, and correct answers are shown in the feedback, if the $pg{options}{automaticAnswerFeedback} option
