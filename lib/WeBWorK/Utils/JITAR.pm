@@ -112,7 +112,7 @@ sub is_jitar_problem_hidden ($db, $userID, $setID, $problemID) {
 		}
 
 		# the child problems are closed unless the number of incorrect attempts is above the
-		# attempts to open children, or if they have exausted their max_attempts
+		# attempts to open children, or if they have exhausted their max_attempts
 		# if att_to_open_children is -1 we just use max attempts
 		# if max_attempts is -1 then they are always less than max attempts
 		if (

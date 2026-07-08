@@ -236,7 +236,7 @@ async sub renderProblem {
 		),
 		showMessages => (
 			$rh->{WWcorrectAnsOnly} ? 0
-			: ($rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+			: ($rh->{showMessages} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
 		),
 		showCorrectAnswers =>
 			($rh->{WWcorrectAnsOnly} ? 1 : ($rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0))),

@@ -51,7 +51,7 @@ sub hardcopyRenderedProblem {
 	}
 
 	# Use the basename of the source file path without the extension prefixed with the course id and user id for the
-	# working directory namd and download filename.
+	# working directory name and download filename.
 	my $returnFileName =
 		"$courseID.$userID." . ((($ws->{inputs_ref}{sourceFilePath} =~ s/^.*\///r) =~ s/\.[^.]*$//r) || 'hardcopy');
 
