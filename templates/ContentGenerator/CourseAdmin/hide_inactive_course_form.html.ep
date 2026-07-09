@@ -12,7 +12,7 @@
 	<%= maketext(
 		'Courses are listed either alphabetically or in order by the time of most recent login activity, '
 			. 'oldest first. To change the listing order check the mode you want and click "Refresh Listing".  '
-			. 'The listing format is: Course_Name (status :: date/time of most recent login) where status is "hidden" '
+			. 'The listing format is: Course_ID (status :: date/time of most recent login) where status is "hidden" '
 			. 'or "visible".'
 	) =%>
 </p>
@@ -43,7 +43,7 @@
 	%
 	<div class="mb-2"><%= maketext('Select course(s) to hide or unhide.') %></div>
 	<div class="row mb-2">
-		<%= label_for hide_courseIDs => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>
+		<%= label_for hide_courseIDs => maketext('Course ID:'), class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
 			<%= select_field hide_courseIDs => [ map { [ $courseLabels->{$_} => $_ ] } @$hideCourseIDs ],
 				id       => 'hide_courseIDs',
