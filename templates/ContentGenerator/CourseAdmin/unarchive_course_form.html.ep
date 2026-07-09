@@ -1,10 +1,10 @@
-% use WeBWorK::Utils::CourseManagement qw(statArchivedCourses);
+% use WeBWorK::Utils::CourseManagement qw(listArchivedCourses);
 %
 <h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
 %
 % # Find courses which have been archived.
-% my %stat = statArchivedCourses($ce);
-% my @courseIDs = sort { lc($a) cmp lc($b) } keys %stat;
+% my %courseArchives = listArchivedCourses($ce);
+% my @courseIDs    = sort { lc($a) cmp lc($b) } keys %courseArchives;
 %
 % if (@courseIDs) {
 	<%= form_for current_route, method => 'POST', begin =%>
@@ -15,18 +15,22 @@
 		%
 		<div class="col-lg-10 col-md-11">
 			<div class="row mb-2">
-				<%= label_for 'unarchive_courseID' => maketext('Course ID:'), class => 'col-lg-3 col-md-4 col-form-label fw-bold' =%>
+				<%= label_for 'unarchive_courseID' => maketext('Course ID:'),
+					class => 'col-lg-3 col-md-4 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
 					<%= select_field
-						unarchive_courseID => [map {["$_ ($stat{$_}{size})" => $stat{$_}{filename}]} @courseIDs],
-						id                 => 'unarchive_courseID',
-						class              => 'form-select',
-						size               => 10
+						unarchive_courseID => [
+							map { [ "$_ ($courseArchives{$_}{size})" => $courseArchives{$_}{filename} ] } @courseIDs
+						],
+						id    => 'unarchive_courseID',
+						class => 'form-select',
+						size  => 10
 					=%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<%= label_for new_courseID => maketext('New ID:'), class => 'col-lg-3 col-md-4 col-form-label fw-bold' =%>
+				<%= label_for new_courseID => maketext('New ID:'),
+					class => 'col-lg-3 col-md-4 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
 					<%= text_field new_courseID => '',
 						id        => 'new_courseID',
