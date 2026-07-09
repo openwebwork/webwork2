@@ -65,8 +65,9 @@
 		) =%>
 	</p>
 	<ol>
-		% for (sort { lc($a) cmp lc($b) } listArchivedCourses($ce)) {
-			<li><%= $_ %></li>
+		% my %courseArchives = listArchivedCourses($ce);
+		% for (sort { lc($a) cmp lc($b) } keys %courseArchives) {
+			<li><%= "$_ ($courseArchives{$_}{size})" %></li>
 		% }
 	</ol>
 % }
