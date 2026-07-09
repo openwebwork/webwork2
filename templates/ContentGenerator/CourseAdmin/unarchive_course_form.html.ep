@@ -15,7 +15,7 @@
 		%
 		<div class="col-lg-7 col-md-8">
 			<div class="row mb-2">
-				<%= label_for 'unarchive_courseID' => maketext('Course ID:'), class => 'col-sm-4 col-form-label' =%>
+				<%= label_for 'unarchive_courseID' => maketext('Course ID:'), class => 'col-sm-4 col-form-label fw-bold' =%>
 				<div class="col-sm-8">
 					<%= select_field
 						unarchive_courseID => [map {["$_ ($stat{$_}{size})" => $stat{$_}{filename}]} @courseIDs],
@@ -26,7 +26,7 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<%= label_for new_courseID => maketext('New ID:'), class => 'col-sm-4 col-form-label' =%>
+				<%= label_for new_courseID => maketext('New ID:'), class => 'col-sm-4 col-form-label fw-bold' =%>
 				<div class="col-sm-8">
 					<%= text_field new_courseID => '',
 						id        => 'new_courseID',
