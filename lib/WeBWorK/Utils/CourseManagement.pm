@@ -140,8 +140,19 @@ sub listArchivedCourses {
 			++$unit_idx;
 		}
 		my $basename = $_->basename;
-		my $round    = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
-		$return{ $basename =~ s/\.tar\.gz$//ir } = {
+		my $arch     = Archive::Tar->new($_);
+		my %top_level;
+		for my $file ($arch->get_files) {
+			(my $first = $file->full_path) =~ s{/.*}{}s;
+			$top_level{$first} = 1 if length $first;
+		}
+		unless (keys %top_level == 1) {
+			warn "The archive $basename does not contain a single top-level course directory.\n";
+			next;
+		}
+		my ($currCourseID) = keys %top_level;
+		my $round = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
+		$return{$currCourseID} = {
 			filename => $basename,
 			size     => sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx])
 		};
