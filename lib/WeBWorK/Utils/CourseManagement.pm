@@ -29,6 +29,7 @@ use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 our @EXPORT_OK = qw(
 	listCourses
 	listArchivedCourses
+	statArchivedCourses
 	addCourse
 	renameCourse
 	retitleCourse
@@ -118,6 +119,31 @@ sub listArchivedCourses {
 	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
 	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
+}
+
+=item statArchivedCourses($ce)
+
+File info for the courses which have been archived (end in .tar.gz).
+
+=cut
+
+sub statArchivedCourses {
+	my ($ce)        = @_;
+	my @archives    = listArchivedCourses($ce);
+	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
+	my %return;
+	for (@archives) {
+		my @stat     = stat("$archivesDir/$_");
+		my $size     = $stat[7];
+		my @units    = qw(B KB MB GB);
+		my $unit_idx = 0;
+		while ($size >= 1024 && $unit_idx < @units - 1) {
+			$size /= 1024;
+			$unit_idx++;
+		}
+		$return{ $_ =~ s/\.tar\.gz$//ir } = { filename => $_, size => sprintf("%s %s", int($size), $units[$unit_idx]) };
+	}
+	return %return;
 }
 
 ################################################################################
