@@ -29,7 +29,6 @@ use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 our @EXPORT_OK = qw(
 	listCourses
 	listArchivedCourses
-	statArchivedCourses
 	addCourse
 	renameCourse
 	retitleCourse
@@ -110,7 +109,17 @@ sub listCourses {
 
 =item listArchivedCourses($ce)
 
-Lists the courses which have been archived (end in .tar.gz).
+Lists the courses which have been archived (end in .tar.gz). The courses found
+are returned as a hash whose keys are the course ids and the values are
+references to hashes containing the C<filename> (the basename of the file
+including the .tar.gz extension) and file C<size>. For example,
+
+    {
+        myTestCourse => {
+            filename => 'myTestCourse.tar.gz',
+            size     => '605 KB'
+        }
+    }
 
 =cut
 
@@ -118,30 +127,24 @@ sub listArchivedCourses {
 	my ($ce) = @_;
 	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
-	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
-}
 
-=item statArchivedCourses($ce)
+	my $archives = $archivesDir->list->grep(qr/\.tar\.gz$/i);
 
-File info for the courses which have been archived (end in .tar.gz).
-
-=cut
-
-sub statArchivedCourses {
-	my ($ce)        = @_;
-	my @archives    = listArchivedCourses($ce);
-	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	my %return;
-	for (@archives) {
-		my @stat     = stat("$archivesDir/$_");
-		my $size     = $stat[7];
+	for (@$archives) {
+		my $size     = $_->stat->size;
 		my @units    = qw(B KB MB GB);
 		my $unit_idx = 0;
-		while ($size >= 1024 && $unit_idx < @units - 1) {
+		while ($size >= 1024 && $unit_idx < $#units) {
 			$size /= 1024;
-			$unit_idx++;
+			++$unit_idx;
 		}
-		$return{ $_ =~ s/\.tar\.gz$//ir } = { filename => $_, size => sprintf("%s %s", int($size), $units[$unit_idx]) };
+		my $basename = $_->basename;
+		my $round    = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
+		$return{ $basename =~ s/\.tar\.gz$//ir } = {
+			filename => $basename,
+			size     => sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx])
+		};
 	}
 	return %return;
 }
