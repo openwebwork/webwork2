@@ -28,8 +28,9 @@
 			const webworkConfig = <%== $c->webwork_js_config %>;
 		</script>
 		%
- % # JS Loads
- % # The color scheme JavaScript must be loaded early and not deferred to prevent flickering as the color scheme is set.
+		% # JS Loads
+		% # The color scheme JavaScript must be loaded early and not deferred
+		% # to prevent flickering as the color scheme is set.
 		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/color-scheme.js' }) =%>
 		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/MathJaxConfig/mathjax-config.js' }),
 			defer => undef =%>
@@ -182,7 +183,7 @@
 						</nav>
 					</div>
 				</div>
-				% # Navigation, e.g.: Prev, Up, Next for homeworks
+				% # Navigation, e.g.: Prev, Up, Next for homework
 				% if ($c->can('nav')) {
 					<%= $c->nav({ style => 'buttons', separator => '' }) =%>
 				% }

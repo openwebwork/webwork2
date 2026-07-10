@@ -439,16 +439,16 @@
 		%
 		% # Set up links between problems and, for multi-page tests, pages.
 		% for my $i (0 .. $#$pg_results) {
-			% my $pn = $i + 1;
+			% my $problemNumber = $i + 1;
 			% content_for 'gw-navigation-problem-row' => begin
 				<td class="problem">
 					% if ($i >= $startProb && $i <= $endProb) {
 						<%= link_to
-							$pn   => '#',
-							class => 'problem-jump-link',
-							data  => { problem_number => $pn } =%>
+							$problemNumber => '#',
+							class          => 'problem-jump-link',
+							data           => { problem_number => $problemNumber } =%>
 					% } else {
-						<%= $pn =%>
+						<%= $problemNumber =%>
 					% }
 				</td>
 			% end
