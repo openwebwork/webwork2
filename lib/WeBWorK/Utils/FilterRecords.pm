@@ -123,12 +123,13 @@ sub getFiltersForClass {
 			}
 		}
 	} elsif (ref $records[0] eq 'WeBWorK::DB::Record::Set') {
-		my (%assignment_types, %visibles);
+		my (%assignment_types, %visibleSets);
 
 		for my $set (@records) {
 			++$assignment_types{ $set->assignment_type };
-			++$visibles{ $set->visible }
-				unless (defined $visibles{0} && $set->visible eq '' || defined $visibles{''} && $set->visible eq '0');
+			++$visibleSets{ $set->visible }
+				unless (defined $visibleSets{0} && $set->visible eq ''
+					|| defined $visibleSets{''} && $set->visible eq '0');
 		}
 
 		if (keys %assignment_types > 1 && (!%includes || $includes{assignment_type})) {
@@ -137,8 +138,8 @@ sub getFiltersForClass {
 			}
 		}
 
-		if (keys %visibles > 1 && (!%includes || $includes{visible})) {
-			for my $vis (sortByName(undef, keys %visibles)) {
+		if (keys %visibleSets > 1 && (!%includes || $includes{visible})) {
+			for my $vis (sortByName(undef, keys %visibleSets)) {
 				push @filters, [ ($vis ? $c->maketext('Visible') : $c->maketext('Not Visible')) => "visible:$vis" ];
 			}
 		}

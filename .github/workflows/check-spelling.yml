@@ -1,0 +1,20 @@
+---
+name: Check Spelling
+
+on:
+  push:
+    branches-ignore: [main, develop]
+  pull_request:
+
+env:
+  CLICOLOR: 1
+
+jobs:
+  spelling:
+    name: Spell Check with crate-ci/typos
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Spell check code
+        uses: crate-ci/typos@v1.50.1
