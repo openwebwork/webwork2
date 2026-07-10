@@ -16,10 +16,10 @@
 					. 'string.'
 			) =%>
 		</p>
-		<div class="col-lg-10 col-md-11">
+		<div class="col-lg-9 col-md-11">
 			<div class="row mb-2">
 				<%= label_for rename_oldCourseID => maketext('Course ID:'),
-					class => 'col-lg-3 col-md-4 col-form-label fw-bold' =%>
+					class => 'col-lg-3 col-md-4 pe-0 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
 					<%= select_field rename_oldCourseID => [ map { [ $_ => $_ ] } @courseIDs ],
 						class    => 'form-select',
@@ -28,7 +28,7 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-lg-3 col-md-4">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseID_label">
 							<%= maketext('New ID:') %>
@@ -42,7 +42,7 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-lg-3 col-md-4">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseTitle_label">
 							<%= maketext('New Title:') %>
@@ -56,7 +56,7 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-lg-3 col-md-4">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseInstitution_label">
 							<%= maketext('New Institution:') %>
