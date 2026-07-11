@@ -342,7 +342,8 @@ sub Delete ($c) {
 
 	my $dir = "$c->{courseRoot}/$c->{pwd}";
 
-	my @course_dirs = values %{ $c->ce->{courseDirs} };
+	my @course_dirs  = values %{ $c->ce->{courseDirs} };
+	my @course_links = map { $_->[1] } values %{ $c->ce->{courseLinks} };
 
 	# If only one file is selected and it is one of the uneditable course files,
 	# then don't show the deletion confirmation page. Just warn about it now.
@@ -353,10 +354,11 @@ sub Delete ($c) {
 			$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $files[0]));
 			return $c->Refresh();
 		}
-		if (grep { $realpath eq $_ } @course_dirs) {
+		if (grep { $realpath eq Mojo::File->new($_)->realpath } @course_dirs, @course_links) {
+			my $fileType = -l "$dir/$files[0]" ? $c->maketext('symbolic link') : $c->maketext('directory');
 			$c->addbadmessage($c->maketext(
-				'The directory "[_1]" is a required course directory and cannot be deleted.',
-				$files[0]
+				'The [_1] "[_2]" is a required course [_1] and cannot be deleted.',
+				$fileType, $files[0]
 			));
 			return $c->Refresh();
 		}
@@ -372,9 +374,11 @@ sub Delete ($c) {
 				$c->addbadmessage($c->maketext('The file "[_1]" is protected and cannot be deleted.', $file));
 				next;
 			}
-			if (grep { $realpath eq $_ } @course_dirs) {
+			if (grep { $realpath eq Mojo::File->new($_)->realpath } @course_dirs, @course_links) {
+				my $fileType = -l "$dir/$file" ? $c->maketext('symbolic link') : $c->maketext('directory');
 				$c->addbadmessage($c->maketext(
-					'The directory "[_1]" is a required course directory and cannot be deleted.', $file
+					'The [_1] "[_2]" is a required course [_1] and cannot be deleted.',
+					$fileType, $file
 				));
 				next;
 			}
