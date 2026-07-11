@@ -47,8 +47,6 @@ use WeBWorK::Utils       qw(x runtime_use utf8Crypt cryptPassword);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
-use Caliper::Sensor;
-use Caliper::Entity;
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
 
@@ -206,18 +204,7 @@ sub verify {
 			if $self->{error} && $self->{error} =~ /\S/ && ($self->{credential_source} // '') ne 'admin_cross_course';
 	}
 
-	my $caliper_sensor = Caliper::Sensor->new($c->ce);
-	if ($caliper_sensor->caliperEnabled && $self->{was_verified} && $self->{initial_login}) {
-		$caliper_sensor->sendEvents(
-			$c,
-			[ {
-				'type'    => 'SessionEvent',
-				'action'  => 'LoggedIn',
-				'profile' => 'SessionProfile',
-				'object'  => Caliper::Entity::webwork_app()
-			} ]
-		);
-	}
+	$c->app->plugins->emit_hook(user_login => $c) if $self->{initial_login} && $self->{was_verified};
 
 	debug("END VERIFY");
 	debug("result $self->{was_verified}");
@@ -1077,18 +1064,7 @@ sub killSession {
 	my $c    = $self->{c};
 	my $ce   = $c->{ce};
 
-	my $caliper_sensor = Caliper::Sensor->new($ce);
-	if ($caliper_sensor->caliperEnabled) {
-		$caliper_sensor->sendEvents(
-			$c,
-			[ {
-				'type'    => 'SessionEvent',
-				'action'  => 'LoggedOut',
-				'profile' => 'SessionProfile',
-				'object'  => Caliper::Entity::webwork_app()
-			} ]
-		);
-	}
+	$c->app->plugins->emit_hook(user_logout => $c);
 
 	$self->forget_verification;
 	$self->killCookie;

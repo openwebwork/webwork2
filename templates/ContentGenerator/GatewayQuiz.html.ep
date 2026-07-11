@@ -410,7 +410,6 @@
 	</div>
 % } else {
 	% # Problems can be shown, so output the main form and the problems.
-	% my $startTime = param('startTime') || time;
 	%
 	% if ($haveProblemWarnings) {
 		<div class="row g-0">
@@ -427,7 +426,7 @@
 		%
 		% # Hacks to use a javascript link to trigger previews and jump to subsequent pages of a multipage test.
 		<%= hidden_field pageChangeHack => '' =%>
-		<%= hidden_field startTime => $startTime =%>
+		<%= hidden_field startTime => param('startTime') || time =%>
 		% if ($numProbPerPage && $numPages > 1) {
 			<%= hidden_field newPage => '' =%>
 			<%= hidden_field currentPage => $pageNumber =%>

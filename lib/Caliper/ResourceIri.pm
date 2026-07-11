@@ -1,101 +1,65 @@
 package Caliper::ResourceIri;
+use Mojo::Base -signatures;
 
-##### Library Imports #####
-use strict;
-use warnings;
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
-use Data::Dumper;
-
-# Constructor
-sub new {
-	my ($class, $ce) = @_;
-
-	# need to use $seed_ce in case of logout
-	my $seed_ce  = WeBWorK::CourseEnvironment->new;
-	my $base_url = $seed_ce->{server_root_url} . $seed_ce->{webwork_url};
-	if (defined($seed_ce->{caliper}{base_url}) && $seed_ce->{caliper}{base_url} ne '') {
-		$base_url = $seed_ce->{caliper}{base_url};
-	}
-	if (substr($base_url, -1, 1) ne "/") {
-		$base_url .= "/";
-	}
-
-	my $self = {
-		ce       => $ce,
-		base_url => $base_url,
-	};
-	bless $self, $class;
-	return $self;
+sub new ($class, $ce) {
+	my $base_url = $ce->{server_root_url} . $ce->{webwork_url};
+	$base_url .= '/' if substr($base_url, -1, 1) ne '/';
+	return bless { ce => $ce, base_url => $base_url }, $class;
 }
 
-sub getBaseUrl {
-	my $self = shift;
+sub getBaseUrl ($self) {
 	return $self->{base_url};
 }
 
-sub webwork {
-	my $self = shift;
-	return $self->getBaseUrl();
+sub webwork ($self) {
+	return $self->getBaseUrl;
 }
 
-sub course {
-	my $self = shift;
-	return $self->getBaseUrl() . $self->{ce}->{"courseName"} . '/';
+sub course ($self) {
+	return $self->getBaseUrl . $self->{ce}{courseName} . '/';
 }
 
-sub actor_homepage {
-	my ($self, $user_id) = @_;
-	return $self->course() . 'users/' . $user_id;
+sub actor_homepage ($self, $user_id) {
+	return $self->course . 'users/' . $user_id;
 }
 
-sub user_session {
-	my ($self, $session_key_hash) = @_;
-	return $self->getBaseUrl() . 'session/' . $session_key_hash;
+sub user_session ($self, $session_key_hash) {
+	return $self->getBaseUrl . 'session/' . $session_key_hash;
 }
 
-sub user_client {
-	my ($self, $session_key_hash) = @_;
+sub user_client ($self, $session_key_hash) {
 	return $self->user_session($session_key_hash) . '/client';
 }
 
-sub user_membership {
-	my ($self, $user_id) = @_;
-	return $self->course() . 'instructor/users2/?visible_users=' . $user_id;
+sub user_membership ($self, $user_id) {
+	return $self->course . 'instructor/users2/?visible_users=' . $user_id;
 }
 
-sub problem_set {
-	my ($self, $set_id) = @_;
-	return $self->course() . $set_id . '/';
+sub problem_set ($self, $set_id) {
+	return $self->course . $set_id . '/';
 }
 
-sub problem_set_user {
-	my ($self, $set_id, $user_id) = @_;
+sub problem_set_user ($self, $set_id, $user_id) {
 	return $self->problem_set($set_id) . '?effectiveUser=' . $user_id;
 }
 
-sub problem {
-	my ($self, $set_id, $problem_id) = @_;
+sub problem ($self, $set_id, $problem_id) {
 	return $self->problem_set($set_id) . $problem_id . '/';
 }
 
-sub problem_user {
-	my ($self, $set_id, $problem_id, $user_id) = @_;
+sub problem_user ($self, $set_id, $problem_id, $user_id) {
 	return $self->problem($set_id, $problem_id) . '?effectiveUser=' . $user_id;
 }
 
-sub answer {
-	my ($self, $set_id, $problem_id, $user_id) = @_;
+sub answer ($self, $set_id, $problem_id, $user_id) {
 	return $self->problem($set_id, $problem_id) . 'answer/' . '?effectiveUser=' . $user_id;
 }
 
-sub answer_attempt {
-	my ($self, $set_id, $problem_id, $user_id, $answer_id) = @_;
+sub answer_attempt ($self, $set_id, $problem_id, $user_id, $answer_id) {
 	return $self->answer($set_id, $problem_id, $user_id) . '&answer_id=' . $answer_id;
 }
 
-sub problem_set_attempt {
-	my ($self, $set_id, $user_id, $attempt) = @_;
+sub problem_set_attempt ($self, $set_id, $user_id, $attempt) {
 	return $self->problem_set_user($set_id, $user_id) . '&attempt=' . $attempt;
 }
 

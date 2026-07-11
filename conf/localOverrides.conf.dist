@@ -738,28 +738,35 @@ $mail{feedbackRecipients}    = [
 # Webwork Caliper
 ################################################################################
 
-# enable/disable Caliper for install
-#$caliper{enabled} = 0;
-# base_url should ideally be hard coded to a persistent url pointing to the webwork root
-# (important to keep it consistent over time)
-#$caliper{base_url} = 'https://webwork.elearning.ubc.ca/webwork2/';
-# LRS endpoint
-#$caliper{host} = 'http://caliper.example.host.org/api/endpoint';
+# Set this to 1 to enable Caliper. Note that the
+# Mojolicious::WeBWorK::Plugin::Caliper plugin must also be enabled in
+# conf/webwork2.mojolicous.yml in order for this to work, and all of the
+# $caliper settings below must be uncommented and set except the
+# $caliper{custom_actor_generator}. Note that this and all of the settings below
+# can also be configured per course in the course.conf files.
+$caliper{enabled} = 0;
+
+# LRS endpoint to which the Caliper telemetry data will be sent.
+#$caliper{host} = 'https://caliper.example.host.org/api/endpoint';
+
 # LRS endpoint Bearer API key
 #$caliper{api_key} = '1234567890abcdefg';
-# log file for caliper errors
-#$caliper{errorlog} = $webworkDirs{logs} . "/caliper_errors.log";
-# customized Caliper actor. Useful if persistent identifiers for students are available in WebWork
-# $caliper{custom_actor_generator} = sub {
-# 	my ($ce, $db, $user) = @_;
-# 	# set caliper id as needed
-# 	my $caliper_id = 'http://www.ubc.ca/' . $user->user_id();
-# 	return {
-# 		'id' => $caliper_id,
-# 		'type' => 'Person',
-# 		'name' => $user->first_name() . " " . $user->last_name(),
-# 	};
-# };
+
+# Log file for caliper errors
+#$caliper{errorlog} = "$webworkDirs{logs}/caliper_errors.log";
+
+# Custom Caliper actor generator. This is useful if persistent identifiers for
+# students are available in WebWork.
+#$caliper{custom_actor_generator} = sub {
+#	my ($ce, $db, $user) = @_;
+#	# set caliper id as needed
+#	my $caliper_id = 'http://yourschool.edu/' . $user->user_id;
+#	return {
+#		id   => $caliper_id,
+#		type => 'Person',
+#		name => $user->first_name . ' ' . $user->last_name,
+#	};
+#};
 
 ###############################################################################
 # Test settings

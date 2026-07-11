@@ -259,3 +259,8 @@ hardcopy:
 # external websites with usernames and passwords embedded in them such as for
 # PreTeXt textbooks.
 allow_unsecured_rpc: 0
+
+plugins:
+  # Uncomment the following to enable Caliper. Also set the Caliper settings in
+  # localOverrides.conf (or per course in course.conf files).
+  #- Mojolicious::WeBWorK::Plugin::Caliper: {}

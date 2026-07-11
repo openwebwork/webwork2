@@ -1,46 +1,25 @@
 package Caliper::Actor;
-
-##### Library Imports #####
-use strict;
-use warnings;
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
-use Data::Dumper;
+use Mojo::Base -signatures;
 
 use Caliper::ResourceIri;
 
-sub generate_anonymous_actor {
+sub generate_default_actor ($c, $user) {
 	return {
-		'id'   => 'http://purl.imsglobal.org/caliper/Person',
-		'type' => 'Person',
+		id   => Caliper::ResourceIri->new($c->ce)->actor_homepage($user->user_id),
+		type => 'Person',
+		name => $user->first_name . ' ' . $user->last_name
 	};
 }
 
-sub generate_default_actor {
-	my ($ce, $db, $user) = @_;
-	my $resource_iri = Caliper::ResourceIri->new($ce);
+sub generate_actor ($c, $user_id) {
+	return { id => 'http://purl.imsglobal.org/caliper/Person', type => 'Person' } unless defined $user_id;
 
-	return {
-		'id'   => $resource_iri->actor_homepage($user->user_id()),
-		'type' => 'Person',
-		'name' => $user->first_name() . " " . $user->last_name(),
-	};
-}
+	my $user = $c->db->getUser($user_id);
 
-sub generate_actor {
-	my ($ce, $db, $user_id) = @_;
+	return $c->ce->{caliper}{custom_actor_generator}($c->ce, $c->db, $user)
+		if ref $c->ce->{caliper}{custom_actor_generator} eq 'CODE';
 
-	if (!defined($user_id)) {
-		return Caliper::Entity::generate_anonymous_actor();
-	} else {
-		my $user = $db->getUser($user_id);
-
-		if (defined($ce->{caliper}{custom_actor_generator})) {
-			return $ce->{caliper}{custom_actor_generator}($ce, $db, $user);
-		} else {
-			return generate_default_actor($ce, $db, $user);
-		}
-	}
+	return generate_default_actor($c, $user);
 }
 
 1;

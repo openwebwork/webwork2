@@ -23,8 +23,6 @@ use WeBWorK::DB::Utils                qw(global2user fake_set fake_set_version f
 use WeBWorK::Debug                    qw(debug);
 use PGrandom;
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
-use Caliper::Sensor;
-use Caliper::Entity;
 
 # Disable links for gateway tests.
 sub can ($c, $arg) {
@@ -1134,72 +1132,7 @@ async sub pre_header_initialize ($c) {
 			}
 		}
 
-		my $caliper_sensor = Caliper::Sensor->new($c->ce);
-		if ($caliper_sensor->caliperEnabled() && defined $answer_log) {
-			my $events = [];
-
-			my $startTime = $c->param('startTime');
-			my $endTime   = int($c->submitTime);
-			if ($c->{submitAnswers} && $will{recordAnswers}) {
-				for my $i (0 .. $#problems) {
-					my $problem                  = $problems[ $probOrder[$i] ];
-					my $pg                       = $pg_results[ $probOrder[$i] ];
-					my $completed_question_event = {
-						'type'    => 'AssessmentItemEvent',
-						'action'  => 'Completed',
-						'profile' => 'AssessmentProfile',
-						'object'  => Caliper::Entity::problem_user(
-							$c->ce, $db, $problem->set_id(), $versionID, $problem->problem_id(),
-							$problem->user_id(), $pg
-						),
-						'generated' => Caliper::Entity::answer(
-							$c->ce,
-							$db,
-							$problem->set_id(),
-							$versionID,
-							$problem->problem_id(),
-							$problem->user_id(),
-							$pg,
-							0,    # don't track start/end time for gateway problems (multiple answers per page)
-							0     # don't track start/end time for gateway problems (multiple answers per page)
-						),
-					};
-					push @$events, $completed_question_event;
-				}
-				my $submitted_set_event = {
-					'type'      => 'AssessmentEvent',
-					'action'    => 'Submitted',
-					'profile'   => 'AssessmentProfile',
-					'object'    => Caliper::Entity::problem_set($c->ce, $db, $setID),
-					'generated' => Caliper::Entity::problem_set_attempt(
-						$c->ce, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
-					),
-				};
-				push @$events, $submitted_set_event;
-			} else {
-				my $paused_set_event = {
-					'type'      => 'AssessmentEvent',
-					'action'    => 'Paused',
-					'profile'   => 'AssessmentProfile',
-					'object'    => Caliper::Entity::problem_set($c->ce, $db, $setID),
-					'generated' => Caliper::Entity::problem_set_attempt(
-						$c->ce, $db, $setID, $versionID, $effectiveUserID, $startTime, $endTime
-					),
-				};
-				push @$events, $paused_set_event;
-			}
-			my $tool_use_event = {
-				'type'    => 'ToolUseEvent',
-				'action'  => 'Used',
-				'profile' => 'ToolUseProfile',
-				'object'  => Caliper::Entity::webwork_app(),
-			};
-			push @$events, $tool_use_event;
-			$caliper_sensor->sendEvents($c, $events);
-
-			# Reset start time
-			$c->param('startTime', '');
-		}
+		$c->app->plugins->emit_hook(test_answers_submitted => $c);
 	}
 	debug('end answer processing');
 

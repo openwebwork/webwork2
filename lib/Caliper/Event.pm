@@ -1,47 +1,26 @@
 package Caliper::Event;
+use Mojo::Base -signatures;
 
-##### Library Imports #####
-use strict;
-use warnings;
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
-use Data::Dumper;
-use Data::UUID;
+use UUID::Tiny ':std';
 
 use Caliper::Actor;
+use Caliper::Entity;
 use Caliper::Sensor;
 
-# Constructor
-sub add_defaults {
-	my ($c, $event_hash) = @_;
-	my $ce = $c->ce;
-	my $db = $c->db;
-	my $ug = Data::UUID->new;
+sub add_defaults ($c, $event_hash) {
+	my $user_id = $c->param('user');
+	my $actor   = Caliper::Actor::generate_actor($c, $user_id);
 
-	my $user_id     = $c->param('user');
-	my $session_key = $c->param('key');
-	my $uuid        = $ug->create_str;
-	my $actor       = Caliper::Actor::generate_actor($ce, $db, $user_id);
-
-	if (!exists($event_hash->{'@context'})) {
-		$event_hash->{'@context'} = 'http://purl.imsglobal.org/ctx/caliper/v1p2';
-	}
-	$event_hash->{'id'}         = 'urn:uuid:' . $uuid;
-	$event_hash->{'actor'}      = $actor;
-	$event_hash->{'session'}    = Caliper::Entity::session($ce, $db, $actor, $session_key);
-	$event_hash->{'edApp'}      = Caliper::Entity::webwork_app($ce, $db);
-	$event_hash->{'group'}      = Caliper::Entity::course($ce, $db);
-	$event_hash->{'membership'} = Caliper::Entity::membership($ce, $db, $actor, $user_id);
-	if (!exists($event_hash->{'eventTime'})) {
-		$event_hash->{'eventTime'} = Caliper::Sensor::formatted_timestamp(time());
-	}
-
-	if (!exists($event_hash->{'extensions'})) {
-		$event_hash->{'extensions'} = ();
-	}
-	if (defined($ENV{HTTP_REFERER})) {
-		$event_hash->{'extensions'}{'referer'} = $ENV{HTTP_REFERER};
-	}
+	$event_hash->{'@context'} = 'http://purl.imsglobal.org/ctx/caliper/v1p2' unless exists $event_hash->{'@context'};
+	$event_hash->{id}         = 'urn:uuid:' . create_uuid_as_string(UUID_V4);
+	$event_hash->{actor}      = $actor;
+	$event_hash->{session}    = Caliper::Entity::session($c, $actor, $c->param('key') // '');
+	$event_hash->{edApp}      = Caliper::Entity::webwork_app($c);
+	$event_hash->{group}      = Caliper::Entity::course($c);
+	$event_hash->{membership} = Caliper::Entity::membership($c, $actor, $user_id);
+	$event_hash->{eventTime}  = Caliper::Sensor::formatted_timestamp(time) unless exists $event_hash->{eventTime};
+	$event_hash->{extensions} = ()                                         unless exists $event_hash->{extensions};
+	$event_hash->{extensions}{referer} = $c->req->headers->referer if defined $c->req->headers->referer;
 	return;
 }
 

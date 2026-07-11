@@ -129,12 +129,6 @@ my %modulesList = (
 			ubuntu => 'libdata-structure-util-perl'
 		}
 	},
-	'Data::UUID' => {
-		package => {
-			ubuntu => 'libossp-uuid-perl',
-			rhel   => 'perl-Data-UUID'
-		}
-	},
 	'Date::Format' => {
 		package => {
 			ubuntu => 'libtimedate-perl',
@@ -281,11 +275,6 @@ my %modulesList = (
 		package => {
 			ubuntu => 'libhtml-parser-perl',
 			rhel   => 'perl-HTML-Parser'
-		}
-	},
-	'HTTP::Async' => {
-		package => {
-			ubuntu => 'libhttp-async-perl'
 		}
 	},
 	'IO::File' => {
