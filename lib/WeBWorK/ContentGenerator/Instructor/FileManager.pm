@@ -982,7 +982,7 @@ sub checkPWD ($c, $pwd, $renameError = 0) {
 
 	# check for bad symbolic links
 	my @dirs = split('/', $pwd);
-	pop(@dirs) if $renameError;               # don't check file iteself in this case
+	pop(@dirs) if $renameError;               # don't check file itself in this case
 	my @path = ($c->{ce}{courseDirs}{root});
 	for my $dir (@dirs) {
 		push @path, $dir;

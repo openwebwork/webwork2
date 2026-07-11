@@ -615,9 +615,9 @@ sub writeCSV ($c, $filename, @csv) {
 	return;
 }
 
-# As soon as backwards compatability is no longer a concern and we don't expect to have
+# As soon as backwards compatibility is no longer a concern and we don't expect to have
 # to use old ww1.x code to read the output anymore, I recommend switching to using
-# these routines, which are more versatile and compatable with other programs which
+# these routines, which are more versatile and compatible with other programs which
 # deal with CSV files.
 sub readStandardCSV ($c, $fileName) {
 	my @result;

@@ -910,7 +910,7 @@ sub page_title ($c) {
 		$subheader .= ' ' . $problem->source_file;
 	}
 
-	# Add the edit link to the sub header if the user has the permisions ot edit problems.
+	# Add the edit link to the sub header if the user has the permissions to edit problems.
 	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')) {
 		$subheader = $c->c(
 			$subheader,
@@ -1098,7 +1098,7 @@ sub output_score_summary ($c) {
 		push(@$output, $pg->{state}{state_summary_msg});
 	}
 
-	# Print jitar specific informaton for students (and notify instructor if necessary).
+	# Print jitar specific information for students (and notify instructor if necessary).
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 		my @problemIDs =
 			map { $_->[2] }
@@ -1107,7 +1107,7 @@ sub output_score_summary ($c) {
 		my @problemSeqs;
 		my $index;
 
-		# This sets of an array of the sequence assoicated to the problem_id
+		# This sets of an array of the sequence associated to the problem_id
 		for (my $i = 0; $i <= $#problemIDs; $i++) {
 			$index = $i if ($problemIDs[$i] == $problem->problem_id);
 			my @seq = jitar_id_to_seq($problemIDs[$i]);
@@ -1116,7 +1116,7 @@ sub output_score_summary ($c) {
 
 		my $next_id = $index + 1;
 		my @seq     = @{ $problemSeqs[$index] };
-		my @children_counts_indexs;
+		my @children_counts_indices;
 		my $hasChildren = 0;
 
 		# Find the index of the next problem at the same level as the current one, check to see if there are any
@@ -1124,7 +1124,7 @@ sub output_score_summary ($c) {
 		while ($next_id <= $#problemIDs && scalar(@{ $problemSeqs[$index] }) < scalar(@{ $problemSeqs[$next_id] })) {
 			my $childProblem = $db->getMergedProblem($effectiveUser, $set->set_id, $problemIDs[$next_id]);
 			$hasChildren = 1;
-			push @children_counts_indexs, $next_id
+			push @children_counts_indices, $next_id
 				if scalar(@{ $problemSeqs[$index] }) + 1 == scalar(@{ $problemSeqs[$next_id] })
 				&& $childProblem->counts_parent_grade;
 			$next_id++;
@@ -1150,24 +1150,24 @@ sub output_score_summary ($c) {
 				)
 			);
 
-			if (scalar(@children_counts_indexs) == 1) {
+			if (scalar(@children_counts_indices) == 1) {
 				push(
 					@$output,
 					$c->tag('br'),
 					$c->maketext(
 						'The grade for this problem is the larger of the score for this problem, '
 							. 'or the score of problem [_1].',
-						join('.', @{ $problemSeqs[ $children_counts_indexs[0] ] })
+						join('.', @{ $problemSeqs[ $children_counts_indices[0] ] })
 					)
 				);
-			} elsif (scalar(@children_counts_indexs) > 1) {
+			} elsif (scalar(@children_counts_indices) > 1) {
 				push(
 					@$output,
 					$c->tag('br'),
 					$c->maketext(
 						'The grade for this problem is the larger of the score for this problem, '
 							. 'or the weighted average of the problems: [_1].',
-						join(', ', map({ join('.', @{ $problemSeqs[$_] }) } @children_counts_indexs))
+						join(', ', map({ join('.', @{ $problemSeqs[$_] }) } @children_counts_indices))
 					)
 				);
 			}

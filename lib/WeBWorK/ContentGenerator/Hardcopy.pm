@@ -72,7 +72,7 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 #   used by add_error(), has_errors(), get_errors()
 #
 # at_least_one_problem_rendered_without_error
-#   set to a true value by write_problem_tex if it is able to sucessfully render
+#   set to a true value by write_problem_tex if it is able to successfully render
 #   a problem. checked by generate_hardcopy to determine whether to continue
 #   with the generation process.
 #
@@ -508,7 +508,7 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 		return;
 	}
 	unless (-w $temp_dir_path) {
-		$c->add_error('Temporary directory "', $c->tag('code', $temp_dir_path), '" is not writeable.');
+		$c->add_error('Temporary directory "', $c->tag('code', $temp_dir_path), '" is not writable.');
 		$c->delete_temp_dir($temp_dir_path);
 		return;
 	}

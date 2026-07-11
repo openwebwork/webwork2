@@ -65,7 +65,7 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 #                                     [min, max, step] will introduce validation, so should not be used on just any
 #                                     input where we expect numbers
 #     size      => "50",            # size of the edit box (if any)
-#     override  => "all",           # none, one, any, all - defines for whom this data can be overidden
+#     override  => "all",           # none, one, any, all - defines for whom this data can be overridden
 #     module    => "problem_list",  # WeBWorK module
 #     default   => 0                # if a field cannot default to undefined/empty what should it default to
 #     labels    => {                # Display labels for type "choose" or type "[min, max, step]".
@@ -1813,7 +1813,7 @@ sub initialize ($c) {
 			}
 		}
 
-		# Change problem_ids from regular style to jitar style if appropraite.  (Not applicable when editing for users.)
+		# Change problem_ids from regular style to jitar style if appropriate.  (Not applicable when editing for users.)
 		# This is a very long operation because we are shuffling the whole database around.
 		if ($oldAssignmentType ne $setRecord->assignment_type
 			&& ($oldAssignmentType eq 'jitar' || $setRecord->assignment_type eq 'jitar'))

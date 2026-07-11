@@ -1241,7 +1241,7 @@ sub save_as_handler ($c) {
 			$c->addgoodmessage($c->maketext('No changes have been made to set [_1]', $c->{setID}))
 				if $c->{setID} && $c->{setID} ne 'Undefined_Set';
 		} else {
-			$c->addbadmessage($c->maketext('Unkown saveMode: [_1].', $saveMode));
+			$c->addbadmessage($c->maketext('Unknown saveMode: [_1].', $saveMode));
 			return;
 		}
 	}
