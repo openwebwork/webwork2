@@ -193,13 +193,20 @@ sub problem {
 
 	my $problem = $db->getGlobalProblem($set_id, $problem_id);
 
-	my $templateDir = $ce->{courseDirs}->{templates};
-	my $tags        = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
-	my $keywords    = $tags->{'keywords'};
-	$_ =~ s/(^[\s"']+)|([\s"']+$)//g for @$keywords;
+	my $keywords = [];
+	my $unblessed_tags;
 
-	my %tags_ref       = %$tags;
-	my $unblessed_tags = \%tags_ref;
+	# Problem groups use a "group:problemGroupName" pseudo source file (see
+	# WeBWorK::Utils::Instructor::assignProblemToUserSetVersion) which is not a real file, so attempting to read tags
+	# from it would die.
+	if ($problem->source_file() !~ /^group:/) {
+		my $templateDir = $ce->{courseDirs}->{templates};
+		my $tags        = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
+		$keywords = $tags->{'keywords'};
+		$_ =~ s/(^[\s"']+)|([\s"']+$)//g for @$keywords;
+
+		$unblessed_tags = {%$tags};
+	}
 
 	return {
 		'id'         => $resource_iri->problem($set_id, $problem_id),
