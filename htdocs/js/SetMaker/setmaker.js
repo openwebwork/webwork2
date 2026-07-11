@@ -19,16 +19,37 @@
 			'p-3'
 		);
 		toastContainer.style.zIndex = 20;
-		toastContainer.innerHTML =
-			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
-			'<div class="toast-header">' +
-			`<strong class="me-auto">${title}</strong>` +
-			'<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close"></button>' +
-			'</div>' +
-			`<div class="toast-body alert ${good ? 'alert-success' : 'alert-danger'} mb-0 text-center">${msg}</div>` +
-			'</div>';
+
+		const toast = document.createElement('div');
+		toast.classList.add('toast', 'bg-white');
+		toast.setAttribute('role', 'alert');
+		toast.setAttribute('aria-live', 'assertive');
+		toast.setAttribute('aria-atomic', 'true');
+		toastContainer.append(toast);
+
+		const toastHeader = document.createElement('div');
+		toastHeader.classList.add('toast-header');
+		toast.append(toastHeader);
+
+		const toastTitle = document.createElement('strong');
+		toastTitle.classList.add('me-auto');
+		toastTitle.textContent = title;
+
+		const closeButton = document.createElement('button');
+		closeButton.classList.add('btn-close');
+		closeButton.type = 'button';
+		closeButton.dataset.bsDismiss = 'toast';
+		closeButton.setAttribute('aria-label', 'close');
+
+		toastHeader.append(toastTitle, closeButton);
+
+		const toastBody = document.createElement('div');
+		toastBody.classList.add('toast-body', 'alert', good ? 'alert-success' : 'alert-danger', 'mb-0', 'text-center');
+		toastBody.textContent = msg;
+		toast.append(toastBody);
+
 		document.body.prepend(toastContainer);
-		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild);
+		const bsToast = new bootstrap.Toast(toast);
 		toastContainer.addEventListener('hidden.bs.toast', () => {
 			bsToast.dispose();
 			toastContainer.remove();
