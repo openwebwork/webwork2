@@ -32,8 +32,10 @@ my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $ENV{WEBWORK_ROOT} });
 die "The WeBWorK temporary directory $ce->{webworkDirs}{tmp} does not exist or is not writable."
 	if (!-d $ce->{webworkDirs}{tmp} || !-w $ce->{webworkDirs}{tmp});
 
-my $releaseDataFF =
-	File::Fetch->new(uri => 'https://api.github.com/repos/openwebwork/webwork-open-problem-library/releases/latest');
+# Set the OPL_METADATA_RELEASE_API_URL environment variable to override the release API URL,
+# for example, for sites that use a fork of the OPL.
+my $releaseDataFF = File::Fetch->new(uri => $ENV{OPL_METADATA_RELEASE_API_URL}
+		// 'https://api.github.com/repos/openwebwork/webwork-open-problem-library/releases/latest');
 my $file        = $releaseDataFF->fetch(to => $ce->{webworkDirs}{tmp}) or die $releaseDataFF->error;
 my $path        = Mojo::File->new($file);
 my $releaseData = decode_json($path->slurp);
