@@ -261,7 +261,7 @@ sub problem_user {
 			'counts_parent_grade'  => $problem_user->counts_parent_grade(),
 			'showMeAnother'        => $problem_user->showMeAnother(),
 			'showMeAnotherCount'   => $problem_user->showMeAnotherCount(),
-			'showHintsAfter'       => $problem_user->prHintsAfter(),
+			'showHintsAfter'       => $problem_user->showHintsAfter(),
 			'prPeriod'             => $problem_user->prPeriod(),
 			'prCount'              => $problem_user->prCount(),
 			'flags'                => $problem_user->flags(),
