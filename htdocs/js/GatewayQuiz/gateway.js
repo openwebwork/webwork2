@@ -348,4 +348,71 @@
 		const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
 		bsToast.show();
 	});
+
+	// Periodically save answers on timed tests by submitting the form in the background as a preview request.  The
+	// server saves the last answers for preview requests, so this ensures that the work of a student whose session is
+	// interrupted (for example, by a computer crash or dropped connection) is not lost.  This is disabled by default,
+	// and is enabled by setting $gatewayAutosaveInterval in the course environment.  If enabled, the template provides
+	// the gw-autosave-status element with the configured interval.  This is not done when an instructor is acting as
+	// another user, so that the student's stored answers are not unintentionally modified.
+	const autosaveStatus = document.getElementById('gw-autosave-status');
+	const autosaveInterval = 1000 * (parseInt(autosaveStatus?.dataset.interval ?? '') || 0);
+	if (timerDiv && !timerDiv.dataset.acting && autosaveInterval > 0 && document.gwquiz.elements.previewAnswers) {
+		const serializeAnswers = () => {
+			const formData = new URLSearchParams(new FormData(document.gwquiz));
+			// Submit buttons are not included in the FormData object, so the previewAnswers parameter must be
+			// added.  The server only checks that the parameter has a true value to treat the request as a preview.
+			// Since no submit button parameters are included, the request cannot grade the test or change pages.
+			formData.set('previewAnswers', '1');
+			return formData;
+		};
+
+		let lastSavedAnswers = serializeAnswers().toString();
+
+		const autosave = async () => {
+			const formData = serializeAnswers();
+
+			// Only save if the answers have changed since the last successful save.
+			if (formData.toString() === lastSavedAnswers) return;
+
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+			const response = await fetch(document.gwquiz.getAttribute('action'), {
+				method: 'post',
+				mode: 'same-origin',
+				body: formData,
+				signal: controller.signal
+			}).catch(() => {
+				/* Errors are handled below. */
+			});
+
+			clearTimeout(timeoutId);
+
+			let saved = false;
+			if (response && response.ok) {
+				const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+				// If the session was lost, then the response is a login page that does not contain the gwquiz form.
+				if (doc.querySelector('form[name="gwquiz"]')) saved = true;
+			}
+
+			if (saved) {
+				lastSavedAnswers = formData.toString();
+				autosaveStatus.textContent = autosaveStatus.dataset.successMessage.replace(
+					'{time}',
+					new Date().toLocaleTimeString()
+				);
+				autosaveStatus.classList.remove('d-none', 'alert', 'alert-danger');
+				autosaveStatus.classList.add('small', 'text-muted');
+			} else {
+				autosaveStatus.textContent = autosaveStatus.dataset.errorMessage;
+				autosaveStatus.classList.remove('d-none', 'small', 'text-muted');
+				autosaveStatus.classList.add('alert', 'alert-danger');
+			}
+		};
+
+		// Randomize the interval by up to a third to stagger the autosave load from a class full of students
+		// that all start a test at the same time.
+		setInterval(autosave, autosaveInterval + Math.floor((Math.random() * autosaveInterval) / 3));
+	}
 })();

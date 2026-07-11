@@ -693,6 +693,15 @@
 		<%= $jumpLinks->() =%>
 		<div class="gwDivider"></div>
 		%
+		% if ($ce->{gatewayAutosaveInterval}) {
+			<div id="gw-autosave-status" class="d-none" role="status" aria-live="polite"
+				data-interval="<%= $ce->{gatewayAutosaveInterval} %>"
+				data-success-message="<%= maketext('Answers automatically saved at [_1].', '{time}') %>"
+				data-error-message="<%= maketext('Automatic saving of your answers failed. Your latest answers may not '
+					. 'be saved. Click "Preview Test" to save them and confirm you are still signed in.') %>">
+			</div>
+		% }
+		%
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 			% if ($c->{can}{checkAnswersNextTime}
