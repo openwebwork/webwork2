@@ -500,7 +500,7 @@ sub readSetDef ($ce, $fileName) {
 				# Anything left?
 				push(@line, $curr) if ($curr);
 
-				# Exract the problem data from the line.
+				# Extract the problem data from the line.
 				my ($name, $weight, $attemptLimit, $showMeAnother) = @line;
 
 				# Clean up problem values

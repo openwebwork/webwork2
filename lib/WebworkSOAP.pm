@@ -1244,7 +1244,7 @@ sub delete_user_set {
 }
 
 ###########################################
-# grading utilties -- to be moved to Utils::Grades
+# grading utilities -- to be moved to Utils::Grades
 ############################################
 
 ############################################

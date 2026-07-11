@@ -96,7 +96,7 @@ sub checkCourseTables {
 	my @tableNames = map {@$_} @$result;    # Drill down in the result to the table name level
 
 	# Table names are of the form courseID_table (with an underscore). So if we have two courses mth101 and
-	# mth101_fall09 when we check the tables for mth101 we will inadvertantly pick up the tables for mth101_fall09.
+	# mth101_fall09 when we check the tables for mth101 we will inadvertently pick up the tables for mth101_fall09.
 	# Thus we find all courseID's and exclude the extraneous tables.
 	my @courseIDs = listCourses($ce);
 	my @similarIDs;

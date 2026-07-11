@@ -617,7 +617,7 @@ appropriate method.
 
 Usage: C<encode_utf8_base64($in)>
 
-UTF-8 encodes, and then base 64 endcodes the input and returns the result.
+UTF-8 encodes, and then base 64 encodes the input and returns the result.
 
 =head2 decode_utf8_base64
 
@@ -730,7 +730,7 @@ that sender.
 Usage: C<processEmailMessage($text, $user_record, $STATUS, $merge_data, $for_preview)>
 
 Process the email message in C<$text> and replace macros with values from the
-C<$user_record>, the C<$STATUS>, and C<$merge_data>. If C<$for_prevew> is true
+C<$user_record>, the C<$STATUS>, and C<$merge_data>. If C<$for_preview> is true
 then the result is formatted to be display in HTML.
 
 The replaceable macros and what they will be replaced with are
