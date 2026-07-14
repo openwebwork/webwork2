@@ -149,11 +149,14 @@ sub initialize ($c) {
 				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers'))
 			|| (defined($c->param('useMathQuill'))
 				&& $c->{effectiveUser}->useMathQuill() ne $c->param('useMathQuill'))
+			|| (defined($c->param('useMathView'))
+				&& $c->{effectiveUser}->useMathView() ne $c->param('useMathView'))
 			)
 		{
 			$c->{effectiveUser}->displayMode($c->param('displayMode'));
 			$c->{effectiveUser}->showOldAnswers($c->param('showOldAnswers'));
 			$c->{effectiveUser}->useMathQuill($c->param('useMathQuill'));
+			$c->{effectiveUser}->useMathView($c->param('useMathView'));
 
 			eval { $db->putUser($c->{effectiveUser}) };
 			if ($@) {
