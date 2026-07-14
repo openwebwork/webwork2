@@ -131,8 +131,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # where webworkWrite and passwordRW must match the corresponding variables in the next section.
 
 ################################################################################
-# these variables are used by database.conf. we define them here so that editing
-# database.conf isn't necessary.
+# These variables define the database connection.
 
 # You must initialize the database and set the password for webworkWrite.
 # Edit the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
