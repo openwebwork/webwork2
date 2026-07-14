@@ -109,7 +109,17 @@ sub listCourses {
 
 =item listArchivedCourses($ce)
 
-Lists the courses which have been archived (end in .tar.gz).
+Lists the courses which have been archived (end in .tar.gz). The courses found
+are returned as a hash whose keys are the course ids and the values are
+references to hashes containing the C<filename> (the basename of the file
+including the .tar.gz extension) and file C<size>. For example,
+
+    {
+        myTestCourse => {
+            filename => 'myTestCourse.tar.gz',
+            size     => '605 KB'
+        }
+    }
 
 =cut
 
@@ -117,7 +127,37 @@ sub listArchivedCourses {
 	my ($ce) = @_;
 	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
-	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
+
+	my $archives = $archivesDir->list->grep(qr/\.tar\.gz$/i);
+
+	my %return;
+	for (@$archives) {
+		my $size     = $_->stat->size;
+		my @units    = qw(B KB MB GB);
+		my $unit_idx = 0;
+		while ($size >= 1024 && $unit_idx < $#units) {
+			$size /= 1024;
+			++$unit_idx;
+		}
+		my $basename = $_->basename;
+		my $arch     = Archive::Tar->new($_);
+		my %top_level;
+		for my $file ($arch->get_files) {
+			(my $first = $file->full_path) =~ s{/.*}{}s;
+			$top_level{$first} = 1 if length $first;
+		}
+		unless (keys %top_level == 1) {
+			warn "The archive $basename does not contain a single top-level course directory.\n";
+			next;
+		}
+		my ($currCourseID) = keys %top_level;
+		my $round = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
+		$return{$currCourseID} = {
+			filename => $basename,
+			size     => sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx])
+		};
+	}
+	return %return;
 }
 
 ################################################################################

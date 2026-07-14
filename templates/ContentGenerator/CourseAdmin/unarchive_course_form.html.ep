@@ -3,7 +3,8 @@
 <h2><%= maketext('Unarchive Course') %> <%= $c->helpMacro('AdminUnarchiveCourse') %></h2>
 %
 % # Find courses which have been archived.
-% my @courseIDs = sort { lc($a) cmp lc($b) } listArchivedCourses($ce);
+% my %courseArchives = listArchivedCourses($ce);
+% my @courseIDs    = sort { lc($a) cmp lc($b) } keys %courseArchives;
 %
 % if (@courseIDs) {
 	<%= form_for current_route, method => 'POST', begin =%>
@@ -12,20 +13,25 @@
 		%
 		<div class="mb-2"><%= maketext('Select a course to unarchive.') =%></div>
 		%
-		<div class="col-lg-7 col-md-8">
+		<div class="col-lg-9 col-md-11">
 			<div class="row mb-2">
-				<%= label_for 'unarchive_courseID' => maketext('Course Name:'), class => 'col-sm-4 col-form-label' =%>
-				<div class="col-sm-8">
-					<%= select_field unarchive_courseID => \@courseIDs,
-						id       => 'unarchive_courseID',
-						class    => 'form-select',
-						size     => 10
+				<%= label_for 'unarchive_courseID' => maketext('Course ID:'),
+					class => 'col-md-2 pe-0 col-form-label fw-bold' =%>
+				<div class="col-lg-9 col-md-8">
+					<%= select_field
+						unarchive_courseID => [
+							map { [ "$_ ($courseArchives{$_}{size})" => $courseArchives{$_}{filename} ] } @courseIDs
+						],
+						id    => 'unarchive_courseID',
+						class => 'form-select',
+						size  => 10
 					=%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<%= label_for new_courseID => maketext('New Name:'), class => 'col-sm-4 col-form-label' =%>
-				<div class="col-sm-8">
+				<%= label_for new_courseID => maketext('New ID:'),
+					class => 'col-md-2 pe-0 col-form-label fw-bold' =%>
+				<div class="col-lg-9 col-md-8">
 					<%= text_field new_courseID => '',
 						id        => 'new_courseID',
 						size      => 25,
