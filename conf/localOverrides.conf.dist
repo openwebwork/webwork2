@@ -40,6 +40,11 @@ $feedback_sender_email = ''; # For student feedback
 $instructor_sender_email = ''; # For instructors emailing students
 $jitar_sender_email = ''; # For notifications of incomplete JiTaR sets
 
+# This email address will be used for the "From:" address in password reset
+# emails. Furthermore, setting this enables the password reset functionality.
+# Note that this can be set per course in the course.conf files.
+$password_reset_sender_email = '';
+
 # By default, feedback is sent to all users who have permission to
 # receive_feedback in a course. If this list is non-empty, feedback is also sent
 # to the addresses specified here.
