@@ -1200,14 +1200,15 @@ sub do_unarchive_course ($c) {
 
 	my $unarchive_courseID = $c->param('unarchive_courseID') || '';
 
-	unarchiveCourse(
-		newCourseID => $new_courseID,
-		archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
-		ce          => $ce,
-	);
+	eval {
+		unarchiveCourse(
+			newCourseID => $new_courseID,
+			archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
+			ce          => $ce,
+		);
+	};
 
 	if ($@) {
-		my $error = $@;
 		return $c->tag(
 			'div',
 			class => 'alert alert-danger p-1 mb-2',
@@ -1215,7 +1216,7 @@ sub do_unarchive_course ($c) {
 				$c->tag(
 					'p', $c->maketext('An error occurred while unarchiving the course [_1]:', $unarchive_courseID)
 				),
-				$c->tag('div', class => 'font-monospace', $error)
+				$c->tag('div', class => 'font-monospace', ref $@ ? $@->message : $@)
 			)->join('')
 		);
 	} else {
