@@ -33,10 +33,12 @@
 		for (const element of document.querySelectorAll('[data-bs-theme-value]')) {
 			element.classList.remove('active');
 			element.setAttribute('aria-pressed', 'false');
+			element.querySelector('.fa-check')?.classList.add('d-none');
 		}
 
 		btnToActive.classList.add('active');
 		btnToActive.setAttribute('aria-pressed', 'true');
+		btnToActive.querySelector('.fa-check')?.classList.remove('d-none');
 		activeThemeIcon.classList.remove('fa-sun', 'fa-moon', 'fa-circle-half-stroke');
 		activeThemeIcon.classList.add(
 			theme === 'light' ? 'fa-sun' : theme === 'dark' ? 'fa-moon' : 'fa-circle-half-stroke'
