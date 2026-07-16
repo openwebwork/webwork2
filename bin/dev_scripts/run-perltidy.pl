@@ -45,7 +45,7 @@ use feature 'say';
 
 use Perl::Tidy;
 use File::Find qw(find);
-use Mojo::File qw(curfile);
+use Mojo::File qw(curfile path);
 
 my $webwork_root = curfile->dirname->dirname->dirname;
 
@@ -91,7 +91,17 @@ if (@files) {
 					return;
 				}
 
-				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/ || $path =~ /\.at$/;
+				my $isPerlScript = 0;
+				if (($dir =~ /\/bin$/ || $dir =~ /\/bin\/dev_scripts$/)
+					&& $path !~ /\.p[lm]$/
+					&& -f $path
+					&& (my $fh = path($path)->open('<')))
+				{
+					$isPerlScript = <$fh> =~ /^#!.*\bperl\b/;
+					$fh->close;
+				}
+
+				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/ || $path =~ /\.at$/ || $isPerlScript;
 
 				say "Tidying file: $path" if $verbose;
 
