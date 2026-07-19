@@ -36,7 +36,7 @@
 					% } else {
 						<%= $problem->{id} %>
 					% }
-				</td>
+				</th>
 			% }
 		</tr>
 		<tr class="weights-row d-none">
