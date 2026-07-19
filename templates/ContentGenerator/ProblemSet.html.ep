@@ -40,8 +40,9 @@
 % } elsif ($c->{restrictedSetMessages}) {
 	<div class="alert alert-warning">
 		% for (0 .. $#{ $c->{restrictedSetMessages} }) {
-			% my $class = $_ == $#{ $c->{restrictedSetMessages} } ? ' class="mb-0"' : '';
-			<p<%== $class %>><%== $c->{restrictedSetMessages}->[$_] %></p>
+			<%= tag 'p', $_ == $#{ $c->{restrictedSetMessages} } ? (class => 'mb-0') : (), begin =%>
+				<%== $c->{restrictedSetMessages}->[$_] %>
+			<% end =%>
 		% }
 	</div>
 % }
