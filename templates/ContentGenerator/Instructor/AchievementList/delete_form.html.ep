@@ -9,7 +9,7 @@
 		<div class="col-auto">
 			<%= select_field
 				'action.delete.confirm' =>
-				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ], ],
+				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ] ],
 				id    => 'delete_select',
 				class => 'form-select form-select-sm d-inline w-auto me-3' =%>
 		</div>

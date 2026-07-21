@@ -4,23 +4,23 @@
 <p>
 	<%= maketext('This page allows users to change their password, email address, and display settings used in '
 			. 'problems. Note that you can hide this page entirely for students by setting permission levels to '
-			. 'login_proctor or higher for the permissions to change password, change email address, and change display '
-			. 'settings used in pg problems.') =%>
+			. 'login_proctor or higher for the permissions to change password, change email address, and change '
+			. 'display settings used in pg problems.') =%>
 </p>
 <h2><%= maketext('Name') %></h2>
 <p>
 	<%= maketext('The first and last name can be any combination of letters, numbers and special symbols. Name changes '
-			. 'and preferences can be respected here. Students should use a name that will not confuse their instructor. '
-			. 'If WeBWorK is used with an LMS (Canvas, Moodle, D2L, Blackboard, etc) the LMS might periodically override '
-			. 'a name setting here if WeBWorK is configured to allow that. Name settings will only appear here if a user '
-			. 'has permission to change their name.') =%>
+			. 'and preferences can be respected here. Students should use a name that will not confuse their '
+			. 'instructor. If WeBWorK is used with an LMS (Canvas, Moodle, D2L, Blackboard, etc) the LMS might '
+			. 'periodically override a name setting here if WeBWorK is configured to allow that. Name settings will '
+			. 'only appear here if a user has permission to change their name.') =%>
 </p>
 <h2><%= maketext('Password') %></h2>
 <p>
 	<%= maketext('The password can be any combination of letters, numbers and special symbols. Students are encouraged '
-			. 'to use all three, and stay away from dictionary words. The password should not be the same as any password '
-			. 'used elsewhere, such as for an email account. The password will only be present on the page if the user '
-			. 'has permission to change the password.') =%>
+			. 'to use all three, and stay away from dictionary words. The password should not be the same as any '
+			. 'password used elsewhere, such as for an email account. The password will only be present on the page '
+			. 'if the user has permission to change the password.') =%>
 </p>
 <h2><%= maketext('Email Address') %></h2>
 <p>

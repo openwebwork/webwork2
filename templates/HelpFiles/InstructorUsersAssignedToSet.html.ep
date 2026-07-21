@@ -3,6 +3,6 @@
 %
 <p class="mb-0">
 	<%= maketext('A student needs to be assigned a set in order for them to work it. Once a student is unassigned a '
-			. 'set, all the data for them is lost and there is no way to undo it. When unassigning be sure to change the '
-			. 'option to "Allow unassign".') =%>
+			. 'set, all the data for them is lost and there is no way to undo it. When unassigning be sure to change '
+			. 'the option to "Allow unassign".') =%>
 </p>

@@ -33,8 +33,8 @@
 				. '<strong>Set Definition files</strong> is described in the <a [_1]>Set Definition specification</a>. '
 				. 'Set definition files are mainly useful for transferring set assignments from one course to another '
 				. 'and are created when exporting a problem set from the "Sets Manager". Each set definition file '
-				. 'contains a list of problems used and the dates and times. These definitions can be imported into the '
-				. 'current course.',
+				. 'contains a list of problems used and the dates and times. These definitions can be imported into '
+				. 'the current course.',
 			'href="https://wiki.openwebwork.org/wiki/Set_Definition_Files" target="Webworkdocs"'
 		) =%>
 	</dd>
@@ -42,8 +42,8 @@
 	<dd>
 		<%== maketext(
 			'The classlist files are stored in the templates directory and provide a convenient way to enter '
-				. 'a large number of students into your class. To view the format for <strong>ClassList files</strong> see '
-				. 'the <a [_1]>ClassList specification</a> or download the [_2] file and use it as a model. '
+				. 'a large number of students into your class. To view the format for <strong>ClassList files</strong> '
+				. 'see the <a [_1]>ClassList specification</a> or download the [_2] file and use it as a model. '
 				. 'ClassList files can be prepared using a spreadsheet and then saved as [_3] (comma separated values) '
 				. 'text files. However, to access as a classlist file, the file suffix needs to be changed to [_4], '
 				. 'which can be done with the "Rename" button.',
@@ -57,9 +57,9 @@
 	<dd>
 		<%== maketext(
 			'The scoring files are stored in the scoring directory and are produced using the "Scoring Tools" '
-				. 'page or the scoring command in the "Instructor Tools" module. These files can be downloaded, modified '
-				. 'in a spreadsheet (for example, to add midterm scores) and then uploaded again to the scoring directory '
-				. 'to be merged with email messages. (Use a new file name, other than [_1], when '
+				. 'page or the scoring command in the "Instructor Tools" module. These files can be downloaded, '
+				. 'modified in a spreadsheet (for example, to add midterm scores) and then uploaded again to the '
+				. 'scoring directory to be merged with email messages. (Use a new file name, other than [_1], when '
 				. 'uploading to prevent the scoring module from overwriting an uploaded file.)',
 			'<code>courseName_totals.csv</code>'
 		) =%>
@@ -69,8 +69,8 @@
 		<%= maketext('These are the files from which problems are generated and are located in the templates '
 				. 'directory or in subdirectories. They can be edited directly using the "Edit" link on each problem '
 				. 'page or from the "Sets Manager". The File Manager allows you to upload or download these files. 	'
-				. 'Directories that start with "set" contain pg files and are generated when exporting a problem set in '
-				. 'which there are local versions of a problem.') =%>
+				. 'Directories that start with "set" contain pg files and are generated when exporting a problem set '
+				. 'in which there are local versions of a problem.') =%>
 	</dd>
 	<dt><%= maketext('html directory') %></dt>
 	<dd>

@@ -5,8 +5,11 @@
 	<head>
 		<meta charset="utf-8">
 		<base href="<%= $SITE_URL %>">
+		<!-- prettier-ignore -->
 		<title>
-			WeBWorK using host: <%= $SITE_URL %>, format: <%= $formatName %>, seed: <%= $problemSeed %>,
+			WeBWorK using host: <%= $SITE_URL %>,
+		   	format: <%= $formatName %>,
+		   	seed: <%= $problemSeed %>,
 			course: <%= $courseID %>
 		</title>
 		<link href="<%= "$ce->{webworkURLs}{htdocs}/images/favicon.ico" %>" rel="shortcut icon">
@@ -175,9 +178,13 @@
 		</main>
 		% # Show the footer unless it is explicitly disabled.
 		% if ($showFooter ne '0') {
+			<!-- prettier-ignore -->
 			<footer id="footer" data-iframe-height="1">
-				WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 'unknown' %> | host: <%= $SITE_URL %> |
-				course: <%= $courseID %> | format: <%= $formatName %> | theme: <%= $theme %>
+				WeBWorK &copy; <%= $ce->{WW_COPYRIGHT_YEARS} || 'unknown' %> |
+			   	host: <%= $SITE_URL %> |
+				course: <%= $courseID %> |
+			   	format: <%= $formatName %> |
+			   	theme: <%= $theme %>
 			</footer>
 		% }
 	</body>

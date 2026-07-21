@@ -2,10 +2,10 @@
 % title maketext('Achievement Evaluator Editor Help');
 %
 <p>
-	<%= maketext('An achievement evaluator is a perl script that is run after each problem is submitted which returns '
-			. 'a truth value of 0 (didn\'t earn) or 1 (earn). The evaluator is given access to different variables which '
-			. 'contain data about the problem and set that is used to determine if the achievement is earned or not.'
-	) =%>
+	<%= maketext('An achievement evaluator is a perl script that is run after each problem is submitted which '
+			. q{returns a truth value of 0 (didn't earn) or 1 (earn). The evaluator is given access to different }
+			. 'variables which contain data about the problem and set that is used to determine if the achievement '
+			. 'is earned or not.') =%>
 </p>
 <p>
 	<%= maketext('Use the editor to edit the evaluator and the action form at the bottom to save the evaluator. You '
