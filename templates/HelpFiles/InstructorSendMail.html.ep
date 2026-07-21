@@ -4,10 +4,11 @@
 <p>
 	<%= maketext('Use this page to send emails to active (enrolled or auditing) students.  Emails can be sent to '
 			. 'all active students or selected students.  Use the "Students" form to sort, filter, or format how '
-			. 'the user name is displayed. If multiple filters are selected and the "Intersection" radio button is used, '
-			. 'the filters will  be applied in sequence, narrowing the results list.  If the "Union" button is used, the '
-			. 'updated list will be the union of all results lists from the multiple filters.  Click "Refresh List" to '
-			. 'apply any changes.  Use control-click or shift-click to select multiple students to email.') =%>
+			. 'the user name is displayed. If multiple filters are selected and the "Intersection" radio button is '
+			. 'used, the filters will  be applied in sequence, narrowing the results list.  If the "Union" button is '
+			. 'used, the updated list will be the union of all results lists from the multiple filters.  Click '
+			. '"Refresh List" to apply any changes.  Use control-click or shift-click to select multiple '
+			. 'students to email.') =%>
 </p>
 <p>
 	<%= maketext('Emails can contain personalized data, such as name, section, or status.  Click "List of insertable '
@@ -15,8 +16,8 @@
 			. 'file.  A merge file is a CSV file located in the ~[Scoring~] directory in which the first column is the '
 			. 'student id, followed by additional data (such as student grades).  This data is identified by which '
 			. 'column it is in, for instance if the scores where in the 4th column of the merge file, insert them into '
-			. 'an email using the variable $COL~[4~].  The "Scoring Tools" page can export grades into a CSV that can be '
-			. 'used as a merge file.  Upload customized merge files with the "File Manager".') =%>
+			. 'an email using the variable $COL~[4~].  The "Scoring Tools" page can export grades into a CSV that can '
+			. 'be used as a merge file.  Upload customized merge files with the "File Manager".') =%>
 </p>
 <p>
 	<%= maketext('Use the "Merge file" drop down menu to select which merge file to use, or select "None" to not '

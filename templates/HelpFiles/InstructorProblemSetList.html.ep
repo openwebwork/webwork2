@@ -9,9 +9,9 @@
 	<dt><%= maketext('"Problems" column') %></dt>
 	<dd>
 		<%= maketext('Indicates the number of problems in the set. Clicking on the link opens the set detail page '
-				. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
-				. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
-				. 'view, edit, and reorder the problems in the set.') =%>
+				. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in '
+				. 'the set such as the number of allowed attempts or the weight (credit value). You can also add, '
+				. 'remove, view, edit, and reorder the problems in the set.') =%>
 	</dd>
 	<dt><%= maketext('"Assigned Users" column') %></dt>
 	<dd>
@@ -86,10 +86,10 @@
 		<dt><%= maketext('Synchronize Set Dates with LMS.') %></dt>
 		<dd>
 			<%= maketext('Synchronize the dates for a single set or multiple sets to or from the LMS. This task is '
-					. 'performed in the job queue, and this page only enqueus that task. Go to the Job Manager to see the '
-					. 'status of the enqueued job. This will only work for sets for which the lineitem for the set is '
-					. 'available or can be obtained. That is all sets that are created via content selection from the LMS, '
-					. 'or manually created links in the LMS that have been used at least once. Note that date '
+					. 'performed in the job queue, and this page only enqueus that task. Go to the Job Manager to see '
+					. 'the status of the enqueued job. This will only work for sets for which the lineitem for the set '
+					. 'is available or can be obtained. That is all sets that are created via content selection from '
+					. 'the LMS, or manually created links in the LMS that have been used at least once. Note that date '
 					. 'synchronization via LTI is not supported by all LMSs.') =%>
 		</dd>
 	% }

@@ -61,15 +61,15 @@
 	<dt><%= maketext('Expand All Nesting') %></dt>
 	<dd>
 		<%= maketext('Only present for JITAR sets. Expand JITAR nested problem groups that have been collapsed. Note '
-				. 'that the nesting of a single problem group can be expanded by clicking on the right arrow to the right '
-				. 'of the problem number.') =%>
+				. 'that the nesting of a single problem group can be expanded by clicking on the right arrow to the '
+				. 'right of the problem number.') =%>
 	</dd>
 
 	<dt><%= maketext('Collapse All Nesting') %></dt>
 	<dd>
 		<%= maketext('Only present for JITAR sets. Collapse JITAR nesting problem groups to the top row of information '
-				. 'about a problem. Note that the nesting of a single problem group can be collapsed by clicking on the '
-				. 'down arrow to the right of the problem number.') =%>
+				. 'about a problem. Note that the nesting of a single problem group can be collapsed by clicking on '
+				. 'the down arrow to the right of the problem number.') =%>
 	</dd>
 
 	<dt><%= maketext('Display Mode') %></dt>
@@ -108,16 +108,17 @@
 	<dt><%= maketext('Deleting Problems') %></dt>
 	<dd>
 		<%= maketext('You can delete problems by clicking the "Delete it?" check box and saving. If the set is already '
-				. 'active it is recommended that you instead use the "Mark Correct?" problem to mark a particular problem '
-				. 'correct for all students.') =%>
+				. 'active it is recommended that you instead use the "Mark Correct?" problem to mark a particular '
+				. 'problem correct for all students.') =%>
 	</dd>
 
 	<dt><%= maketext('Rendering Problems') %></dt>
 	<dd>
 		<%= maketext('You can render a problem by clicking the "Render Problem" icon to the right of the problem '
-				. 'number. The display mode used to render the problem is chosen using the drop down menu. You can render all '
-				. 'problems using the "Render All" button. "Hide All" will hide all rendered problems. It is also useful to '
-				. 'collapse problem details when doing this, as it makes it easier to drag problems around.') =%>
+				. 'number. The display mode used to render the problem is chosen using the drop down menu. You can '
+				. 'render all problems using the "Render All" button. "Hide All" will hide all rendered problems. It '
+				. 'is also useful to collapse problem details when doing this, as it makes it easier to drag '
+				. 'problems around.') =%>
 	</dd>
 
 	<dt><%= maketext('Editing Problems') %></dt>
@@ -136,8 +137,8 @@
 	<dd>
 		<%= maketext('If you click on the "Grade Problem" icon to the right of the problem number, then the problem '
 				. 'will open in the manual problem grader. This page shows the rendered problem and lists all students '
-				. 'assigned to the set and the last answer the students entered for the problem. You can then change the '
-				. 'recorded scores for students on this problem and provide instructor feedback comments.') =%>
+				. 'assigned to the set and the last answer the students entered for the problem. You can then change '
+				. 'the recorded scores for students on this problem and provide instructor feedback comments.') =%>
 	</dd>
 
 	<dt><%= maketext('Problem Paths') =%></dt>

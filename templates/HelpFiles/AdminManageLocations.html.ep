@@ -3,8 +3,8 @@
 %
 <p>
 	<%= maketext('Fill out the form below to add, edit, or delete locations.  Locations are used to restrict access '
-			. 'to sets based on ip address.  Locations are configured here in the administration course, then used in a '
-			. 'normal course.  When configuring a set to use a restricted ip address, the instructor can choose to '
+			. 'to sets based on ip address.  Locations are configured here in the administration course, then used in '
+			. 'a normal course.  When configuring a set to use a restricted ip address, the instructor can choose to '
 			. 'either restrict access to the location or deny access from a location, which are identified by their '
 			. 'name.  Instructors can select multiple locations to restrict access to.') =%>
 </p>

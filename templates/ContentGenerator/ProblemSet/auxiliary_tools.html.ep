@@ -57,7 +57,10 @@
 									<dt class="fs-4"><%= $item->name %></dt>
 									<dd class="mx-3 mb-4">
 										% if (param('user') eq param('effectiveUser')) {
-											<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
+											<%= form_for current_route,
+												method => 'POST',
+												name   => 'use_reward',
+												begin =%>
 												<%= hidden_field 'use_achievement_item_id' => $item->id %>
 												<%= $form %>
 												% unless ($item->{hideUseButton}) {

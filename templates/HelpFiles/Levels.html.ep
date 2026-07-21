@@ -16,8 +16,8 @@
 		<%= maketext('Usually means students must demonstrate understanding of facts. This is more than regurgitating '
 				. 'the fact. We use this category for simple and direct applications of algorithms the student has '
 				. 'studied. There should be no judgement involved in choosing the method. This would include a simple '
-				. 'application of a rule for differentiation (e.g., can combine rules for sums and constant multiples with '
-				. 'one more advanced rule) or for integrals.') =%>
+				. 'application of a rule for differentiation (e.g., can combine rules for sums and constant multiples '
+				. 'with one more advanced rule) or for integrals.') =%>
 	</li>
 
 	<li>

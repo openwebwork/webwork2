@@ -12,7 +12,7 @@
 <p class="mb-0">
 	<%= maketext('Note that two courses in different LMSs might have the same context id. If that is the case, then '
 			. 'these courses must must have different LTI configurations. For LTI 1.1, this means they must have the '
-			. 'consumer key set to different values in the two LMSs and that must be set in the LTI 1.1 configuration for '
-			. 'the courses in WeBWorK. For LTI 1.3, two different LMSs will always have different configurations. Make '
-			. 'sure the two configurations are correct in WeBWorK.') =%>
+			. 'consumer key set to different values in the two LMSs and that must be set in the LTI 1.1 configuration '
+			. 'for the courses in WeBWorK. For LTI 1.3, two different LMSs will always have different configurations. '
+			. 'Make sure the two configurations are correct in WeBWorK.') =%>
 </p>

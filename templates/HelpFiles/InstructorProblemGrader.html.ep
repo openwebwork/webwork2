@@ -9,8 +9,8 @@
 </p>
 <p class="m-0">
 	<%= maketext('The problem is shown at the top with the seed and answers of the selected student.  Use the drop '
-			. q(down menu to change which student's seed and answers are shown.  Use the "Mark Correct" checkbox to set )
-			. 'the score to 100%.  The feedback comment can contain LaTeX formulas using the deliminator "\\\\( ... \\)" '
-			. q(for math mode, and is placed above the student's problem.  Students can access the feedback comments by )
-			. 'going to the page for the associated set and problem number.') =%>
+			. q{down menu to change which student's seed and answers are shown.  Use the "Mark Correct" checkbox to }
+			. 'set the score to 100%.  The feedback comment can contain LaTeX formulas using the deliminator '
+			. q{"\\\\( ... \\)" for math mode, and is placed above the student's problem.  Students can access the }
+			. 'feedback comments by going to the page for the associated set and problem number.') =%>
 </p>
