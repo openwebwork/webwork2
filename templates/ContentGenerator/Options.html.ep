@@ -167,7 +167,7 @@
 					% : $ce->{pg}{options}{useMathView};
 				<div class="mb-3">
 					<fieldset>
-						<legend class="lead"><%= maketext('Use Equation Editor?') %></fieldset>
+						<legend class="lead"><%= maketext('Use Equation Editor?') %></legend>
 						% for (1, 0) {
 							<div class="form-check form-check-inline">
 								<%= radio_button useMathView => $_,
