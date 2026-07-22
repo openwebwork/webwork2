@@ -3,6 +3,6 @@
 %
 <p class="m-0">
 	<%= maketext(q{This page displays a student's current achievement level and progress toward the next level, }
-		. 'and lists the rewards and badges that the student has earned. If rewards have been earned, '
-		. 'then the student may also redeem those rewards.') =%>
+			. 'and lists the rewards and badges that the student has earned. If rewards have been earned, '
+			. 'then the student may also redeem those rewards.') =%>
 </p>

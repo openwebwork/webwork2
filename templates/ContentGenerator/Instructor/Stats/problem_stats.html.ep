@@ -21,59 +21,81 @@
 	xTitle      => maketext('Percent Ranges'),
 	yTitle      => maketext('Number of Students'),
 	descText    => $isJitarSet && $topLevelJitar
-		? maketext(
-			'Histogram showing the percent grade of active students for problem [_1] and the adjusted '
-				. 'percent grade with review. The number of students in each percent range is: [_2]. '
-				. 'The number of students in each percent range after review is: [_3].',
-			$c->{prettyID},
-			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
-			join(', ', map { "$bucketLabels->[$_]:$jitarBars->[$_]" } 0 .. scalar(@$buckets) - 1)
+	? maketext(
+		'Histogram showing the percent grade of active students for problem [_1] and the adjusted '
+			. 'percent grade with review. The number of students in each percent range is: [_2]. '
+			. 'The number of students in each percent range after review is: [_3].',
+		$c->{prettyID},
+		join(', ', map {"$bucketLabels->[$_]:$buckets->[$_]"} 0 .. scalar(@$buckets) - 1),
+		join(', ', map {"$bucketLabels->[$_]:$jitarBars->[$_]"} 0 .. scalar(@$buckets) - 1)
 		)
-		: maketext(
-			'Histogram showing the grades of active students for problem [_1], where the number of '
-				. 'students in each percent range is: [_2]',
-			$c->{prettyID},
-			join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1),
-		),
-	barWidth    => 35,
-	barSep      => 5,
-	isPercent   => 0,
-	leftMargin  => 40 + 5 * length(5 * $maxCount),
-	isJitarSet  => ($isJitarSet && $topLevelJitar),
-	jitarBars   => $jitarBars,
+	: maketext(
+		'Histogram showing the grades of active students for problem [_1], where the number of '
+			. 'students in each percent range is: [_2]',
+		$c->{prettyID},
+		join(', ', map {"$bucketLabels->[$_]:$buckets->[$_]"} 0 .. scalar(@$buckets) - 1),
+	),
+	barWidth   => 35,
+	barSep     => 5,
+	isPercent  => 0,
+	leftMargin => 40 + 5 * length(5 * $maxCount),
+	isJitarSet => ($isJitarSet && $topLevelJitar),
+	jitarBars  => $jitarBars,
 ) =%>
 %
 % # Display overall statistics
 <div class="table-responsive">
 	<table class="table table-bordered w-auto">
-		<tr><th><%= maketext('Point Value') %></th><td><%= $c->{problemRecord}->value =%></tr>
-		<tr><th><%= maketext('Average Percent') %></th><td><%= sprintf('%0.1f', 100 * $mean) %></tr>
-		<tr><th><%= maketext('Standard Deviation') %></th><td><%= sprintf('%0.1f', 100 * $stddev) %></td></tr>
-		<tr><th><%= maketext('Average Attempts') %></th><td><%= sprintf('%0.1f', $mean2) %></td></tr>
+		<tr>
+			<th><%= maketext('Point Value') %></th>
+			<td><%= $c->{problemRecord}->value =%></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Average Percent') %></th>
+			<td><%= sprintf('%0.1f', 100 * $mean) %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Standard Deviation') %></th>
+			<td><%= sprintf('%0.1f', 100 * $stddev) %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Average Attempts') %></th>
+			<td><%= sprintf('%0.1f', $mean2) %></td>
+		</tr>
 		<tr>
 			<th>
 				<%= maketext('Success Index') =%>
-				<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+				<a
+					class="help-popup ms-2"
+					role="button"
+					tabindex="0"
+					data-bs-placement="top"
+					data-bs-toggle="popover"
 					data-bs-content="<%= maketext(
 						'Success index is the square of the average score divided by the average number of attempts.'
-					) %>">
+					) %>"
+				>
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 				</a>
 			</th>
 			<td><%= sprintf('%0.1f', 100 * $successIndex) %></td>
 		</tr>
-		<tr><th><%= maketext('Active Students') %></th><td><%= $activeStudents %></td></tr>
-		<tr><th><%= maketext('Inactive Students') %></th><td><%= $inactiveStudents %></tr>
+		<tr>
+			<th><%= maketext('Active Students') %></th>
+			<td><%= $activeStudents %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Inactive Students') %></th>
+			<td><%= $inactiveStudents %></td>
+		</tr>
 	</table>
 </div>
 %
 % # Table showing percentile statistics for scores.
 <p>
-	<%= maketext(
-		'Percentile cutoffs for student\'s score and success index. '
-		. 'The 50% column shows the median number of attempts.'
-	) =%>
+	<%= maketext('Percentile cutoffs for student\'s score and success index. '
+			. 'The 50% column shows the median number of attempts.') =%>
 </p>
 %
 % my @tableHeaders = (maketext('Percent Score'));
@@ -84,9 +106,16 @@
 % }
 % my $successIndexHeader = begin
 	<%= maketext('Success Index') =%>
-	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
+	<a
+		class="help-popup ms-2"
+		role="button"
+		tabindex="0"
+		data-bs-placement="top"
+		data-bs-toggle="popover"
 		data-bs-content="<%=
-			maketext('Success index is the square of the score divided by the number of attempts.') =%>">
+			maketext('Success index is the square of the score divided by the number of attempts.')
+		=%>"
+	>
 		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
@@ -99,7 +128,7 @@
 <p>
 	<%= maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.') =%>
 </p>
-<%= $c->bracket_table([ 95, 75, 50, 25, 5, 1 ], [ $problemAttempts ], [ maketext('# of attempts') ], reverse => 1) =%>
+<%= $c->bracket_table([ 95, 75, 50, 25, 5, 1 ], [$problemAttempts], [ maketext('# of attempts') ], reverse => 1) =%>
 %
 % if ($c->{problemRecord}->source_file =~ /^group:/) {
 	<div class="alert alert-info">
@@ -119,15 +148,17 @@
 	<div class="btn-toolbar gap-3">
 		<div class="input-group pt-1">
 			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-			<%= select_field 'problem_displaymode' => [
-					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
-				],
-				id => 'problem_displaymode', class => 'form-select' =%>
+			<%= select_field
+				'problem_displaymode' =>
+				[ grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} } ],
+				id    => 'problem_displaymode',
+				class => 'form-select' =%>
 		</div>
 		<div class="btn-group pt-1">
 			<%= link_to maketext('Edit Problem') =>
-					$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),
-				class => 'btn btn-primary', target => 'WW_Editor' =%>
+				$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),
+				class  => 'btn btn-primary',
+				target => 'WW_Editor' =%>
 		</div>
 	</div>
 	<div id="problem_render_area" class="rpc_render_area mt-2"></div>

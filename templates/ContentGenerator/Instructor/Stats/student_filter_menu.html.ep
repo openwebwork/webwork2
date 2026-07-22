@@ -7,13 +7,18 @@
 	% for (@$filters) {
 		% $current_filter = $_->[0] if $_->[1] eq $filter;
 	% }
-	<%= link_to $current_filter => '#', id => 'filter', class => 'btn btn-primary dropdown-toggle',
-		role => 'button', 'aria-expanded' => 'false', data => { bs_toggle => 'dropdown' } =%>
+	<%= link_to
+		$current_filter => '#',
+		id              => 'filter',
+		class           => 'btn btn-primary dropdown-toggle',
+		role            => 'button',
+		'aria-expanded' => 'false',
+		data            => { bs_toggle => 'dropdown' } =%>
 	<ul class="dropdown-menu" role="menu" aria-labelledby="filter">
 		% for (@$filters) {
 			<li>
 				<%= link_to $_->[0] => $c->systemLink(url_for, params => { %$params, filter => $_->[1] }),
-					class => join(' ', 'dropdown-item', $_->[1] eq $filter ? 'active' : ()) =%>
+					class           => join(' ', 'dropdown-item', $_->[1] eq $filter ? 'active' : ()) =%>
 			</li>
 		% }
 	</ul>

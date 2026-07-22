@@ -1,13 +1,13 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
-% my $coursesDir = $ce->{webworkDirs}{courses};
-% my @courseIDs = listCourses($ce);
+% my $coursesDir      = $ce->{webworkDirs}{courses};
+% my @courseIDs       = listCourses($ce);
 % my $admin_course_id = $ce->{admin_course_id};
 %
 <p><%= maketext('Welcome to WeBWorK!') %></p>
 %
 % if ((grep { $_ eq $admin_course_id } @courseIDs) && !-f "$coursesDir/$admin_course_id/hide_directory") {
-	<p><%=	link_to maketext('Course Administration') => url_for('course_admin') =%></p>
+	<p><%= link_to maketext('Course Administration') => url_for('course_admin') =%></p>
 % }
 %
 <h2><%= maketext('Courses') %></h2>

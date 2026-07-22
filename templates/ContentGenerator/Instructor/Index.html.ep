@@ -1,6 +1,6 @@
 % use Mojo::JSON qw(encode_json);
 %
-% use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::Utils                     qw(getAssetURL);
 % use WeBWorK::HTML::ScrollingRecordList qw(scrollingRecordList);
 %
 % content_for js => begin
@@ -78,7 +78,8 @@
 						type="button"
 						role="tab"
 						aria-controls="user-actions"
-						aria-selected="true">\
+						aria-selected="true"
+					>\
 						<%== maketext('User Actions') =%>\
 					</button>
 				</li>
@@ -91,7 +92,8 @@
 						type="button"
 						role="tab"
 						aria-controls="user-set-actions"
-						aria-selected="false">\
+						aria-selected="false"
+					>\
 						<%== maketext('User-Set Actions') =%>\
 					</button>
 				</li>
@@ -104,20 +106,25 @@
 						type="button"
 						role="tab"
 						aria-controls="set-actions"
-						aria-selected="false">\
+						aria-selected="false"
+					>\
 						<%== maketext('Set Actions') =%>\
 					</button>
 				</li>
 			</ul>
 
 			<div class="tab-content row" id="pills-tabContent">
-				<div class="tab-pane fade show active col-lg-6 col-sm-8" id="user-actions" role="tabpanel"
-					aria-labelledby="pills-user-actions-tab">
+				<div
+					class="tab-pane fade show active col-lg-6 col-sm-8"
+					id="user-actions"
+					role="tabpanel"
+					aria-labelledby="pills-user-actions-tab"
+				>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Edit'),
 							name  => 'sets_assigned_to_user',
 							class => 'btn btn-sm btn-secondary',
-							data  => { users_needed => 'exactly one', error_users  => maketext($E_ONE_USER) } =%>
+							data  => { users_needed => 'exactly one', error_users => maketext($E_ONE_USER) } =%>
 						<span class="input-group-text flex-grow-1">\
 							<%== maketext('assignments and dates for <strong>one</strong> user') =%>\
 						</span>
@@ -152,25 +159,33 @@
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Email'),
-							name  => 'email_users',
-							class => 'btn btn-sm btn-secondary',
+							name       => 'email_users',
+							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'instructor_mail_merge') =%>
 						<span class="input-group-text flex-grow-1">\
 							<%== maketext('<strong>selected</strong> users') =%>\
 						</span>
 					</div>
 					<div class="input-group input-group-sm mb-2">
-						<%= submit_button maketext('Add'), name => 'add_users',
+						<%= submit_button maketext('Add'),
+							name  => 'add_users',
 							class => 'btn btn-sm btn-secondary' =%>
-						<%= number_field number_of_students => 1, min => 1, max => 100,
-							class => 'form-control form-control-sm text-center' =%>
+						<%= number_field
+							number_of_students => 1,
+							min                => 1,
+							max                => 100,
+							class              => 'form-control form-control-sm text-center' =%>
 						<span class="input-group-text flex-grow-1">\
 							<%== maketext('new user accounts') =%>\
 						</span>
 					</div>
 				</div>
-				<div class="tab-pane fade show offset-xxl-3 offset-lg-2 offset-sm-1 col-xxl-6 col-lg-8 col-sm-10"
-					id="user-set-actions" role="tabpanel" aria-labelledby="pills-user-set-actions-tab">
+				<div
+					class="tab-pane fade show offset-xxl-3 offset-lg-2 offset-sm-1 col-xxl-6 col-lg-8 col-sm-10"
+					id="user-set-actions"
+					role="tabpanel"
+					aria-labelledby="pills-user-set-actions-tab"
+				>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Assign'),
 							# This name is the same as the name of the submit button in Assigner.pm and the form is
@@ -178,7 +193,7 @@
 							name       => 'assign',
 							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'instructor_set_assigner'),
-							data => {
+							data       => {
 								users_needed => 'at least one',
 								error_users  => maketext($E_MIN_ONE_USER),
 								sets_needed  => 'at least one',
@@ -198,9 +213,9 @@
 								sets_needed  => 'at most one',
 								error_sets   => maketext($E_MAX_ONE_SET)
 							} =%>
-						<span class="input-group-text flex-grow-1"><%==
-							maketext('as <strong>one</strong> user on <strong>up to one</strong> set')
-						=%></span>
+						<span class="input-group-text flex-grow-1"
+							><%== maketext('as <strong>one</strong> user on <strong>up to one</strong> set') =%></span
+						>
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Edit'),
@@ -208,9 +223,11 @@
 							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'instructor_set_detail'),
 							data       => { sets_needed => 'exactly one', error_sets => maketext($E_ONE_SET) } =%>
-						<span class="input-group-text flex-grow-1"><%==
-							maketext(q{<strong>one</strong> set's details for <strong>some or all</strong> users})
-						=%></span>
+						<span class="input-group-text flex-grow-1"
+							><%==
+								maketext(q{<strong>one</strong> set's details for <strong>some or all</strong> users})
+							=%></span
+						>
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('View'),
@@ -218,24 +235,28 @@
 							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'answer_log'),
 							formtarget => 'WW_Info' =%>
-						<span class="input-group-text flex-grow-1"><%==
-							maketext('answer log for <strong>selected</strong> users, '
-								. 'for <strong>selected</strong> sets')
-						=%></span>
+						<span class="input-group-text flex-grow-1"
+							><%== maketext('answer log for <strong>selected</strong> users, '
+									. 'for <strong>selected</strong> sets') =%></span
+						>
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Generate'),
 							name       => 'hardcopy',
 							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'hardcopy') =%>
-						<span class="input-group-text flex-grow-1"><%==
-							maketext('PDF hardcopy for <strong>selected</strong> users, '
-								. 'for <strong>selected</strong> sets')
-						=%></span>
+						<span class="input-group-text flex-grow-1"
+							><%== maketext('PDF hardcopy for <strong>selected</strong> users, '
+									. 'for <strong>selected</strong> sets') =%></span
+						>
 					</div>
 				</div>
-				<div class="tab-pane fade show row offset-lg-6 offset-sm-4 col-lg-6 col-sm-8"
-					id="set-actions" role="tabpanel" aria-labelledby="pills-set-actions-tab">
+				<div
+					class="tab-pane fade show row offset-lg-6 offset-sm-4 col-lg-6 col-sm-8"
+					id="set-actions"
+					role="tabpanel"
+					aria-labelledby="pills-set-actions-tab"
+				>
 					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('Edit'),
 							name  => 'users_assigned_to_set',
@@ -277,7 +298,7 @@
 							name       => 'score_sets',
 							class      => 'btn btn-sm btn-secondary',
 							formaction => $c->systemLink(url_for 'instructor_scoring'),
-							data => { sets_needed => 'at least one', error_sets => maketext($E_MIN_ONE_SET) } =%>
+							data       => { sets_needed => 'at least one', error_sets => maketext($E_MIN_ONE_SET) } =%>
 						<span class="input-group-text flex-grow-1">\
 							<%== maketext('<strong>selected</strong> sets') =%>\
 						</span>
@@ -292,12 +313,13 @@
 								error_invalid_set_name => maketext($E_BAD_NAME)
 							} =%>
 						<%= label_for new_set_name => maketext('new set:'), class => 'input-group-text' =%>
-						<%= text_field new_set_name => '',
-							id          => 'new_set_name',
-							placeholder => maketext('New set name'),
-							size        => 20,
-							class       => 'form-control form-control-sm',
-							dir         => 'ltr' =%>
+						<%= text_field
+							new_set_name => '',
+							id           => 'new_set_name',
+							placeholder  => maketext('New set name'),
+							size         => 20,
+							class        => 'form-control form-control-sm',
+							dir          => 'ltr' =%>
 					</div>
 				</div>
 			</div>

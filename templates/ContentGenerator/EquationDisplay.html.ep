@@ -3,7 +3,11 @@
 <p><%== $typesetStr %></p>
 <%= form_for current_route, method => 'POST', begin =%>
 	<%= $c->hidden_authen_fields =%>
-	<%= text_area eq => '', class => 'form-control mb-3', placeholder => 'Enter equation here',
-		cols => 40, rows => 5 =%>
+	<%= text_area
+		eq          => '',
+		class       => 'form-control mb-3',
+		placeholder => 'Enter equation here',
+		cols        => 40,
+		rows        => 5 =%>
 	<%= submit_button 'typeset', class => 'btn btn-primary' =%>
 <% end =%>

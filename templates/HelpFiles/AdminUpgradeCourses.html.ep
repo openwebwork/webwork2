@@ -3,7 +3,7 @@
 %
 <p class="mb-0">
 	<%= maketext('Select which courses to upgrade from a previous version of WeBWorK.  The upgrade process can add '
-		. 'missing database columns, delete unused database columns, and check the course file structure.  Be sure '
-		. 'to read over the changes before confirming the upgrade.  You may want to create an archive of the course '
-		. 'before upgrading.  Only courses that need upgraded will be selectable.') =%>
+			. 'missing database columns, delete unused database columns, and check the course file structure.  Be sure '
+			. 'to read over the changes before confirming the upgrade.  You may want to create an archive of the course '
+			. 'before upgrading.  Only courses that need upgraded will be selectable.') =%>
 </p>

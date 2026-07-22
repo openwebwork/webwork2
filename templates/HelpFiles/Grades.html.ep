@@ -3,20 +3,20 @@
 %
 <p>
 	<%= maketext(q{This page shows the student's current grade for all assignments they are assigned to.  This page }
-		. 'only shows assignments and grades visible to the student. To view all grades, visit the "Student Progress" '
-		. q{page for the student. The student navigation menu at the top can be used to change which student's grades }
-		. 'to view') =%>
+			. 'only shows assignments and grades visible to the student. To view all grades, visit the "Student Progress" '
+			. q{page for the student. The student navigation menu at the top can be used to change which student's grades }
+			. 'to view') =%>
 </p>
 <p>
 	<%= maketext('The total grade at the top shows the total score and percent average over all open assignments.  '
-		. 'The total grade can be shown/hidden under general course configuration settings.') =%>
+			. 'The total grade can be shown/hidden under general course configuration settings.') =%>
 </p>
 <p>
 	<%= maketext('The grades are divided into open, reduced scoring, closed, and future assignments.  No grades are '
-		. 'shown for future assignments, just their open date.  Assignments are sorted using the same urgency logic '
-		. 'as the "Assignments" page.  For open assignments, a table of per problem scores are shown for homework '
-		. 'assignments. Just in time assignments only show top level problems.  Tests only show the best test version '
-		. 'provided students can see the test grade.') %>
+			. 'shown for future assignments, just their open date.  Assignments are sorted using the same urgency logic '
+			. 'as the "Assignments" page.  For open assignments, a table of per problem scores are shown for homework '
+			. 'assignments. Just in time assignments only show top level problems.  Tests only show the best test version '
+			. 'provided students can see the test grade.') %>
 </p>
 <p class="m-0">
 	<%== maketext(
@@ -26,7 +26,6 @@
 			. 'the "Email" message [_2], which will be rendered and displayed below the grade table.  The message can '
 			. 'be created on the "Email" page and the CSV file can be created/uploaded using the "File Manager".  '
 			. 'External grades can only be displayed here and are not included in any totals or statistics.',
-		'<code>[Scoring]/report_grades_data.csv</code>',
-		'<code>[TMPL]/email/report_grades.msg</code>',
+		'<code>[Scoring]/report_grades_data.csv</code>', '<code>[TMPL]/email/report_grades.msg</code>',
 	) =%>
 </p>

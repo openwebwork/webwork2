@@ -3,23 +3,23 @@
 %
 <p>
 	<%= maketext('A student must be assigned a homework set in order for it to appear on their WeBWorK home page. '
-		. 'Check the box in the left column to assign a student to that homework set. Uncheck the box to unassign a '
-		. q{student. If a student is unassigned from a homework set, all of the student's data for that homework set }
-		. 'is deleted and cannot be recovered. Use this action cautiously!') =%>
+			. 'Check the box in the left column to assign a student to that homework set. Uncheck the box to unassign a '
+			. q{student. If a student is unassigned from a homework set, all of the student's data for that homework set }
+			. 'is deleted and cannot be recovered. Use this action cautiously!') =%>
 </p>
 <p>
 	<%= maketext('Change the due dates for an individual student on this page. Enter a new date in order to '
-		. 'override the date. (You can copy the date format from the date in the left column which indicates '
-		. 'the date when the homework set is due for the whole class.) Note that you should ensure that the close '
-		. 'date is before the answer date. If the close date for a student is extended until after the class answer '
-		. 'date for the set, then the answer date for the student must also be set to a later date. If reduced '
-		. 'scoring is enabled for the set, then the reduced scoring date must be between the open and close dates. '
-		. 'If a date is left empty, then the assignment default date will be used.') =%>
+			. 'override the date. (You can copy the date format from the date in the left column which indicates '
+			. 'the date when the homework set is due for the whole class.) Note that you should ensure that the close '
+			. 'date is before the answer date. If the close date for a student is extended until after the class answer '
+			. 'date for the set, then the answer date for the student must also be set to a later date. If reduced '
+			. 'scoring is enabled for the set, then the reduced scoring date must be between the open and close dates. '
+			. 'If a date is left empty, then the assignment default date will be used.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('Click on the homework set links to edit the grades for this individual student on the homework set. '
-		. '(The grade of each problem is called the "status".) You can also change the number of allowed attempts and '
-		. q{further modify the individual student's homework set.) You will also be able to change a student's seed }
-		. q{which determines the individual values used in the individual version of the student's problem and the }
-		. 'weight (how much a problem counts toward the grade.)') =%>
+			. '(The grade of each problem is called the "status".) You can also change the number of allowed attempts and '
+			. q{further modify the individual student's homework set.) You will also be able to change a student's seed }
+			. q{which determines the individual values used in the individual version of the student's problem and the }
+			. 'weight (how much a problem counts toward the grade.)') =%>
 </p>

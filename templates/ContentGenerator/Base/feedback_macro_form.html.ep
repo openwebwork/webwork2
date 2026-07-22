@@ -8,12 +8,16 @@
 	% while (my ($key, $value) = each %$params) {
 		% if ($key eq 'pg_object') {
 			<%= hidden_field $key => encode_base64(
-			 	Encode::encode(
-			 		'UTF-8',
-			 		$value->{body_text}
-			 			. ($value->{result}{msg} ? tag('p', tag('b', 'Note: ') . tag('i', $value->{result}{msg})) : '')
-			 	),
-			 	''
+				Encode::encode(
+					'UTF-8',
+					$value->{body_text}
+						. (
+							$value->{result}{msg}
+							? tag('p', tag('b', 'Note: ') . tag('i', $value->{result}{msg}))
+							: ''
+						)
+				),
+				''
 			) =%>
 		% } else {
 			<%= hidden_field $key => $value =%>
@@ -21,5 +25,6 @@
 	% }
 	%
 	<%= submit_button maketext($ce->{feedback_button_name}) || maketext('Email instructor'),
-		name  => 'feedbackForm', class => 'btn btn-primary' =%>
+		name  => 'feedbackForm',
+		class => 'btn btn-primary' =%>
 <% end =%>

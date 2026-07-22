@@ -1,10 +1,6 @@
 % use WeBWorK::Utils qw(wwRound);
-% use WeBWorK::Utils::JITAR (
-	% 'jitar_id_to_seq',
-	% 'is_jitar_problem_hidden',
-	% 'is_jitar_problem_closed',
-	% 'jitar_problem_adjusted_status'
-% );
+% use WeBWorK::Utils::JITAR ('jitar_id_to_seq', 'is_jitar_problem_hidden', 'is_jitar_problem_closed',
+	% 'jitar_problem_adjusted_status');
 %
 % my $courseID      = stash('courseID');
 % my $setID         = $c->{set}->set_id;
@@ -30,11 +26,9 @@
 	<tr>
 		% # Problem number
 		<td>
-			% if (
-				% $isJitarSet
+			% if ($isJitarSet
 				% && !$authz->hasPermissions($problem->user_id, 'view_unopened_sets')
-				% && is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID)
-			% )
+				% && is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID))
 			% {
 				% # If the problem is jitar restricted, then show it greyed out.
 				<span class="<%= $linkClasses %> text-nowrap">
@@ -68,17 +62,17 @@
 				% }
 			</td>
 			<td>
-				<%= $isJitarSet && $problemLevel != 0 && $problem->counts_parent_grade
-					? maketext('Yes')
-					: maketext('No') =%>
+				<%= $isJitarSet
+					&& $problemLevel != 0
+					&& $problem->counts_parent_grade ? maketext('Yes') : maketext('No') =%>
 			</td>
 		% }
 		% # Grader
 		% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
-			% && $authz->hasPermissions(param('user'), 'problem_grader')) {
+		% && $authz->hasPermissions(param('user'), 'problem_grader')) {
 			<td>
 				<%= link_to(maketext('Grade Problem') =>
-					$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
+						$c->systemLink(url_for('instructor_problem_grader', problemID => $problemID))) =%>
 			</td>
 		% }
 	</tr>

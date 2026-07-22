@@ -3,9 +3,9 @@
 %
 <p>
 	<%= maketext('This page allows one to edit and set the achievement email notification template for an achievement. '
-		. ' In addition to setting an email notification template for an achievement here, you must also set the '
-		. '"email address to use when sending Achievement notifications" in the optional modules of the course '
-		. 'configuration in order for email notifications to be sent.') =%>
+			. ' In addition to setting an email notification template for an achievement here, you must also set the '
+			. '"email address to use when sending Achievement notifications" in the optional modules of the course '
+			. 'configuration in order for email notifications to be sent.') =%>
 </p>
 <h2><%= maketext('Actions:') %></h2>
 <p class="mb-2"><i><%= maketext('(If an action cannot be executed it will not appear.)') %></i></p>
@@ -16,8 +16,8 @@
 	<dt><%= maketext('Save As') %></dt>
 	<dd>
 		<%= maketext(q{Makes a new copy of the file you are editing at the location relative to the course's }
-			. 'achievement notifications (~[ACHEVNOTIFYDIR~]) directory, and sets the new file to be the email '
-			. 'notification template for this achievement.') =%>
+				. 'achievement notifications (~[ACHEVNOTIFYDIR~]) directory, and sets the new file to be the email '
+				. 'notification template for this achievement.') =%>
 	</dd>
 
 	<dt><%= maketext('Use Existing Template') %></dt>
@@ -28,9 +28,12 @@
 </dl>
 <h2><%= maketext('Template Substitutions') %></h2>
 <p>
-	<%== maketext('The following variables are available for use in the template.  These variables can be used inside '
-		. '[_1] tags.  For example, [_2] will insert the description of the achievement into the email body.',
-	   	'<code>&lt;%= ... %&gt;</code>', '<code>&lt;%= $achievement->description %&gt;</code>') =%>
+	<%== maketext(
+		'The following variables are available for use in the template.  These variables can be used inside '
+			. '[_1] tags.  For example, [_2] will insert the description of the achievement into the email body.',
+		'<code>&lt;%= ... %&gt;</code>',
+		'<code>&lt;%= $achievement->description %&gt;</code>'
+	) =%>
 </p>
 <ul class="mb-0">
 	<li><code>$ce</code>: This gives access to the entire course environment.</li>

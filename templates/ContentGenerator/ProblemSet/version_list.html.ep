@@ -35,8 +35,7 @@
 				<div class="alert alert-warning">
 					<%= maketext(
 						'You have [quant,_1,hour] and [quant,_2,minute] remaining to complete the currently open test.',
-						$hours,
-						$minutes
+						$hours, $minutes
 					) =%>
 				</div>
 			% } elsif ($hours || ($minutes && (!$seconds || $continueTimeLeft > 299))) {
@@ -46,8 +45,7 @@
 					<%= maketext(
 						'You have [quant,_1,hour,hours,][quant,_2,minute,minutes,] '
 							. 'remaining to complete the currently open test.',
-						$hours,
-						$minutes
+						$hours, $minutes
 					) =%>
 				</div>
 			% } else {
@@ -56,16 +54,13 @@
 						<%= maketext(
 							'You have [quant,_1,minute] and [quant,_2,second] '
 								. 'remaining to complete the currently open test.',
-							$minutes,
-							$seconds
+							$minutes, $seconds
 						) =%>
 					</div>
 				% } else {
 					<div class="alert alert-warning">
-						<%= maketext(
-							'You have [quant,_1,second] remaining to complete the currently open test.',
-							$seconds
-						) =%>
+						<%= maketext('You have [quant,_1,second] remaining to complete the currently open test.',
+							$seconds) =%>
 					</div>
 				% }
 			% }
@@ -80,27 +75,26 @@
 	%
 	<div class="mb-3">
 		<%= link_to maketext('Continue Open Test') =>
-				$c->systemLink(url_for($routeName, setID => $set->set_id . ',v' . $continueVersion->version_id)),
+			$c->systemLink(url_for($routeName, setID => $set->set_id . ',v' . $continueVersion->version_id)),
 			class => 'btn btn-primary' =%>
 	</div>
 % } elsif (($timeNow >= $set->open_date || $authz->hasPermissions($user, 'view_hidden_sets'))
-	% && $timeNow <= $set->due_date
+% && $timeNow <= $set->due_date
 	% && !($ce->{options}{enableConditionalRelease} && is_restricted($db, $set, param('effectiveUser')))
 	% && ($maxVersions <= 0 || $currentVersions < $maxVersions))
 % {
 	% # Display information about a new test and a start new test button.
 	% # Print time limit for timed tests
 	% if ($timeLimit > 0) {
-		% my $hours    = int($timeLimit / 3600);
-		% my $minutes  = int(($timeLimit % 3600) / 60);
+		% my $hours   = int($timeLimit / 3600);
+		% my $minutes = int(($timeLimit % 3600) / 60);
 		%
 		% # Two cases to format time to work well with translation.
 		% if ($hours && $minutes) {
 			<div class="alert alert-warning">
 				<%= maketext(
 					'This is a timed test. You will have [quant,_1,hour] and [quant,_2,minute] to complete the test.',
-					$hours,
-					$minutes
+					$hours, $minutes
 				) =%>
 			</div>
 		% } else {
@@ -110,8 +104,7 @@
 				<%= maketext(
 					'This is a timed test. You will have [quant,_1,hour,hours,]'
 						. '[quant,_2,minute,minutes,] to complete the test.',
-					$hours,
-					$minutes
+					$hours, $minutes
 				) =%>
 			</div>
 		% }
@@ -124,15 +117,20 @@
 	<div class="mb-3">
 		% # Disable "Start New Test" button when acting as another user who doesn't have permissions to start tests.
 		% if ($disable_start_new_test) {
-			<span class="d-inline-block set-id-tooltip" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
-				data-bs-title="<%=maketext(
+			<span
+				class="d-inline-block set-id-tooltip"
+				tabindex="0"
+				data-bs-toggle="tooltip"
+				data-bs-placement="top"
+				data-bs-title="<%= maketext(
 					'You are acting as another user and do not have permission to start a new test for other users.'
-				) %>">
+				) %>"
+			>
 				<button class="btn btn-primary" type="button" disabled><%= maketext('Start New Test') %></button>
 			</span>
 		% } else {
 			<%= link_to maketext('Start New Test') => $c->systemLink(url_for($routeName, setID => $set->set_id)),
-				class => 'btn btn-primary' =%>
+				class                              => 'btn btn-primary' =%>
 		% }
 	</div>
 % } else {
@@ -158,7 +156,9 @@
 	<% my $version_list = begin =%>
 		<div class="table-responsive">
 			<table class="problem_set_table table table-sm caption-top font-sm">
-				<caption><%= maketext('Test Versions') %></caption>
+				<caption>
+					<%= maketext('Test Versions') %>
+				</caption>
 				<thead class="table-group-divider">
 					<tr>
 						<th scope="col"><%= maketext('Versions') %></th>
@@ -167,8 +167,11 @@
 						<th scope="col"><%= maketext('Start') %></th>
 						<th scope="col"><%= maketext('End') %></th>
 						<th scope="col" class="hardcopy">
-							<i class="icon far fa-lg fa-arrow-alt-circle-down" aria-hidden="true"
-								title="<%= maketext('Generate Hardcopy') %>"></i>
+							<i
+								class="icon far fa-lg fa-arrow-alt-circle-down"
+								aria-hidden="true"
+								title="<%= maketext('Generate Hardcopy') %>"
+							></i>
 							<span class="visually-hidden"><%= maketext('Generate Hardcopy') =%></span>
 						</th>
 					</tr>
@@ -177,14 +180,15 @@
 					% for my $ver (@$versionData) {
 						% my $interactive = maketext('Version [_1]', $ver->{version});
 						% if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
-							<% $interactive = link_to $interactive => $c->systemLink(url_for(
+							<% $interactive = link_to
+								$interactive => $c->systemLink(url_for(
 									$ver->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
-									setID    => $ver->{id}
+									setID => $ver->{id}
 								)),
-								class             => 'set-id-tooltip text-nowrap',
-								data => {
+								class => 'set-id-tooltip text-nowrap',
+								data  => {
 									bs_toggle    => 'tooltip',
-								   	bs_placement => 'right',
+									bs_placement => 'right',
 									bs_title     => $set->description
 								} =%>
 						% }
@@ -192,20 +196,25 @@
 						% # Download hardcopy.
 						% my $control = '';
 						% if ($multiSet) {
-							<% $control = check_box selected_sets => $ver->{id},
-								id => $ver->{id}, class => 'form-check-input'; =%>
+							<% $control = check_box
+								selected_sets => $ver->{id},
+								id            => $ver->{id},
+								class         => 'form-check-input'; =%>
 							% # Make interactive the label for the control.
 							% $interactive = label_for $ver->{id} => $interactive;
 						% } elsif ($ver->{show_download}) {
 							% # Only display download option if answers are available.
 							<% $control = link_to $c->systemLink(
-									url_for('hardcopy_preselect_set', setID => $ver->{id}),
-									params => { selected_sets => $ver->{id} }
+								url_for('hardcopy_preselect_set', setID => $ver->{id}),
+								params => { selected_sets => $ver->{id} }
 								),
 								class => 'hardcopy-link',
 								begin =%>
-								<i class="icon far fa-arrow-alt-circle-down fa-lg" aria-hidden="true"
-									title="<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>"></i>
+								<i
+									class="icon far fa-arrow-alt-circle-down fa-lg"
+									aria-hidden="true"
+									title="<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>"
+								></i>
 								<span class="visually-hidden">
 									<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>
 								</span>
@@ -228,17 +237,25 @@
 	%
 	% if ($multiSet) {
 		% # Show form for generating hardcopies of test versions.
-		<%= form_for 'hardcopy_preselect_set', method => 'POST', name => 'problem-sets-form', id => 'problem-sets-form',
+		<%= form_for 'hardcopy_preselect_set',
+			method => 'POST',
+			name   => 'problem-sets-form',
+			id     => 'problem-sets-form',
 			begin =%>
 			<%= $c->hidden_authen_fields =%>
 			<%= $version_list->() =%>
 			<div class="mb-3">
-				<%= input_tag reset => maketext('Deselect All Test Versions'),
-					id => 'clear', type => 'reset', class => 'btn btn-primary' =%>
+				<%= input_tag
+					reset => maketext('Deselect All Test Versions'),
+					id    => 'clear',
+					type  => 'reset',
+					class => 'btn btn-primary' =%>
 			</div>
 			<div class="mb-3">
 				<%= submit_button maketext('Download Hardcopy for Selected Tests'),
-					id => 'hardcopy', name => 'hardcopy', class => 'btn btn-primary' =%>
+					id    => 'hardcopy',
+					name  => 'hardcopy',
+					class => 'btn btn-primary' =%>
 			</div>
 		<% end =%>
 	% } else {

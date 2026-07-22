@@ -3,16 +3,16 @@
 %
 <p>
 	<%= maketext('Select an archive to restore.  You cannot restore an archive into an existing course. '
-		. 'Instead, either rename or delete the old course, or restore the archive with a new name.  When '
-		. 'restoring a course with a new name, the name is used as the course ID, and must contain only '
-		. 'letters, numbers, hyphens, and underscores, and may have at most 40 characters.') =%>
+			. 'Instead, either rename or delete the old course, or restore the archive with a new name.  When '
+			. 'restoring a course with a new name, the name is used as the course ID, and must contain only '
+			. 'letters, numbers, hyphens, and underscores, and may have at most 40 characters.') =%>
 </p>
 <p>
 	<%= maketext('Archived courses are located inside the "archives" directory of the "admin" course.  Use '
-		. 'the "File Manager" to upload additional .tar.gz files to be unarchived.') =%>
+			. 'the "File Manager" to upload additional .tar.gz files to be unarchived.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('You may check the box to "clean" the unarchived course. This will remove student users '
-		. 'and their associated data from the database after the course is unarchived. It will also remove '
-		. 'the log files, any files in the scoring folder, and any temporary edited files.') =%>
+			. 'and their associated data from the database after the course is unarchived. It will also remove '
+			. 'the log files, any files in the scoring folder, and any temporary edited files.') =%>
 </p>

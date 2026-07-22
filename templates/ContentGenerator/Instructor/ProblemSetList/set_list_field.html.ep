@@ -1,7 +1,8 @@
 % if ($type eq 'date') {
 	% if ($c->{editMode}) {
 		<div class="input-group input-group-sm flex-nowrap flatpickr">
-			<%= text_field $name => $value,
+			<%= text_field
+				$name       => $value,
 				id          => "${name}_id",
 				class       => 'form-control w-auto ' . ($name =~ /\.open_date/ ? ' datepicker-group' : ''),
 				size        => 22,
@@ -17,8 +18,13 @@
 					timezone   => $ce->{siteDefaults}{timezone}
 				},
 				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
-			<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
-				aria-label="<%= maketext('Pick date and time') %>">
+			<a
+				class="btn btn-secondary btn-sm"
+				data-toggle
+				role="button"
+				tabindex="0"
+				aria-label="<%= maketext('Pick date and time') %>"
+			>
 				<i class="fas fa-calendar-alt"></i>
 			</a>
 		</div>
@@ -31,7 +37,10 @@
 	% if ($c->{editMode}) {
 		% # If the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		% # in which case the hidden field overrides the parameter with a 0.
-		<%= check_box $name => 1, id => "${name}_id", class => 'form-check-input',
+		<%= check_box
+			$name             => 1,
+			id                => "${name}_id",
+			class             => 'form-check-input',
 			'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header',
 			$value ? (checked => undef) : () =%>
 		<%= hidden_field $name => 0 =%>
@@ -43,9 +52,12 @@
 	% # This is a fallback in case someone tries add a type without learning this system.
 	% if ($c->{editMode}) {
 		<div class="input-group input-group-sm flex-nowrap">
-			<%= text_field $name => $value, id => "${name}_id", class  => 'form-control w-auto',
+			<%= text_field
+				$name             => $value,
+				id                => "${name}_id",
+				class             => 'form-control w-auto',
 				'aria-labelledby' => ($name =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-				size => 10 =%>
+				size              => 10 =%>
 		</div>
 	% } else {
 		<%= $value =%>

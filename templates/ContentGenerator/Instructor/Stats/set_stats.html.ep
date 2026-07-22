@@ -14,11 +14,15 @@
 		<tr>
 			<th>
 				<%= maketext('Status') =%>
-				<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
-					data-bs-content="<%= maketext(
-						'This gives the status and dates of the main set. '
-							. 'Individual students may have different settings.'
-					) %>">
+				<a
+					class="help-popup ms-2"
+					role="button"
+					tabindex="0"
+					data-bs-placement="top"
+					data-bs-toggle="popover"
+					data-bs-content="<%= maketext('This gives the status and dates of the main set. '
+							. 'Individual students may have different settings.') %>"
+				>
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Set Status Help') =%></span>
 				</a>
@@ -27,7 +31,7 @@
 				% if (time < $c->{setRecord}->open_date) {
 					<%= maketext('Before Open Date') =%>
 				% } elsif ($c->{setRecord}->enable_reduced_scoring
-					% && time > $c->{setRecord}->reduced_scoring_date
+				% && time > $c->{setRecord}->reduced_scoring_date
 					% && time < $c->{setRecord}->due_date)
 				% {
 					<%= maketext('Reduced Scoring Period') =%>
@@ -42,12 +46,16 @@
 					(<%= maketext('Hidden') =%>)
 				% }
 				% if ($c->{setRecord}->assignment_type =~ /gateway/ && time > $c->{setRecord}->answer_date) {
-					<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top"
+					<a
+						class="help-popup ms-2"
+						role="button"
+						tabindex="0"
+						data-bs-placement="top"
 						data-bs-toggle="popover"
 						data-bs-content="<%= maketext(
 							'Answer availability for tests depends on multiple settings.  This only indicates the '
-								. 'template answer date has passed.  See Set Detail page for actual availability.'
-						) =%>">
+								. 'template answer date has passed.  See Set Detail page for actual availability.') =%>"
+					>
 						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 						<span class="visually-hidden"><%= maketext('Answer Availability Help') =%></span>
 					</a>
@@ -56,7 +64,8 @@
 		</tr>
 		<tr>
 			<th><%= maketext('Number of Students') %></th>
-			<td><%= scalar(@$score_list) %></td></tr>
+			<td><%= scalar(@$score_list) %></td>
+		</tr>
 		<tr>
 			<th><%= maketext('Open Date') %></th>
 			<td><%= $c->formatDateTime($c->{setRecord}->open_date, $ce->{studentDateDisplayFormat}) %></td>
@@ -94,19 +103,26 @@
 	yTitle      => maketext('Number of Students'),
 	descText    => maketext(
 		'Histogram showing the overall set grades, where the number of students in each percent range is: [_1].',
-		join(', ', map { "$bucketLabels->[$_]:$buckets->[$_]" } 0 .. scalar(@$buckets) - 1)
+		join(', ', map {"$bucketLabels->[$_]:$buckets->[$_]"} 0 .. scalar(@$buckets) - 1)
 	),
-	barWidth    => 35,
-	barSep      => 5,
-	isPercent   => 0,
-	leftMargin  => 40 + 5 * length(5 * $maxCount),
+	barWidth   => 35,
+	barSep     => 5,
+	isPercent  => 0,
+	leftMargin => 40 + 5 * length(5 * $maxCount),
 ) =%>
 %
 % # Success index help icon.
 % my $successHelp = begin
-	<a class="help-popup ms-2" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
-		data-bs-content="<%= maketext(
-			'Success index is the square of the average score divided by the average number of attempts.') %>">
+	<a
+		class="help-popup ms-2"
+		role="button"
+		tabindex="0"
+		data-bs-placement="top"
+		data-bs-toggle="popover"
+		data-bs-content="<%=
+			maketext('Success index is the square of the average score divided by the average number of attempts.')
+		%>"
+	>
 		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
@@ -115,9 +131,18 @@
 % # Display the overall average
 <div class="table-responsive">
 	<table class="table table-bordered w-auto">
-		<tr><th><%= maketext('Total Points') %></th><td><%= $totalValue %></td></tr>
-		<tr><th><%= maketext('Average Percent') %></th><td><%= sprintf('%0.1f', 100 * $mean) %></td></tr>
-		<tr><th><%= maketext('Standard Deviation') %></th><td><%= sprintf('%0.1f', 100 * $stddev) %></td></tr>
+		<tr>
+			<th><%= maketext('Total Points') %></th>
+			<td><%= $totalValue %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Average Percent') %></th>
+			<td><%= sprintf('%0.1f', 100 * $mean) %></td>
+		</tr>
+		<tr>
+			<th><%= maketext('Standard Deviation') %></th>
+			<td><%= sprintf('%0.1f', 100 * $stddev) %></td>
+		</tr>
 		<tr>
 			<th><%= maketext('Average Attempts Per Problem') %></th>
 			<td><%= sprintf('%0.1f', $overallAvgAttempts) %></td>
@@ -131,12 +156,13 @@
 %
 % # Table showing percentile statistics for scores and success indices.
 <p>
-	<%= maketext(
-		'The percentage of students receiving at least these scores. The median score is in the 50% column.') =%>
+	<%=
+		maketext('The percentage of students receiving at least these scores. The median score is in the 50% column.')
+	=%>
 </p>
 <%= $c->bracket_table(
-	[ 90, 80, 70, 60, 50, 40, 30, 20, 10 ],
-	[ $score_list, $index_list ],
+	[ 90,                        80, 70, 60, 50, 40, 30, 20, 10 ],
+	[ $score_list,               $index_list ],
 	[ maketext('Percent Score'), b(maketext('Success Index') . $successHelp->()) ],
 	showMax => 1,
 ) =%>
@@ -152,25 +178,23 @@
 	mainTitle   => maketext('Grade of Active Students'),
 	xTitle      => maketext('Problem Number'),
 	descText    => $isJitarSet
-		? maketext(
-			'Bar chart showing the average percent grade of active students for each problem and the adjusted '
-				. 'percent grade on top level problems with review. The average percent grade (as a decimal) for '
-				. 'each problem is: [_1]. The adjusted percent grade for top level problems with review is: [_2].',
-			join(', ', map { "$svgProblemLabels->[$_]:$svgProblemData->[$_]" } 0 .. scalar(@$svgProblemData) - 1),
-			join(
-				', ',
-				 map { $jitarBars->[$_] < 0 ? () : "$svgProblemLabels->[$_]:$jitarBars->[$_]" }
-					0 .. scalar(@$svgProblemData) - 1
-			)
+	? maketext(
+		'Bar chart showing the average percent grade of active students for each problem and the adjusted '
+			. 'percent grade on top level problems with review. The average percent grade (as a decimal) for '
+			. 'each problem is: [_1]. The adjusted percent grade for top level problems with review is: [_2].',
+		join(', ', map {"$svgProblemLabels->[$_]:$svgProblemData->[$_]"} 0 .. scalar(@$svgProblemData) - 1),
+		join(', ',
+			map { $jitarBars->[$_] < 0 ? () : "$svgProblemLabels->[$_]:$jitarBars->[$_]" }
+				0 .. scalar(@$svgProblemData) - 1)
 		)
-		: maketext(
-			'Bar chart showing the average percent grade of active students for each problem, '
-				. 'where the average percent grade (as a decimal) for each problem is: [_1].',
-			join(', ', map { "$svgProblemLabels->[$_]:$svgProblemData->[$_]" } 0 .. scalar(@$svgProblemData) - 1)
-		),
-	isJitarSet  => $isJitarSet,
-	jitarBars   => $isJitarSet ? $jitarBars : [],
-	barLinks    => [ map { $_->{statsLink} } @$problems ],
+	: maketext(
+		'Bar chart showing the average percent grade of active students for each problem, '
+			. 'where the average percent grade (as a decimal) for each problem is: [_1].',
+		join(', ', map {"$svgProblemLabels->[$_]:$svgProblemData->[$_]"} 0 .. scalar(@$svgProblemData) - 1)
+	),
+	isJitarSet => $isJitarSet,
+	jitarBars  => $isJitarSet ? $jitarBars : [],
+	barLinks   => [ map { $_->{statsLink} } @$problems ],
 ) =%>
 %
 % # Table showing individual problem stats.

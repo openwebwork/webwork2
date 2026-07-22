@@ -13,18 +13,19 @@
 			<%= maketext(
 				'Select a course to rename.  The courseID is used in the url and can only contain alphanumeric '
 					. 'characters and underscores. The course title appears on the course home page and can be any '
-					. 'string.'
-			) =%>
+					. 'string.') =%>
 		</p>
 		<div class="col-lg-9 col-md-11">
 			<div class="row mb-2">
-				<%= label_for rename_oldCourseID => maketext('Course ID:'),
-					class => 'col-lg-3 col-md-4 pe-0 col-form-label fw-bold' =%>
+				<%= label_for
+					rename_oldCourseID => maketext('Course ID:'),
+					class              => 'col-lg-3 col-md-4 pe-0 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
-					<%= select_field rename_oldCourseID => [ map { [ $_ => $_ ] } @courseIDs ],
-						class    => 'form-select',
-						size     => 10,
-						id       => 'rename_oldCourseID' =%>
+					<%= select_field
+						rename_oldCourseID => [ map { [ $_ => $_ ] } @courseIDs ],
+						class              => 'form-select',
+						size               => 10,
+						id                 => 'rename_oldCourseID' =%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
@@ -37,8 +38,10 @@
 					</div>
 				</div>
 				<div class="col-lg-9 col-md-8">
-					<%= text_field rename_newCourseID => '',
-						class => 'form-control', 'aria-labelledby' => 'rename_newCourseID_label' =%>
+					<%= text_field
+						rename_newCourseID => '',
+						class              => 'form-control',
+						'aria-labelledby'  => 'rename_newCourseID_label' =%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
@@ -51,8 +54,10 @@
 					</div>
 				</div>
 				<div class="col-lg-9 col-md-8">
-					<%= text_field rename_newCourseTitle => '',
-						class => 'form-control', 'aria-labelledby' => 'rename_newCourseTitle_label' =%>
+					<%= text_field
+						rename_newCourseTitle => '',
+						class                 => 'form-control',
+						'aria-labelledby'     => 'rename_newCourseTitle_label' =%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
@@ -65,8 +70,10 @@
 					</div>
 				</div>
 				<div class="col-lg-9 col-md-8">
-					<%= text_field rename_newCourseInstitution => '',
-						class => 'form-control', 'aria-labelledby' => 'rename_newCourseInstitution_label' =%>
+					<%= text_field
+						rename_newCourseInstitution => '',
+						class                       => 'form-control',
+						'aria-labelledby'           => 'rename_newCourseInstitution_label' =%>
 				</div>
 			</div>
 		</div>

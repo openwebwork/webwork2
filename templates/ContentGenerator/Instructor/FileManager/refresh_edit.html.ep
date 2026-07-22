@@ -7,8 +7,12 @@
 <div class="d-flex">
 	<div class="col-12">
 		% param('data', $contents);
-		<%= text_area data => '', rows => 30, columns => 80, dir => 'auto',
-			class => 'file-manager-editor form-control' =%>
+		<%= text_area
+			data    => '',
+			rows    => 30,
+			columns => 80,
+			dir     => 'auto',
+			class   => 'file-manager-editor form-control' =%>
 	</div>
 </div>
 <div class="row">

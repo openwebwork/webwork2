@@ -6,7 +6,9 @@
 	% # This table contains a summary, a caption, and scope variables for the columns.
 	<div class="table-responsive">
 		<table class="problem_set_table table caption-top font-sm">
-			<caption><%= maketext('Problems') %></caption>
+			<caption>
+				<%= maketext('Problems') %>
+			</caption>
 			<thead class="table-group-divider">
 				<tr>
 					<th><%= maketext('Name') %></th>
@@ -18,14 +20,17 @@
 						<th>
 							<%= maketext('Adjusted Status') =%>
 							&nbsp;
-							<%= link_to '#', class => 'help-popup', tabindex => 0, role => 'button',
-								data => {
+							<%= link_to '#',
+								class    => 'help-popup',
+								tabindex => 0,
+								role     => 'button',
+								data     => {
 									bs_placement => 'top',
 									bs_toggle    => 'popover',
 									bs_content   => maketext(
-										q{The adjusted status of a problem is the larger of the problem's status and }
-											. 'the weighted average of the status of those problems which count '
-											. 'toward the parent grade.'
+									q{The adjusted status of a problem is the larger of the problem's status and }
+										. 'the weighted average of the status of those problems which count '
+										. 'toward the parent grade.'
 									)
 								},
 								begin =%>
@@ -36,7 +41,7 @@
 						<th><%= maketext('Counts for Parent') %></th>
 					% }
 					% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
-						% && $authz->hasPermissions(param('user'), 'problem_grader')) {
+					% && $authz->hasPermissions(param('user'), 'problem_grader')) {
 						<th><%= maketext('Grader') %></th>
 					% }
 				</tr>
@@ -44,7 +49,8 @@
 			<tbody class="table-group-divider">
 				% for my $problem (@$problems) {
 					<%= include 'ContentGenerator/ProblemSet/problem_list_row',
-						problem => $problem, isJitarSet => $isJitarSet =%>
+						problem    => $problem,
+						isJitarSet => $isJitarSet =%>
 				% }
 			</tbody>
 		</table>
@@ -52,4 +58,3 @@
 % } else {
 	<p><%= maketext('This homework set contains no problems.') %></p>
 % }
-%

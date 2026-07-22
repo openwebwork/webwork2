@@ -1,7 +1,7 @@
 % # Cap the number of tests shown to at most 200.
 % my $numAfter     = $#$userRecords - $currentTestIndex;
 % my $numBefore    = 200 - ($numAfter < 100 ? $numAfter : 100);
-% my $minTestIndex = $currentTestIndex < $numBefore      ? 0                   : $currentTestIndex - $numBefore;
+% my $minTestIndex = $currentTestIndex < $numBefore       ? 0                   : $currentTestIndex - $numBefore;
 % my $maxTestIndex = $minTestIndex + 200 < $#$userRecords ? $minTestIndex + 200 : $#$userRecords;
 %
 % my $setID = $c->{set}->set_id;
@@ -12,12 +12,12 @@
 			% if ($eUserID ne $userID) {
 				% if ($prevTest) {
 					<%= link_to $c->systemLink(
-							url_for('gateway_quiz', setID => "$setID,v$prevTest->{setVersion}"),
-							params => {
-								effectiveUser => $prevTest->user_id,
-								currentPage   => $pageNumber,
-								$filter ? (studentNavFilter => $filter) : ()
-							}
+						url_for('gateway_quiz', setID => "$setID,v$prevTest->{setVersion}"),
+						params => {
+							effectiveUser => $prevTest->user_id,
+							currentPage   => $pageNumber,
+							$filter ? (studentNavFilter => $filter) : ()
+						}
 						),
 						data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
 						title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
@@ -30,21 +30,21 @@
 				% }
 			% }
 			<div class="btn-group student-nav-selector">
-				% my $buttonName =
-					% $eUserID ne $userID
+				% my $buttonName = $eUserID ne $userID
 					% ? maketext(
 						% '[_1] (version [_2])',
 						% $userRecords->[$currentTestIndex]{displayName},
 						% $userRecords->[$currentTestIndex]{setVersion}
-						% )
+					% )
 					% : maketext('Select a Test to Review');
-				<%= link_to $buttonName => '#',
+				<%= link_to
+					$buttonName     => '#',
 					id              => 'studentSelector',
 					class           => 'btn btn-primary dropdown-toggle',
 					role            => 'button',
 					data            => { bs_toggle => 'dropdown' },
 					'aria-expanded' => 'false' =%>
-				<ul class="dropdown-menu" role ="menu" aria-labelledby="studentSelector">
+				<ul class="dropdown-menu" role="menu" aria-labelledby="studentSelector">
 					% for (@$userRecords[ $minTestIndex .. $maxTestIndex ]) {
 						<li>
 							<%= link_to maketext('[_1] (version [_2])', $_->{displayName}, $_->{setVersion}) =>
@@ -57,9 +57,8 @@
 									}
 								),
 								tabindex => '-1',
-								class =>
-									join(' ', 'dropdown-item', $eUserID ne $userID && $_->{currentTest} ? 'active' : '')
-							=%>
+								class    =>
+								join(' ', 'dropdown-item', $eUserID ne $userID && $_->{currentTest} ? 'active' : '') =%>
 						</li>
 					% }
 				</ul>
@@ -67,14 +66,14 @@
 			% if ($eUserID ne $userID) {
 				% if ($nextTest) {
 					<%= link_to $c->systemLink(
-							url_for('gateway_quiz', setID => "$setID,v$nextTest->{setVersion}"),
-							params => {
-								effectiveUser => $nextTest->user_id,
-								currentPage   => $pageNumber,
-								$filter ? (studentNavFilter => $filter) : ()
-							}
+						url_for('gateway_quiz', setID => "$setID,v$nextTest->{setVersion}"),
+						params => {
+							effectiveUser => $nextTest->user_id,
+							currentPage   => $pageNumber,
+							$filter ? (studentNavFilter => $filter) : ()
+						}
 						),
-						data  => { bs_toggle    => 'tooltip', bs_placement => 'top' },
+						data  => { bs_toggle => 'tooltip', bs_placement => 'top' },
 						title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
 						class => 'btn btn-primary student-nav-button',
 						begin =%>
@@ -89,18 +88,18 @@
 		% if (scalar keys %$filters) {
 			<div class="btn-group student-nav-filter-selector">
 				<%= link_to $filter ? $filters->{$filter}[0] : maketext('Showing all tests') => '#',
-						id              => 'testSelectorFilter',
-						class           => 'btn btn-primary dropdown-toggle',
-						role            => 'button',
-						data            => { bs_toggle => 'dropdown' },
-						'aria-expanded' => 'false' =%>
+					id                                                                       => 'testSelectorFilter',
+					class           => 'btn btn-primary dropdown-toggle',
+					role            => 'button',
+					data            => { bs_toggle => 'dropdown' },
+					'aria-expanded' => 'false' =%>
 				<ul class="dropdown-menu" role="menu" aria-labelledby="testSelectorFilter">
 					% # If a filter is currently in use, then add an item that will remove that filter.
 					% if ($filter) {
 						<li>
 							<%= link_to maketext('Show all tests') => $c->systemLink(
-									url_for('gateway_quiz', setID => "$setID,v$setVersion"),
-									params => { effectiveUser => param('effectiveUser'), currentPage => $pageNumber }
+								url_for('gateway_quiz', setID => "$setID,v$setVersion"),
+								params => { effectiveUser => param('effectiveUser'), currentPage => $pageNumber }
 								),
 								class => 'dropdown-item' =%>
 						</li>
@@ -108,12 +107,12 @@
 					% for (sort keys %$filters) {
 						<li>
 							<%= link_to $filters->{$_}[0] => $c->systemLink(
-									url_for('gateway_quiz', setID => "$setID,v$filters->{$_}[2]"),
-									params => {
-										effectiveUser    => $filters->{$_}[1],
-										currentPage      => $pageNumber,
-										studentNavFilter => $_
-									}
+								url_for('gateway_quiz', setID => "$setID,v$filters->{$_}[2]"),
+								params => {
+									effectiveUser    => $filters->{$_}[1],
+									currentPage      => $pageNumber,
+									studentNavFilter => $_
+								}
 								),
 								class => join(' ', 'dropdown-item', ($filter || '') eq $_ ? 'active' : '') =%>
 						</li>

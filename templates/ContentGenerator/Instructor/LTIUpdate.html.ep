@@ -23,7 +23,10 @@
 % # Status table
 <div class="table-responsive">
 	<table class="table table-bordered w-auto">
-		<tr><th><%= maketext('LTI Grade Mode') %></th><td><%= $ce->{LTIGradeMode} %></td></tr>
+		<tr>
+			<th><%= maketext('LTI Grade Mode') %></th>
+			<td><%= $ce->{LTIGradeMode} %></td>
+		</tr>
 		<tr>
 			<th><%= maketext('Update Interval') %></th>
 			<td><%= $updateInterval > -1 ? $c->format_interval($updateInterval) : maketext('Never') %></td>
@@ -31,9 +34,9 @@
 		<tr>
 			<th><%= maketext('Last Full Update') %></th>
 			<td>
-				<%= $lastUpdate
-					? $c->formatDateTime($lastUpdate, $ce->{studentDateDisplayFormat})
-					: maketext('Never') =%>
+				<%=
+					$lastUpdate ? $c->formatDateTime($lastUpdate, $ce->{studentDateDisplayFormat}) : maketext('Never')
+				=%>
 			</td>
 		</tr>
 		% if ($updateInterval > -1) {
@@ -51,28 +54,31 @@
 	<div class="row mb-3">
 		<%= label_for updateUserID => maketext('Update user:'), class => 'col-auto col-form-label fw-bold' =%>
 		<div class="col-auto">
-			<%= select_field updateUserID => [
+			<%= select_field
+				updateUserID => [
 					[
 						maketext('All Users') => '',
-						selected             => undef,
+						selected              => undef,
 						$ce->{LTIGradeMode} eq 'homework' ? (data => { sets => join(':', @$sets) }) : (),
 					],
 					$ce->{LTIGradeMode} eq 'homework'
 					? (map { [ $_ => $_, data => { sets => join(':', sort @{ $userSets->{$_} }) } ] } @$users)
 					: (@$users)
 				],
-				id => 'updateUserID', class => 'form-select' =%>
+				id    => 'updateUserID',
+				class => 'form-select' =%>
 		</div>
 	</div>
 	% if ($ce->{LTIGradeMode} eq 'homework') {
 		<div class="row">
 			<div class="col-auto">
 				<%= label_for updateSetID => maketext('Update selected sets:'), class => 'col-form-label fw-bold' =%>
-				<%= select_field updateSetID => [ map { [ format_set_name_display($_) => $_ ] } @$sets ],
-					id       => 'updateSetID',
-					class    => 'form-select',
-					multiple => undef,
-					size     => 10 =%>
+				<%= select_field
+					updateSetID => [ map { [ format_set_name_display($_) => $_ ] } @$sets ],
+					id          => 'updateSetID',
+					class       => 'form-select',
+					multiple    => undef,
+					size        => 10 =%>
 			</div>
 		</div>
 		<div class="row mb-3">
@@ -86,6 +92,8 @@
 			</div>
 		</div>
 	% }
-	<%= submit_button maketext('Update Grades'), id => 'updateLTI', name => 'updateLTI',
+	<%= submit_button maketext('Update Grades'),
+		id    => 'updateLTI',
+		name  => 'updateLTI',
 		class => 'btn btn-primary mb-3' =%>
 <% end =%>

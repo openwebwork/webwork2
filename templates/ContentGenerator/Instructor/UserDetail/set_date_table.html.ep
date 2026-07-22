@@ -15,12 +15,18 @@
 		% if (defined $userRecord) {
 			<th scope="col" <%== defined $userRecord && !$isVersioned ? '' : 'colspan="2"' %>>
 				% if ($isVersioned) {
-					<a tabindex="0" class="help-popup" role="button" data-bs-toggle="popover" data-bs-trigger="focus"
-						data-bs-content="<%= maketext(
-							'If the test was timed, granting the user an additional version '
-							. 'may be preferred to changing its dates.' )%>">
+					<a
+						tabindex="0"
+						class="help-popup"
+						role="button"
+						data-bs-toggle="popover"
+						data-bs-trigger="focus"
+						data-bs-content="<%= maketext('If the test was timed, granting the user an additional version '
+								. 'may be preferred to changing its dates.') %>"
+					>
 						<i class="icon fa-solid fa-question-circle fa-lg" aria-hidden="true"></i><% =%>\
-						<span class="visually-hidden"><%= maketext('Advice on changing test dates') %></span><% =%>\
+						<span class="visually-hidden"><%= maketext('Advice on changing test dates') %></span
+						><% =%>\
 					</a>
 				% }
 				<%= $isVersioned ? maketext(q{User's Test Version Dates}) : maketext('User Overrides') =%>
@@ -35,17 +41,20 @@
 		%
 		<tr>
 			<td class="px-1 text-nowrap">
-				<%= label_for "set.$setID.$field" . (defined $userRecord ? '_id' : '.class_value') =>
-						maketext($fieldLabels->{$field}),
-					class => 'form-label mb-0' =%>
+				<%= label_for "set.$setID.$field"
+					. (defined $userRecord ? '_id' : '.class_value') => maketext($fieldLabels->{$field}),
+					class                                            => 'form-label mb-0' =%>
 			</td>
 			% unless ($isVersioned) {
 				<td class="px-1 text-nowrap">
-					<%= text_field "set.$setID.$field.class_value" =>
-							$c->formatDateTime($globalRecord->$field, 'datetime_format_short'),
-						id => "set.$setID.$field.class_value", readonly => undef, dir => 'ltr',
-						class => 'form-control-plaintext form-control-sm w-auto',
-						size => 16,
+					<%= text_field
+						"set.$setID.$field.class_value" =>
+						$c->formatDateTime($globalRecord->$field, 'datetime_format_short'),
+						id       => "set.$setID.$field.class_value",
+						readonly => undef,
+						dir      => 'ltr',
+						class    => 'form-control-plaintext form-control-sm w-auto',
+						size     => 16,
 						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : (),
 						data => { class_value => $globalRecord->$field } =%>
 				</td>
@@ -53,14 +62,15 @@
 			% if (defined $userRecord) {
 				<td class="px-1 text-nowrap">
 					<div class="input-group input-group-sm flex-nowrap flatpickr">
-						<%= text_field "set.$setID.$field" => $userRecord->$field,
-							id          => "set.$setID.${field}_id",
-							class       => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+						<%= text_field
+							"set.$setID.$field" => $userRecord->$field,
+							id                  => "set.$setID.${field}_id",
+							class => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 							placeholder => $isGateway
-								? ($isVersioned && $field ne 'reduced_scoring_date'
-									? maketext('Required')
-								   	: maketext('Test Default'))
-								: maketext('Assignment Default'),
+							? ($isVersioned && $field ne 'reduced_scoring_date'
+								? maketext('Required')
+								: maketext('Test Default'))
+							: maketext('Assignment Default'),
 							$isVersioned && $field ne 'reduced_scoring_date' ? (required => undef) : (),
 							data => {
 								input      => undef,
@@ -70,8 +80,13 @@
 								locale     => $ce->{language},
 								timezone   => $ce->{siteDefaults}{timezone}
 							} =%>
-						<a class="btn btn-secondary btn-sm" data-toggle tabindex="0" role="button"
-							aria-label="<%= $c->maketext('Pick date and time') %>">
+						<a
+							class="btn btn-secondary btn-sm"
+							data-toggle
+							tabindex="0"
+							role="button"
+							aria-label="<%= $c->maketext('Pick date and time') %>"
+						>
 							<i class="fas fa-calendar-alt"></i>
 						</a>
 					</div>

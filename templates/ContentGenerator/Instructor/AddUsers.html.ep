@@ -1,5 +1,5 @@
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
-% use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::Utils       qw(getAssetURL);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0">
@@ -14,7 +14,7 @@
 % }
 %
 % content_for js => begin
-    <%= javascript getAssetURL($ce, 'js/AddUsers/add-users.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/AddUsers/add-users.js'), defer => undef =%>
 % end
 <p><%= defined $c->{studentEntryReport} ? $c->{studentEntryReport}->join('') : '' %></p>
 <p><%= maketext('Enter information below for students you wish to add.') =%></p>
@@ -25,8 +25,11 @@
 	<%= $c->hidden_authen_fields('create_') =%>
 	<div class="input-group d-inline-flex w-auto mb-3">
 		<%= submit_button maketext('Create'), class => 'btn btn-primary' =%>
-		<%= number_field number_of_students => $numberOfStudents, min => 1,
-			class => 'form-control', style => 'width: 6em' =%>
+		<%= number_field
+			number_of_students => $numberOfStudents,
+			min                => 1,
+			class              => 'form-control',
+			style              => 'width: 6em' =%>
 		<span class="input-group-text"><%= maketext('entry rows.') %></span>
 	</div>
 <% end =%>
@@ -45,9 +48,9 @@
 				data  => {
 					bs_content => maketext(
 						'This is the field that will be used for the password if the password field is left blank. '
-							. 'If it is set to "None", and no password is provided in the password field, or if no '
-							. 'value is provided for the field this is set to, then the user will be created without '
-							. 'a password.'
+						. 'If it is set to "None", and no password is provided in the password field, or if no '
+						. 'value is provided for the field this is set to, then the user will be created without '
+						. 'a password.'
 					),
 					bs_placement => 'top',
 					bs_toggle    => 'popover'
@@ -55,11 +58,12 @@
 				role     => 'button',
 				tabindex => 0,
 				begin =%>
-					<i class="icon fas fa-question-circle" aria-hidden="true"></i><% =%>\
-					<span class="visually-hidden"><%= maketext('Fallback password source help') %></span><% =%>\
-				<% end =%>
+				<i class="icon fas fa-question-circle" aria-hidden="true"></i><% =%>\
+				<span class="visually-hidden"><%= maketext('Fallback password source help') %></span><% =%>\
+			<% end =%>
 		<% end =%>
-		<%= select_field fallback_password_source => [
+		<%= select_field
+			fallback_password_source => [
 				[ maketext('None')       => '',           $default eq ''           ? (selected => undef) : () ],
 				[ maketext('Login Name') => 'user_id',    $default eq 'user_id'    ? (selected => undef) : () ],
 				[ maketext('First Name') => 'first_name', $default eq 'first_name' ? (selected => undef) : () ],
@@ -73,7 +77,8 @@
 				placeholder_last_name  => maketext('Use last name'),
 				placeholder_student_id => maketext('Use student ID')
 			},
-			id => 'fallback_password_source', class => 'form-select w-auto flex-grow-0' =%>
+			id    => 'fallback_password_source',
+			class => 'form-select w-auto flex-grow-0' =%>
 	</div>
 
 	<div class="table-responsive">
@@ -98,61 +103,87 @@
 					<tr>
 						<td>
 							% param("user_id_$_", undef);
-							<%= text_field "user_id_$_" => '', size => '10', 'aria-labelledby' => 'user_id_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"user_id_$_"      => '',
+								size              => '10',
+								'aria-labelledby' => 'user_id_header',
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("first_name_$_", undef);
-							<%= text_field "first_name_$_" => '', size => '10',
+							<%= text_field
+								"first_name_$_"   => '',
+								size              => '10',
 								'aria-labelledby' => 'first_name_header',
-								class => 'form-control form-control-sm w-auto' =%>
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("last_name_$_", undef);
-							<%= text_field "last_name_$_" => '', size => '10', 'aria-labelledby' => 'last_name_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"last_name_$_"    => '',
+								size              => '10',
+								'aria-labelledby' => 'last_name_header',
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("email_address_$_", undef);
-							<%= text_field "email_address_$_" => '', 'aria-labelledby' => 'email_address_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"email_address_$_" => '',
+								'aria-labelledby'  => 'email_address_header',
+								class              => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("student_id_$_", undef);
-							<%= text_field "student_id_$_" => '', size => '16',
+							<%= text_field
+								"student_id_$_"   => '',
+								size              => '16',
 								'aria-labelledby' => 'student_id_header',
-								class => 'form-control form-control-sm w-auto' =%>
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("status_$_", undef);
-							<%= select_field "status_$_" => $statusValues, 'aria-labelledby' => 'status_header',
-							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+							<%= select_field
+								"status_$_"       => $statusValues,
+								'aria-labelledby' => 'status_header',
+								class             => 'form-select form-select-sm w-auto flex-grow-0' =%>
 						</td>
 						<td>
 							% param("section_$_", undef);
-							<%= text_field "section_$_" => '', size => '4', 'aria-labelledby' => 'section_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"section_$_"      => '',
+								size              => '4',
+								'aria-labelledby' => 'section_header',
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("recitation_$_", undef);
-							<%= text_field "recitation_$_" => '', size => '4', 'aria-labelledby' => 'recitation_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"recitation_$_"   => '',
+								size              => '4',
+								'aria-labelledby' => 'recitation_header',
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("comment_$_", undef);
-							<%= text_field "comment_$_" => '', 'aria-labelledby' => 'comment_header',
-								class => 'form-control form-control-sm w-auto' =%>
+							<%= text_field
+								"comment_$_"      => '',
+								'aria-labelledby' => 'comment_header',
+								class             => 'form-control form-control-sm w-auto' =%>
 						</td>
 						<td>
 							% param("permission_$_", undef);
-							<%= select_field "permission_$_" => $permissionValues,
-							'aria-labelledby' => 'permission_header',
-							class => 'form-select form-select-sm w-auto flex-grow-0' =%>
+							<%= select_field
+								"permission_$_"   => $permissionValues,
+								'aria-labelledby' => 'permission_header',
+								class             => 'form-select form-select-sm w-auto flex-grow-0' =%>
 						</td>
 						<td>
 							% param("password_$_", undef);
-							<%= text_field "password_$_" => '', size => '16', 'aria-labelledby' => 'password_header',
-							class => 'form-control form-control-sm w-auto new_password' =%>
+							<%= text_field
+								"password_$_"     => '',
+								size              => '16',
+								'aria-labelledby' => 'password_header',
+								class             => 'form-control form-control-sm w-auto new_password' =%>
 						</td>
 					</tr>
 				% }
@@ -162,8 +193,11 @@
 	% unless ($ce->{courseName} eq $ce->{admin_course_id}) {
 		<p class="my-2"><%= maketext('Select sets below to assign them to the newly-created users.') %></p>
 		% param('assignSets', undef);
-		<%= select_field assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
-			size => 10, multiple => undef, class => 'form-select w-auto mb-2' =%>
+		<%= select_field
+			assignSets => [ map { [ format_set_name_display($_) => $_ ] } $db->listGlobalSets ],
+			size       => 10,
+			multiple   => undef,
+			class      => 'form-select w-auto mb-2' =%>
 	% }
 	<p><%= submit_button maketext('Add Users'), name => 'addStudents', class => 'btn btn-primary' =%></p>
 <% end =%>

@@ -49,9 +49,15 @@
 				% }
 				<td>
 					% for my $badge (@$badges) {
-						<button class="btn btn-sm btn-link help-popup p-0" type="button" tabindex="0"
-							data-bs-placement="top" data-bs-toggle="popover" data-bs-html="true"
-							data-bs-content="<strong><%= $badge->{name} %></strong><br><%= $badge->{description} %>">
+						<button
+							class="btn btn-sm btn-link help-popup p-0"
+							type="button"
+							tabindex="0"
+							data-bs-placement="top"
+							data-bs-toggle="popover"
+							data-bs-html="true"
+							data-bs-content="<strong><%= $badge->{name} %></strong><br><%= $badge->{description} %>"
+						>
 							<%= image $badge->{icon}
 								? "$ce->{courseURLs}{achievements}/$badge->{icon}"
 								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",

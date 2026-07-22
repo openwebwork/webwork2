@@ -4,8 +4,12 @@
 		% if ($extra_database_tables_exist) {
 			<div class="form-check">
 				<label class="form-check-label">
-					<input type="checkbox" value="on" class="select-all form-check-input"
-						data-select-group="delete_tableIDs">
+					<input
+						type="checkbox"
+						value="on"
+						class="select-all form-check-input"
+						data-select-group="delete_tableIDs"
+					>
 					<%= maketext('Select/unselect all tables missing in schema for deletion.') %>
 				</label>
 			</div>
@@ -13,8 +17,12 @@
 		% if ($extra_database_fields_exist) {
 			<div class="form-check">
 				<label class="form-check-label">
-					<input type="checkbox" value="on" class="select-all form-check-input"
-						data-select-group="delete_fieldIDs">
+					<input
+						type="checkbox"
+						value="on"
+						class="select-all form-check-input"
+						data-select-group="delete_fieldIDs"
+					>
 					<%= maketext('Select/unselect all fields missing in schema for deletion.') %>
 				</label>
 			</div>
@@ -22,8 +30,12 @@
 		% if ($incorrect_type_database_fields_exist) {
 			<div class="form-check">
 				<label class="form-check-label">
-					<input type="checkbox" value="on" class="select-all form-check-input"
-						data-select-group="fix_type_fieldIDs">
+					<input
+						type="checkbox"
+						value="on"
+						class="select-all form-check-input"
+						data-select-group="fix_type_fieldIDs"
+					>
 					<%= maketext('Select/unselect all fields with incorrect type.') %>
 				</label>
 			</div>

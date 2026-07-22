@@ -5,8 +5,7 @@
 	<%= maketext(
 		'WeBWorK has encountered warnings while processing your request. This indicates a problem with the WeBWorK '
 			. 'system. If you are a student, report these warnings to your instructor to have them corrected. If you '
-			. 'are a instructor, please consult the warning output below for more information.'
-	) %>
+			. 'are a instructor, please consult the warning output below for more information.') %>
 </p>
 <h3><%= maketext('Warning messages') %></h3>
 <ul>
@@ -16,7 +15,16 @@
 </ul>
 <h3><%= maketext('Request information') %></h3>
 <table class="table-bordered">
-	<tr><td><%= maketext('Time') %><td><%= time2str('%a %b %d %H:%M:%S %Y', time) %></td></tr>
-	<tr><td><%= maketext('Method') %><td><%= $c->req->method %></td></tr>
-	<tr><td><%= maketext('URI') %><td><%= url_for %></td></tr>
+	<tr>
+		<td><%= maketext('Time') %></td>
+		<td><%= time2str('%a %b %d %H:%M:%S %Y', time) %></td>
+	</tr>
+	<tr>
+		<td><%= maketext('Method') %></td>
+		<td><%= $c->req->method %></td>
+	</tr>
+	<tr>
+		<td><%= maketext('URI') %></td>
+		<td><%= url_for %></td>
+	</tr>
 </table>

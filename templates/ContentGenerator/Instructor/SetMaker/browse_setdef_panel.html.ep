@@ -14,7 +14,8 @@
 <div class="InfoPanel">
 	<div class="mb-2">
 		<label class="col-form-label-sm"><%= maketext('Browse from:') %></label>
-		<%= select_field library_sets => [
+		<%= select_field
+			library_sets => [
 				[
 					maketext('Select a Set Definition File') => '',
 					$selected_library ? () : (selected => undef),

@@ -1,7 +1,10 @@
-<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/LTILogin/ltilogin.js' }),
-        defer => undef =%>
-<%= form_for $form_target, method => 'POST', enctype => 'application/x-www-form-urlencoded',
-	name => 'ltiRepost', id => 'ltiRepost', begin =%>
+<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/LTILogin/ltilogin.js' }), defer => undef =%>
+<%= form_for $form_target,
+	method  => 'POST',
+	enctype => 'application/x-www-form-urlencoded',
+	name    => 'ltiRepost',
+	id      => 'ltiRepost',
+	begin =%>
 	% for (keys %$form_params) {
 		<%= hidden_field $_ => $form_params->{$_} =%>
 	% }

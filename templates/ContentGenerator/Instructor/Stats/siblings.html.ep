@@ -1,5 +1,5 @@
 % use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
-% use WeBWorK::Utils::Sets qw(format_set_name_display);
+% use WeBWorK::Utils::Sets  qw(format_set_name_display);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
 	% last;
@@ -12,7 +12,8 @@
 			% for (map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => stash->{setID} }, 'problem_id')) {
 				<li class="nav-item">
 					<%= tag 'a',
-						$_ eq stash('problemID') ? (class => 'nav-link active')
+						$_ eq stash('problemID')
+						? (class => 'nav-link active')
 						: (
 							href => $c->systemLink(
 								url_for(current_route, problemID => $_),
@@ -21,14 +22,14 @@
 							class => 'nav-link'
 						),
 						maketext('Problem [_1]',
-							$c->{setRecord}->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($_)) : $_)
-					=%>
+							$c->{setRecord}->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($_)) : $_) =%>
 				</li>
 			% }
 		</ul>
 	% } else {
 		% # Shared with StudentProgress siblings.
-		<%= include 'ContentGenerator/Instructor/Stats/siblings_set_list',
-			set_link_route => 'instructor_set_statistics' =%>
+		<%=
+			include 'ContentGenerator/Instructor/Stats/siblings_set_list', set_link_route => 'instructor_set_statistics'
+		=%>
 	% }
 </div>

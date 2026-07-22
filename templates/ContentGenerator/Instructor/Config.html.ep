@@ -40,8 +40,13 @@
 		% end
 		%
 		% content_for config_tabs_content => begin
-			<div class="tab-pane fade show<%= $sectionName eq param('current_tab') ? ' active' : '' %>"
-				id="<%= $id %>" role="tabpanel" aria-labelledby="<%= $id %>-tab" tabindex="0">
+			<div
+				class="tab-pane fade show<%= $sectionName eq param('current_tab') ? ' active' : '' %>"
+				id="<%= $id %>"
+				role="tabpanel"
+				aria-labelledby="<%= $id %>-tab"
+				tabindex="0"
+			>
 				<h2><b><%= maketext($sectionName) %></b></h2>
 				<div class="table-responsive">
 					<table class="table table-bordered align-middle">
@@ -52,14 +57,13 @@
 						</tr>
 						% for my $con (@$configSection) {
 							% my $conobject = $c->objectify($con);
-							% next if (
-								% defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
-								% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}")
-							% );
+							% next
+								% if (defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
+									% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}"));
 							% # Hide sensitive variables from being displayed.
 							% my $default_value = $conobject->get_value($default_ce);
 							% my $current_value = $conobject->get_value($ce3);
-							% my $is_secret = $conobject->{secret} && $default_value eq $current_value ? 1 : 0;
+							% my $is_secret     = $conobject->{secret} && $default_value eq $current_value ? 1 : 0;
 							<tr>
 								<td><%= $conobject->what_string %></td>
 								<td class="text-center">
@@ -80,5 +84,5 @@
 	</nav>
 	<div class="tab-content"><%= content 'config_tabs_content' =%></div>
 	%
-	<p><%= submit_button maketext('Save Changes'), name => 'make_changes',  class => 'btn btn-primary' =%></p>
+	<p><%= submit_button maketext('Save Changes'), name => 'make_changes', class => 'btn btn-primary' =%></p>
 <% end =%>

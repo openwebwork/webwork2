@@ -60,38 +60,42 @@
 		<div class="input-group d-inline-flex flex-nowrap w-auto py-1 me-sm-3">
 			<%= label_for selected_student => maketext('Showing problem for:'), class => 'input-group-text' =%>
 			<%= select_field student_selector => [
-					map {
-						my $user = $_;
-						map { [
-							($user->{displayName}
+				map {
+					my $user = $_;
+					map { [
+						(
+							$user->{displayName}
 								. (
 									ref($_->{problem}) =~ /::ProblemVersion/
 									? maketext(' (version [_1])', $_->{problem}->version_id)
 									: ''
 								)
-							) => $user->user_id,
-							data => {
-								source_file  => $_->{problem}->source_file || $problem->source_file,
-								problem_seed => $_->{problem}->problem_seed,
-								last_answer  => $_->{problem}->last_answer,
-								ref($_->{problem}) =~ /::ProblemVersion/
-									? (
-										version_id    => $_->{problem}->version_id,
-										answer_prefix => sprintf('Q%04d_', $_->{problem}->problem_id)
-									)
-									: (),
-							}
-						] } @{ $user->{data} }
-					} @$users
+						) => $user->user_id,
+						data => {
+							source_file  => $_->{problem}->source_file || $problem->source_file,
+							problem_seed => $_->{problem}->problem_seed,
+							last_answer  => $_->{problem}->last_answer,
+							ref($_->{problem}) =~ /::ProblemVersion/
+							? (
+								version_id    => $_->{problem}->version_id,
+								answer_prefix => sprintf('Q%04d_', $_->{problem}->problem_id)
+								)
+							: (),
+						}
+					] }
+						@{ $user->{data} }
+				} @$users
 				],
-				id => 'student_selector', class => 'form-select' =%>
+				id    => 'student_selector',
+				class => 'form-select' =%>
 		</div>
 		<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
 			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-			<%= select_field 'problem_displaymode' => [
-					grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} }
-				],
-				id => 'problem_displaymode', class => 'form-select' =%>
+			<%= select_field
+				'problem_displaymode' =>
+				[ grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} } ],
+				id    => 'problem_displaymode',
+				class => 'form-select' =%>
 		</div>
 	</div>
 </div>
@@ -119,8 +123,11 @@
 					<th id="mark-all-correct-header" class="text-center">
 						<%= label_for 'select-all' => maketext('Mark Correct') =%>
 						<br>
-						<%= check_box 'select-all' => 'on', id => 'select-all', class => 'select-all form-check-input',
-							data => { select_group => 'mark_correct' } =%>
+						<%= check_box
+							'select-all' => 'on',
+							id           => 'select-all',
+							class        => 'select-all form-check-input',
+							data         => { select_group => 'mark_correct' } =%>
 					</th>
 					% unless ($ce->{problemGraderScore} eq 'Point') {
 						<th id="score-header"><%= maketext('Score (%)') %></th>
@@ -138,26 +145,24 @@
 					%
 					% for (@{ $user->{data} }) {
 						% next unless defined $_->{problem};
-						% my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
+						% my $versionID   = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
 						% my @answerTypes = split(',', $_->{problem}->flags =~ s/:needs_grading$//r);
 						% my $problemLink;
 						% if ($versionID) {
-							% $problemLink = $c->systemLink(
-								% url_for('gateway_quiz', setID => "$setID,v$versionID"),
-								% params => { effectiveUser => $userID, currentPage => $_->{pageNumber} }
-							% )->fragment("prob$_->{problemNumber}");
+							% $problemLink = $c->systemLink(url_for('gateway_quiz', setID => "$setID,v$versionID"),
+								% params => { effectiveUser => $userID, currentPage => $_->{pageNumber} })
+								% ->fragment("prob$_->{problemNumber}");
 						% } else {
-							% $problemLink = $c->systemLink(
-								% url_for('problem_detail'),
-								% params => { effectiveUser => $userID }
-							% )->fragment('problem_body');
+							% $problemLink =
+								% $c->systemLink(url_for('problem_detail'), params => { effectiveUser => $userID })
+								% ->fragment('problem_body');
 						% }
 						<tr>
 							% if ($haveSections) {
 								<td class="text-center restricted-width-col"><%= $user->section %></td>
 							% }
 							% $problemNeedsGrading = 1 if $_->{problem}->flags =~ /:needs_grading$/;
-							<td class="<%= $_->{problem}->flags =~ /:needs_grading$/ ? 'needs-grading' : ''%>">
+							<td class="<%= $_->{problem}->flags =~ /:needs_grading$/ ? 'needs-grading' : '' %>">
 								<%= link_to $problemLink, target => 'WW_View', begin =%>
 									<div class="<%= $ce->status_abbrev_to_name($user->status) || '' %>">
 										<%= $user->{displayName} =%>
@@ -167,21 +172,25 @@
 									% }
 								<% end =%>
 							</td>
-							<td class="problem-answers"
-								data-source-file="<%= $_->{problem}->source_file || $problem->source_file %>">
+							<td
+								class="problem-answers"
+								data-source-file="<%= $_->{problem}->source_file || $problem->source_file %>"
+							>
 								% if (defined $_->{past_answer} ) {
 									% my @scores  = split(//,   $_->{past_answer}->scores);
 									% my @answers = split(/\t/, $_->{past_answer}->answer_string);
 									%
 									% for (my $i = 0; $i <= $#answers; $i++) {
-										<div class="<%= join(
-											' ',
-											'past-answer',
-											# Color the answer if it is not an essay answer.
-											$answerTypes[$i] && $answerTypes[$i] eq 'essay'
-												? ()
-												: $scores[$i] ? 'correct' : 'incorrect'
-										) %>">
+										<div
+											class="<%= join(
+												' ',
+												'past-answer',
+												# Color the answer if it is not an essay answer.
+												$answerTypes[$i] && $answerTypes[$i] eq 'essay' ? ()
+												: $scores[$i]                                   ? 'correct'
+												:                                                 'incorrect'
+											) %>"
+										>
 											% if ($answerTypes[$i] && $answerTypes[$i] eq 'essay') {
 												% # If the answer is an essay answer then display it line by line.
 												% my @lines = split /\n/, $answers[$i];
@@ -208,18 +217,24 @@
 							</td>
 							<td class="text-center restricted-width-col">
 								% param("$userID.$versionID.mark_correct", undef);
-								<%= check_box "$userID.$versionID.mark_correct" => '1',
-									class             => 'mark_correct form-check-input',
-									'aria-labelledby' => 'mark-all-correct-header' =%>
+								<%= check_box
+									"$userID.$versionID.mark_correct" => '1',
+									class                             => 'mark_correct form-check-input',
+									'aria-labelledby'                 => 'mark-all-correct-header' =%>
 							</td>
 							% unless ($ce->{problemGraderScore} eq 'Point') {
 								<td class="restricted-width-col">
 									% param("$userID.$versionID.score", undef);
-									<%= number_field "$userID.$versionID.score" => wwRound(0, $_->{problem}->status * 100),
-										id    => "$userID.$versionID.score",
+									<%= number_field
+										"$userID.$versionID.score" => wwRound(0, $_->{problem}->status * 100),
+										id                         => "$userID.$versionID.score",
 										class => 'problem-score form-control form-control-sm restricted-width-col',
-										style => 'width:6.5rem;', min => 0, max => 100, step => 1,
-										autocomplete => 'off', 'aria-labelledby' => 'score-header' =%>
+										style => 'width:6.5rem;',
+										min   => 0,
+										max   => 100,
+										step  => 1,
+										autocomplete      => 'off',
+										'aria-labelledby' => 'score-header' =%>
 								</td>
 							% }
 							% unless ($ce->{problemGraderScore} eq 'Percent') {
@@ -229,12 +244,14 @@
 								<td class="restricted-width-col">
 									% if ($ce->{problemGraderScore} eq 'Point') {
 										% param("$userID.$versionID.score", wwRound(0, $_->{problem}->status * 100));
-										<%= hidden_field "$userID.$versionID.score" => 0,
-											id => "$userID.$versionID.score" %>
+										<%= hidden_field
+											"$userID.$versionID.score" => 0,
+											id                         => "$userID.$versionID.score" %>
 									% }
 									% param("$userID.$versionID.points", undef);
-									<%= number_field "$userID.$versionID.points" => round_nearest_stepsize(
-											$_->{problem}->status * $problemValue, $thisStepSize),
+									<%= number_field
+										"$userID.$versionID.points" =>
+										round_nearest_stepsize($_->{problem}->status * $problemValue, $thisStepSize),
 										id    => "$userID.$versionID.points",
 										class => 'problem-points form-control form-control-sm restricted-width-col',
 										style => 'width:6.5rem;',
@@ -243,8 +260,8 @@
 										step  => $thisStepSize,
 										autocomplete      => 'off',
 										'aria-labelledby' => $useUserValue
-											? "point-label-$userID.$versionID"
-											: 'point-header' =%>
+										? "point-label-$userID.$versionID"
+										: 'point-header' =%>
 									% if ($useUserValue) {
 										<div id="point-label-<%= "$userID.$versionID" =%>" class="fw-bold">
 											<%= maketext('Points (0 - [_1])', $problemValue) =%>
@@ -254,12 +271,15 @@
 							% }
 							<td class="grader-comment-column">
 								% if (defined $_->{past_answer}) {
-									<%= text_area "$userID.$versionID.comment" => $_->{past_answer}->comment_string,
-										id => "${userID}_${versionID}_comment",
-										rows  => 3, class => 'form-control latexentryfield',
-										'aria-labelledby' => 'comment-header' =%>
-									<%= hidden_field "MaThQuIlL_${userID}_${versionID}_comment" => '',
-										id => "MaThQuIlL_${userID}_${versionID}_comment",
+									<%= text_area
+										"$userID.$versionID.comment" => $_->{past_answer}->comment_string,
+										id                           => "${userID}_${versionID}_comment",
+										rows                         => 3,
+										class                        => 'form-control latexentryfield',
+										'aria-labelledby'            => 'comment-header' =%>
+									<%= hidden_field
+										"MaThQuIlL_${userID}_${versionID}_comment" => '',
+										id   => "MaThQuIlL_${userID}_${versionID}_comment",
 										data => { eqn_editor_btn_after => 'true' } =%>
 								% }
 							</td>
@@ -269,14 +289,14 @@
 			</tbody>
 		</table>
 		% if ($problemNeedsGrading) {
-			<div class='problem-grader-legend-key mb-3'>
-				<span class='needs-grading fw-bold p-2'><%= maketext('Name') %></span>
+			<div class="problem-grader-legend-key mb-3">
+				<span class="needs-grading fw-bold p-2"><%= maketext('Name') %></span>
 				\( = \)
 				<%= maketext('Problem has an essay answer that needs to be graded.') =%>
 			</div>
 		% }
-		<div id="alt-source-key" class='problem-grader-legend-key mb-3 d-none'>
-			<span class='alt-source p-2'><%= maketext('Latest Answers') %></span>
+		<div id="alt-source-key" class="problem-grader-legend-key mb-3 d-none">
+			<span class="alt-source p-2"><%= maketext('Latest Answers') %></span>
 			\( = \)
 			<%= maketext('Problem has a different source file than the currently rendered problem.') =%>
 		</div>

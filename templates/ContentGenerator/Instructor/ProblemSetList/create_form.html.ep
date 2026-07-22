@@ -4,19 +4,27 @@
 			<%= maketext('Name the new set') =%><span class="required-field">*</span>:
 		<% end =%>
 		<div class="col-auto">
-			<%= text_field 'action.create.name' => '', id => 'create_text', maxlength => '100',
-				'aria-required' => 'true', class => 'form-control form-control-sm', dir => 'ltr' =%>
+			<%= text_field
+				'action.create.name' => '',
+				id                   => 'create_text',
+				maxlength            => '100',
+				'aria-required'      => 'true',
+				class                => 'form-control form-control-sm',
+				dir                  => 'ltr' =%>
 		</div>
 	</div>
 	<div class="row mb-2">
-		<%= label_for create_select => maketext("Create as what type of set?"),
-			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<%= label_for
+			create_select => maketext("Create as what type of set?"),
+			class         => 'col-form-label col-form-label-sm col-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.create.type' => [
+			<%= select_field
+				'action.create.type' => [
 					[ maketext('a new empty set')                       => 'empty', selected => undef ],
 					[ maketext('a duplicate of the first selected set') => 'copy' ]
 				],
-				id => 'create_select', class => 'form-select form-select-sm' =%>
+				id    => 'create_select',
+				class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div id="create_file_err_msg" role="alert" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">

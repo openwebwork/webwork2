@@ -1,10 +1,9 @@
-<div class="cheevo-toast toast hide" role ="alert" aria-live="polite" aria-atomic="true">
+<div class="cheevo-toast toast hide" role="alert" aria-live="polite" aria-atomic="true">
 	<div class="toast-body d-flex align-items-center">
-		<%= image $ce->{server_root_url} . (
-				$achievement->{icon}
+		<%= image $ce->{server_root_url}
+			. ($achievement->{icon}
 				? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
-				: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png"
-			),
+				: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png"),
 			alt => 'Achievement Icon' =%>
 		<div class="cheevopopuptext">
 			% if ($achievement->category eq 'level') {

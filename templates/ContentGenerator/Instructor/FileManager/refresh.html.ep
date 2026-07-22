@@ -12,7 +12,9 @@
 <div class="row">
 	<div class="col-md-8 mb-2">
 		<div class="input-group input-group-sm">
-			<%= submit_button '^', name  => 'action', $pwd eq '.' || $pwd eq '' ? (disabled => undef) : (),
+			<%= submit_button '^',
+				name => 'action',
+				$pwd eq '.' || $pwd eq '' ? (disabled => undef) : (),
 				class => 'btn btn-sm btn-secondary' =%>
 			<%= select_field directory => $c->directoryMenu($pwd), class => 'form-select', dir => 'ltr' =%>
 		</div>
@@ -32,9 +34,14 @@
 % my $width  = ($c->getFlag('dates') && scalar(@{$files}) > 0) ? '' : ' width:30em';
 <div class="row">
 	<div class="col-md-8 mb-2">
-		<%= select_field files => $files, id => 'files', class => 'form-select font-monospace h-100',
-			dir => 'ltr', size => 17, multiple => undef,
-			data => {
+		<%= select_field
+			files    => $files,
+			id       => 'files',
+			class    => 'form-select font-monospace h-100',
+			dir      => 'ltr',
+			size     => 17,
+			multiple => undef,
+			data     => {
 				link_message         => maketext('Symbolic links cannot be followed.'),
 				non_viewable_message => maketext('This is not a viewable file type.'),
 				close_title          => maketext('Close')
@@ -48,7 +55,8 @@
 			<%= submit_button maketext('Rename'), id => 'Rename', %button =%>
 			<%= submit_button maketext('Copy'), id => 'Copy', %button =%>
 			<%= submit_button maketext('Delete'), id => 'Delete', %button =%>
-			<%= submit_button maketext('Make Archive'), id => 'MakeArchive',
+			<%= submit_button maketext('Make Archive'),
+				id   => 'MakeArchive',
 				data => {
 					archive_text   => maketext('Make Archive'),
 					unarchive_text => maketext('Unpack Archive')
@@ -69,7 +77,10 @@
 <div class="row">
 	<div class="col-md-8">
 		<div class="input-group input-group-sm mb-2">
-			<%= submit_button maketext('Upload'), name => 'action', style => 'width:7em', id => 'Upload',
+			<%= submit_button maketext('Upload'),
+				name  => 'action',
+				style => 'width:7em',
+				id    => 'Upload',
 				class => 'btn btn-sm btn-primary' =%>
 			<%= file_field 'file', id => 'file', class => 'form-control form-control-sm' =%>
 		</div>

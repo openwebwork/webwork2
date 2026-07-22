@@ -7,16 +7,15 @@
 		<%= maketext(
 			'Achievement rewards can be used to modify assignments. To use a reward, go to the assignment you '
 				. 'wish to apply the reward to, then click the "Use Achievement Reward" button. You currently have '
-				. 'access to the following rewards:'
-		) %>
+				. 'access to the following rewards:') %>
 	</p>
 	<dl class="mx-4">
-	% for my $item (@{ $c->{achievementItems} }) {
-		<dt>
-			<%= $item->remaining_title($c) %>
-		</dt>
-		<dd class="ms-3 mb-2"><%= maketext(@{ $item->description }) %></dd>
-	% }
+		% for my $item (@{ $c->{achievementItems} }) {
+			<dt>
+				<%= $item->remaining_title($c) %>
+			</dt>
+			<dd class="ms-3 mb-2"><%= maketext(@{ $item->description }) %></dd>
+		% }
 	</dl>
 % } else {
 	<p><%= maketext(q{You don't have any rewards!}) %></p>

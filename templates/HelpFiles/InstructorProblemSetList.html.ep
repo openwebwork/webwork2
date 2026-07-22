@@ -3,28 +3,28 @@
 %
 <p>
 	<%= maketext('This page manages all problem sets (including quizzes/tests). '
-		. 'The following allow editing directly of a single problem set.') =%>
+			. 'The following allow editing directly of a single problem set.') =%>
 </p>
 <dl>
 	<dt><%= maketext('"Problems" column') %></dt>
 	<dd>
 		<%= maketext('Indicates the number of problems in the set. Clicking on the link opens the set detail page '
-			. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
-			. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
-			. 'view, edit, and reorder the problems in the set.') =%>
+				. 'which allows you to modify set parameters, edit set headers, and change parameters of problems in the '
+				. 'set such as the number of allowed attempts or the weight (credit value). You can also add, remove, '
+				. 'view, edit, and reorder the problems in the set.') =%>
 	</dd>
 	<dt><%= maketext('"Assigned Users" column') %></dt>
 	<dd>
 		<%= maketext('Shows how many instructors and students have been assigned this problem set, out of the total '
-			. 'number in the class. Clicking on this link allows you to assign the set to users, unassign this '
-			. 'set from users, and to individually edit the assignment for specific users. For changing dates for '
-			. 'individual users there are also shortcuts from the "Instructor Tools" link.') =%>
+				. 'number in the class. Clicking on this link allows you to assign the set to users, unassign this '
+				. 'set from users, and to individually edit the assignment for specific users. For changing dates for '
+				. 'individual users there are also shortcuts from the "Instructor Tools" link.') =%>
 	</dd>
 	<dt><%= maketext('Changing dates') %></dt>
 	<dd>
 		<%= maketext('Dates for problem sets can be edited by clicking the pencil icon in the "Set Name" column '
-			. 'next to the set name. To change dates for several sets at once, click the check box in the "Select" '
-			. 'column and choose "Edit selected" from the tasks above.') =%>
+				. 'next to the set name. To change dates for several sets at once, click the check box in the "Select" '
+				. 'column and choose "Edit selected" from the tasks above.') =%>
 	</dd>
 </dl>
 <h2><%= maketext('Primary Actions') %></h2>
@@ -35,7 +35,7 @@
 	<dt><%= maketext('Sort') %></dt>
 	<dd>
 		<%= maketext('Sorts the table rows by set name, due date, etc.  The table rows can also be sorted by '
-			. 'clicking on an active link at the top of the column.') %>
+				. 'clicking on an active link at the top of the column.') %>
 	</dd>
 
 	<dt><%= maketext('Edit') %></dt>
@@ -44,35 +44,35 @@
 	<dt><%= maketext('Publish') %></dt>
 	<dd>
 		<%= maketext('The sets checked below will be visible to students or hidden from students. Useful for preparing '
-			. 'sets ahead of time, but not showing them to students; or for temporarily hiding a set which has a '
-			. 'mistake in it while it is being fixed.') =%>
+				. 'sets ahead of time, but not showing them to students; or for temporarily hiding a set which has a '
+				. 'mistake in it while it is being fixed.') =%>
 	</dd>
 
 	<dt><%= maketext('Import') %></dt>
 	<dd>
 		<%= maketext('Import a single set or multiple sets from a set definition file. '
-			. '(Use the "File Manager" to upload/download set definition files.) The "Shift Dates..." '
-			. 'option is useful for problem sets that were used from other courses and will shift all of '
-			. 'the dates.' ) =%>
+				. '(Use the "File Manager" to upload/download set definition files.) The "Shift Dates..." '
+				. 'option is useful for problem sets that were used from other courses and will shift all of '
+				. 'the dates.') =%>
 	</dd>
 
 	<dt><%= maketext('Export') %></dt>
 	<dd>
 		<%= maketext('The sets checked below will written to set definition files, to be saved for future use, or to '
-			. 'be transferred to another course. The set definition files can be uploaded/downloaded using the '
-			. '"File Manager".') =%>
+				. 'be transferred to another course. The set definition files can be uploaded/downloaded using the '
+				. '"File Manager".') =%>
 	</dd>
 
 	<dt><%= maketext('Score') %></dt>
 	<dd>
 		<%= maketext('Student scores for the sets selected below will be calculated. This and other scoring '
-			. 'operations can also be done using the "Scoring Tools" link.') =%>
+				. 'operations can also be done using the "Scoring Tools" link.') =%>
 	</dd>
 
 	<dt><%= maketext('Create') %></dt>
 	<dd>
 		<%= maketext('Create a new set with a given name. This can either create an empty set or a duplicate of '
-			. 'an existing set.') =%>
+				. 'an existing set.') =%>
 	</dd>
 	<dt><%= maketext('Delete') %></dt>
 	<dd><%= maketext('Delete the sets checked below. Be careful, this cannot be undone.') %></dd>
@@ -86,12 +86,11 @@
 		<dt><%= maketext('Synchronize Set Dates with LMS.') %></dt>
 		<dd>
 			<%= maketext('Synchronize the dates for a single set or multiple sets to or from the LMS. This task is '
-				. 'performed in the job queue, and this page only enqueus that task. Go to the Job Manager to see the '
-				. 'status of the enqueued job. This will only work for sets for which the lineitem for the set is '
-				. 'available or can be obtained. That is all sets that are created via content selection from the LMS, '
-				. 'or manually created links in the LMS that have been used at least once. Note that date '
-				. 'synchronization via LTI is not supported by all LMSs.'
-				) =%>
+					. 'performed in the job queue, and this page only enqueus that task. Go to the Job Manager to see the '
+					. 'status of the enqueued job. This will only work for sets for which the lineitem for the set is '
+					. 'available or can be obtained. That is all sets that are created via content selection from the LMS, '
+					. 'or manually created links in the LMS that have been used at least once. Note that date '
+					. 'synchronization via LTI is not supported by all LMSs.') =%>
 		</dd>
 	% }
 </dl>

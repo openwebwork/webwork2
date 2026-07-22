@@ -5,8 +5,11 @@
 		% # Select checkboxes
 		<td>
 			% if ($editable) {
-				<%= check_box selected_users => $user->user_id, id => $user->user_id . '_checkbox',
-					class => 'form-check-input', $userSelected ? (checked => undef) : () =%>
+				<%= check_box
+					selected_users => $user->user_id,
+					id             => $user->user_id . '_checkbox',
+					class          => 'form-check-input',
+					$userSelected ? (checked => undef) : () =%>
 			% }
 		</td>
 		% # User id
@@ -17,10 +20,8 @@
 					% if (!$authz->hasPermissions(param('user'), 'become_student')) {
 						<%= $user->user_id =%>
 					% } else {
-						<%= link_to $user->user_id => $c->systemLink(
-							url_for('set_list'),
-							params => { effectiveUser => $user->user_id }
-						) =%>
+						<%= link_to $user->user_id =>
+							$c->systemLink(url_for('set_list'), params => { effectiveUser => $user->user_id }) =%>
 					% }
 				<% end =%>
 				% if ($editable) {
@@ -34,12 +35,10 @@
 		</td>
 		% # Login Status
 		<td>
-			% if (
-				% $db->existsKeyWhere({
-					% user_id => $user->user_id,
-					% timestamp => { '>=' => time - $ce->{sessionTimeout} }
-				% })
-			% )
+			% if ($db->existsKeyWhere({
+				% user_id   => $user->user_id,
+				% timestamp => { '>=' => time - $ce->{sessionTimeout} }
+			% }))
 			% {
 				<b><%= maketext('Active') %></b>
 			% } else {
@@ -51,8 +50,9 @@
 	% if ($c->{editMode}) {
 		% # User ID ("edit sets assigned to user" link)
 		<td>
-			<%= link_to $user->user_id =>
-				$c->systemLink(url_for('instructor_user_detail', userID => $user->user_id)) =%>
+			<%=
+				link_to $user->user_id => $c->systemLink(url_for('instructor_user_detail', userID => $user->user_id))
+			=%>
 		</td>
 	% } else {
 		% # User ID ("edit sets assigned to user" link)
@@ -72,7 +72,7 @@
 		% next if $field eq 'password' && !$c->{editMode};
 		<td>
 			<div class="<%= $statusClass %>">
-			   	<%= include 'ContentGenerator/Instructor/UserList/user_list_field', user => $user, field => $field =%>
+				<%= include 'ContentGenerator/Instructor/UserList/user_list_field', user => $user, field => $field =%>
 			</div>
 		</td>
 	% }

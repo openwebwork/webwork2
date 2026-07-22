@@ -6,8 +6,10 @@
 	<%= javascript getAssetURL($ce, 'js/SetMaker/setmaker.js'), defer => undef =%>
 	%
 	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
-		<%= javascript "$ce->{webworkURLs}{htdocs}/js/TagWidget/tagwidget.js", id => 'tag-widget-script',
-			defer => undef, data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+		<%= javascript "$ce->{webworkURLs}{htdocs}/js/TagWidget/tagwidget.js",
+			id    => 'tag-widget-script',
+			defer => undef,
+			data  => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 % end
 %
@@ -33,8 +35,11 @@
 	<%= hidden_field total_probs => $c->{total_probs} =%>
 	%
 	<div class="library-browser-table">
-		<%= include('ContentGenerator/Instructor/SetMaker/top_row',
-			local_sets => $c->{all_db_sets}, browse_which => $c->{browse_which}) =%>
+		<%= include(
+			'ContentGenerator/Instructor/SetMaker/top_row',
+			local_sets   => $c->{all_db_sets},
+			browse_which => $c->{browse_which}
+		) =%>
 	</div>
 	%
 	% # Show problems
@@ -45,33 +50,40 @@
 			% # If this problem has children, then show the problem and all children.
 			<div id="mlt-table<%= $i + 1 %>" class="lb-mlt-group">
 				<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
-					sourceFileData => $sourceFileData, pg_file => $plist->[$i], cnt => $i + 1 =%>
+					sourceFileData => $sourceFileData,
+					pg_file        => $plist->[$i],
+					cnt            => $i + 1 =%>
 				% for (@{ $sourceFileData->{children} }) {
 					% ++$i;
 					% last if $i == @$plist;    # Protection in case of malformed data.
 					% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
 					<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
 						sourceFileData => $pg_files->[ $i + $c->{first_index} ],
-						pg_file => $plist->[$i], cnt => $i + 1 =%>
+						pg_file        => $plist->[$i],
+						cnt            => $i + 1 =%>
 				% }
 			</div>
 		% } else {
 			<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
-				sourceFileData => $sourceFileData, pg_file => $plist->[$i], cnt => $i + 1 =%>
+				sourceFileData => $sourceFileData,
+				pg_file        => $plist->[$i],
+				cnt            => $i + 1 =%>
 		% }
 	% }
 	%
 	% if (@$pg_files) {
 		<div class="my-2">
 			<span id="what_shown">
-				<span id="firstshown"><%= $c->{first_shown} + 1 %></span>-<span id="lastshown"><%=
-					$c->{last_shown} + 1 %></span>
+				<span id="firstshown"><%= $c->{first_shown} + 1 %></span>-<span id="lastshown"
+					><%= $c->{last_shown} + 1 %></span
+				>
 			</span>
 			<%= maketext('of') %>
 			<span id="totalshown"><%= $c->{total_probs} %></span>
 			<%= maketext('shown') %>
 			% if ($c->{first_index} > 0) {
-				<%= submit_button maketext('Previous page'), name => 'prev_page',
+				<%= submit_button maketext('Previous page'),
+					name  => 'prev_page',
 					class => 'btn btn-secondary btn-sm' =%>
 			% }
 			% if (1 + $c->{last_index} < @$pg_files) {

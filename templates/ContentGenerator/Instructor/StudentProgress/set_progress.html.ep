@@ -4,7 +4,7 @@
 	% defined $primary_sort_method   ? (primary_sort   => $primary_sort_method)   : (),
 	% defined $secondary_sort_method ? (secondary_sort => $secondary_sort_method) : (),
 	% defined $ternary_sort_method   ? (ternary_sort   => $ternary_sort_method)   : (),
-	% defined $filter                ? (filter => $filter)                        : (),
+	% defined $filter                ? (filter         => $filter)                : (),
 	% # Preserve display options when the sort headers are clicked for gateway quizzes.
 	% $setIsVersioned
 	% ? (
@@ -26,7 +26,8 @@
 	<div class="d-flex align-items-center mt-1 mb-3">
 		<%= maketext('Showing progress for:') =%>
 		<%= include 'ContentGenerator/Instructor/Stats/student_filter_menu',
-			filters => $filters, params => \%params =%>
+			filters => $filters,
+			params  => \%params =%>
 	</div>
 % }
 %
@@ -34,8 +35,11 @@
 % # display.
 % if ($setIsVersioned) {
 	<div class="card bg-light mb-3">
-		<%= form_for current_route, method => 'post',
-			id => 'sp-gateway-form', name => 'StudentProgress', begin =%>
+		<%= form_for current_route,
+			method => 'post',
+			id     => 'sp-gateway-form',
+			name   => 'StudentProgress',
+			begin =%>
 			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field returning => 1 =%>
 			<div class="card-body">
@@ -112,17 +116,14 @@
 <div>
 	% if ($setIsVersioned) {
 		<p>
-			<%= maketext(
-				q{Click a student's name to see the student's test summary page. }
+			<%= maketext(q{Click a student's name to see the student's test summary page. }
 					. q{Click a test's version number to see the corresponding test version. }
-					. 'Click a heading to sort the table.'
-			) =%>
+					. 'Click a heading to sort the table.') =%>
 		</p>
 	% } else {
 		<p>
 			<%= maketext(
-				q{Click a student's name to see the student's homework set. Click a heading to sort the table.}
-			) =%>
+				q{Click a student's name to see the student's homework set. Click a heading to sort the table.}) =%>
 		</p>
 	% }
 	%
@@ -191,12 +192,17 @@
 				% if ($showColumns->{problems}) {
 					<th colspan="<%= scalar(@$problems) %>">
 						<%= maketext('Problems') =%>
-						<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+						<a
+							class="help-popup"
+							role="button"
+							tabindex="0"
+							data-bs-placement="top"
 							data-bs-toggle="popover"
 							data-bs-content="<%= maketext(
 								'The top number is the percent score on the problem.  A period (.) indicates a problem '
-								. 'has not been attempted. The bottom number is the number of incorrect attempts.'
-							) =%>">
+									. 'has not been attempted. The bottom number is the number of incorrect attempts.'
+							) =%>"
+						>
 							<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 							<span class="visually-hidden"><%= maketext('Problem Score Help') =%></span>
 						</a>
@@ -239,10 +245,8 @@
 				% my $email    = $rec->{record}{email_address};
 				%
 				% if ($setIsVersioned) {
-					% my $interactiveURL = $c->systemLink(
-						% url_for('problem_list'),
-						% params => { effectiveUser => $rec->{record}{user_id} }
-					% );
+					% my $interactiveURL = $c->systemLink(url_for('problem_list'),
+						% params => { effectiveUser => $rec->{record}{user_id} });
 					%
 					<tr>
 						% # If total is -1, then this is a user that hasn't taken any tests.
@@ -254,20 +258,20 @@
 							% );
 							%
 							<td>
-							% if ($rec->{record}{user_id} eq $prevUserID) {
-								<div class="ms-4">(<%= $versionLink %>)</div>
-							% } else {
-								<div>
-									<%= link_to $fullName => $interactiveURL =%>
-									% if ($setIsVersioned && !$showBestOnly) {
-										(<%= $versionLink %>)
+								% if ($rec->{record}{user_id} eq $prevUserID) {
+									<div class="ms-4">(<%= $versionLink %>)</div>
+								% } else {
+									<div>
+										<%= link_to $fullName => $interactiveURL =%>
+										% if ($setIsVersioned && !$showBestOnly) {
+											(<%= $versionLink %>)
+										% }
+									</div>
+									% if ($email) {
+										<div><%= link_to $email => "mailto:$email" =%></div>
 									% }
-								</div>
-								% if ($email) {
-									<div><%= link_to $email => "mailto:$email" =%></div>
+									% $prevUserID = $rec->{record}{user_id};
 								% }
-								% $prevUserID = $rec->{record}{user_id};
-							% }
 							</td>
 							<td><%= $rec->{score} %></td>
 							<td><%= $rec->{total} %></td>
@@ -284,10 +288,11 @@
 								% if (@{ $rec->{problem_scores} }) {
 									% for (0 .. $#{ $rec->{problem_scores} }) {
 										<td class="problem-data">
-											<span class="<%=
-												$rec->{problem_scores}[$_] eq '100'             ? 'correct'
-												: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
-												:                                                 '' =%>">
+											<span
+												class="<%= $rec->{problem_scores}[$_] eq '100'                 ? 'correct'
+													: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
+													:                                                 '' =%>"
+											>
 												<%== $rec->{problem_scores}[$_] =%>
 											</span>
 											<br>
@@ -320,10 +325,8 @@
 					<tr>
 						<td>
 							<div>
-								<%= link_to $fullName => $c->systemLink(
-									url_for('problem_list'),
-									params => { effectiveUser => $rec->{record}{user_id} }
-								) =%>
+								<%= link_to $fullName => $c->systemLink(url_for('problem_list'),
+									params => { effectiveUser => $rec->{record}{user_id} }) =%>
 							</div>
 							% if ($email) {
 								<div><%= link_to $email => "mailto:$email" %></div>
@@ -334,10 +337,11 @@
 						% if (@{ $rec->{problem_scores} }) {
 							% for (0 .. $#{ $rec->{problem_scores} }) {
 								<td class="problem-data">
-									<span class="<%=
-										$rec->{problem_scores}[$_] eq '100'             ? 'correct'
-										: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
-										:                                                 '' =%>">
+									<span
+										class="<%= $rec->{problem_scores}[$_] eq '100'                 ? 'correct'
+											: $rec->{problem_scores}[$_] eq '&nbsp;.&nbsp;' ? 'unattempted'
+											:                                                 '' =%>"
+									>
 										<%== $rec->{problem_scores}[$_] =%>
 									</span>
 									<br>

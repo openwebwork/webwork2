@@ -31,21 +31,21 @@
 								'proctored_gateway_quiz',
 								text       => $prettySetID,
 								captures   => { setID => $setID },
-								link_attrs => { dir => 'ltr' }
+								link_attrs => { dir   => 'ltr' }
 							) %>
 						% } elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
 							<%= $makelink->(
 								'gateway_quiz',
 								text       => $prettySetID,
 								captures   => { setID => $setID },
-								link_attrs => { dir => 'ltr' }
+								link_attrs => { dir   => 'ltr' }
 							) %>
 						% } else {
 							<%= $makelink->(
 								'problem_list',
 								text       => $prettySetID,
 								captures   => { setID => $setID },
-								link_attrs => { dir => 'ltr' }
+								link_attrs => { dir   => 'ltr' }
 							) %>
 						% }
 					</li>
@@ -105,7 +105,7 @@
 									'instructor_user_detail',
 									text       => $urlUserID,
 									captures   => { userID => $urlUserID },
-									link_attrs => { dir => 'ltr' }
+									link_attrs => { dir    => 'ltr' }
 								); %>
 							</li>
 						% }
@@ -115,7 +115,7 @@
 									'instructor_user_detail',
 									text       => $eUserID,
 									captures   => { userID => $eUserID },
-									link_attrs => { dir => 'ltr' }
+									link_attrs => { dir    => 'ltr' }
 								); %>
 							</li>
 						% }
@@ -133,7 +133,7 @@
 								'instructor_set_detail',
 								text       => $prettySetID,
 								captures   => { setID => $setID },
-								link_attrs => { dir => 'ltr' }
+								link_attrs => { dir   => 'ltr' }
 							); %>
 						</li>
 					</ul>
@@ -175,9 +175,12 @@
 							<%= $makelink->(
 								'instructor_problem_editor_withset_withproblem',
 								text => param('file_type') eq 'set_header'
-									? b(maketext('[_1]: Set Header',      $c->tag('span', dir => 'ltr', $prettySetID)))
-									: b(maketext('[_1]: Hardcopy Header', $c->tag('span', dir => 'ltr', $prettySetID))),
-								captures          => { setID => $setID, problemID => 0 },
+								? b(maketext('[_1]: Set Header', $c->tag('span', dir => 'ltr', $prettySetID)))
+								: b(maketext(
+									'[_1]: Hardcopy Header',
+									$c->tag('span', dir => 'ltr', $prettySetID)
+								)),
+								captures          => { setID     => $setID, problemID => 0 },
 								systemlink_params => { file_type => param('file_type') },
 								target            => 'WW_Editor'
 							) %>
@@ -209,8 +212,8 @@
 									file_type      => 'hardcopy_theme',
 									hardcopy_theme => param('hardcopy_theme')
 								},
-								active            => 1,
-								target            => 'WW_Editor'
+								active => 1,
+								target => 'WW_Editor'
 							) %>
 						</li>
 					</ul>
@@ -251,16 +254,17 @@
 				% }
 			</li>
 			% # Student Progress
-			<li class="list-group-item nav-item"><%= $makelink->('instructor_progress') %>
+			<li class="list-group-item nav-item">
+				<%= $makelink->('instructor_progress') %>
 				% if ($userID ne $eUserID || defined $setID || defined $urlUserID) {
 					<ul class="nav flex-column">
 						% if (defined $urlUserID) {
 							<li class="nav-item">
 								<%= $makelink->(
 									'instructor_user_progress',
-									text     => $urlUserID,
-									captures => { userID => $urlUserID },
-									link_attrs => { dir => 'ltr' }
+									text       => $urlUserID,
+									captures   => { userID => $urlUserID },
+									link_attrs => { dir    => 'ltr' }
 								) %>
 							</li>
 						% }
@@ -268,10 +272,9 @@
 							<li class="nav-item">
 								<%= $makelink->(
 									'instructor_user_progress',
-									text     => $eUserID,
-									captures => { userID => $eUserID },
-									active   => current_route eq 'instructor_user_progress'
-										&& !defined $urlUserID,
+									text       => $eUserID,
+									captures   => { userID => $eUserID },
+									active     => current_route eq 'instructor_user_progress' && !defined $urlUserID,
 									link_attrs => { dir => 'ltr' }
 								) %>
 							</li>
@@ -344,15 +347,15 @@
 			% }
 			% # Instructor links help
 			<li class="list-group-item nav-item">
-				<%= $c->helpMacro('instructor_links',
-					{ label => maketext('Help'), class => 'nav-link' }) %>
+				<%= $c->helpMacro('instructor_links', { label => maketext('Help'), class => 'nav-link' }) %>
 			</li>
 		% }
 		%
 		% if ($ce->{webworkURLs}{webwork2BugReporter} && $authz->hasPermissions($userID, 'report_bugs')) {
 			<li class="list-group-item nav-item">
 				<%= link_to maketext('Report bugs') => $ce->{webworkURLs}{webwork2BugReporter},
-					target => 'bug_report', class => 'nav-link' =%>
+					target                          => 'bug_report',
+					class                           => 'nav-link' =%>
 			</li>
 		% }
 	% }

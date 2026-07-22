@@ -3,7 +3,7 @@
 %
 <p class="mb-0">
 	<%= maketext('Display full set or problem statistics.  The main page lists all sets to view. When viewing '
-		. 'set statistics, the drop down menus can be used to show stats for individual sections, recitations, or '
-		. 'problems.  The overall results include all students who are assigned to the set, while the individual '
-		. 'problem results only include active (have attempted the problem) students.') =%>
+			. 'set statistics, the drop down menus can be used to show stats for individual sections, recitations, or '
+			. 'problems.  The overall results include all students who are assigned to the set, while the individual '
+			. 'problem results only include active (have attempted the problem) students.') =%>
 </p>

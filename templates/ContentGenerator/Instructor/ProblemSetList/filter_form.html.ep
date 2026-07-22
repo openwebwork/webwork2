@@ -1,16 +1,19 @@
 <div>
 	<div class="row mb-2">
-		<%= label_for filter_select => maketext('Show which sets?'),
-			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<%= label_for
+			filter_select => maketext('Show which sets?'),
+			class         => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.filter.scope' => [
+			<%= select_field
+				'action.filter.scope' => [
 					[ maketext('all course sets')              => 'all' ],
 					[ maketext('selected sets')                => 'selected' ],
 					[ maketext('enter matching set IDs below') => 'match_ids', selected => undef ],
 					[ maketext('sets visible to students')     => 'visible' ],
 					[ maketext('sets hidden from students')    => 'unvisible' ]
 				],
-				id => 'filter_select', class => 'form-select form-select-sm' =%>
+				id    => 'filter_select',
+				class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div id="filter_elements" class="row mb-2">
@@ -19,8 +22,12 @@
 			<span class="required-field">*</span>
 		<% end =%>
 		<div class="col-auto">
-			<%= text_field 'action.filter.set_ids' => '', id => 'filter_text', 'aria-required' => 'true',
-				class => 'form-control form-control-sm', dir => 'ltr' =%>
+			<%= text_field
+				'action.filter.set_ids' => '',
+				id                      => 'filter_text',
+				'aria-required'         => 'true',
+				class                   => 'form-control form-control-sm',
+				dir                     => 'ltr' =%>
 		</div>
 	</div>
 	<div id="filter_err_msg" role="alert" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">

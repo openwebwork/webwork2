@@ -7,28 +7,35 @@
 % my $course = (stash('courseID') // '') =~ s/_/ /gr;
 %
 % if ($ce->{LTI} && $externalAuth) {
-	% my $LMS = $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
+	% my $LMS =
+		% $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url}
 		% ? link_to($ce->{LTI}{ $ce->{LTIVersion} }{LMS_name} => $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url})
 		% : $ce->{LTI}{ $ce->{LTIVersion} }{LMS_name};
 	%
 	% if (!stash('authen_error')) {
 		<p>
-			<%== maketext('The course [_1] uses an external authentication system ([_2]). '
-				. 'Please return to that system to access this course.',
-				tag('strong', $course), $LMS) =%>
+			<%== maketext(
+				'The course [_1] uses an external authentication system ([_2]). '
+					. 'Please return to that system to access this course.',
+				tag('strong', $course),
+				$LMS
+			) =%>
 		</p>
 	% } else {
 		<p>
-			<%== maketext('The course [_1] uses an external authentication system ([_2]). You\'ve authenticated '
-				. 'through that system, but aren\'t allowed to log in to this course.',
-				tag('strong', $course), $LMS) =%>
+			<%== maketext(
+				'The course [_1] uses an external authentication system ([_2]). You\'ve authenticated '
+					. 'through that system, but aren\'t allowed to log in to this course.',
+				tag('strong', $course),
+				$LMS
+			) =%>
 		</p>
 	% }
 % } elsif ($externalAuth) {
 	% if (stash('authen_error')) {
 		<p>
 			<%== maketext(q{This course uses an external authentication system. You've authenticated }
-				. q{through that system, but aren't allowed to log in to this course.}) =%>
+					. q{through that system, but aren't allowed to log in to this course.}) =%>
 		</p>
 	% }
 % } else {
@@ -37,10 +44,11 @@
 	% if ($ce->{session_management_via} ne 'session_cookie') {
 		<p>
 			% my $rememberMeText = maketext('Remember Me');
-			<%== maketext('If you check [_1] your login information will be remembered by the browser you are using, '
-				. 'allowing you to visit WeBWorK pages without typing your user name and password (until your session '
-				. 'expires). This feature is not safe for public workstations, untrusted machines, and machines '
-				. 'over which you do not have direct control.',
+			<%== maketext(
+				'If you check [_1] your login information will be remembered by the browser you are using, '
+					. 'allowing you to visit WeBWorK pages without typing your user name and password (until your session '
+					. 'expires). This feature is not safe for public workstations, untrusted machines, and machines '
+					. 'over which you do not have direct control.',
 				tag('strong', $rememberMeText)
 			) =%>
 		</p>
@@ -54,13 +62,22 @@
 				% # Prevent user from being filled in for practice users (they should use the "Guest Login" button).
 				% param('user', undef) if param('user') && param('user') =~ m/^$ce->{practiceUserPrefix}/;
 				%
-				<%= text_field user => '', id => 'uname', 'aria-required' => 'true', class => 'form-control',
-					placeholder => '', autocapitalize => 'none', spellcheck => 'false' =%>
+				<%= text_field
+					user            => '',
+					id              => 'uname',
+					'aria-required' => 'true',
+					class           => 'form-control',
+					placeholder     => '',
+					autocapitalize  => 'none',
+					spellcheck      => 'false' =%>
 				<%= label_for uname => maketext('Username') =%>
 			</div>
 			<div class="form-floating mb-2">
-				<%= password_field 'passwd', id => 'pswd', 'aria-required' => 'true', class => 'form-control',
-					placeholder => '' =%>
+				<%= password_field 'passwd',
+					id              => 'pswd',
+					'aria-required' => 'true',
+					class           => 'form-control',
+					placeholder     => '' =%>
 				<%= label_for pswd => maketext('Password') =%>
 			</div>
 			% if ($ce->{session_management_via} ne 'session_cookie') {
@@ -86,7 +103,8 @@
 						tag('b', $guestLoginText)) =%>
 				</p>
 				<%= submit_button maketext('Guest Login'),
-					name  => 'login_practice_user', class => 'btn btn-primary' =%>
+					name  => 'login_practice_user',
+					class => 'btn btn-primary' =%>
 			</div>
 		% }
 	<% end =%>

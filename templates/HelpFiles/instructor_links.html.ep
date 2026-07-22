@@ -1,34 +1,36 @@
 % layout 'help_macro';
 % title maketext('Instructor Links Help');
 %
-<%== maketext('Click the [_1] icon for page and item specific help.',
-	'<i class="fas fa-question-circle"></i>') =%>
+<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fas fa-question-circle"></i>') =%>
 <hr>
-<%== maketext('The main page for WeBWorK documentation is the <a [_1]>webwork wiki</a> while specific help for '
-	. q{instructors setting up a course are in the <a [_2]>instructors' section</a>.},
+<%== maketext(
+	'The main page for WeBWorK documentation is the <a [_1]>webwork wiki</a> while specific help for '
+		. q{instructors setting up a course are in the <a [_2]>instructors' section</a>.},
 	'href="https://wiki.openwebwork.org/wiki" target="ww_wiki"',
-	'href="https://wiki.openwebwork.org/wiki/Instructors" target="ww_wiki"') =%>
+	'href="https://wiki.openwebwork.org/wiki/Instructors" target="ww_wiki"'
+) =%>
 <hr>
 
 <dl>
 	<dt><%= maketext('Instructor Tools') %></dt>
 	<dd>
 		<%== maketext('Quick access to many instructor tools, including '
-			. '<strong>Reset passwords</strong>, '
-			. '<strong>Act as student</strong>, '
-			. '<strong>Assign individual sets</strong> '
-			. 'and <strong>Edit individual due dates</strong>.') =%>
+				. '<strong>Reset passwords</strong>, '
+				. '<strong>Act as student</strong>, '
+				. '<strong>Assign individual sets</strong> '
+				. 'and <strong>Edit individual due dates</strong>.') =%>
 	</dd>
 	<dt><%= maketext('Accounts Manager') %></dt>
 	<dd>
 		<%= maketext('Edit class roster data. Add students, edit student data, drop students from class, import '
-			. 'students from a classlist, and give user professor privileges. Access to individual assignments.') =%>
+				. 'students from a classlist, and give user professor privileges. Access to individual assignments.'
+		) =%>
 	</dd>
 	<dt><%= maketext('Sets Manager') %></dt>
 	<dd>
 		<%= maketext('Edit sets for the entire class. Change set due dates, create new sets from a set '
-			. 'definition file, create new sets, make sets visible/invisible, score assignments. Assign '
-			. 'sets to the class.') =%>
+				. 'definition file, create new sets, make sets visible/invisible, score assignments. Assign '
+				. 'sets to the class.') =%>
 	</dd>
 	<dt><%= maketext('Assigner Tool') %></dt>
 	<dd><%= maketext('Assign and unassign selected exercise sets to selected users.') %></dd>
@@ -43,17 +45,17 @@
 	<dt><%= maketext('Scoring Tools') %></dt>
 	<dd>
 		<%= maketext('Score one or more sets. This can also be done from the "Sets Manager" or from the '
-			. '"Instructor Tools", but the "Scoring Tools" page allows control over parameters.') =%>
+				. '"Instructor Tools", but the "Scoring Tools" page allows control over parameters.') =%>
 	</dd>
 	<dt><%= maketext('LTI Grade Update') %></dt>
 	<dd>
 		<%= maketext('Manually initiate an LTI grade passback for selected sets or users. This link is only visible '
-			. 'if LTI grade passback is enabled for the course.') =%>
+				. 'if LTI grade passback is enabled for the course.') =%>
 	</dd>
 	<dt><%= maketext('Achievements Manager') %></dt>
 	<dd>
 		<%= maketext('Edit achievements for the course. This link is only present if achievements '
-			. 'are enabled for the course.') =%>
+				. 'are enabled for the course.') =%>
 	</dd>
 	<dt><%= maketext('Email') %></dt>
 	<dd><%= maketext('Send email to students.') %></dd>
@@ -62,14 +64,13 @@
 	<dt><%= maketext('File Manager') %></dt>
 	<dd>
 		<%= maketext('Upload, download and delete text files, including scoring spread sheets, set definition files, '
-			. 'class list spread sheets, and "PG" problems.') =%>
+				. 'class list spread sheets, and "PG" problems.') =%>
 	</dd>
 	<dt><%= maketext('Course Configuration') %></dt>
 	<dd>
 		<%= maketext('Allows configuration of certain parameters, such as permission levels, default display mode for '
-			. 'equations, and email feedback behavior, on a course by course basis.') =%>
+				. 'equations, and email feedback behavior, on a course by course basis.') =%>
 	</dd>
 </dl>
 
-<%== maketext('Click the [_1] icon for page and item specific help.',
-	'<i class="fas fa-question-circle"></i>') %>
+<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fas fa-question-circle"></i>') %>

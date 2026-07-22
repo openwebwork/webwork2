@@ -4,7 +4,8 @@
 	% for (map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id')) {
 		<li class="nav-item">
 			<%= tag 'a',
-				defined stash('setID') && $_ eq stash('setID') ? (class => 'nav-link active')
+				defined stash('setID') && $_ eq stash('setID')
+				? (class => 'nav-link active')
 				: (
 					href => $c->systemLink(
 						url_for($set_link_route, setID => $_),

@@ -31,8 +31,8 @@
 				<th scope="col">
 					% if ($problem->{link}) {
 						<%= link_to $problem->{id} => $problem->{link},
-							class        => "fw-bold",
-							'aria-label' => maketext('[_1] problem [_2]', $item->{set_name}, $problem->{id}) %>
+							class                  => "fw-bold",
+							'aria-label'           => maketext('[_1] problem [_2]', $item->{set_name}, $problem->{id}) %>
 					% } else {
 						<%= $problem->{id} %>
 					% }

@@ -2,14 +2,15 @@
 %
 <div class="btn-group student-nav-filter-selector mx-2">
 	<%= link_to $c->{prettyID} ? maketext('Problem [_1]', $c->{prettyID}) : maketext('All problems') => '#',
-		id => 'problemMenu', class => 'btn btn-primary dropdown-toggle', role => 'button', 'aria-expanded' => 'false',
-		data => { bs_toggle => 'dropdown' } =%>
+		id                                                                                           => 'problemMenu',
+		class           => 'btn btn-primary dropdown-toggle',
+		role            => 'button',
+		'aria-expanded' => 'false',
+		data            => { bs_toggle => 'dropdown' } =%>
 	<ul class="dropdown-menu" role="menu" aria-labelledby="problemMenu">
 		<li>
-			<%= link_to maketext('All problems') => $c->systemLink(
-					url_for('instructor_set_statistics'),
-					params => param('filter') ? { filter => param('filter') } : {}
-				),
+			<%= link_to maketext('All problems') => $c->systemLink(url_for('instructor_set_statistics'),
+				params => param('filter') ? { filter => param('filter') } : {}),
 				class => join(' ', 'dropdown-item', $c->{prettyID} ? () : 'active') =%>
 		</li>
 		% for (@$problems) {
@@ -19,8 +20,8 @@
 				% : $_->problem_id;
 			<li>
 				<%= link_to maketext('Problem [_1]', $probID) => $c->systemLink(
-						url_for('instructor_problem_statistics', problemID => $_->problem_id),
-						params => param('filter') ? { filter => param('filter') } : {}
+					url_for('instructor_problem_statistics', problemID => $_->problem_id),
+					params => param('filter') ? { filter => param('filter') } : {}
 					),
 					class => join(' ', 'dropdown-item', $probID eq ($c->{prettyID} // '') ? 'active' : ()) =%>
 			</li>

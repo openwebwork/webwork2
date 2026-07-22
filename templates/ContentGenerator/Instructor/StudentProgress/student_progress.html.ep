@@ -6,7 +6,7 @@
 	% last;
 % }
 %
-% my $email  = $studentRecord->email_address;
+% my $email = $studentRecord->email_address;
 % if ($email) {
 	<%= link_to $email => "mailto:$email" =%>
 	<br>

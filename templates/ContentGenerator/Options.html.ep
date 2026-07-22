@@ -23,31 +23,45 @@
 		<div class="row mb-2">
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
-					<%= label_for currFirstName => maketext("Current First Name"),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						currFirstName => maketext("Current First Name"),
+						class         => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field currFirstName => $c->{effectiveUser}->first_name, readonly => undef,
-							id => 'currFirstName', class => 'form-control bg-light', dir => 'ltr' =%>
+						<%= text_field
+							currFirstName => $c->{effectiveUser}->first_name,
+							readonly      => undef,
+							id            => 'currFirstName',
+							class         => 'form-control bg-light',
+							dir           => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for currLastName => maketext("Current Last Name"),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						currLastName => maketext("Current Last Name"),
+						class        => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field currLastName => $c->{effectiveUser}->last_name, readonly => undef,
-							id => 'currLastName', class => 'form-control bg-light', dir => 'ltr' =%>
+						<%= text_field
+							currLastName => $c->{effectiveUser}->last_name,
+							readonly     => undef,
+							id           => 'currLastName',
+							class        => 'form-control bg-light',
+							dir          => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newFirstName => maketext("New First Name"),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						newFirstName => maketext("New First Name"),
+						class        => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field newFirstName => '', id => 'newFirstName', class => 'form-control', dir => 'ltr' =%>
+						<%=
+							text_field newFirstName => '', id => 'newFirstName', class => 'form-control', dir => 'ltr'
+						=%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newLastName => maketext("New Last Name"),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						newLastName => maketext("New Last Name"),
+						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field newLastName => '', id => 'newLastName', class => 'form-control', dir => 'ltr' =%>
 					</div>
@@ -62,30 +76,39 @@
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for 'currPassword', class => 'col-form-label col-sm-6', begin =%>
-						<%= maketext(
-							q{[_1]'s Current Password}, $eUserName
-						) =%>
+						<%= maketext(q{[_1]'s Current Password}, $eUserName) =%>
 					<% end =%>
 					<div class="col-sm-6">
 						<%= text_field dummyUsername => '', class => 'd-none' =%>
-						<%= password_field 'currPassword', id => 'currPassword', class => 'form-control', dir => 'ltr',
+						<%= password_field 'currPassword',
+							id    => 'currPassword',
+							class => 'form-control',
+							dir   => 'ltr',
 							$c->{has_password} ? () : (disabled => 1) =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newPassword => maketext("[_1]'s New Password", $eUserName),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						newPassword => maketext("[_1]'s New Password", $eUserName),
+						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= password_field 'newPassword', id => 'newPassword', class => 'form-control',
-							dir => 'ltr', autocomplete => 'new-password' =%>
+						<%= password_field 'newPassword',
+							id           => 'newPassword',
+							class        => 'form-control',
+							dir          => 'ltr',
+							autocomplete => 'new-password' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
+						class           => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= password_field 'confirmPassword', id => 'confirmPassword', class => 'form-control',
-							dir => 'ltr', autocomplete => 'new-password' =%>
+						<%= password_field 'confirmPassword',
+							id           => 'confirmPassword',
+							class        => 'form-control',
+							dir          => 'ltr',
+							autocomplete => 'new-password' =%>
 					</div>
 				</div>
 			</div>
@@ -97,16 +120,22 @@
 		<div class="row mb-2">
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
-					<%= label_for currAddress => maketext("[_1]'s Current Address", $eUserName),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						currAddress => maketext("[_1]'s Current Address", $eUserName),
+						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
-						<%= text_field currAddress => $c->{effectiveUser}->email_address, readonly => undef,
-							id => 'currAddress', class => 'form-control bg-light', dir => 'ltr' =%>
+						<%= text_field
+							currAddress => $c->{effectiveUser}->email_address,
+							readonly    => undef,
+							id          => 'currAddress',
+							class       => 'form-control bg-light',
+							dir         => 'ltr' =%>
 					</div>
 				</div>
 				<div class="row mb-2">
-					<%= label_for newAddress => maketext("[_1]'s New Address", $eUserName),
-						class => 'col-form-label col-sm-6' =%>
+					<%= label_for
+						newAddress => maketext("[_1]'s New Address", $eUserName),
+						class      => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field newAddress => '', id => 'newAddress', class => 'form-control', dir => 'ltr' =%>
 					</div>
@@ -129,7 +158,10 @@
 						<legend class="lead"><%= maketext('View equations as') . ':' =%></legend>
 						% for (@active_modes) {
 							<div class="form-check form-check-inline">
-								<%= radio_button displayMode => $_, id => "displayMode-$_", class => 'form-check-input',
+								<%= radio_button
+									displayMode => $_,
+									id          => "displayMode-$_",
+									class       => 'form-check-input',
 									$_ eq $curr_displayMode ? (checked => undef) : () =%>
 								<%= label_for "displayMode-$_" => $_, class => 'form-check-label' =%>
 							</div>
@@ -148,11 +180,14 @@
 						<legend class="lead"><%= maketext('Show saved answers?') =%></legend>
 						% for (1, 0) {
 							<div class="form-check form-check-inline">
-								<%= radio_button showOldAnswers => $_,
-									id => "showOldAnswers$_", class => 'form-check-input',
+								<%= radio_button
+									showOldAnswers => $_,
+									id             => "showOldAnswers$_",
+									class          => 'form-check-input',
 									$_ eq $curr_showOldAnswers ? (checked => undef) : () =%>
-								<%= label_for "showOldAnswers$_" => $_ ? maketext('Yes') : maketext('No'),
-									class => 'form-check-label' =%>
+								<%= label_for
+									"showOldAnswers$_" => $_ ? maketext('Yes') : maketext('No'),
+									class              => 'form-check-label' =%>
 							</div>
 						% }
 					</fieldset>
@@ -170,11 +205,14 @@
 						<legend class="lead"><%= maketext('Use Equation Editor?') %></legend>
 						% for (1, 0) {
 							<div class="form-check form-check-inline">
-								<%= radio_button useMathView => $_,
-									id => "useMathView$_", class => 'form-check-input',
+								<%= radio_button
+									useMathView => $_,
+									id          => "useMathView$_",
+									class       => 'form-check-input',
 									$_ eq $curr_useMathView ? (checked => undef) : () =%>
-								<%= label_for "useMathView$_" => $_ ? maketext('Yes') : maketext('No'),
-									class => 'form-check-label' =%>
+								<%= label_for
+									"useMathView$_" => $_ ? maketext('Yes') : maketext('No'),
+									class           => 'form-check-label' =%>
 							</div>
 						% }
 					</fieldset>
@@ -192,11 +230,14 @@
 						<legend class="lead"><%= maketext('Use live equation rendering?') %></legend>
 						% for (1, 0) {
 							<div class="form-check form-check-inline">
-								<%= radio_button useMathQuill => $_,
-									id => "useMathQuill$_", class => 'form-check-input',
+								<%= radio_button
+									useMathQuill => $_,
+									id           => "useMathQuill$_",
+									class        => 'form-check-input',
 									$_ eq $curr_useMathQuill ? (checked => undef) : () =%>
-								<%= label_for "useMathQuill$_" => $_ ? maketext('Yes') : maketext('No'),
-									class => 'form-check-label' =%>
+								<%= label_for
+									"useMathQuill$_" => $_ ? maketext('Yes') : maketext('No'),
+									class            => 'form-check-label' =%>
 							</div>
 						% }
 					</fieldset>

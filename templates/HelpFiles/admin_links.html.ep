@@ -1,12 +1,14 @@
 % layout 'help_macro';
 % title maketext('Course Administration Help');
 %
-<%== maketext('Click the icon [_1] for page and item specific help.',
-	'<a href="#"><i class="fas fa-question-circle"></i></a>') =%>
+<%== maketext(
+	'Click the icon [_1] for page and item specific help.',
+	'<a href="#"><i class="fas fa-question-circle"></i></a>'
+) =%>
 <hr>
 <p>
 	<%= maketext('This is the administration course which is used to manage courses on this server.  Use the '
-		. '"Admin Menu" to select the desired action.') =%>
+			. '"Admin Menu" to select the desired action.') =%>
 </p>
 
 <dl>
@@ -33,7 +35,7 @@
 	<dt><%= maketext('Manage LTI Course Map') %></dt>
 	<dd>
 		<%= maketext('Set LMS context ids for courses to map LMS courses to WeBWorK '
-			. 'courses for content item selection.') =%>
+				. 'courses for content item selection.') =%>
 	</dd>
 	<dt><%= maketext('Manage OTP Secrets') %></dt>
 	<dd><%= maketext('Copy OTP secrets from one course/user to another, or reset OTP secrets.') =%></dd>
