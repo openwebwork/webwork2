@@ -1,24 +1,27 @@
 <div>
 	<div class="row mb-2">
-		<%= label_for export_select_scope => maketext('Export which users?'),
-			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<%= label_for
+			export_select_scope => maketext('Export which users?'),
+			class               => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.export.scope' => [
+			<%= select_field
+				'action.export.scope' => [
 					[ maketext('all course users') => 'all' ],
 					[ maketext('selected users')   => 'selected', selected => undef ],
 				],
-				id => 'export_select_scope', class => 'form-select form-select-sm' =%>
+				id    => 'export_select_scope',
+				class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div class="row mb-2">
-		<%= label_for export_select_target => maketext('Export to what kind of file?'),
-			class => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<%= label_for
+			export_select_target => maketext('Export to what kind of file?'),
+			class                => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.export.target' => [
-					[ maketext('Enter filename below') => 'new' ],
-					@$CSVList
-				],
-				id => 'export_select_target', class => 'form-select form-select-sm' =%>
+			<%= select_field
+				'action.export.target' => [ [ maketext('Enter filename below') => 'new' ], @$CSVList ],
+				id                     => 'export_select_target',
+				class                  => 'form-select form-select-sm' =%>
 		</div>
 	</div>
 	<div id="export_elements" class="row mb-2">
@@ -27,8 +30,11 @@
 		<% end =%>
 		<div class="col-auto d-inline-flex">
 			<div class="input-group input-group-sm">
-				<%= text_field 'action.export.new' => '', id => 'export_filename', 'aria-required' => 'true',
-					class => 'form-control form-control-sm' =%>
+				<%= text_field
+					'action.export.new' => '',
+					id                  => 'export_filename',
+					'aria-required'     => 'true',
+					class               => 'form-control form-control-sm' =%>
 				<span class="input-group-text font-monospace">.lst</span>
 			</div>
 		</div>

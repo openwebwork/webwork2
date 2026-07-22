@@ -3,19 +3,23 @@
 </div>
 <div class="table-responsive">
 	<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
-		<caption><%= maketext('Achievement List') %></caption>
+		<caption>
+			<%= maketext('Achievement List') %>
+		</caption>
 		<thead class="table-group-divider">
 			<tr>
 				<th class="text-nowrap">
 					<%= label_for 'select-all', begin =%>
-						<%= check_box 'select-all' => '', id => 'select-all',
-							class => 'select-all form-check-input set-id-tooltip',
+						<%= check_box
+							'select-all' => '',
+							id           => 'select-all',
+							class        => 'select-all form-check-input set-id-tooltip',
 							'aria-label' => maketext('Select all achievements'),
-							data => {
+							data         => {
 								select_group => 'selected_achievements',
-								bs_toggle => 'tooltip',
+								bs_toggle    => 'tooltip',
 								bs_placement => 'right',
-								bs_title => maketext('Select all achievements')
+								bs_title     => maketext('Select all achievements')
 							} =%>
 						<i class="fa-solid fa-check-double" aria-hidden="true"></i>
 					<% end =%>
@@ -36,18 +40,17 @@
 				% my $achievement_id = $_->achievement_id;
 				<tr>
 					<td>
-						<%= check_box selected_achievements => $achievement_id,
-							id    => "${achievement_id}_id",
-							class => 'form-check-input',
+						<%= check_box
+							selected_achievements => $achievement_id,
+							id                    => "${achievement_id}_id",
+							class                 => 'form-check-input',
 							$selectedAchievementIDs{ $_->achievement_id } ? (checked => undef) : () =%>
 					</td>
 					<td>
 						<div class="d-flex justify-content-between gap-1">
 							<%= label_for "${achievement_id}_id" => $_->achievement_id =%>
-							<%= link_to $c->systemLink(
-									url_for('instructor_achievement_list'),
-									params => { editMode => 1, selected_achievements => $achievement_id }
-								),
+							<%= link_to $c->systemLink(url_for('instructor_achievement_list'),
+								params => { editMode => 1, selected_achievements => $achievement_id }),
 								begin %>
 								<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
 								<span class="visually-hidden"><%= maketext('Edit') =%></span>
@@ -61,13 +64,12 @@
 					<td>
 						% my $num_users = $db->countAchievementUsers($_->achievement_id);
 						<%= link_to "$num_users/$c->{totalUsers}" => $c->systemLink(
-							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)
-						) =%>
+							url_for('instructor_achievement_user_editor', achievementID => $achievement_id)) =%>
 					</td>
 					<td class="text-nowrap">
 						<%= link_to $c->systemLink(
-							url_for('instructor_achievement_notification', achievementID => $achievement_id),
-						), begin =%>
+							url_for('instructor_achievement_notification', achievementID => $achievement_id),),
+							begin =%>
 							<%= $_->email_template
 								? maketext('Edit Email Template')
 								: maketext('Enable Email Notification') =%>
@@ -76,7 +78,7 @@
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
 							url_for('instructor_achievement_editor', achievementID => $achievement_id),
-							params => { sourceFilePath => $ce->{courseDirs}{achievements}. '/' . $_->test }
+							params => { sourceFilePath => $ce->{courseDirs}{achievements} . '/' . $_->test }
 						) =%>
 					</td>
 				</tr>

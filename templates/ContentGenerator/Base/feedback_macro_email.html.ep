@@ -7,5 +7,6 @@
 		<%= hidden_field $key => $value =%>
 	% }
 	<%= submit_button maketext($ce->{feedback_button_name}) || maketext('Email instructor'),
-		name => 'feedbackForm', class => 'btn btn-primary' =%>
+		name  => 'feedbackForm',
+		class => 'btn btn-primary' =%>
 % end

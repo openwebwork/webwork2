@@ -2,7 +2,8 @@
 %
 % if ($c->{can}{showCorrectAnswers}) {
 	<div class="submit-buttons-container col-12 my-2">
-		<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
+		<%= submit_button maketext('Show Correct Answers'),
+			name  => 'showCorrectAnswers',
 			class => 'btn btn-primary mb-1' =%>
 	</div>
 % }

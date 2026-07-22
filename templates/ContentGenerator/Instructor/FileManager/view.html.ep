@@ -1,6 +1,6 @@
 % use WeBWorK::Utils::Files qw(readFile);
 %
-% my $fileManagerURL = $c->systemLink(url_for, params => { download => $filename, pwd => $c->{pwd} } );
+% my $fileManagerURL = $c->systemLink(url_for, params => { download => $filename, pwd => $c->{pwd} });
 %
 % # Include a download link
 <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -9,7 +9,7 @@
 		<%= link_to maketext('Download') => $fileManagerURL, class => 'btn btn-primary' =%>
 		% if (-T $file) {
 			<%= link_to maketext('Edit') =>
-				$c->systemLink(url_for, params => { action => 'Edit', files => [$filename], pwd => $c->{pwd} } ),
+				$c->systemLink(url_for, params => { action => 'Edit', files => [$filename], pwd => $c->{pwd} }),
 				class => 'btn btn-primary' =%>
 		% }
 	</div>

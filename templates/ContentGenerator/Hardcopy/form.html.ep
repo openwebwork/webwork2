@@ -1,4 +1,4 @@
-% use WeBWorK::Utils::Sets qw(format_set_name_display);
+% use WeBWorK::Utils::Sets               qw(format_set_name_display);
 % use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 %
 %= form_for current_route, name => 'hardcopy-form', id => 'hardcopy-form', method => 'POST', begin
@@ -7,8 +7,7 @@
 	%
 	% if ($multiuser) {
 		<p>
-			<%= maketext(
-				'Select the assignments for which to generate hardcopy versions. You may'
+			<%= maketext('Select the assignments for which to generate hardcopy versions. You may'
 					. ' also select multiple users from the users list. You will receive hardcopy'
 					. ' for each (set, user) pair.') =%>
 		</p>
@@ -55,7 +54,11 @@
 		<p>
 			<%== maketext(
 				'Download hardcopy of set [_1] for [_2]?',
-				tag('span', dir => 'ltr', format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)),
+				tag(
+					'span',
+					dir => 'ltr',
+					format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)
+				),
 				join(' ', $user->first_name, $user->last_name)
 			) =%>
 		</p>
@@ -115,7 +118,9 @@
 					<div class="input-group-text">
 						% for (@$formats) {
 							<label class="form-check-label me-3">
-								<%= radio_button hardcopy_format => $_, class => 'form-check-input me-2',
+								<%= radio_button
+									hardcopy_format => $_,
+									class           => 'form-check-input me-2',
 									$_ eq $default_format ? (checked => undef) : () =%>
 								<%= $format_labels->{$_} =%>
 							</label>
@@ -131,13 +136,17 @@
 						<span class="input-group-text"><b><%= maketext('Show Problem Source File:') %></b></span>
 						<div class="input-group-text">
 							<label class="form-check-label me-3">
-								<%= radio_button show_source_file => 'Yes', class => 'form-check-input me-2',
-									checked => undef =%>
+								<%= radio_button
+									show_source_file => 'Yes',
+									class            => 'form-check-input me-2',
+									checked          => undef =%>
 								<%= maketext('Yes') =%>
 							</label>
 							<label class="form-check-label me-3">
-								<%= radio_button show_source_file => 'No', class => 'form-check-input me-2',
-									checked => undef =%>
+								<%= radio_button
+									show_source_file => 'No',
+									class            => 'form-check-input me-2',
+									checked          => undef =%>
 								<%= maketext('No') =%>
 							</label>
 						</div>
@@ -154,7 +163,9 @@
 							<div class="input-group-text">
 								% for (@{ $hardcopyThemesAvailable }) {
 									<label class="form-check-label me-3">
-										<%= radio_button hardcopy_theme => $_, class => 'form-check-input me-2',
+										<%= radio_button
+											hardcopy_theme => $_,
+											class          => 'form-check-input me-2',
 											$_ eq $ce->{hardcopyTheme} ? (checked => undef) : () =%>
 										<%= $hardcopyLabels->{$_} =%>
 									</label>
@@ -162,11 +173,12 @@
 							</div>
 						% } else {
 							<div class="input-group-text p-0">
-								<%= select_field 'hardcopy_theme' => [
+								<%= select_field
+									'hardcopy_theme' => [
 										map { [
 											$hardcopyLabels->{$_} => $_,
 											$_ eq $ce->{hardcopyTheme} ? (selected => undef) : ()
-										] } @{ $hardcopyThemesAvailable }
+										] } @{$hardcopyThemesAvailable}
 									],
 									id    => 'action_hardcopy_theme_id',
 									class => 'form-select form-select-sm d-inline w-auto' =%>
@@ -177,11 +189,11 @@
 			</div>
 		% }
 		<div>
-			<%= submit_button
-				$multiuser
+			<%= submit_button $multiuser
 				? maketext('Generate hardcopy for selected sets and selected users')
 				: maketext('Generate Hardcopy'),
-				name => 'generate_hardcopy', class => 'btn btn-primary' =%>
+				name  => 'generate_hardcopy',
+				class => 'btn btn-primary' =%>
 		</div>
 	</div>
 % end

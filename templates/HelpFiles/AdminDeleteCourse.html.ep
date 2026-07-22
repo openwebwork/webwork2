@@ -3,5 +3,5 @@
 %
 <p class="mb-0">
 	<%= maketext('Select a course to delete.  Warning, all data will be deleted and this cannot be undone.  '
-		. 'This will not delete any course archives.') =%>
+			. 'This will not delete any course archives.') =%>
 </p>

@@ -3,22 +3,22 @@
 %
 <p>
 	<%= maketext('Manage achievements for the course.  The actions allow one to edit, assign, import, export, score, '
-		. 'create, or delete achievements.  The action form is at the top to select the desired action and options to '
-		. 'perform when the submit button is pressed.  Below the action form is the list of all the '
-		. 'achievements, ordered by their achievement "Number", with "level" achievements listed last.') =%>
+			. 'create, or delete achievements.  The action form is at the top to select the desired action and options to '
+			. 'perform when the submit button is pressed.  Below the action form is the list of all the '
+			. 'achievements, ordered by their achievement "Number", with "level" achievements listed last.') =%>
 </p>
 <p>
 	<%= maketext('Achievements are evaluated in the order shown below, with the exception of "level" achievements.  '
-		. 'Achievements in the "level" category are evaluated last and control the XP thresholds and rewards '
-		. '(achievement items) for reaching each level. Achievements in the "secret" category are not shown to '
-		. 'students until they earn the achievement, and is used for fun/surprise achievements.') =%>
+			. 'Achievements in the "level" category are evaluated last and control the XP thresholds and rewards '
+			. '(achievement items) for reaching each level. Achievements in the "secret" category are not shown to '
+			. 'students until they earn the achievement, and is used for fun/surprise achievements.') =%>
 </p>
 <p>
 	<%= maketext('Achievements in the same category, with sequential numbers, and whose ID starts with the same '
-		. '"prefix_" (up to the last underscore), are treated as achievement chains.  Achievement chains are a '
-		. 'sequence of achievements which build upon themselves, such as complete one problem, complete 10 problems, '
-		. 'complete 25 problems, and so on. Students will only see the achievements in the chain they have completed '
-		. 'or are currently working on.') =%>
+			. '"prefix_" (up to the last underscore), are treated as achievement chains.  Achievement chains are a '
+			. 'sequence of achievements which build upon themselves, such as complete one problem, complete 10 problems, '
+			. 'complete 25 problems, and so on. Students will only see the achievements in the chain they have completed '
+			. 'or are currently working on.') =%>
 </p>
 <h2><%= maketext('Achievement options') %></h2>
 <ul>
@@ -33,12 +33,12 @@
 	<li>
 		<strong><%= maketext('Category:') %></strong>
 		<%= maketext('Groups types of achievements. The "level" and "secret" categories are special (described '
-			. 'above), and categories can be used to create achievement chains.') =%>
+				. 'above), and categories can be used to create achievement chains.') =%>
 	</li>
 	<li>
 		<strong><%= maketext('Number:') %></strong>
 		<%= maketext('Sets the order in which achievements are listed and evaluated. Achievements in the "level" '
-			. 'category are always listed and evaluated after all other achievements.') =%>
+				. 'category are always listed and evaluated after all other achievements.') =%>
 	</li>
 	<li>
 		<strong><%= maketext('Enabled:') %></strong>
@@ -51,12 +51,13 @@
 	<li>
 		<strong><%= maketext('Counter:') %></strong>
 		<%= maketext('Used for "counting" achievements, which sets the value a counter must reach in order to earn '
-			. 'the achievement. For example this is used counting the number of completed problems.') =%>
+				. 'the achievement. For example this is used counting the number of completed problems.') =%>
 	</li>
 	<li>
 		<strong><%= maketext('Description:') %></strong>
-		<%= maketext(
-			'The description shown to students which states what action is needed to earn the achievement.') =%>
+		<%=
+			maketext('The description shown to students which states what action is needed to earn the achievement.')
+		=%>
 	</li>
 	<li>
 		<strong><%= maketext('Evaluator File:') %></strong>
@@ -76,49 +77,51 @@
 	<dt><%= maketext('Filter achievements') %></dt>
 	<dd>
 		<%= maketext('You can filter which achievements are shown by clicking the "Filter" button.  Use the drop '
-			. 'down menu to select the filter criteria, which allows you to filter achievements by their ID, '
-			. 'category, or if they are enabled or disabled.') =%>
+				. 'down menu to select the filter criteria, which allows you to filter achievements by their ID, '
+				. 'category, or if they are enabled or disabled.') =%>
 	</dd>
 	<dt><%= maketext('Edit achievement information') %></dt>
 	<dd>
 		<%= maketext('You can edit a single achievement by clicking on the pencil icon next to the achievement ID.  '
-			. 'You can edit multiple achievements by selecting which achievements to edit, then click the '
-			. '"Edit" button. You can edit all of the achievements by first selecting them all using the checkbox '
-			. 'next to "Achievement ID", then editing them with the "Edit" button.') =%>
+				. 'You can edit multiple achievements by selecting which achievements to edit, then click the '
+				. '"Edit" button. You can edit all of the achievements by first selecting them all using the checkbox '
+				. 'next to "Achievement ID", then editing them with the "Edit" button.') =%>
 	</dd>
 
 	<dt><%= maketext('Import/export achievements') %></dt>
 	<dd>
 		<%= maketext('You can import/export from their respective action tab.  Exporting saves information about the '
-			. 'achievement as a .axp file which is a CSV that lists each achievements information.  You can import '
-			. '.axp files that have been previously exported.  Use the "File Manager" to upload/download .axp files '
-			. 'to "achievements" directory (also upload/download any achievement evaluator .at files needed).') =%>
-	<dd>
+				. 'achievement as a .axp file which is a CSV that lists each achievements information.  You can import '
+				. '.axp files that have been previously exported.  Use the "File Manager" to upload/download .axp files '
+				. 'to "achievements" directory (also upload/download any achievement evaluator .at files needed).') =%>
+	</dd>
+
+	<dd></dd>
 
 	<dt><%= maketext('Assign achievements') %></dt>
 	<dd>
 		<%= maketext('You can assign selected achievements to all users by using the "Assign" action action and '
-			. 'selecting which achievements to assign.  You can select which users to assign/unassign to an '
-			. 'achievement by clicking on the link in the "Edit Users" column.') =%>
+				. 'selecting which achievements to assign.  You can select which users to assign/unassign to an '
+				. 'achievement by clicking on the link in the "Edit Users" column.') =%>
 	</dd>
 
 	<dt><%= maketext('Export achievement data') %></dt>
 	<dd>
 		<%= maketext('The "Score" tab will export achievement data to a CSV file that can be downloaded.  The export '
-			. 'contains the global data including number of achievement points and current level of each student.  '
-			. 'In addition for each selected achievement, a column for if the achievement was earned (1) or not earned '
-			. '(0) will be added to the CSV.') =%>
+				. 'contains the global data including number of achievement points and current level of each student.  '
+				. 'In addition for each selected achievement, a column for if the achievement was earned (1) or not earned '
+				. '(0) will be added to the CSV.') =%>
 	</dd>
 
 	<dt><%= maketext('Create/Delete achievements') %></dt>
 	<dd>
 		<%= maketext('Use the "Create" and "Delete" actions to create or delete achievements. Note that deleting an '
-			. 'achievement will delete all data associated to the achievement and cannot be undone.') =%>
+				. 'achievement will delete all data associated to the achievement and cannot be undone.') =%>
 	</dd>
 
 	<dt><%= maketext('Edit achievement evaluator') %></dt>
 	<dd>
 		<%= maketext('The achievement evaluator is the perl code that is run after each submit to determine if an '
-			. 'achievement is earned or not.  Click on the "Edit Evaluator" link to edit the evaluator.') =%>
+				. 'achievement is earned or not.  Click on the "Edit Evaluator" link to edit the evaluator.') =%>
 	</dd>
 </dl>

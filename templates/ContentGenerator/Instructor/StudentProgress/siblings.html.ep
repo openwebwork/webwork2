@@ -14,9 +14,10 @@
 						$_->user_id eq $c->{studentID}
 						? (class => 'nav-link active')
 						: (
-							href => $c->systemLink(url_for(current_route, userID => $_->user_id)),
+							href  => $c->systemLink(url_for(current_route, userID => $_->user_id)),
 							class => 'nav-link'
-						), begin =%>
+						),
+						begin =%>
 						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
 					<% end =%>
 				</li>
@@ -24,7 +25,8 @@
 		</ul>
 	% } else {
 		% # Shared with Stats siblings.
-		<%= include 'ContentGenerator/Instructor/Stats/siblings_set_list',
-			set_link_route => 'instructor_set_progress' =%>
+		<%=
+			include 'ContentGenerator/Instructor/Stats/siblings_set_list', set_link_route => 'instructor_set_progress'
+		=%>
 	% }
 </div>

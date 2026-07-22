@@ -8,8 +8,12 @@
 		<div>
 			<h1><%= $achievement->name %></h1>
 			% if ($c->{globalData}->next_level_points) {
-				<div class="levelouterbar" title="<%= maketext('[_1]% Complete', $level_percentage) %>"
-					aria-label="<%= maketext('[_1]% Complete', $level_percentage) %>" role="figure">
+				<div
+					class="levelouterbar"
+					title="<%= maketext('[_1]% Complete', $level_percentage) %>"
+					aria-label="<%= maketext('[_1]% Complete', $level_percentage) %>"
+					role="figure"
+				>
 					<div class="levelinnerbar" style="width:<%= $level_percentage %>%"></div>
 				</div>
 				<div><strong><%= maketext('Level Progress:') %></strong> <%= "$level_progress/$level_goal" %></div>

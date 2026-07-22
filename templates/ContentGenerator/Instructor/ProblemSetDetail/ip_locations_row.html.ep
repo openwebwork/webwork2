@@ -1,24 +1,31 @@
 <tr class="align-top">
 	<td>
-		<%= label_for "set.$setID.selected_ip_locations_id" => maketext('Restrict Locations'),
+		<%= label_for
+			"set.$setID.selected_ip_locations_id" => maketext('Restrict Locations'),
 			$forUsers
-				? (id => "set.$setID.selected_ip_locations.label", class => 'form-check-label')
-				: (class => 'form-label') =%>
+			? (id => "set.$setID.selected_ip_locations.label", class => 'form-check-label')
+			: (class => 'form-label') =%>
 	</td>
 	<td></td>
 	<td>
-		<%= select_field "set.$setID.selected_ip_locations" => [
+		<%= select_field
+			"set.$setID.selected_ip_locations" => [
 				$forUsers ? [ maketext('Set Default') => '', %$defaultLocations ? () : (selected => undef) ] : (),
 				map { [ $_ => $_, $defaultLocations->{$_} ? (selected => undef) : () ] } @$locations
 			],
-			id => "set.$setID.selected_ip_locations_id", size => 5, multiple => undef,
-			class => 'form-select form-select-sm' =%>
+			id       => "set.$setID.selected_ip_locations_id",
+			size     => 5,
+			multiple => undef,
+			class    => 'form-select form-select-sm' =%>
 	</td>
 	% if ($forUsers) {
 		<td>
-			<%= text_area "set.$setID.selected_ip_locations.class_value" => join("\n", @$globalLocations),
-				readonly => undef, rows => 5, class => 'form-control form-control-sm',
-				'aria-labelledby' => "set.$setID.selected_ip_locations.label" =%>
+			<%= text_area
+				"set.$setID.selected_ip_locations.class_value" => join("\n", @$globalLocations),
+				readonly                                       => undef,
+				rows                                           => 5,
+				class                                          => 'form-control form-control-sm',
+				'aria-labelledby'                              => "set.$setID.selected_ip_locations.label" =%>
 		</td>
 	% }
 </tr>

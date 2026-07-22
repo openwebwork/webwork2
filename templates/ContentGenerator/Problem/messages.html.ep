@@ -12,10 +12,8 @@
 	<p>
 		<b><%= maketext('Note') %>:</b>
 		<i>
-			<%= maketext(
-				'You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
-				$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100
-			) =%>
+			<%= maketext('You are in the Reduced Scoring Period.  All work counts for [_1]% of the original.',
+				$ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100) =%>
 		</i>
 	</p>
 % }
@@ -43,8 +41,7 @@
 		<b><%= maketext('Note') %>:</b>
 		<i>
 			<%= maketext('The solution shown is an instructor preview and '
-				. 'will only be shown to students after the answer date.'
-			) =%>
+					. 'will only be shown to students after the answer date.') =%>
 		</i>
 	</p>
 % }
@@ -54,7 +51,7 @@
 		<b><%= maketext('Note') %>:</b>
 		<i>
 			<%= maketext('The correct answers shown in feedback are instructor previews and '
-				. 'will only be shown to students after the answer date.') =%>
+					. 'will only be shown to students after the answer date.') =%>
 		</i>
 	</p>
 % }

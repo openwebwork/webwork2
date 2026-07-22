@@ -4,11 +4,9 @@
 	<h2><%= maketext('WeBWorK Error') %></h2>
 % }
 <p>
-	<%= maketext(
-		'WeBWorK has encountered a software error. If you are a student, report this error message to your '
-		. 'instructor to have it corrected. If you are a instructor, please consult the error output below for '
-		. 'more information.'
-		) %>
+	<%= maketext('WeBWorK has encountered a software error. If you are a student, report this error message to your '
+			. 'instructor to have it corrected. If you are a instructor, please consult the error output below for '
+			. 'more information.') %>
 </p>
 <h3><%= maketext('Error messages') %></h3>
 <div class="error-output"><%== $error %></div>

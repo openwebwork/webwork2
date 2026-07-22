@@ -12,41 +12,51 @@
 						<%= label_for 'openfilename', class => 'input-group-text', begin =%>
 							<strong><%= maketext('Message file:') %></strong>
 						<% end =%>
-						<%= select_field openfilename => [
+						<%= select_field
+							openfilename => [
 								[ None => '' ],
 								map { [ $_ => $_, $_ eq $c->{input_file} ? (selected => undef) : () ] }
 								$c->get_message_file_names
 							],
-							id => 'openfilename', class => 'form-select form-select-sm' =%>
+							id    => 'openfilename',
+							class => 'form-select form-select-sm' =%>
 					</div>
 					<div class="input-group input-group-sm mb-2">
 						<%= label_for 'merge_file', class => 'input-group-text', begin =%>
 							<strong><%= maketext('Merge file:') %></strong>
 						<% end =%>
-						<%= select_field merge_file => [
+						<%= select_field
+							merge_file => [
 								[ None => '' ],
 								map { [ $_ => $_, $_ eq $c->{merge_file} ? (selected => undef) : () ] }
 								$c->get_merge_file_names
 							],
-							id => 'merge_file', class => 'form-select form-select-sm' =%>
+							id    => 'merge_file',
+							class => 'form-select form-select-sm' =%>
 					</div>
 					<div class="row mb-1">
-						<%= label_for from => maketext('From:'),
+						<%= label_for
+							from  => maketext('From:'),
 							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
 						<div class="col-sm-9">
-							<%= text_field from => $c->{from}, id => 'from',
+							<%= text_field
+								from => $c->{from},
+								id   => 'from',
 								$c->{from} && $c->{from} eq $c->{defaultPreviewUser}->rfc822_mailbox
-									? (readonly => undef, disabled => undef)
-									: (),
+								? (readonly => undef, disabled => undef)
+								: (),
 								class => 'form-control form-control-sm' =%>
 						</div>
 					</div>
 					<div class="row mb-2">
-						<%= label_for subject => maketext('Subject:'),
-							class => 'col-sm-3 col-form-label col-form-label-sm' =%>
+						<%= label_for
+							subject => maketext('Subject:'),
+							class   => 'col-sm-3 col-form-label col-form-label-sm' =%>
 						<div class="col-sm-9">
-							<%= text_field subject => $c->{subject}, id => 'subject',
-								class => 'form-control form-control-sm' =%>
+							<%= text_field
+								subject => $c->{subject},
+								id      => 'subject',
+								class   => 'form-control form-control-sm' =%>
 						</div>
 					</div>
 					<div class="form-check">
@@ -54,28 +64,38 @@
 						<%= label_for send_to_all => maketext('Send to all students'), class => 'form-check-label' =%>
 					</div>
 					<div class="form-check mb-2">
-						<%= radio_button send_to => 'studentID', id => 'send_to_selected', class => 'form-check-input',
+						<%= radio_button
+							send_to => 'studentID',
+							id      => 'send_to_selected',
+							class   => 'form-check-input',
 							checked => undef =%>
-							<%= label_for send_to_selected => maketext('Send to selected students'),
-								class => 'form-check-label' =%>
+						<%= label_for
+							send_to_selected => maketext('Send to selected students'),
+							class            => 'form-check-label' =%>
 					</div>
 					% if ($c->{preview_user}) {
 						<div class="input-group input-group-sm mb-2">
 							<%= submit_button maketext('Preview Message'),
-								name => 'previewMessage', class => 'btn btn-secondary btn-sm' =%>
+								name  => 'previewMessage',
+								class => 'btn btn-secondary btn-sm' =%>
 							<span class="input-group-text text-nowrap">
 								<strong><%= maketext('for') %></strong>&nbsp;
-								<span id="preview-user" data-default="<%=
-									$c->{defaultPreviewUser}->last_name . ', ' . $c->{defaultPreviewUser}->first_name
-									. ' (' . $c->{defaultPreviewUser}->user_id . ')' %>">
-									<%= $c->{preview_user}->last_name . ', ' . $c->{preview_user}->first_name
-										. ' (' . $c->{preview_user}->user_id . ')' =%>
+								<span
+									id="preview-user"
+									data-default="<%= $c->{defaultPreviewUser}->last_name . ', '
+										. $c->{defaultPreviewUser}->first_name . ' ('
+										. $c->{defaultPreviewUser}->user_id . ')' %>"
+								>
+									<%= $c->{preview_user}->last_name . ', '
+										. $c->{preview_user}->first_name . ' ('
+										. $c->{preview_user}->user_id . ')' =%>
 								</span>
 							</span>
 						</div>
 					% }
 					<div class="mb-2">
-						<%= submit_button maketext('Send Email'), name => 'sendEmail',
+						<%= submit_button maketext('Send Email'),
+							name  => 'sendEmail',
 							class => 'btn btn-secondary btn-sm d-inline w-auto' =%>
 					</div>
 					% # Insert a toast containing a list of available macros.
@@ -85,29 +105,71 @@
 						</button>
 					</div>
 					<div class="position-fixed top-0 end-0 p-3" style="z-index: 21">
-						<div id="insertable-macros" class="toast bg-white" role="alert" aria-live="polite"
-								aria-atomic="true">
+						<div
+							id="insertable-macros"
+							class="toast bg-white"
+							role="alert"
+							aria-live="polite"
+							aria-atomic="true"
+						>
 							<div class="toast-header">
 								<strong class="me-auto"><%= maketext('List of insertable macros') %></strong>
-								<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close">
-								</button>
+								<button
+									type="button"
+									class="btn-close"
+									data-bs-dismiss="toast"
+									aria-label="Close"
+								></button>
 							</div>
 							<div class="toast-body">
 								<table class="table table-bordered table-sm align-middle w-auto mb-0 mx-auto">
 									<thead>
-										<tr><th><%= maketext('Macro') %></th><th><%= maketext('Value') %></th></tr>
+										<tr>
+											<th><%= maketext('Macro') %></th>
+											<th><%= maketext('Value') %></th>
+										</tr>
 									</thead>
 									<tbody class="table-group-divider">
-										<tr><td>$SID</td><td><%= maketext('Student ID') %></td></tr>
-										<tr><td>$FN</td><td><%= maketext('First name') %></td></tr>
-										<tr><td>$LN</td><td><%= maketext('Last name') %></td></tr>
-										<tr><td>$SECTION</td><td><%= maketext('Section') %></td></tr>
-										<tr><td>$RECITATION</td><td><%= maketext('Recitation') %></td></tr>
-										<tr><td>$STATUS</td><td><%= maketext('Enrolled, Drop, etc.') %></td></tr>
-										<tr><td>$EMAIL</td><td><%= maketext('Email address') %></td></tr>
-										<tr><td>$LOGIN</td><td><%= maketext('Login') %></td></tr>
-										<tr><td>$COL[n]</td><td><%= maketext('nth column of merge file') %></td></tr>
-										<tr><td>$COL[-1]</td><td><%= maketext('Last column of merge file') %></td></tr>
+										<tr>
+											<td>$SID</td>
+											<td><%= maketext('Student ID') %></td>
+										</tr>
+										<tr>
+											<td>$FN</td>
+											<td><%= maketext('First name') %></td>
+										</tr>
+										<tr>
+											<td>$LN</td>
+											<td><%= maketext('Last name') %></td>
+										</tr>
+										<tr>
+											<td>$SECTION</td>
+											<td><%= maketext('Section') %></td>
+										</tr>
+										<tr>
+											<td>$RECITATION</td>
+											<td><%= maketext('Recitation') %></td>
+										</tr>
+										<tr>
+											<td>$STATUS</td>
+											<td><%= maketext('Enrolled, Drop, etc.') %></td>
+										</tr>
+										<tr>
+											<td>$EMAIL</td>
+											<td><%= maketext('Email address') %></td>
+										</tr>
+										<tr>
+											<td>$LOGIN</td>
+											<td><%= maketext('Login') %></td>
+										</tr>
+										<tr>
+											<td>$COL[n]</td>
+											<td><%= maketext('nth column of merge file') %></td>
+										</tr>
+										<tr>
+											<td>$COL[-1]</td>
+											<td><%= maketext('Last column of merge file') %></td>
+										</tr>
 									</tbody>
 								</table>
 							</div>
@@ -143,8 +205,8 @@
 		% my @rows;
 		% my $cols = 0;
 		% for my $user (@{ $c->{ra_user_records} }) {
-			% if ($rh_merge_data->{$user->student_id}) {
-				% my $this_row = $rh_merge_data->{$user->student_id};
+			% if ($rh_merge_data->{ $user->student_id }) {
+				% my $this_row = $rh_merge_data->{ $user->student_id };
 				% push(@rows, $this_row);
 				% $cols = scalar(@$this_row) if scalar(@$this_row) > $cols;
 			% }
@@ -163,8 +225,11 @@
 		<%= label_for 'email-body', class => 'form-label', begin =%>
 			<%= maketext("Email Body:") %><span class="required-field">*</span>
 		<% end =%>
-		<%= text_area body => $c->{r_text},
-			id => 'email-body', rows => $ce->{mail}{editor_window_rows}, class => 'form-control' %>
+		<%= text_area
+			body  => $c->{r_text},
+			id    => 'email-body',
+			rows  => $ce->{mail}{editor_window_rows},
+			class => 'form-control' %>
 	</div>
 	%
 	% # Save buttons
@@ -179,10 +244,15 @@
 				</div>
 			% }
 			<div class="input-group input-group-sm w-auto m-1">
-				<%= submit_button maketext('Save as') . ':', name => 'saveAs', id => 'saveAs',
+				<%= submit_button maketext('Save as') . ':',
+					name  => 'saveAs',
+					id    => 'saveAs',
 					class => 'btn btn-secondary btn-sm' =%>
-				<%= text_field savefilename => $c->{output_file} ? $c->{output_file} : 'default.msg',
-					size => 20, class => 'form-control form-control-sm', 'aria-labelledby' => 'saveAs' =%>
+				<%= text_field
+					savefilename      => $c->{output_file} ? $c->{output_file} : 'default.msg',
+					size              => 20,
+					class             => 'form-control form-control-sm',
+					'aria-labelledby' => 'saveAs' =%>
 			</div>
 		</div>
 	</div>

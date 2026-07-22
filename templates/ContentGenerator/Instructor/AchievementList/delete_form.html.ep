@@ -3,13 +3,13 @@
 		<em><%= maketext('Deletion destroys all achievement-related data and is not undoable!') =%></em>
 	</div>
 	<div class="row mb-2">
-		<%= label_for delete_select => maketext('Delete selected achievements?'),
-			class => 'col-form-label col-form-label-sm col-auto' =%>
+		<%= label_for
+			delete_select => maketext('Delete selected achievements?'),
+			class         => 'col-form-label col-form-label-sm col-auto' =%>
 		<div class="col-auto">
-			<%= select_field 'action.delete.confirm' => [
-					[ maketext('No')  => 'no', selected => undef ],
-					[ maketext('Yes') => 'yes' ],
-				],
+			<%= select_field
+				'action.delete.confirm' =>
+				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ], ],
 				id    => 'delete_select',
 				class => 'form-select form-select-sm d-inline w-auto me-3' =%>
 		</div>

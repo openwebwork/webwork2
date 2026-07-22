@@ -1,8 +1,8 @@
 % use Date::Format;
 % use UUID::Tiny ':std';
 %
-% my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $c->req->url->path->to_string)
-	% . "::" . create_uuid_as_string(UUID_TIME);
+% my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $c->req->url->path->to_string) . "::"
+	% . create_uuid_as_string(UUID_TIME);
 % my $time = time2str('%a %b %d %H:%M:%S %Y', time);
 %
 % # Log the error to the Mojolicious error log

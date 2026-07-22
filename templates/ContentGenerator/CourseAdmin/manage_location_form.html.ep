@@ -1,7 +1,7 @@
 <h2><%= maketext('Manage Locations') %> <%= $c->helpMacro('AdminManageLocations') %></h2>
 <p><strong><%= maketext('Currently defined locations are listed below.') %></strong></p>
 <%= form_for current_route, method => 'POST', begin =%>
-	% my @locationIDs = map  { $_->location_id } @$locations;
+	% my @locationIDs = map { $_->location_id } @$locations;
 	%
 	<%= $c->hidden_authen_fields =%>
 	<%= $c->hidden_fields('subDisplay') =%>
@@ -13,8 +13,9 @@
 			<div class="col-sm-4">
 				<div class="form-check">
 					<label class="form-check-label">
-						<%= radio_button manage_location_action => 'edit_location_form',
-							class => 'form-check-input' %>
+						<%= radio_button
+							manage_location_action => 'edit_location_form',
+							class                  => 'form-check-input' %>
 						<%= maketext('Edit Location:') %>
 					</label>
 				</div>
@@ -26,8 +27,9 @@
 			<div class="col-auto">
 				<div class="form-check">
 					<label class="form-check-label">
-						<%= radio_button manage_location_action => 'add_location_handler',
-							class => 'form-check-input' %>
+						<%= radio_button
+							manage_location_action => 'add_location_handler',
+							class                  => 'form-check-input' %>
 						<%= maketext('Create Location:') %>
 					</label>
 				</div>
@@ -40,25 +42,30 @@
 			</div>
 		</div>
 		<div class="row ms-sm-3 mb-2">
-			<%= label_for new_location_description => maketext('Location description:'),
-				class => 'col-sm-4 col-form-label' =%>
+			<%= label_for
+				new_location_description => maketext('Location description:'),
+				class                    => 'col-sm-4 col-form-label' =%>
 			<div class="col-sm-8">
-				<%= text_field new_location_description => '',
-					id => 'new_location_description', class => 'form-control' =%>
+				<%= text_field
+					new_location_description => '',
+					id                       => 'new_location_description',
+					class                    => 'form-control' =%>
 			</div>
 		</div>
 		<div class="row ms-sm-3 mb-2">
 			<div class="col">
 				<%= label_for new_location_addresses => maketext(
 					'Addresses for new location.  Enter one per line, as single IP addresses (e.g., 192.168.1.101), '
-						. 'address masks (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.101-192.168.1.150):'
-				) =%>
+						. 'address masks (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.101-192.168.1.150):') =%>
 			</div>
 		</div>
 		<div class="row ms-sm-3 mb-2">
 			<div class="col-7 col-xs-12">
-				<%= text_area new_location_addresses => '', id => 'new_location_addresses',
-					columns => 40, class => 'form-control' =%>
+				<%= text_area
+					new_location_addresses => '',
+					id                     => 'new_location_addresses',
+					columns                => 40,
+					class                  => 'form-control' =%>
 			</div>
 		</div>
 		% # Delete action
@@ -73,8 +80,9 @@
 			<div class="col-sm-4">
 				<div class="form-check">
 					<label class="form-check-label">
-						<%= radio_button manage_location_action => 'delete_location_handler',
-							class => 'form-check-input' %>
+						<%= radio_button
+							manage_location_action => 'delete_location_handler',
+							class                  => 'form-check-input' %>
 						<%= maketext('Delete location:') %>
 					</label>
 				</div>
@@ -82,11 +90,12 @@
 			<div class="col-sm-8">
 				<div class="row mb-1">
 					<div class="col-auto">
-						<%= select_field delete_location => [
+						<%= select_field
+							delete_location => [
 								[ maketext('no location') => '' ],
-								[ maketext('locations selected below') => 'selected_locations' ],
-								@locationIDs
-							], class => 'form-select' =%>
+								[ maketext('locations selected below') => 'selected_locations' ], @locationIDs
+							],
+							class => 'form-select' =%>
 					</div>
 				</div>
 				<div class="row">
@@ -121,14 +130,15 @@
 					% for (@$locations) {
 						<tr>
 							<td>
-								<%= check_box delete_selected => $_->location_id,
-									name  => 'delete_selected',
-									id    => $_->location_id . '_id',
-									class => 'form-check-input' =%>
+								<%= check_box
+									delete_selected => $_->location_id,
+									name            => 'delete_selected',
+									id              => $_->location_id . '_id',
+									class           => 'form-check-input' =%>
 							</td>
 							<td>
-								<%= label_for $_->location_id . '_id' =>
-									link_to $_->location_id => $c->systemLink(
+								<%= label_for $_->location_id
+									. '_id' => link_to $_->location_id => $c->systemLink(
 										url_for,
 										params => {
 											subDisplay             => 'manage_locations',

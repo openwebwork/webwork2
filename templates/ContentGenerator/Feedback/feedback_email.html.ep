@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(decodeAnswers);
+% use WeBWorK::Utils       qw(decodeAnswers);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % my $yes = maketext('yes');
@@ -7,11 +7,15 @@
 <html>
 	<body>
 		<p>
-			<%== maketext('Message from [_1] ([_2]) via WeBWorK at [_3] (sent from [_4]).',
-				$user->full_name, $user->user_id, $ce->{institutionName},
-				$problem ? link_to(format_set_name_display($set->set_id) . ', #' . $problem->problem_id, $emailableURL)
-				: $set   ? link_to(format_set_name_display($set->set_id), $emailableURL)
-				:          link_to('this page', $emailableURL)
+			<%== maketext(
+				'Message from [_1] ([_2]) via WeBWorK at [_3] (sent from [_4]).',
+				$user->full_name,
+				$user->user_id,
+				$ce->{institutionName},
+				$problem
+				? link_to(format_set_name_display($set->set_id) . ', #' . $problem->problem_id, $emailableURL)
+				: $set ? link_to(format_set_name_display($set->set_id), $emailableURL)
+				:        link_to('this page',                           $emailableURL)
 			) =%>
 		</p>
 		% if ($numRecipients > 1) {
@@ -31,16 +35,25 @@
 		% if ($problem && $verbosity >= 1) {
 			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
-					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray" colspan="2"><%= maketext('Data about the problem') %></th></tr>
+					<tr>
+						<th
+							style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray"
+							colspan="2"
+						>
+							<%= maketext('Data about the problem') %>
+						</th>
+					</tr>
 				</thead>
 				<tbody>
 					% my @rows = (
-						% [ maketext('Problem ID'),         $problem->problem_id ],
-						% [ maketext('Source file'),        $problem->source_file ],
-						% [ maketext('Value'),              $problem->value ],
-						% [ maketext('Max attempts'),
-							% $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts ],
+						% [ maketext('Problem ID'),  $problem->problem_id ],
+						% [ maketext('Source file'), $problem->source_file ],
+						% [ maketext('Value'),       $problem->value ],
+						% [
+							% maketext('Max attempts'),
+							% $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts
+						% ],
 						% [ maketext('Random seed'),        $problem->problem_seed ],
 						% [ maketext('Status'),             $problem->status ],
 						% [ maketext('Attempted'),          $problem->attempted ? $yes : $no ],
@@ -83,8 +96,15 @@
 		% if ($set && $verbosity >= 1) {
 			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
-					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray" colspan="2"><%= maketext('Data about the assignment') %></th></tr>
+					<tr>
+						<th
+							style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray"
+							colspan="2"
+						>
+							<%= maketext('Data about the assignment') %>
+						</th>
+					</tr>
 				</thead>
 				<tbody>
 					% my @rows = (
@@ -98,15 +118,18 @@
 						% [ maketext('Assignment type'),      $set->assignment_type ]
 					% );
 					% if ($set->assignment_type =~ /gateway/) {
-						% push @rows, (
-							% [ maketext('Attempts per version'),      $set->attempts_per_version ],
-							% [ maketext('Time interval'),             $set->time_interval ],
-							% [ maketext('Versions per interval'),     $set->versions_per_interval ],
-							% [ maketext('Version time limit'),        $set->version_time_limit ],
-							% [ maketext('Version creation time'),     $c->formatDateTime($set->version_creation_time) ],
-							% [ maketext('Problem randorder'),         $set->problem_randorder ],
-							% [ maketext('Version last attempt time'), $set->version_last_attempt_time ]
-						% );
+						% push @rows,
+							% (
+								% [ maketext('Attempts per version'),  $set->attempts_per_version ],
+								% [ maketext('Time interval'),         $set->time_interval ],
+								% [ maketext('Versions per interval'), $set->versions_per_interval ],
+								% [ maketext('Version time limit'),    $set->version_time_limit ],
+								% [
+									% maketext('Version creation time'), $c->formatDateTime($set->version_creation_time)
+								% ],
+								% [ maketext('Problem randorder'),         $set->problem_randorder ],
+								% [ maketext('Version last attempt time'), $set->version_last_attempt_time ]
+							% );
 					% }
 					% for (@rows) {
 						<tr>
@@ -121,8 +144,11 @@
 			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
 					<tr>
-						<th style="text-align: left; padding: 0.25rem; border: 1px solid black;
-							background-color: lightgray" colspan="2">
+						<th
+							style="text-align: left; padding: 0.25rem; border: 1px solid black;
+							background-color: lightgray"
+							colspan="2"
+						>
 							<%= maketext('Data about the problem processor') =%>
 						</th>
 					</tr>
@@ -130,10 +156,10 @@
 				<tbody>
 					% my @rows = (
 						% [ maketext('Display Mode'),         param('displayMode') ],
-						% [ maketext('Show Old Answers'),     param('showOldAnswers') ? $yes : $no ],
+						% [ maketext('Show Old Answers'),     param('showOldAnswers')     ? $yes : $no ],
 						% [ maketext('Show Correct Answers'), param('showCorrectAnswers') ? $yes : $no ],
-						% [ maketext('Show Hints'),           param('showHints') ? $yes : $no ],
-						% [ maketext('Show Solutions'),       param('showSolutions') ? $yes : $no ]
+						% [ maketext('Show Hints'),           param('showHints')          ? $yes : $no ],
+						% [ maketext('Show Solutions'),       param('showSolutions')      ? $yes : $no ]
 					% );
 					% for (@rows) {
 						<tr>
@@ -148,8 +174,15 @@
 		% if ($user && $verbosity >= 1) {
 			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
-					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray" colspan="2"><%= maketext('Data about the user') %></th></tr>
+					<tr>
+						<th
+							style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray"
+							colspan="2"
+						>
+							<%= maketext('Data about the user') %>
+						</th>
+					</tr>
 				</thead>
 				<tbody>
 					% my @rows = (
@@ -157,19 +190,20 @@
 						% [ maketext('Name'),    $user->full_name ],
 						% [ maketext('Email'),   $user->email_address ]
 					% );
-					% unless ($ce->{blockStudentIDinFeedback}) { push @rows, ['Student ID', $user->student_id]; }
+					% unless ($ce->{blockStudentIDinFeedback}) { push @rows, [ 'Student ID', $user->student_id ]; }
 					% my $status_name = $ce->status_abbrev_to_name($user->status);
 					% my $status_string =
 						% defined $status_name
 						% ? "$status_name ('" . $user->status . q{')}
 						% : maketext('[_1] (unknown status abbreviation)', $user->status);
-					% push @rows, (
-						% [ maketext('Status'),     $status_string ],
-						% [ maketext('Section'),    $user->section ],
-						% [ maketext('Recitation'), $user->recitation ],
-						% [ maketext('Comment'),    $user->comment ],
-						% [ maketext('IP Address'), $remote_host ]
-					%);
+					% push @rows,
+						% (
+							% [ maketext('Status'),     $status_string ],
+							% [ maketext('Section'),    $user->section ],
+							% [ maketext('Recitation'), $user->recitation ],
+							% [ maketext('Comment'),    $user->comment ],
+							% [ maketext('IP Address'), $remote_host ]
+						% );
 					% for (@rows) {
 						<tr>
 							<th style="text-align: left; padding: 0.25rem"><%= $_->[0] %>:</th>
@@ -182,11 +216,20 @@
 		% if ($verbosity >= 2) {
 			<table style="border-collapse: collapse">
 				<thead>
-					<tr><th style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray" colspan="2"><%= maketext('Data about the environment') %></th></tr>
+					<tr>
+						<th
+							style="text-align: left; padding: 0.25rem; border: 1px solid black;
+						background-color: lightgray"
+							colspan="2"
+						>
+							<%= maketext('Data about the environment') %>
+						</th>
+					</tr>
 				</thead>
 				<tbody>
-					<tr><td style="text-align: left; padding: 0.25rem"><pre><%= dumper($ce) %></pre></td></tr>
+					<tr>
+						<td style="text-align: left; padding: 0.25rem"><pre><%= dumper($ce) %></pre></td>
+					</tr>
 				</tbody>
 			</table>
 		% }

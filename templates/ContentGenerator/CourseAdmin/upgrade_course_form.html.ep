@@ -1,6 +1,6 @@
 % use WeBWorK::Utils::CourseDBIntegrityCheck;
 % use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(checkCourseDirectories checkCourseLinks);
-% use WeBWorK::Utils::CourseManagement qw(listCourses);
+% use WeBWorK::Utils::CourseManagement              qw(listCourses);
 % use WeBWorK::CourseEnvironment;
 %
 % my @courseIDs = sort { lc($a) cmp lc($b) } listCourses($ce);
@@ -36,10 +36,15 @@
 			<li class="align-items-center">
 				% if (!$tables_ok || !$directories_ok || !$links_ok) {
 					<div class="form-check form-check-inline me-0">
-						<%= check_box upgrade_courseIDs => $courseID, name => 'upgrade_courseIDs',
-							id => "upgrade_courseIDs_$courseID", checked => undef, class => 'form-check-input' %>
-						<%= label_for "upgrade_courseIDs_$courseID" => maketext('Upgrade'),
-							class => 'form-check-label' =%>
+						<%= check_box
+							upgrade_courseIDs => $courseID,
+							name              => 'upgrade_courseIDs',
+							id                => "upgrade_courseIDs_$courseID",
+							checked           => undef,
+							class             => 'form-check-input' %>
+						<%= label_for
+							"upgrade_courseIDs_$courseID" => maketext('Upgrade'),
+							class                         => 'form-check-label' =%>
 					</div>
 				% }
 				<%= link_to $courseID => 'set_list' => { courseID => $courseID } =%><span>:</span>

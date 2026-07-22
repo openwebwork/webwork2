@@ -14,8 +14,12 @@
 	% last;
 % }
 %
-<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data',
-	id => 'FileManager', name => 'FileManager', begin =%>
+<%= form_for current_route,
+	method  => 'POST',
+	enctype => 'multipart/form-data',
+	id      => 'FileManager',
+	name    => 'FileManager',
+	begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
 	% my $action = param('action') || param('formAction') || param('confirmed') || 'Init';

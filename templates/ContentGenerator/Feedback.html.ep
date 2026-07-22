@@ -32,22 +32,25 @@
 			<%= maketext(
 				'Use this form to ask your instructor a question, to report a problem with the WeBWorK system, or '
 					. 'to report an error in a problem you are attempting. Along with your message, additional '
-					. 'information about the state of the system will be included.'
-			) =%>
+					. 'information about the state of the system will be included.') =%>
 		</div>
 		<div class="row mb-3">
 			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
 			<div class="col-auto">
-				<%= email_field from => $user_email_address, class => 'form-control', size => 40, id => 'from',
+				<%= email_field
+					from  => $user_email_address,
+					class => 'form-control',
+					size  => 40,
+					id    => 'from',
 					$user_email_address
-						? (disabled => undef, readonly => undef)
-						: (
-							required       => undef,
-							placeholder    => 'Email address',
-							autocorrect    => 'off',
-							autocapitalize => 'off',
-							pattern        => '^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`~\\-]+@[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9.\\-]+$'
-						) =%>
+					? (disabled => undef, readonly => undef)
+					: (
+						required       => undef,
+						placeholder    => 'Email address',
+						autocorrect    => 'off',
+						autocapitalize => 'off',
+						pattern        => '^[a-zA-Z0-9.!#$%&\'*+\\/=?^_`~\\-]+@[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9.\\-]+$'
+					) =%>
 			</div>
 		</div>
 		% if (stash 'send_error') {
@@ -55,8 +58,13 @@
 		% }
 		<div class="mb-3">
 			<%= label_for 'feedback', class => 'form-label', begin =%><b><%= maketext('E-mail:') %></b><% end =%>
-			<%= text_area feedback => '', id => 'feedback', rows => '20', class => 'form-control',
-				placeholder => maketext('Compose Email Message'), required => undef =%>
+			<%= text_area
+				feedback    => '',
+				id          => 'feedback',
+				rows        => '20',
+				class       => 'form-control',
+				placeholder => maketext('Compose Email Message'),
+				required    => undef =%>
 		</div>
 		% # Attachment
 		<div class="row mb-3">
@@ -64,7 +72,9 @@
 				<b><%= maketext('Attachment:') %></b>
 			<%= end %>
 			<div class="col-auto">
-				<%= file_field 'attachment', id => 'attachment', class => 'form-control',
+				<%= file_field 'attachment',
+					id     => 'attachment',
+					class  => 'form-control',
 					accept => 'image/*,application/pdf,application/zip,text/plain,text/csv' =%>
 			</div>
 		</div>

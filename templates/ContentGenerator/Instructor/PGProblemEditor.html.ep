@@ -1,14 +1,14 @@
 % use Mojo::URL;
 % use Mojo::Util qw(url_escape);
 %
-% use WeBWorK::Utils qw(not_blank x getAssetURL);
-% use WeBWorK::Utils::Files qw(readFile);
-% use WeBWorK::Utils::Sets qw(format_set_name_display);
+% use WeBWorK::Utils                  qw(not_blank x getAssetURL);
+% use WeBWorK::Utils::Files           qw(readFile);
+% use WeBWorK::Utils::Sets            qw(format_set_name_display);
 % use WeBWorK::HTML::CodeMirrorEditor qw(generate_codemirror_html output_codemirror_static_files);
 %
 % content_for js => begin
 	<%= output_codemirror_static_files($c) =%>
-	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),           defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/PGProblemEditor/pgproblemeditor.js'), defer => undef =%>
 % end
 %
@@ -51,7 +51,8 @@
 %
 % my $fileInfo = begin
 	<div class="mb-2">
-		<%= tag 'div', class => 'set-file-info' . ($c->isTempEditFilePath($c->{inputFilePath}) ? ' temporaryFile' : ''),
+		<%= tag 'div',
+			class => 'set-file-info' . ($c->isTempEditFilePath($c->{inputFilePath}) ? ' temporaryFile' : ''),
 			begin =%>
 			<i>
 				<%== $c->{file_type} eq 'problem'
@@ -59,15 +60,23 @@
 						'Editing <strong>problem [_1] of set [_2]</strong> in file "[_3]".',
 						$c->{prettyProblemNumber},
 						tag('span', dir => 'ltr', format_set_name_display($setName)),
-						tag('span', dir => 'ltr', class => 'current-file',
-							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
-							$c->shortPath($c->{inputFilePath}))
+						tag(
+							'span',
+							dir   => 'ltr',
+							class => 'current-file',
+							data  => { tmp_file => $c->shortPath($c->{tempFilePath}) },
+							$c->shortPath($c->{inputFilePath})
 						)
+					)
 					: maketext(
 						$titles{ $c->{file_type} },
-						tag('span', dir => 'ltr', class => 'current-file',
-							data => { tmp_file => $c->shortPath($c->{tempFilePath}) },
-							$c->shortPath($c->{inputFilePath}))
+						tag(
+							'span',
+							dir   => 'ltr',
+							class => 'current-file',
+							data  => { tmp_file => $c->shortPath($c->{tempFilePath}) },
+							$c->shortPath($c->{inputFilePath})
+						)
 					) =%>
 			</i>
 		<% end =%>
@@ -75,8 +84,14 @@
 % end
 <%= $fileInfo->() %>
 %
-<%= form_for current_route, method => 'POST', id => 'editor', name => 'editor',
-	enctype => 'application/x-www-form-urlencoded', class => 'col-12', novalidate => undef, begin =%>
+<%= form_for current_route,
+	method     => 'POST',
+	id         => 'editor',
+	name       => 'editor',
+	enctype    => 'application/x-www-form-urlencoded',
+	class      => 'col-12',
+	novalidate => undef,
+	begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>
@@ -105,93 +120,88 @@
 		% # PG problem authoring resource links
 		<div class="mb-2">
 			<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
-				target => 'techniques_window',
-				title  => maketext('Sample problem code with documentation.'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+				target                              => 'techniques_window',
+				title                               => maketext('Sample problem code with documentation.'),
+				class                               => 'reference-link btn btn-sm btn-info',
+				data                                => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			<%= link_to maketext('Math Objects') => $ce->{webworkURLs}{MathObjectsHelpURL},
-				target => 'math_objects',
-				title  => maketext('Wiki summary page for MathObjects'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+				target                           => 'math_objects',
+				title                            => maketext('Wiki summary page for MathObjects'),
+				class                            => 'reference-link btn btn-sm btn-info',
+				data                             => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PG POD served locally
 			<%= link_to maketext('POD') => url_for('pod_index'),
-				target => 'pod_docs',
-				title  => maketext('Documentation from source code for PG modules and macro files.'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+				target                  => 'pod_docs',
+				title                   => maketext('Documentation from source code for PG modules and macro files.'),
+				class                   => 'reference-link btn btn-sm btn-info',
+				data                    => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # PGML lab problem rendered as an unattached problem in a new window.
 			% my $pgml_lab_source = readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg");
-			<%= tag 'button', type => 'button',
-				title  => maketext(
-					'PG markdown syntax used to format WeBWorK questions. '
-					. 'This interactive lab can help you to learn the techniques.'
-				),
+			<%= tag 'button',
+				type  => 'button',
+				title => maketext('PG markdown syntax used to format WeBWorK questions. '
+					. 'This interactive lab can help you to learn the techniques.'),
 				class => 'reference-link pgml-lab btn btn-sm btn-info',
 				data  => { source => url_escape($pgml_lab_source), bs_toggle => 'tooltip', bs_placement => 'top' },
 				'PGML' =%>
 			<%= link_to maketext('Author Info') => $ce->{webworkURLs}{AuthorHelpURL},
-				target => 'author_info',
-				title  => maketext('Top level of author information on the wiki.'),
-				class  => 'reference-link btn btn-sm btn-info',
-				data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+				target                          => 'author_info',
+				title                           => maketext('Top level of author information on the wiki.'),
+				class                           => 'reference-link btn btn-sm btn-info',
+				data                            => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
 			% if ($ce->{webworkURLs}{OPLBugReporter}
 				% && $c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
 				% && ($1 eq 'Library' || $1 eq 'Contrib'))
 			% {
 				<%= link_to maketext('Report Bugs in this Problem') =>
-						Mojo::URL->new($ce->{webworkURLs}{OPLBugReporter})
-							->query(
-								title => $c->getRelativeSourceFilePath($c->{editFilePath}),
-								body  => "Problem Seed: " . (param('action.view.seed') // $c->{problemSeed})
-							),
-					target => 'bug_report',
-					title  => maketext(
-						'Report bugs in a WeBWorK question/problem using this link. '
-						. 'The very first time you do this you will need to register with an email address so that '
-						. 'information on the bug fix can be reported back to you.'
+					Mojo::URL->new($ce->{webworkURLs}{OPLBugReporter})->query(
+						title => $c->getRelativeSourceFilePath($c->{editFilePath}),
+						body  => "Problem Seed: " . (param('action.view.seed') // $c->{problemSeed})
 					),
-					class  => 'reference-link btn btn-sm btn-info',
-					data   => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
+					target => 'bug_report',
+					title  => maketext('Report bugs in a WeBWorK question/problem using this link. '
+						. 'The very first time you do this you will need to register with an email address so that '
+						. 'information on the bug fix can be reported back to you.'),
+					class => 'reference-link btn btn-sm btn-info',
+					data  => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% }
 		</div>
 	% }
 	<div id="pgedit-container" class="mb-2">
 		<div class="pgedit-inner-container">
 			<div class="pgedit-panel code order-last order-lg-first">
-				<%= generate_codemirror_html(
-					$c,
-					'problemContents',
-					$problemContents,
-					{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg'
-				) =%>
+				<%= generate_codemirror_html($c, 'problemContents', $problemContents,
+					{ course_info => 'html', hardcopy_theme => 'xml' }->{ $c->{file_type} } // 'pg') =%>
 			</div>
-            <div class="pgedit-resizer horizontal-resizer"
-                tabindex="0"
-                role="separator"
-                aria-hidden="vertical"
-                aria-label="horizontally resize panels"
-            >
+			<div
+				class="pgedit-resizer horizontal-resizer"
+				tabindex="0"
+				role="separator"
+				aria-hidden="vertical"
+				aria-label="horizontally resize panels"
+			>
 				<i class="fa-solid fa-grip-lines-vertical fa-lg" aria-hidden="true"></i>
 			</div>
 			<div class="pgedit-panel render mb-lg-0 order-first order-lg-last">
 				<div class="p-0" id="pgedit-render-area">
-					<div class="placeholder d-flex flex-column justify-content-center
-						 align-items-center bg-secondary-subtle h-100">
+					<div
+						class="placeholder d-flex flex-column justify-content-center
+						 align-items-center bg-secondary-subtle h-100"
+					>
 						<div class="fs-1"><%= maketext('Loading...') %></div>
 						<i class="fa-solid fa-spinner fa-spin fa-2x"></i>
 					</div>
 				</div>
 			</div>
 		</div>
-        <div
-            class="pgedit-resizer vertical-resizer"
-            tabindex="0"
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label="vertically resize panels"
-        >
+		<div
+			class="pgedit-resizer vertical-resizer"
+			tabindex="0"
+			role="separator"
+			aria-orientation="horizontal"
+			aria-label="vertically resize panels"
+		>
 			<i class="fa-solid fa-grip-lines fa-lg" aria-hidden="true"></i>
 		</div>
 	</div>
@@ -206,16 +216,15 @@
 		% my $disabled =
 			% ($actionID eq 'revert' && (!defined($c->{tempFilePath}) || !-e $c->{tempFilePath}) && !$c->getBackupTimes)
 			% || ($actionID eq 'save' && $line_contents eq '')
-			% || ($actionID eq 'add_problem' && $c->{is_pg} && $line_contents eq '')
-				% ? ' disabled' : '';
+			% || ($actionID eq 'add_problem' && $c->{is_pg} && $line_contents eq '') ? ' disabled' : '';
 		%
 		% if (($line_contents && $line_contents ne '') || $disabled) {
 			% unless ($default_choice) { $active = ' active'; $default_choice = $actionID; }
 			% content_for 'tab-list' => begin
 				<li class="nav-item" role="presentation">
 					<%= link_to maketext($actionFormTitles->{$actionID}) => "#$actionID",
-						class           => "nav-link action-link$active$disabled",
-						id              => "$actionID-tab",
+						class                                            => "nav-link action-link$active$disabled",
+						id                                               => "$actionID-tab",
 						data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
 						role            => 'tab',
 						'aria-controls' => $actionID,
@@ -223,8 +232,12 @@
 				</li>
 			% end
 			% content_for 'tab-content' => begin
-				<div class="tab-pane fade <%= $active ? "show$active" : '' %>"
-					id="<%= $actionID %>" role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+				<div
+					class="tab-pane fade <%= $active ? "show$active" : '' %>"
+					id="<%= $actionID %>"
+					role="tabpanel"
+					aria-labelledby="<%= $actionID %>-tab"
+				>
 					<%= $line_contents %>
 				</div>
 			% end
@@ -233,11 +246,15 @@
 	%
 	<%= hidden_field action => $default_choice, id => 'current_action' =%>
 	<div>
-		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<ul class="nav nav-tabs mb-2" role="tablist">
+			<%= content 'tab-list' =%>
+		</ul>
 		<div class="tab-content"><%= content 'tab-content' %></div>
 	</div>
 	<div>
-		<%= submit_button maketext($actionFormTitles->{$default_choice}), name => 'submit', id => 'take_action',
+		<%= submit_button maketext($actionFormTitles->{$default_choice}),
+			name  => 'submit',
+			id    => 'take_action',
 			class => 'btn btn-primary' =%>
 	</div>
 <% end =%>

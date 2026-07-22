@@ -16,8 +16,7 @@
 					$_ eq $problem->problem_id
 					? (class => 'nav-link active')
 					: (href => $c->systemLink(url_for(current_route, problemID => $_)), class => 'nav-link'),
-					maketext('Problem [_1]', $set->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($_)) : $_)
-				=%>
+					maketext('Problem [_1]', $set->assignment_type eq 'jitar' ? join('.', jitar_id_to_seq($_)) : $_) =%>
 			</li>
 		% }
 	</ul>

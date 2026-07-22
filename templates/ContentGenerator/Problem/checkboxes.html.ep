@@ -1,4 +1,5 @@
-% last unless $c->{can}{showAnsGroupInfo}
+% last
+	% unless $c->{can}{showAnsGroupInfo}
 	% || $c->{can}{showAnsHashInfo}
 	% || $c->{can}{showPGInfo}
 	% || $c->{can}{showResourceInfo};
@@ -8,7 +9,10 @@
 	%
 	% if ($c->{can}{showAnsGroupInfo}) {
 		<div class="form-check form-check-inline">
-			<%= check_box showAnsGroupInfo => 1, id => 'showAnsGroupInfo', class => 'form-check-input',
+			<%= check_box
+				showAnsGroupInfo => 1,
+				id               => 'showAnsGroupInfo',
+				class            => 'form-check-input',
 				$c->{will}{showAnsGroupInfo} ? (checked => undef) : () =%>
 			<%= label_for showAnsGroupInfo => maketext('Answer Group Info'), class => "form-check-label" =%>
 		</div>
@@ -16,7 +20,10 @@
 	%
 	% if ($c->{can}{showResourceInfo}) {
 		<div class="form-check form-check-inline">
-			<%= check_box showResourceInfo => 1, id => 'showResourceInfo', class => 'form-check-input',
+			<%= check_box
+				showResourceInfo => 1,
+				id               => 'showResourceInfo',
+				class            => 'form-check-input',
 				$c->{will}{showResourceInfo} ? (checked => undef) : () =%>
 			<%= label_for showResourceInfo => maketext('Auxiliary Resources'), class => 'form-check-label' =%>
 		</div>
@@ -24,7 +31,10 @@
 	%
 	% if ($c->{can}{showAnsHashInfo}) {
 		<div class="form-check form-check-inline">
-			<%= check_box showAnsHashInfo => 1, id => 'showAnsHashInfo', class => 'form-check-input',
+			<%= check_box
+				showAnsHashInfo => 1,
+				id              => 'showAnsHashInfo',
+				class           => 'form-check-input',
 				$c->{will}{showAnsHashInfo} ? (checked => undef) : () =%>
 			<%= label_for showAnsHashInfo => maketext('Answer Hash Info'), class => 'form-check-label' =%>
 		</div>
@@ -32,9 +42,12 @@
 	%
 	% if ($c->{can}{showPGInfo}) {
 		<div class="form-check form-check-inline">
-			<%= check_box showPGInfo => 1, id => 'showPGInfo', class => 'form-check-input',
+			<%= check_box
+				showPGInfo => 1,
+				id         => 'showPGInfo',
+				class      => 'form-check-input',
 				$c->{will}{showPGInfo} ? (checked => undef) : () =%>
-			<%= label_for showPGInfo => maketext('PG Info'), class =>  'form-check-label' =%>
+			<%= label_for showPGInfo => maketext('PG Info'), class => 'form-check-label' =%>
 		</div>
 	% }
 </div>

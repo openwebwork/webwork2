@@ -1,13 +1,17 @@
-% my $fieldName = 'user.' . $user->user_id . '.' . $field;
+% my $fieldName  = 'user.' . $user->user_id . '.' . $field;
 % my $properties = $fieldProperties->{$field};
 %
 % if ($properties->{type} eq 'text' || $properties->{type} eq 'number') {
 	% my $value = $user->$field;
 	% if ($c->{editMode}) {
 		% my $field_method = "$properties->{type}_field";
-		<%= $c->$field_method($fieldName => $value, id => $fieldName . '_id', %{$properties->{attributes} // {}},
-			class => 'form-control form-control-sm d-inline w-auto',
-			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header') =%>
+		<%= $c->$field_method(
+			$fieldName => $value,
+			id         => $fieldName . '_id',
+			%{ $properties->{attributes} // {} },
+			class             => 'form-control form-control-sm d-inline w-auto',
+			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header'
+		) =%>
 	% } else {
 		% if ($field eq 'email_address') {
 			% if ($value =~ /\S/) {
@@ -18,19 +22,21 @@
 		% }
 	% }
 % } elsif ($properties->{type} eq 'status') {
-	% my $value = $user->$field;
+	% my $value       = $user->$field;
 	% my $status_name = $ce->status_abbrev_to_name($value);
 	% if ($c->{editMode}) {
 		% if (defined $status_name) {
 			% $value = ($ce->status_name_to_abbrevs($status_name))[0];
 		% }
-		<%= select_field $fieldName => [
+		<%= select_field
+			$fieldName => [
 				map { [
 					maketext($_) => $ce->{statuses}{$_}{abbrevs}[0],
 					$ce->{statuses}{$_}{abbrevs}[0] eq $value ? (selected => undef) : ()
 				] } sort(keys %{ $ce->{statuses} })
 			],
-			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
+			id                => $fieldName . '_id',
+			class             => 'form-select form-select-sm w-auto flex-grow-0',
 			'aria-labelledby' => 'status_header' =%>
 	% } else {
 		<%= $status_name ? maketext($status_name) : $value =%>
@@ -42,14 +48,19 @@
 		% my @values;
 		% for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
 			% next unless $ce->{userRoles}{$role} <= $db->getPermissionLevel(param('user'))->permission;
-			% push(@values, [
-				% maketext($role) => $ce->{userRoles}{$role},
-				% $value eq $ce->{userRoles}{$role} ? (selected => undef) : ()
-			% ]);
+			% push(
+				% @values,
+				% [
+					% maketext($role) => $ce->{userRoles}{$role},
+					% $value eq $ce->{userRoles}{$role} ? (selected => undef) : ()
+				% ]
+			% );
 		% }
 		%
-		<%= select_field $fieldName => \@values,
-			id => $fieldName . '_id', class => 'form-select form-select-sm w-auto flex-grow-0',
+		<%= select_field
+			$fieldName        => \@values,
+			id                => $fieldName . '_id',
+			class             => 'form-select form-select-sm w-auto flex-grow-0',
 			'aria-labelledby' => 'permission_header' =%>
 	% } elsif (my $roleName = (grep { $ce->{userRoles}{$_} eq $value } keys %{ $ce->{userRoles} })[0]) {
 		<%= maketext($roleName) %>
@@ -71,17 +82,21 @@
 	% } else {
 		<div class="row flex-nowrap">
 			<div class="col-auto">
-				<%= text_field $fieldName => '', id => "${fieldName}_id",
-					placeholder => $user->{passwordExists} ? 'password set' : 'no password set',
-					class => 'form-control form-control-sm d-inline w-auto', size => 14,
+				<%= text_field
+					$fieldName        => '',
+					id                => "${fieldName}_id",
+					placeholder       => $user->{passwordExists} ? 'password set' : 'no password set',
+					class             => 'form-control form-control-sm d-inline w-auto',
+					size              => 14,
 					'aria-labelledby' => 'password_header' =%>
 			</div>
 			% # This checkbox is always rendered (even when there is no password to delete) so that the columns of
 			% # checkboxes line up from row to row.  When there is no password, it is just made invisible and
 			% # disabled so it has no effect and cannot be interacted with.
 			<div class="col-auto form-check d-flex align-items-center">
-				<%= check_box "${fieldName}_delete" => 1,
-					class => 'form-check-input' . ($user->{passwordExists} ? '' : ' invisible'),
+				<%= check_box
+					"${fieldName}_delete" => 1,
+					class                 => 'form-check-input' . ($user->{passwordExists} ? '' : ' invisible'),
 					$user->{passwordExists}
 					? (data => { bs_toggle => 'tooltip', bs_title => 'Check to delete password' })
 					: (disabled => undef, tabindex => -1, 'aria-hidden' => 'true') =%>
@@ -90,13 +105,16 @@
 				% # For a user with no password, this checkbox is not checked by default (there is nothing to reset
 				% # yet). Instead, js/UserList/userlist.js automatically checks it once a new password is actually
 				% # typed into the password field above (unless the instructor has manually toggled it themselves).
-				<%= check_box "${fieldName}_must_reset" => 1, class => 'form-check-input',
-					'aria-label' => maketext('Prompt this user to reset their password at next login'),
-					data => {
+				<%= check_box
+					"${fieldName}_must_reset" => 1,
+					class                     => 'form-check-input',
+					'aria-label'              => maketext('Prompt this user to reset their password at next login'),
+					data                      => {
 						bs_toggle => 'tooltip',
 						bs_title  => maketext(
 							'Check to require this user to change their password before they can access the '
-								. 'course again. Only takes effect if the user has or is given a password.'),
+							. 'course again. Only takes effect if the user has or is given a password.'
+						),
 						($user->{passwordExists} ? () : (auto_check => 'password'))
 					},
 					$user->{mustResetPassword} ? (checked => undef) : () =%>

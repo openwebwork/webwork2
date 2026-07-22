@@ -26,18 +26,25 @@
 		</div>
 		<label class="col-auto col-form-label col-form-label-sm" for="common-date">to</label>
 		<div class="col-auto input-group input-group-sm flatpickr flex-nowrap" style="max-width: 200px">
-			<%= text_field 'common-date' => '',
-				id => 'common-date', class => 'form-control',
-				data => {
-					input => undef,
+			<%= text_field
+				'common-date' => '',
+				id            => 'common-date',
+				class         => 'form-control',
+				data          => {
+					input      => undef,
 					done_text  => maketext('Done'),
 					today_text => maketext('Today'),
 					now_text   => maketext('Now'),
 					locale     => $ce->{language},
 					timezone   => $ce->{siteDefaults}{timezone}
 				} =%>
-			<a class="btn btn-secondary btn-sm" data-toggle role="button" tabindex="0"
-				aria-label="<%= maketext('Pick date and time') =%>">
+			<a
+				class="btn btn-secondary btn-sm"
+				data-toggle
+				role="button"
+				tabindex="0"
+				aria-label="<%= maketext('Pick date and time') =%>"
+			>
 				<i class="fas fa-calendar-alt"></i>
 			</a>
 		</div>
@@ -58,34 +65,43 @@
 	<%= maketext('Please select at least one set.') %>
 </div>
 <div class="table-responsive">
-	<table id="set_table_id" class="set_table table table-sm table-bordered caption-top font-sm <%=
-		$c->{editMode} ? 'align-middle' : '' %>">
+	<table
+		id="set_table_id"
+		class="set_table table table-sm table-bordered caption-top font-sm <%= $c->{editMode} ? 'align-middle' : '' %>"
+	>
 		%
-		<caption><%= maketext('Set List') %></caption>
+		<caption>
+			<%= maketext('Set List') %>
+		</caption>
 		%
 		<thead class="table-group-divider">
 			<tr>
 				<th>
 					<%= label_for 'select-all', begin =%>
-						<%= check_box 'select-all' => '', id => 'select-all',
-							class => 'select-all form-check-input set-id-tooltip',
+						<%= check_box
+							'select-all' => '',
+							id           => 'select-all',
+							class        => 'select-all form-check-input set-id-tooltip',
 							'aria-label' => maketext('Select all sets'),
-							data => {
+							data         => {
 								select_group => $c->{editMode} ? 'apply_date_sets' : 'selected_sets',
-								bs_toggle => 'tooltip',
+								bs_toggle    => 'tooltip',
 								bs_placement => 'right',
-								bs_title => maketext('Select all sets')
+								bs_title     => maketext('Select all sets')
 							} =%>
-							<i class="fa-solid fa-check-double" aria-hidden="true"></i>
-						<% end =%>
+						<i class="fa-solid fa-check-double" aria-hidden="true"></i>
+					<% end =%>
 				</th>
 				% for (@$fieldNames) {
-					<th id="<%= $_ %>_header"
-						<%== !$c->{editMode} && $sortableFields->{$_} ? $c->ariaSortAttr($_) : '' %>>
+					<th
+						id="<%= $_ %>_header"
+						<%== !$c->{editMode} && $sortableFields->{$_} ? $c->ariaSortAttr($_) : '' %>
+					>
 						% if (!$c->{editMode} && $sortableFields->{$_}) {
 							<div class="d-flex justify-content-between align-items-end gap-1">
-								<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',
-									data => { sort_field => $_ } =%>
+								<%= link_to $fieldHeaders{$_} => '#',
+									class                     => 'sort-header',
+									data                      => { sort_field => $_ } =%>
 								<%= include 'ContentGenerator/Instructor/ProblemSetList/sort_button', field => $_ =%>
 							</div>
 						% } else {
@@ -100,7 +116,8 @@
 			% my %selectedSetIDs = (map { $_ => 1 } @{ $c->{selectedSetIDs} });
 			% for (@$sets) {
 				<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_row',
-					set => $_, setSelected => $selectedSetIDs{ $_->set_id } =%>
+					set         => $_,
+					setSelected => $selectedSetIDs{ $_->set_id } =%>
 			% }
 		</tbody>
 	</table>

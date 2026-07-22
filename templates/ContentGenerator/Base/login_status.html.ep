@@ -9,7 +9,7 @@
 	<div class="d-flex justify-content-end align-items-center">
 		<%= maketext('Logged in as [_1].', $userName) %>
 		<%= link_to $c->systemLink(url_for 'logout'), class => 'btn btn-light btn-sm ms-2', begin %>
-		<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
+			<%= maketext('Log Out') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
 		<% end %>
 	</div>
 	%
@@ -27,8 +27,9 @@
 		<div class="d-flex justify-content-end align-items-center">
 			<%= maketext('Acting as [_1].', $effectiveUserName) %>
 			<%= link_to $c->systemLink(url_for, params => { effectiveUser => $userID }),
-				class => 'btn btn-light btn-sm ms-2', begin %>
-			<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
+				class => 'btn btn-light btn-sm ms-2',
+				begin %>
+				<%= maketext('Stop Acting') %> <i class="icon fas fa-sign-out-alt" aria-hidden="true"></i>
 			<% end %>
 		</div>
 	% }

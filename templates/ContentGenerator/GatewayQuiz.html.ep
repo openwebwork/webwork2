@@ -1,5 +1,5 @@
-% use WeBWorK::Utils qw(wwRound getAssetURL);
-% use WeBWorK::Utils::DateTime qw(before after);
+% use WeBWorK::Utils                       qw(wwRound getAssetURL);
+% use WeBWorK::Utils::DateTime             qw(before after);
 % use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
 % use WeBWorK::HTML::SingleProblemGrader;
 % use WeBWorK::AchievementEvaluator qw(checkForAchievements);
@@ -91,17 +91,15 @@
 		<div class="mb-2"><%= stash->{actingConfirmation} =%></div>
 		<div>
 			<%= link_to stash->{actingConfirmationButton} => $c->systemLink(
-					url_for,
-					params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
+				url_for,
+				params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
 				),
-				class => 'btn btn-primary'
-			=%>
+				class => 'btn btn-primary' =%>
 			<%= link_to maketext('Cancel') => $c->systemLink(
-					url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
-					params => { effectiveUser => $effectiveUserID, user => $userID }
+				url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
+				params => { effectiveUser => $effectiveUserID, user => $userID }
 				),
-				class => 'btn btn-primary'
-			=%>
+				class => 'btn btn-primary' =%>
 		</div>
 	</div>
 	%
@@ -162,12 +160,10 @@
 	</div>
 	%
 	% # Finally, if there is another recorded message, output that too.
-	% if (
-		% $c->{set}->attempts_per_version > 1
+	% if ($c->{set}->attempts_per_version > 1
 		% && $c->{attemptNumber} > 0
 		% && $c->{recordedScore} != $c->{attemptScore}
-		% && $c->{can}{showScore}
-	% )
+		% && $c->{can}{showScore})
 	% {
 		<div class="alert alert-warning p-1">
 			<%== maketext(
@@ -225,11 +221,12 @@
 	% # Print the timer if there is less than 24 hours left.
 	% if ($timeLeft < 86400) {
 		<div id="gwTimerContainer" class="d-flex flex-column gap-2 mb-2">
-			<%= tag('div',
-				id    => 'gwTimer',
-				class => 'alert alert-warning p-1 mb-0',
+			<%= tag(
+				'div',
+				id            => 'gwTimer',
+				class         => 'alert alert-warning p-1 mb-0',
 				'aria-hidden' => 'true',
-				data  => {
+				data          => {
 					server_time     => int($submitTime),
 					server_due_time => $c->{set}->due_date,
 					session_timeout => $ce->{sessionTimeout},
@@ -237,7 +234,8 @@
 					grace_period    => $ce->{gatewayGracePeriod},
 					alert_title     => maketext('Test Time Notification'),
 					alert_three     => maketext(
-						'You have less than 90 seconds left to complete this assignment. You should finish it soon!'),
+						'You have less than 90 seconds left to complete this assignment. You should finish it soon!'
+					),
 					alert_two => ('<div>' . maketext('You have less than 45 seconds left!') . '</div>')
 						. (
 							($c->{set}->attempts_per_version > 1 && $c->{attemptNumber} > 0) ? ''
@@ -253,7 +251,8 @@
 				# '00:00:00' is a placeholder that is replaced by the actual time remaining via javascript.
 				maketext('Remaining time: [_1]', '00:00:00')
 			) =%>
-			<%= tag('button',
+			<%= tag(
+				'button',
 				id    => 'gwAnnounceTimeBtn',
 				type  => 'button',
 				class => 'btn btn-sm btn-secondary',
@@ -263,19 +262,17 @@
 	% }
 	%
 	% if ($timeLeft < 60 && $timeLeft > 0 && !$c->{can}{gradeUnsubmittedTest}
-			% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
 	% } elsif ($timeLeft <= 0 && !$c->{can}{gradeUnsubmittedTest} &&
-			% !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong>
 				<%= maketext('You are out of time!')
-					. (
-						$c->{set}->attempts_per_version > 1
-						&& $c->{attemptNumber} > 0 ? '' : ' ' . maketext('Press "Grade Test" now!')
-					) =%>
+					. ($c->{set}->attempts_per_version > 1
+						&& $c->{attemptNumber} > 0 ? '' : ' ' . maketext('Press "Grade Test" now!')) =%>
 			</strong>
 		</div>
 	% }
@@ -321,19 +318,16 @@
 		<div class="alert alert-warning p-1">
 			<strong>
 				<%== maketext(
-						'Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).',
-						$setVersionID,
-						'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
-						'<span id="test-total-possible">' . $c->{totalPossible} . '</span>',
-						'<span id="test-recorded-percent">'
-							. wwRound(0, 100 * $c->{recordedScore} / $c->{totalPossible})
-							. '</span>'
+					'Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).',
+					$setVersionID,
+					'<span id="test-recorded-score">' . wwRound(2, $c->{recordedScore}) . '</span>',
+					'<span id="test-total-possible">' . $c->{totalPossible} . '</span>',
+					'<span id="test-recorded-percent">'
+						. wwRound(0, 100 * $c->{recordedScore} / $c->{totalPossible})
+						. '</span>'
 					)
-					. (
-						$c->{exceededAllowedTime} && $c->{recordedScore} == 0
-						? ' ' . maketext('You exceeded the allowed time.')
-						: ''
-					) =%>
+					. ($c->{exceededAllowedTime}
+						&& $c->{recordedScore} == 0 ? ' ' . maketext('You exceeded the allowed time.') : '') =%>
 			</strong>
 			<br>
 		</div>
@@ -357,7 +351,7 @@
 			<div class="col-md-10 mb-1">
 				<div class="alert alert-info p-1 mb-0">
 					<%= maketext('The test (which is version [_1]) may no longer be submitted for a grade.',
-							$setVersionID)
+						$setVersionID)
 						. ($c->{can}{showScore} ? (' ' . maketext('You may still check your answers.')) : '') %>
 				</div>
 			</div>
@@ -386,8 +380,10 @@
 	<div class="gwProblem">
 		% if ($c->{set}->hide_work eq 'BeforeAnswerDate') {
 			<strong>
-				<%= maketext('Completed results for this assignment are not available until [_1].',
-					$c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})) %>
+				<%= maketext(
+					'Completed results for this assignment are not available until [_1].',
+					$c->formatDateTime($c->{set}->answer_date, $ce->{studentDateDisplayFormat})
+				) %>
 			</strong>
 		% } else {
 			<strong><%= maketext('Completed results for this assignment are not available.') %></strong>
@@ -401,7 +397,7 @@
 		<div class="row g-0">
 			<div class="col-12 alert alert-danger">
 				<%== maketext('<strong>Warning</strong>: There may be something wrong with a problem in this test. '
-					. 'Please inform your instructor including the warning messages below the problem.') =%>
+						. 'Please inform your instructor including the warning messages below the problem.') =%>
 			</div>
 		</div>
 	% }
@@ -428,15 +424,21 @@
 			% content_for 'gw-navigation-problem-row' => begin
 				<td class="problem">
 					% if ($i >= $startProb && $i <= $endProb) {
-						<%= link_to $pn => '#', class => 'problem-jump-link', data => { problem_number => $pn } =%>
+						<%= link_to
+							$pn   => '#',
+							class => 'problem-jump-link',
+							data  => { problem_number => $pn } =%>
 					% } else {
 						<%= $pn =%>
 					% }
 				</td>
 			% end
 			% content_for 'gw-navigation-score-row' => begin
-				<td class="score" data-problem-id="<%= $problems->[ $probOrder->[$i] ]->problem_id %>"
-					data-problem-value="<%= $problems->[ $probOrder->[$i] ]->value %>">
+				<td
+					class="score"
+					data-problem-id="<%= $problems->[ $probOrder->[$i] ]->problem_id %>"
+					data-problem-value="<%= $problems->[ $probOrder->[$i] ]->value %>"
+				>
 					% if ($c->{probStatus}[ $probOrder->[$i] ] == 1) {
 						&#128175;
 					% } else {
@@ -446,7 +448,9 @@
 			% end
 		% }
 		% content_for 'gw-navigation-cols' => begin
-			<colgroup><col class="header"></colgroup>
+			<colgroup>
+				<col class="header">
+			</colgroup>
 		% end
 		% if ($numProbPerPage && $numPages > 1) {
 			% content_for 'gw-navigation-cols' => begin
@@ -461,14 +465,19 @@
 			% end
 			% for my $i (1 .. $numPages) {
 				% content_for 'gw-navigation-pages' => begin
-					<td colspan="<%= $i == $numPages && (@$problem_numbers % $numProbPerPage)
-						? (@$problem_numbers % $numProbPerPage)
-						: $numProbPerPage %>"
-						class="<%= $i == $pageNumber ? 'page active' : 'page' %>">
+					<td
+						colspan="<%= $i == $numPages && (@$problem_numbers % $numProbPerPage)
+							? (@$problem_numbers % $numProbPerPage)
+							: $numProbPerPage %>"
+						class="<%= $i == $pageNumber ? 'page active' : 'page' %>"
+					>
 						% if ($i == $pageNumber) {
 							<%= $i =%>
 						% } else {
-							<%= link_to $i => '#', class => 'page-change-link', data => { page_number => $i } =%>
+							<%= link_to
+								$i    => '#',
+								class => 'page-change-link',
+								data  => { page_number => $i } =%>
 						% }
 					</td>
 				% end
@@ -494,15 +503,19 @@
 				<div class="submit-buttons-container mb-3">
 					% my $prevText = $numProbPerPage == 1 ? maketext('Previous Problem') : maketext('Previous Page');
 					% if ($pageNumber > 1) {
-						<%= link_to $prevText => '#',
-							class => 'btn btn-primary page-change-link', data => { page_number => $pageNumber - 1 } =%>
+						<%= link_to
+							$prevText => '#',
+							class     => 'btn btn-primary page-change-link',
+							data      => { page_number => $pageNumber - 1 } =%>
 					% } else {
 						<a class="btn btn-primary disabled" role="button" aria-disabled="true"><%= $prevText =%></a>
 					% }
 					% my $nextText = $numProbPerPage == 1 ? maketext('Next Problem') : maketext('Next Page');
 					% if ($pageNumber < $numPages) {
-						<%= link_to $nextText => '#',
-							class => 'btn btn-primary page-change-link', data => { page_number => $pageNumber + 1 } =%>
+						<%= link_to
+							$nextText => '#',
+							class     => 'btn btn-primary page-change-link',
+							data      => { page_number => $pageNumber + 1 } =%>
 					% } else {
 						<a class="btn btn-primary disabled" role="button" aria-disabled="true"><%= $nextText =%></a>
 					% }
@@ -510,7 +523,9 @@
 			% end
 		% } else {
 			% content_for 'gw-navigation-cols' => begin
-				<colgroup class="page"><% for (0 .. $#$pg_results) { =%><col class="problem"><% } =%></colgroup>
+				<colgroup class="page">
+					<% for (0 .. $#$pg_results) { =%><col class="problem"><% } =%>
+				</colgroup>
 			% end
 			% content_for 'gw-navigation-table-rows' => begin
 				<tr>
@@ -521,7 +536,10 @@
 		% }
 		% if ($c->{can}{showProblemScores} && $c->{set}->version_last_attempt_time) {
 			% content_for 'gw-navigation-table-rows' => begin
-				<tr><th><%= maketext('% Score:') %></th><%= content 'gw-navigation-score-row' =%></tr>
+				<tr>
+					<th><%= maketext('% Score:') %></th>
+					<%= content 'gw-navigation-score-row' =%>
+				</tr>
 			% end
 		% }
 		% my $jumpLinks = begin
@@ -545,23 +563,34 @@
 				%
 				% if ($c->{submitAnswers}) {
 					% if ($c->{scoreRecordedMessage}[ $probOrder->[$i] ] ne 'recorded') {
-						% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
-							% maketext('ANSWERS NOT RECORDED -- [_1]', $c->{scoreRecordedMessage}[ $probOrder->[$i] ])
+						% $recordMessage = tag(
+							% 'div',
+							% class => 'alert alert-danger d-inline-block mb-2 p-1',
+							% maketext(
+								% 'ANSWERS NOT RECORDED -- [_1]',
+								% $c->{scoreRecordedMessage}[ $probOrder->[$i] ]
+							% )
 						% );
 					% }
 					% $resultsTable = $c->attemptResults($pg);
 				% } elsif (param('showCorrectAnswers') && $c->{will}{showCorrectAnswers}) {
-					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
+					% $recordMessage = tag(
+						% 'div',
+						% class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('CORRECT ANSWERS SHOWN ONLY -- ANSWERS NOT RECORDED')
 					% );
 				% } elsif ($c->{will}{checkAnswers}) {
-					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
+					% $recordMessage = tag(
+						% 'div',
+						% class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED')
 					% );
-					%
+				%
 					% $resultsTable = $c->attemptResults($pg);
 				% } elsif ($c->{previewAnswers}) {
-					% $recordMessage = tag('div', class => 'alert alert-danger d-inline-block mb-2 p-1',
+					% $recordMessage = tag(
+						% 'div',
+						% class => 'alert alert-danger d-inline-block mb-2 p-1',
 						% maketext('PREVIEW ONLY -- ANSWERS NOT RECORDED')
 					% );
 				% }
@@ -573,8 +602,9 @@
 					<h2 class="gw-problem-number"><%= maketext('Problem [_1].', $i + 1) %></h2>
 					<span class="problem-sub-header">
 						% if ($c->{can}{showTemplateIds}) {
-							<%= '('
-								. maketext('Template ID: [_1]', $problems->[ $probOrder->[$i] ]->problem_id) . ')' %>
+							<%=
+								'(' . maketext('Template ID: [_1]', $problems->[ $probOrder->[$i] ]->problem_id) . ')'
+							%>
 						% }
 						% my $problemValue = $problems->[ $probOrder->[$i] ]->value;
 						% if (defined $problemValue) {
@@ -583,7 +613,7 @@
 						% }
 						%
 						% # This uses the permission level and user id of the user assigned to the set.
-						% if ( $authz->hasPermissions($effectiveUserID, 'print_path_to_problem') )
+						% if ($authz->hasPermissions($effectiveUserID, 'print_path_to_problem'))
 						% {
 							<%= $problems->[ $probOrder->[$i] ]->source_file %>
 						% }
@@ -602,14 +632,17 @@
 					% if ($pg->{flags}{error_flag}) {
 						% stash->{briefErrorOutput} = 1;
 						<%= include 'ContentGenerator/Base/error_output',
-							error => $pg->{errors},
+							error   => $pg->{errors},
 							details => $pg->{body_text} =%>
 						%
 						% delete stash->{briefErrorOutput};
 					% } else {
-						<div class="problem-content text-dark col-lg-10" <%== get_problem_lang_and_dir(
-								$pg->{flags}, $ce->{perProblemLangAndDirSettingMode}, $ce->{language}
-							) %>  data-bs-theme="light">
+						<div
+							class="problem-content text-dark col-lg-10"
+							<%== get_problem_lang_and_dir($pg->{flags}, $ce->{perProblemLangAndDirSettingMode},
+								$ce->{language}) %>
+							data-bs-theme="light"
+						>
 							<%== $pg->{body_text} =%>
 						</div>
 					% }
@@ -622,8 +655,7 @@
 							<b><%= maketext('Note') %>:</b>
 							<i>
 								<%= maketext('The solution shown is an instructor preview and '
-									. 'will only be shown to students when answers are available.'
-								) =%>
+										. 'will only be shown to students when answers are available.') =%>
 							</i>
 						</p>
 					% }
@@ -634,20 +666,20 @@
 							% || $authz->hasPermissions($userID, 'view_hidden_work')
 						% )
 						% && !$c->can_showCorrectAnswersForAll($c->{set}, $c->{problem}, $c->{tmplSet})
-						% )
+					% )
 					% {
 						<p>
 							<b><%= maketext('Note') %>:</b>
 							<i>
 								<%= maketext('The correct answers shown in feedback are instructor previews and '
-									. 'will only be shown to students when answers are available.') =%>
+										. 'will only be shown to students when answers are available.') =%>
 							</i>
 						</p>
 					% }
 					%
 					<div class="text-end mb-2">
 						<%= link_to maketext('preview answers') => '#',
-							class => 'gateway-preview-btn btn btn-secondary',
+							class                               => 'gateway-preview-btn btn btn-secondary',
 							($numProbPerPage && $numPages > 1) ? (data => { page_number => $pageNumber }) : () =%>
 					</div>
 					%
@@ -667,8 +699,8 @@
 						debug_messages   => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [] =%>
 				</div>
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
-					=> $c->{probStatus}[ $probOrder->[$i] ] =%>
+				<%= hidden_field 'probstatus'
+					. $problems->[ $probOrder->[$i] ]{problem_id} => $c->{probStatus}[ $probOrder->[$i] ] =%>
 				%
 				<div class="gwDivider"></div>
 			% } else {
@@ -684,8 +716,8 @@
 					% }
 				% }
 				% # Store the problem status for continued attempts recording.
-				<%= hidden_field 'probstatus' . $problems->[ $probOrder->[$i] ]{problem_id}
-					=> $c->{probStatus}[ $probOrder->[$i] ] %>
+				<%= hidden_field 'probstatus'
+					. $problems->[ $probOrder->[$i] ]{problem_id} => $c->{probStatus}[ $probOrder->[$i] ] %>
 			% }
 			%
 			% # If the user can check answers and a problem_data form parameter for
@@ -694,8 +726,9 @@
 				% $c->{can}{checkAnswers}
 				% && defined $c->param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id})
 			% ) {
-				<%= hidden_field 'problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}
-					=> param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}) =%>
+				<%= hidden_field 'problem_data_'
+					. $problems->[ $probOrder->[$i] ]{problem_id} =>
+					param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}) =%>
 			% }
 		% }
 		%
@@ -705,15 +738,17 @@
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 			% if ($c->{can}{checkAnswersNextTime}
-					% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
+			% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
 				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
 			% }
 			% if ($c->{can}{recordAnswersNextTime}) {
-				<%= tag('input',
+				<%= tag(
+					'input',
 					type  => 'submit',
 					name  => 'submitAnswers',
 					value => $effectiveUserID ne $userID
-						? maketext('Grade Test for [_1]', $effectiveUserID) : maketext('Grade Test'),
+					? maketext('Grade Test for [_1]', $effectiveUserID)
+					: maketext('Grade Test'),
 					class => 'btn btn-primary mb-1',
 					$c->{set}->attempts_per_version
 					? (
@@ -735,17 +770,18 @@
 									. 'and you will not be able to continue to work this test version.'
 								)
 							: maketext(
-							'This is your only submission.  If you say yes, then your answers will be final, '
-								. 'and you will not be able to continue to work this test version.'
+								'This is your only submission.  If you say yes, then your answers will be final, '
+									. 'and you will not be able to continue to work this test version.'
 							),
 							# This is always a plural form. JavaScript replaces %d with the
 							# number of unanswered questions which will be greater than one.
 							unanswered_questions_message =>
 								maketext('There are [_1] problems with unanswered questions.', '%d'),
-							unanswered_question_message => maketext('There is a problem with unanswered questions.'),
+							unanswered_question_message =>
+								maketext('There is a problem with unanswered questions.'),
 							return_to_test_message => maketext(
 								'Are you sure you want to grade the test? '
-								. 'Select "No" if you would like to return to the test to enter more answers.'
+									. 'Select "No" if you would like to return to the test to enter more answers.'
 							)
 						}
 						)
@@ -759,7 +795,8 @@
 		%
 		% if ($c->{can}{showCorrectAnswers}) {
 			<div class="submit-buttons-container col-12 my-2">
-				<%= submit_button maketext('Show Correct Answers'), name => 'showCorrectAnswers',
+				<%= submit_button maketext('Show Correct Answers'),
+					name  => 'showCorrectAnswers',
 					class => 'btn btn-primary mb-1' =%>
 			</div>
 		% }

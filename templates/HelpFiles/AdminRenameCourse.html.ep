@@ -3,6 +3,6 @@
 %
 <p class="mb-0">
 	<%= maketext('Select the course to change its Course ID, Course Title, or Institution.  Note that changing a '
-		. q{course's ID will change the URL of all links to the course, and could break links from external sites }
-		. 'such as an LMS.') =%>
+			. q{course's ID will change the URL of all links to the course, and could break links from external sites }
+			. 'such as an LMS.') =%>
 </p>

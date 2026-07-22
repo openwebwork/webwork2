@@ -18,22 +18,26 @@
 						<%== maketext(
 							'See [_1].',
 							link_to(
-								($_->policy =~ s/^Perl::Critic::Policy:://r)
-									=> pod_viewer => { filePath => 'lib/' . ($_->policy =~ s/::/\//gr) . '.pm' },
+								($_->policy =~ s/^Perl::Critic::Policy:://r) => pod_viewer =>
+									{ filePath => 'lib/' . ($_->policy =~ s/::/\//gr) . '.pm' },
 								target => '_blank'
 							)
 						) =%>
 					</div>
 					% if (ref($_->explanation->{sampleProblems}) eq 'ARRAY' && @{ $_->explanation->{sampleProblems} }) {
 						<div>
-							<%== maketext('Related sample [plural,_1,problem]:',
-								scalar(@{ $_->explanation->{sampleProblems} })) %>
-							<%= c(map {
-								link_to(
-									$_->[0] => sample_problem_viewer => { filePath => $_->[1] },
-									target => '_blank'
-								)
-							} @{ $_->explanation->{sampleProblems} })->join(', ') =%>
+							<%== maketext(
+								'Related sample [plural,_1,problem]:',
+								scalar(@{ $_->explanation->{sampleProblems} })
+							) %>
+							<%= c(
+								map {
+									link_to(
+										$_->[0] => sample_problem_viewer => { filePath => $_->[1] },
+										target  => '_blank'
+									)
+								} @{ $_->explanation->{sampleProblems} }
+							)->join(', ') =%>
 						</div>
 					% }
 				</li>
@@ -47,8 +51,10 @@
 				<li class="list-group-item">
 					<div><%= $_->to_string %></div>
 					<div>
-						See <%= link_to(
-							($_->policy =~ s/^Perl::Critic::Policy:://r) => 'https://metacpan.org/pod/' . $_->policy,
+						See
+						<%= link_to(
+							($_->policy =~ s/^Perl::Critic::Policy:://r) => 'https://metacpan.org/pod/'
+								. $_->policy,
 							target => '_blank'
 						) %>.
 					</div>

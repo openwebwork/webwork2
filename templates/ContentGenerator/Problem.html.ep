@@ -34,8 +34,10 @@
 	%
 	% # This is for tagging menus (if allowed)
 	% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
-		<%= javascript getAssetURL($ce, 'js/TagWidget/tagwidget.js'), id => 'tag-widget-script', defer => undef,
-			data => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
+		<%= javascript getAssetURL($ce, 'js/TagWidget/tagwidget.js'),
+			id    => 'tag-widget-script',
+			defer => undef,
+			data  => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
 	% # This is for any page specific js.  Right now its just used for achievement popups
@@ -69,7 +71,7 @@
 	<div class="row g-0 mb-2">
 		<div class="col-12 alert alert-danger m-0">
 			<%== maketext('<strong>Warning</strong>: There may be something wrong with this question. '
-				. 'Please inform your instructor including the warning messages below.') =%>
+					. 'Please inform your instructor including the warning messages below.') =%>
 		</div>
 	</div>
 % }
@@ -88,20 +90,26 @@
 	<div class="row g-0 mb-2">
 		<div class="col-10 alert alert-danger m-0">
 			<h2 style="color:red"><%= maketext('PG question failed to render') %></h2>
-			<p class="m-0"><%= maketext('Processing of this PG problem was not completed.  Probably because of a '
-				. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.') %></p>
+			<p class="m-0">
+				<%= maketext('Processing of this PG problem was not completed.  Probably because of a '
+						. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.'
+				) %>
+			</p>
 		</div>
 	</div>
 % }
 <div class="row">
 	<div class="col-lg-10">
-		<%= form_for current_route, method => 'POST', name => 'problemMainForm',
-			id => 'problemMainForm', class => 'problem-main-form', begin =%>
+		<%= form_for current_route,
+			method => 'POST',
+			name   => 'problemMainForm',
+			id     => 'problemMainForm',
+			class  => 'problem-main-form',
+			begin =%>
 			<%= $c->hidden_authen_fields =%>
 			<%= hidden_field(startTime => param('startTime') || time) =%>
 			<%= hidden_field(courseID => $c->ce->{courseName}) =%>
-			<div id="problem_body" class="problem-content"
-				<%== $c->output_problem_lang_and_dir %>>
+			<div id="problem_body" class="problem-content" <%== $c->output_problem_lang_and_dir %>>
 				<%= $c->output_problem_body =%>
 			</div>
 			<%= $c->output_message =%>

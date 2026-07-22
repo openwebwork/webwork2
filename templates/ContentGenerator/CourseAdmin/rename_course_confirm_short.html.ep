@@ -7,8 +7,9 @@
 			rename_newCourseID_checkbox rename_newCourseInstitution_checkbox rename_newCourseTitle_checkbox/
 	) =%>
 	<%= hidden_field rename_oldCourseTitle => $rename_oldCourseTitle, id => 'hidden_rename_oldCourseTitle' =%>
-	<%= hidden_field rename_oldCourseInstitution => $rename_oldCourseInstitution,
-		id => 'hidden_rename_oldCourseInstitution' =%>
+	<%= hidden_field
+		rename_oldCourseInstitution => $rename_oldCourseInstitution,
+		id                          => 'hidden_rename_oldCourseInstitution' =%>
 	%
 	<div class="text-start">
 		<hr>
@@ -22,8 +23,8 @@
 		<hr>
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext(q{Don't make changes}),
-					name  => 'decline_retitle_course',
-					class => 'btn btn-primary' =%>
+				name  => 'decline_retitle_course',
+				class => 'btn btn-primary' =%>
 			<%= submit_button maketext('Make changes'), name => 'confirm_retitle_course', class => 'btn btn-primary' =%>
 		</div>
 	</div>

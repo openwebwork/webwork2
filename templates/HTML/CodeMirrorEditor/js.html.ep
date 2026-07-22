@@ -7,10 +7,7 @@
 
 % if ($ce->{options}{PGCodeMirror}) {
 	% content_for js => begin
-		<%= javascript getAssetURL(
-				$ce,
-				'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js'
-			),
+		<%= javascript getAssetURL($ce, 'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js'),
 			defer => undef =%>
 		<%= javascript getAssetURL($ce, 'js/PGCodeMirror/pgeditor.js'), defer => undef =%>
 	% end

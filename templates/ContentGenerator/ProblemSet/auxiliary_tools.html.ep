@@ -34,18 +34,21 @@
 		% my $achievementItems = $c->{achievementItems};
 		% if ($achievementItems && @$achievementItems) {
 			<%= link_to maketext('Use Achievement Reward') => '#modal_rewards',
-				role  => 'button',
-				class => 'btn btn-primary',
-				id    => 'popup_rewards',
-				data  => { bs_toggle => 'modal' }
-			=%>
+				role                                       => 'button',
+				class                                      => 'btn btn-primary',
+				id                                         => 'popup_rewards',
+				data                                       => { bs_toggle => 'modal' } =%>
 			<div id="modal_rewards" class="modal hide fade" tabindex="-1">
 				<div class="modal-dialog modal-dialog-centered">
 					<div class="modal-content">
 						<div class="modal-header">
 							<h1 class="modal-title h4"><%= maketext('Achievement Rewards') %></h1>
-							<button type="button" class="btn-close" data-bs-dismiss="modal"
-								aria-label="<%= maketext('close') %>"></button>
+							<button
+								type="button"
+								class="btn-close"
+								data-bs-dismiss="modal"
+								aria-label="<%= maketext('close') %>"
+							></button>
 						</div>
 						<div class="modal-body">
 							<dl>
@@ -53,27 +56,34 @@
 									% my ($item, $form) = @$_;
 									<dt class="fs-4"><%= $item->name %></dt>
 									<dd class="mx-3 mb-4">
-									% if (param('user') eq param('effectiveUser')) {
-										<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
-											<%= hidden_field 'use_achievement_item_id' => $item->id %>
+										% if (param('user') eq param('effectiveUser')) {
+											<%= form_for current_route, method => 'POST', name => 'use_reward', begin =%>
+												<%= hidden_field 'use_achievement_item_id' => $item->id %>
+												<%= $form %>
+												% unless ($item->{hideUseButton}) {
+													<input
+														class="btn btn-primary"
+														type="submit"
+														name="use_achievement_item_<%= $item->id %>"
+														value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>"
+													>
+												% }
+											<%= end =%>
+										% } else {
 											<%= $form %>
-											% unless ($item->{hideUseButton}) {
-												<input class="btn btn-primary" type="submit"
-													name="use_achievement_item_<%= $item->id %>"
-													value="<%= maketext('Use [_1]', $item->remaining_title($c)) %>">
-											% }
-										<%= end =%>
-									% } else {
-										<%= $form %>
-										<span class="d-inline-block set-id-tooltip"
-											tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
-											data-bs-title="<%=maketext('You cannot use achievement rewards '
-																		. 'when acting as another user.') %>">
-											<button class="btn btn-primary" type="button" disabled>
-												<%= maketext('Use [_1]', $item->remaining_title($c)) %>
-											</button>
-										</span>
-									% }
+											<span
+												class="d-inline-block set-id-tooltip"
+												tabindex="0"
+												data-bs-toggle="tooltip"
+												data-bs-placement="top"
+												data-bs-title="<%= maketext('You cannot use achievement rewards '
+														. 'when acting as another user.') %>"
+											>
+												<button class="btn btn-primary" type="button" disabled>
+													<%= maketext('Use [_1]', $item->remaining_title($c)) %>
+												</button>
+											</span>
+										% }
 									</dd>
 								% }
 							</dl>
@@ -85,8 +95,13 @@
 				</div>
 			</div>
 		% } else {
-			<span class="d-inline-block set-id-tooltip" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
-				data-bs-title="<%=maketext('No achievement rewards are available for this assignment.') %>">
+			<span
+				class="d-inline-block set-id-tooltip"
+				tabindex="0"
+				data-bs-toggle="tooltip"
+				data-bs-placement="top"
+				data-bs-title="<%= maketext('No achievement rewards are available for this assignment.') %>"
+			>
 				<button class="btn btn-primary" type="button" disabled>
 					<%= maketext('Use Achievement Reward') %>
 				</button>
@@ -100,27 +115,31 @@
 		% && time < $c->{set}->answer_date
 	% ) {
 		<%= link_to maketext('Show Answers Now') => '#modal_view_answers_early',
-			role  => 'button',
-			class => 'btn btn-primary',
-			id    => 'popup_view_answers_early',
-			data  => { bs_toggle => 'modal' }
-		=%>
+			role                                 => 'button',
+			class                                => 'btn btn-primary',
+			id                                   => 'popup_view_answers_early',
+			data                                 => { bs_toggle => 'modal' } =%>
 		<div id="modal_view_answers_early" class="modal fade" tabindex="-1">
 			<div class="modal-dialog modal-dialog-centered">
 				<div class="modal-content">
 					<div class="modal-header">
 						<h1 class="modal-title h4"><%= maketext('Show Answers Now?') %></h1>
-						<button type="button" class="btn-close" data-bs-dismiss="modal"
-							aria-label="<%= maketext('close') %>"></button>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="<%= maketext('close') %>"
+						></button>
 					</div>
 					<div class="modal-body">
-						<p class="mb-0"><%= maketext(
-							'Are you sure you want to see the answer key now? This will change your answer date '
-								. 'for this set to the current time, making the correct answers to problems in this '
-								. 'set available to you immediately. If your close date and/or reduced scoring date '
-								. 'for this set are still in the future, those will also be changed to the current '
-								. 'time. This cannot be undone.'
-						) %></p>
+						<p class="mb-0">
+							<%= maketext(
+								'Are you sure you want to see the answer key now? This will change your answer date '
+									. 'for this set to the current time, making the correct answers to problems in this '
+									. 'set available to you immediately. If your close date and/or reduced scoring date '
+									. 'for this set are still in the future, those will also be changed to the current '
+									. 'time. This cannot be undone.') %>
+						</p>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -128,7 +147,8 @@
 						</button>
 						<%= form_for current_route, method => 'POST', name => 'view_answers_early', begin =%>
 							<%= $c->hidden_authen_fields =%>
-							<%= submit_button maketext('Yes, Show Me the Answers'), name => 'viewAnswersEarly',
+							<%= submit_button maketext('Yes, Show Me the Answers'),
+								name  => 'viewAnswersEarly',
 								class => 'btn btn-primary' =%>
 						<%= end =%>
 					</div>
@@ -138,9 +158,7 @@
 	% }
 	%
 	% unless ($c->{set}->assignment_type =~ /gateway/) {
-		<%= link_to
-			maketext('Download Hardcopy') => $c->systemLink(url_for 'hardcopy_preselect_set'),
-			class => 'btn btn-primary' =%>
+		<%= link_to maketext('Download Hardcopy') => $c->systemLink(url_for 'hardcopy_preselect_set'),
+			class                                 => 'btn btn-primary' =%>
 	% }
 </div>
-

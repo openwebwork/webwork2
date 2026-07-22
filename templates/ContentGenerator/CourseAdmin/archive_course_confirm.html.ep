@@ -6,38 +6,27 @@
 		<p class="<%= $_->[1] ? 'text-success' : 'text-danger' %> fw-bold my-0"><%= $_->[0] %></p>
 	% }
 % }
-% my (
-	% $all_tables_ok,
-	% $extra_database_tables,
-	% $extra_database_fields,
-	% $rebuild_table_indexes,
-	% $incorrect_type_database_fields,
-	% $db_report
-% ) = $c->formatReportOnDatabaseTables($dbStatus);
+% my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
+	% $incorrect_type_database_fields, $db_report)
+	% = $c->formatReportOnDatabaseTables($dbStatus);
 <%= $db_report %>
 % if ($extra_database_tables) {
 	<p class="text-danger fw-bold">
-		<%= maketext(
-			'There are extra database tables which are not defined in the schema.  '
-				. 'These can be deleted when upgrading the course.'
-		) =%>
+		<%= maketext('There are extra database tables which are not defined in the schema.  '
+				. 'These can be deleted when upgrading the course.') =%>
 	</p>
 % }
 % if ($extra_database_fields) {
 	<p class="text-danger fw-bold">
-		<%= maketext(
-			'There are extra database fields which are not defined in the schema for at least one table.  '
-				. 'They can be removed when upgrading the course.'
-		) =%>
+		<%= maketext('There are extra database fields which are not defined in the schema for at least one table.  '
+				. 'They can be removed when upgrading the course.') =%>
 	</p>
 % }
 % if ($rebuild_table_indexes) {
 	<p class="text-danger fw-bold">
-		<%= maketext(
-			'There are extra database fields which are not defined in the schema and were part of the key '
+		<%= maketext('There are extra database fields which are not defined in the schema and were part of the key '
 				. 'for at least one table. These fields need to be deleted and the table indexes need to be rebuilt. '
-				. 'This will be done when upgrading the course.'
-		) =%>
+				. 'This will be done when upgrading the course.') =%>
 	</p>
 % }
 % if ($incorrect_type_database_fields) {
@@ -46,8 +35,7 @@
 			'There are database fields that do not have the same type as the field defined in the schema for '
 				. 'at least one table. The types of these fields can be changed when upgrading the course. '
 				. 'Make sure that you archive the course here before doing that, since changing the type of a '
-				. 'field can corrupt the table.'
-		) =%>
+				. 'field can corrupt the table.') =%>
 	</p>
 % }
 % if (!$all_tables_ok) {
@@ -96,10 +84,8 @@
 <hr>
 % if ($all_tables_ok && param('delete_course')) {
 	<p class="text-danger fw-bold">
-		<%== maketext(
-			'Are you sure that you want to delete the course [_1] after archiving? This cannot be undone!',
-			tag('b', $archive_courseID)
-		) =%>
+		<%== maketext('Are you sure that you want to delete the course [_1] after archiving? This cannot be undone!',
+			tag('b', $archive_courseID)) =%>
 	</p>
 % }
 % # Print form for choosing next action.
@@ -120,17 +106,18 @@
 				<%= maketext(
 					'The course "[_1]" has already been archived at "[_2]". '
 						. 'This earlier archive will be erased.  This cannot be undone.',
-					$archive_courseID,
-					$archive_path
+					$archive_courseID, $archive_path
 				) =%>
 			</p>
 		% }
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext('Stop Archiving'),
-				name => 'decline_archive_course', class => 'btn btn-primary' =%>
+				name  => 'decline_archive_course',
+				class => 'btn btn-primary' =%>
 			% if (scalar(@$archive_courseIDs) > 1) {
 				<%= submit_button maketext('Skip archiving this course'),
-					name => 'skip_archive_course', class => 'btn btn-primary' =%>
+					name  => 'skip_archive_course',
+					class => 'btn btn-primary' =%>
 			% }
 			<%= submit_button maketext('Archive'), name => 'confirm_archive_course', class => 'btn btn-primary' =%>
 		</div>
@@ -142,11 +129,13 @@
 		% }
 		<div class="d-flex justify-content-center gap-2">
 			<%= submit_button maketext(q{Don't Archive}),
-				name => 'decline_archive_course', class => 'btn btn-primary' =%>
+				name  => 'decline_archive_course',
+				class => 'btn btn-primary' =%>
 			<%= submit_button $all_tables_ok
-					? maketext('Attempt to upgrade directories and links')
-					: maketext('Upgrade Course Tables'),
-				name => 'upgrade_course_tables', class => 'btn btn-primary' =%>
+				? maketext('Attempt to upgrade directories and links')
+				: maketext('Upgrade Course Tables'),
+				name  => 'upgrade_course_tables',
+				class => 'btn btn-primary' =%>
 		</div>
 	% }
 <% end =%>

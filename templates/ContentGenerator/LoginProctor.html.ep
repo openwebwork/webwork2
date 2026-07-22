@@ -19,8 +19,8 @@
 	% my ($alertClass, $msg) = ('alert-primary', '');
 	% if ($dueTime + $ce->{gatewayGracePeriod} < $submitTime) {
 		% $alertClass = ' alert-warning';
-		% $msg = maketext('The time limit on this assignment was exceeded. The assignment may be checked, '
-			% . 'but the result will not be counted.');
+		% $msg        = maketext('The time limit on this assignment was exceeded. The assignment may be checked, '
+				% . 'but the result will not be counted.');
 	% }
 	%
 	<div class="alert mb-2<%= $alertClass %>" role="alert">
@@ -62,16 +62,23 @@
 		<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2">
 			% # Prevent the proctor_user field from being filled with the parameter value.
 			% param('proctor_user', undef);
-			<%= text_field proctor_user => '', id => 'proctor_user', class => 'form-control', placeholder => '',
-				autocapitalize => 'none', spellcheck => 'false', autocomplete => 'new-password' =%>
+			<%= text_field
+				proctor_user   => '',
+				id             => 'proctor_user',
+				class          => 'form-control',
+				placeholder    => '',
+				autocapitalize => 'none',
+				spellcheck     => 'false',
+				autocomplete   => 'new-password' =%>
 			<%= label_for proctor_user => maketext('Proctor Username') =%>
 		</div>
 	% } else {
 		% # Restricted set login
 		<div class="alert alert-primary card p-2 mb-2" role="alert">
 			<em>
-				<%= maketext(
-					'This set has a set-level proctor password to authorize logins. Enter the password below.') =%>
+				<%=
+					maketext('This set has a set-level proctor password to authorize logins. Enter the password below.')
+				=%>
 			</em>
 		</div>
 		<%= hidden_field proctor_user => "set_id:$setID" =%>
@@ -80,12 +87,11 @@
 	% # The password field for the proctor.
 	<div class="col-xl-5 col-lg-6 col-md-7 col-sm-8 form-floating mb-2">
 		<%= password_field 'proctor_passwd',
-		 		id           => 'proctor_passwd',
-		 		class        => 'form-control',
-				placeholder  => '',
-				autocomplete => 'new-password'
-			=%>
-		<%=	label_for proctor_passwd => maketext('Proctor Password') =%>
+			id           => 'proctor_passwd',
+			class        => 'form-control',
+			placeholder  => '',
+			autocomplete => 'new-password' =%>
+		<%= label_for proctor_passwd => maketext('Proctor Password') =%>
 	</div>
 	%
 	<%= submit_button maketext('Continue'), class => 'btn btn-primary' =%>

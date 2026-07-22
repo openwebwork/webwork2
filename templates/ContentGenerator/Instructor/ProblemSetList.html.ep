@@ -13,18 +13,19 @@
 		<%= javascript getAssetURL(
 			$ce,
 			'node_modules/flatpickr/dist/l10n/'
-		   	. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr))
-		   	. '.js'
-		), defer => undef =%>
+				. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr)) . '.js'
+			),
+			defer => undef =%>
 	% }
-	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
-		defer => undef =%>
+	<%=
+		javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'), defer => undef
+	=%>
 	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
 		defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'),         defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'),         defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/ProblemSetList/problemsetlist.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),           defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
@@ -44,7 +45,11 @@
 	% last;
 % }
 %
-<%= form_for current_route, method => 'post', id => 'problemsetlist', name => 'problemsetlist', class  => 'font-sm',
+<%= form_for current_route,
+	method => 'post',
+	id     => 'problemsetlist',
+	name   => 'problemsetlist',
+	class  => 'font-sm',
 	begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
@@ -79,12 +84,11 @@
 	%
 	% for my $actionID (@$formsToShow) {
 		% next
-			% if $actionID eq 'lms_roster_sync' && (
-				% !$ce->{LTIVersion}
+			% if $actionID eq 'lms_roster_sync'
+			% && (!$ce->{LTIVersion}
 				% || $ce->{LTIVersion} ne 'v1p3'
 				% || $ce->{LTIGradeMode} ne 'homework'
-				% || !$db->getSettingValue('LTILineitemsURL')
-			% );
+				% || !$db->getSettingValue('LTILineitemsURL'));
 		% # Check permissions
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
@@ -95,17 +99,21 @@
 		% content_for 'tab-list' => begin
 			<li class="nav-item" role="presentation">
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
-					class           => "nav-link action-link$active$disabled",
-					id              => "$actionID-tab",
-					role            => 'tab',
+					class                                      => "nav-link action-link$active$disabled",
+					id                                         => "$actionID-tab",
+					role                                       => 'tab',
 					data            => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
 					'aria-controls' => $actionID,
 					'aria-selected' => $active ? 'true' : 'false' =%>
 			</li>
 		% end
 		% content_for 'tab-content' => begin
-			<div class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>" id="<%= $actionID %>"
-				role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+			<div
+				class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>"
+				id="<%= $actionID %>"
+				role="tabpanel"
+				aria-labelledby="<%= $actionID %>-tab"
+			>
 				<%= include "ContentGenerator/Instructor/ProblemSetList/${actionID}_form" =%>
 			</div>
 		% end
@@ -113,19 +121,19 @@
 	%
 	<%= hidden_field action => $default_choice, id => 'current_action' =%>
 	<div>
-		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<ul class="nav nav-tabs mb-2" role="tablist">
+			<%= content 'tab-list' =%>
+		</ul>
 		<div class="tab-content"><%= content 'tab-content' %></div>
 	</div>
 	<div>
 		<%= submit_button maketext($formTitles->{$default_choice}),
-			id => 'take_action', class => 'btn btn-primary mb-3' =%>
+			id    => 'take_action',
+			class => 'btn btn-primary mb-3' =%>
 	</div>
 	%
 	<p class="mb-2">
-		<%= maketext('Showing [_1] out of [_2] sets.',
-			scalar @{ $c->{visibleSetIDs} },
-			scalar @{ $c->{allSetIDs} }
-		) =%>
+		<%= maketext('Showing [_1] out of [_2] sets.', scalar @{ $c->{visibleSetIDs} }, scalar @{ $c->{allSetIDs} }) =%>
 	</p>
 	%
 	<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_table' =%>

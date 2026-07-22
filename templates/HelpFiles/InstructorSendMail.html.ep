@@ -3,44 +3,45 @@
 %
 <p>
 	<%= maketext('Use this page to send emails to active (enrolled or auditing) students.  Emails can be sent to '
-		. 'all active students or selected students.  Use the "Students" form to sort, filter, or format how '
-		. 'the user name is displayed. If multiple filters are selected and the "Intersection" radio button is used, '
-		. 'the filters will  be applied in sequence, narrowing the results list.  If the "Union" button is used, the '
-		. 'updated list will be the union of all results lists from the multiple filters.  Click "Refresh List" to '
-		. 'apply any changes.  Use control-click or shift-click to select multiple students to email.')=%>
+			. 'all active students or selected students.  Use the "Students" form to sort, filter, or format how '
+			. 'the user name is displayed. If multiple filters are selected and the "Intersection" radio button is used, '
+			. 'the filters will  be applied in sequence, narrowing the results list.  If the "Union" button is used, the '
+			. 'updated list will be the union of all results lists from the multiple filters.  Click "Refresh List" to '
+			. 'apply any changes.  Use control-click or shift-click to select multiple students to email.') =%>
 </p>
 <p>
 	<%= maketext('Emails can contain personalized data, such as name, section, or status.  Click "List of insertable '
-		. 'macros" for a full list available variables.  Additional personal data can be included by using a merge '
-		. 'file.  A merge file is a CSV file located in the ~[Scoring~] directory in which the first column is the '
-		. 'student id, followed by additional data (such as student grades).  This data is identified by which '
-		. 'column it is in, for instance if the scores where in the 4th column of the merge file, insert them into '
-		. 'an email using the variable $COL~[4~].  The "Scoring Tools" page can export grades into a CSV that can be '
-		. 'used as a merge file.  Upload customized merge files with the "File Manager".') =%>
+			. 'macros" for a full list available variables.  Additional personal data can be included by using a merge '
+			. 'file.  A merge file is a CSV file located in the ~[Scoring~] directory in which the first column is the '
+			. 'student id, followed by additional data (such as student grades).  This data is identified by which '
+			. 'column it is in, for instance if the scores where in the 4th column of the merge file, insert them into '
+			. 'an email using the variable $COL~[4~].  The "Scoring Tools" page can export grades into a CSV that can be '
+			. 'used as a merge file.  Upload customized merge files with the "File Manager".') =%>
 </p>
 <p>
 	<%= maketext('Use the "Merge file" drop down menu to select which merge file to use, or select "None" to not '
-		. 'use any merge file.  When a merge file is selected, the data for active students will be displayed '
-		. 'above the "Email Body".  This will show you the structure of the merge file and the column variables '
-		. 'associated with each column.  Data that is longer than 7 characters will be truncated, and the data can '
-		. 'be scrolled up and down to see all rows.') =%>
+			. 'use any merge file.  When a merge file is selected, the data for active students will be displayed '
+			. 'above the "Email Body".  This will show you the structure of the merge file and the column variables '
+			. 'associated with each column.  Data that is longer than 7 characters will be truncated, and the data can '
+			. 'be scrolled up and down to see all rows.') =%>
 </p>
-<p> <%= maketext('Preview the message before sending using the "Preview Message" button.  The preview shows the '
-		. 'email that would be sent to the first selected student or the instructor if no students were selected.  '
-		. 'The preview will also list all of the students that would receive their own personalized message.  If a '
-		. 'merge file was selected, the preview will also indicate which (if any) recipient\'s merge file data '
-		. 'could not be found.') =%>
+<p>
+	<%= maketext('Preview the message before sending using the "Preview Message" button.  The preview shows the '
+			. 'email that would be sent to the first selected student or the instructor if no students were selected.  '
+			. 'The preview will also list all of the students that would receive their own personalized message.  If a '
+			. 'merge file was selected, the preview will also indicate which (if any) recipient\'s merge file data '
+			. 'could not be found.') =%>
 </p>
 <p>
 	<%= maketext('Messages can be saved to a message file (which must end in the ".msg" extension).  Use the '
-		. '"Message file" drop down menu to select which message file to load, or "None" to use a blank message. '
-		. 'To save a new message, use the "Save as" button after entering in a valid filename.  The "Save as" '
-		. 'button will not overwrite currently saved messages.  To edit a currently saved message first select it '
-		. 'using the drop down menu, then click the "Save" button to save any changes.  Use the "File Manager" to '
-		. 'delete messages, located in the "~[TMPL~]/email" directory.') =%>
+			. '"Message file" drop down menu to select which message file to load, or "None" to use a blank message. '
+			. 'To save a new message, use the "Save as" button after entering in a valid filename.  The "Save as" '
+			. 'button will not overwrite currently saved messages.  To edit a currently saved message first select it '
+			. 'using the drop down menu, then click the "Save" button to save any changes.  Use the "File Manager" to '
+			. 'delete messages, located in the "~[TMPL~]/email" directory.') =%>
 </p>
 <p class="mb-0">
 	<%= maketext('When the message is ready to send, click "Send Email". This will queue the email to be sent, which '
-		. 'can take several minutes depending on the number of students selected.  You will be notified by email '
-		. 'once all the emails have been sent.') =%>
+			. 'can take several minutes depending on the number of students selected.  You will be notified by email '
+			. 'once all the emails have been sent.') =%>
 </p>

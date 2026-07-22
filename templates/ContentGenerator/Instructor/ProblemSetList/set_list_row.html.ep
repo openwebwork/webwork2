@@ -1,8 +1,8 @@
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
-% my $visibleClass   = $set->visible ? 'font-visible' : 'font-hidden';
-% my $set_id         = $set->set_id;
-% my $prettySetID    = format_set_name_display($set_id);
+% my $visibleClass = $set->visible ? 'font-visible' : 'font-hidden';
+% my $set_id       = $set->set_id;
+% my $prettySetID  = format_set_name_display($set_id);
 % my $iconClass;
 % my $iconTitle;
 % if ($set->assignment_type() =~ /gateway/) {
@@ -14,68 +14,79 @@
 % }
 %
 <tr>
-%
-% if ($c->{editMode}) {
-	<td><%= check_box apply_date_sets => $set_id, class => 'form-check-input' =%></td>
-	<td dir="ltr">
-		% if ($iconClass) {
-			<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" role="img" aria-label="<%= $iconTitle =%>"></i>
-		% }
-		<%= link_to $prettySetID => $c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
-	</td>
-% } else {
-	<td>
-		% param(selected_sets => [ param('selected_sets'), $set_id ]) if $setSelected;
-		<%= check_box selected_sets => $set_id, id => "${set_id}_id", class => 'form-check-input' =%>
-	</td>
-	<td>
-		<div class="d-flex justify-content-between gap-1" dir="ltr">
-			<%= label_for "${set_id}_id", begin =%>
-				<span class="set-label set-id-tooltip <%= $visibleClass %>" data-bs-toggle="tooltip"
-					data-bs-placement="right" data-bs-title="<%= $set->description %>">
-					% if ($iconClass) {
-						<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" role="img" aria-label="<%= $iconTitle =%>"></i>
-					% }
-					<%= $prettySetID =%>
-				</span>
-			<% end =%>
-			% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
-				<%= link_to $c->systemLink(
+	% if ($c->{editMode}) {
+		<td><%= check_box apply_date_sets => $set_id, class => 'form-check-input' =%></td>
+		<td dir="ltr">
+			% if ($iconClass) {
+				<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" role="img" aria-label="<%= $iconTitle =%>"></i>
+			% }
+			<%= link_to $prettySetID => $c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
+		</td>
+	% } else {
+		<td>
+			% param(selected_sets => [ param('selected_sets'), $set_id ]) if $setSelected;
+			<%= check_box selected_sets => $set_id, id => "${set_id}_id", class => 'form-check-input' =%>
+		</td>
+		<td>
+			<div class="d-flex justify-content-between gap-1" dir="ltr">
+				<%= label_for "${set_id}_id", begin =%>
+					<span
+						class="set-label set-id-tooltip <%= $visibleClass %>"
+						data-bs-toggle="tooltip"
+						data-bs-placement="right"
+						data-bs-title="<%= $set->description %>"
+					>
+						% if ($iconClass) {
+							<i
+								class="<%= $iconClass =%>"
+								title="<%= $iconTitle =%>"
+								role="img"
+								aria-label="<%= $iconTitle =%>"
+							></i>
+						% }
+						<%= $prettySetID =%>
+					</span>
+				<% end =%>
+				% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+					<%= link_to $c->systemLink(
 						url_for('instructor_set_list', setID => $set_id),
 						params => { editMode => 1, visible_sets => $set_id }
-					),
-					class => 'set-id-tooltip',
-					'aria-label' => maketext('Edit Set Data'),
-					data  => {
-						bs_toggle => 'tooltip',
-						bs_placement => 'right',
-						bs_title => maketext('Edit Set Data')
-					},
-					begin =%>
-					<i class="fas fa-pencil-alt" aria-hidden="true"></i>
-				<% end =%>
-			% }
-		</div>
-	</td>
-	%# Problems link
-	<td>
-		<%= link_to $db->countGlobalProblems($set_id) =>
-			$c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
-	</td>
-	% # Users link
-	<td>
-		<%= link_to $db->countSetUsers($set_id) . "/$c->{totalUsers}" =>
-			$c->systemLink(url_for('instructor_users_assigned_to_set', setID => $set_id)) =%>
-	</td>
-% }
-%
-% for my $field (@$fieldNames) {
-	% next unless defined $fieldTypes->{$field};
-	<td>
-		<div class="d-inline-block w-100 text-center text-nowrap <%= $visibleClass %>">
-			<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_field',
-				name => "set.$set_id.$field", value => $set->$field, type => $fieldTypes->{$field} =%>
-		</div>
-	</td>
-% }
+						),
+						class        => 'set-id-tooltip',
+						'aria-label' => maketext('Edit Set Data'),
+						data         => {
+							bs_toggle    => 'tooltip',
+							bs_placement => 'right',
+							bs_title     => maketext('Edit Set Data')
+						},
+						begin =%>
+						<i class="fas fa-pencil-alt" aria-hidden="true"></i>
+					<% end =%>
+				% }
+			</div>
+		</td>
+		% # Problems link
+		<td>
+			<%= link_to $db->countGlobalProblems($set_id) =>
+				$c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
+		</td>
+		% # Users link
+		<td>
+			<%= link_to $db->countSetUsers($set_id)
+				. "/$c->{totalUsers}" =>
+				$c->systemLink(url_for('instructor_users_assigned_to_set', setID => $set_id)) =%>
+		</td>
+	% }
+	%
+	% for my $field (@$fieldNames) {
+		% next unless defined $fieldTypes->{$field};
+		<td>
+			<div class="d-inline-block w-100 text-center text-nowrap <%= $visibleClass %>">
+				<%= include 'ContentGenerator/Instructor/ProblemSetList/set_list_field',
+					name  => "set.$set_id.$field",
+					value => $set->$field,
+					type  => $fieldTypes->{$field} =%>
+			</div>
+		</td>
+	% }
 </tr>

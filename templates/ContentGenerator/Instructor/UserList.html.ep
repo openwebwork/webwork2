@@ -6,8 +6,8 @@
 %
 % content_for js => begin
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/UserList/userlist.js'),     defer => undef =%>
-	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'),   defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/UserList/userlist.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
@@ -49,12 +49,11 @@
 	% for my $actionID (@$formsToShow) {
 		% next if $actionID eq 'reset_2fa' && !$ce->two_factor_authentication_enabled;
 		% next
-			% if $actionID eq 'lms_roster_sync' && (
-				% !$ce->{LTIVersion}
+			% if $actionID eq 'lms_roster_sync'
+			% && (!$ce->{LTIVersion}
 				% || $ce->{LTIVersion} ne 'v1p3'
 				% || !$ce->{LTI}{v1p3}{preferred_source_of_username}
-				% || !$db->getSettingValue('LTINamesRolesServiceURL')
-			% );
+				% || !$db->getSettingValue('LTINamesRolesServiceURL'));
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';
@@ -64,22 +63,26 @@
 		% content_for 'tab-list' => begin
 			<li class="nav-item" role="presentation">
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
-					class            => "nav-link action-link$active$disabled",
-					id               => "$actionID-tab",
-					data             => {
+					class                                      => "nav-link action-link$active$disabled",
+					id                                         => "$actionID-tab",
+					data                                       => {
 						action    => $actionID,
 						bs_toggle => 'tab',
 						bs_target => "#$actionID",
 						$actionID eq 'cancel_edit' ? (no_validate => 1) : ()
 					},
-					role             => 'tab',
-					'aria-controls'  => $actionID,
-					'aria-selected'  => $active ? 'true' : 'false', =%>
+					role            => 'tab',
+					'aria-controls' => $actionID,
+					'aria-selected' => $active ? 'true' : 'false', =%>
 			</li>
 		% end
 		% content_for 'tab-content' => begin
-			<div class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>" id="<%= $actionID %>"
-				role="tabpanel" aria-labelledby="<%= $actionID %>-tab">
+			<div
+				class="tab-pane fade mb-2 <%= $active ? " show$active" : '' %>"
+				id="<%= $actionID %>"
+				role="tabpanel"
+				aria-labelledby="<%= $actionID %>-tab"
+			>
 				<%= include "ContentGenerator/Instructor/UserList/${actionID}_form" =%>
 			</div>
 		% end
@@ -87,7 +90,9 @@
 	%
 	<%= hidden_field action => $default_choice, id => 'current_action' =%>
 	<div>
-		<ul class="nav nav-tabs mb-2" role="tablist"><%= content 'tab-list' =%></ul>
+		<ul class="nav nav-tabs mb-2" role="tablist">
+			<%= content 'tab-list' =%>
+		</ul>
 		<div class="tab-content"><%= content 'tab-content' %></div>
 	</div>
 	%
@@ -96,8 +101,11 @@
 	</div>
 	%
 	<div>
-		<%= maketext('Showing [_1] out of [_2] users',
-			scalar(keys %{ $c->{visibleUserIDs} }), scalar(@{ $c->{allUserIDs} })) =%>
+		<%= maketext(
+			'Showing [_1] out of [_2] users',
+			scalar(keys %{ $c->{visibleUserIDs} }),
+			scalar(@{ $c->{allUserIDs} })
+		) =%>
 	</div>
 	%
 	% if ($c->{editMode}) {

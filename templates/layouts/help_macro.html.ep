@@ -1,4 +1,6 @@
-<%= link_to '#', data => { bs_toggle => 'modal', bs_target => "#${name}_help_modal" }, %$args, begin =%>
+<%= link_to '#',
+	data => { bs_toggle => 'modal', bs_target => "#${name}_help_modal" },
+	%$args, begin =%>
 	% if ($label) {
 		<%== $label =%>
 	% } else {
@@ -7,8 +9,13 @@
 	% }
 <% end =%>
 <% content_for 'modal-dialog-area' => begin =%>
-	<div class="modal fade" id="<%= "${name}_help_modal" %>" tabindex="-1"
-		aria-labelledby="<%= "${name}_help_title" %>" aria-hidden="true">
+	<div
+		class="modal fade"
+		id="<%= "${name}_help_modal" %>"
+		tabindex="-1"
+		aria-labelledby="<%= "${name}_help_title" %>"
+		aria-hidden="true"
+	>
 		<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
 			<div class="modal-content">
 				<div class="modal-header">

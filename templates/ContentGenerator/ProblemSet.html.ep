@@ -13,10 +13,8 @@
 	% } else {
 		<div class="alert alert-danger">
 			<p class="mb-3">
-				<%= maketext(
-					'The selected problem set ([_1]) is not a valid set for [_2].',
-					stash('setID'), param('effectiveUser')
-				) =%>
+				<%= maketext('The selected problem set ([_1]) is not a valid set for [_2].',
+					stash('setID'), param('effectiveUser')) =%>
 			</p>
 			<p class="mb-0"><%= $c->{invalidSet} %></p>
 		</div>

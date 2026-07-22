@@ -19,15 +19,13 @@
 				'A hardcopy file was generated, but it may not be complete or correct. Please check that no problems '
 					. 'are missing and that they are all legible. If not, please inform your instructor.') =%>
 			<br>
-			<%= link_to(
-				maketext('Download Hardcopy') => $c->systemLink(url_for, params => { tempFilePath => $file_path })
-			) =%>
+			<%= link_to(maketext('Download Hardcopy') =>
+					$c->systemLink(url_for, params => { tempFilePath => $file_path })) =%>
 		</p>
 	% } else {
 		<p>
 			<%= maketext(
-				'WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor.'
-			) =%>
+				'WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor.') =%>
 		</p>
 	% }
 	%
@@ -35,9 +33,8 @@
 		<p>
 			<%= maketext('You can also examine the following temporary files: ') =%>
 			<%= c(
-				map {
-					link_to $_ => $c->systemLink(url_for, params => { tempFilePath => $temp_file_map{$_} })
-				} keys %temp_file_map
+				map { link_to $_ => $c->systemLink(url_for, params => { tempFilePath => $temp_file_map{$_} }) }
+					keys %temp_file_map
 			)->join(', ') =%>
 		</p>
 	% }

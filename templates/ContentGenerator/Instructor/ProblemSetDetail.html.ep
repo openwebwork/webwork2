@@ -1,7 +1,7 @@
-% use WeBWorK::Utils qw(sortByName getAssetURL);
+% use WeBWorK::Utils        qw(sortByName getAssetURL);
 % use WeBWorK::Utils::Files qw(listFilesRecursive);
 % use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
-% use WeBWorK::Utils::Sets qw(get_test_problem_position format_set_name_display);
+% use WeBWorK::Utils::Sets  qw(get_test_problem_position format_set_name_display);
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
@@ -16,12 +16,13 @@
 		<%= javascript getAssetURL(
 			$ce,
 			'node_modules/flatpickr/dist/l10n/'
-			. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr))
-			. '.js'
-		), defer => undef =%>
+				. ($ce->{language} =~ /^el/ ? 'gr' : ($ce->{language} =~ s/^(..).*/$1/gr)) . '.js'
+			),
+			defer => undef =%>
 	% }
-	<%= javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'),
-		defer => undef =%>
+	<%=
+		javascript getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js'), defer => undef
+	=%>
 	<%= javascript getAssetURL($ce, 'node_modules/shortcut-buttons-flatpickr/dist/shortcut-buttons-flatpickr.min.js'),
 		defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/DatePicker/datepicker.js'), defer => undef =%>
@@ -66,17 +67,13 @@
 % if (stash('forUsers')) {
 	% if (@editForUser && @$unassignedUsers) {
 		<div class="alert alert-danger p-1 mb-2">
-			<%== maketext(
-				'The following users are NOT assigned to this set and will be ignored: [_1]',
-				tag('b', join(', ', @$unassignedUsers))
-			) =%>
+			<%== maketext('The following users are NOT assigned to this set and will be ignored: [_1]',
+				tag('b', join(', ', @$unassignedUsers))) =%>
 		</div>
 	% } elsif (!@editForUser) {
 		<div class="alert alert-danger p-1 mb-2">
-			<%== maketext(
-				'None of the selected users are assigned to this set: [_1]',
-				tag('b', join(', ', @$unassignedUsers))
-			) =%>
+			<%== maketext('None of the selected users are assigned to this set: [_1]',
+				tag('b', join(', ', @$unassignedUsers))) =%>
 		</div>
 		<div class="alert alert-danger p-1 mb-2">
 			<%= maketext('Global set data will be shown instead of user specific data') =%>
@@ -127,18 +124,15 @@
 						dir => 'ltr',
 						format_set_name_display($setID . ($editingSetVersion ? ",v$editingSetVersion" : ''))
 					),
-					c(
-						tag('br'),
-						tag('strong', $userLinks->join(tag('br')))
-					)->join('')
+					c(tag('br'), tag('strong', $userLinks->join(tag('br'))))->join('')
 				) =%>
 			</div>
 			<div class="col-md-6 mt-md-0 mt-2">
 				<%= link_to $c->systemLink($setDetailPage), begin =%>
 					<%== maketext(
-							'Edit set [_1] for ALL students assigned to this set.',
-							tag('strong', dir => 'ltr', format_set_name_display($setID))
-						) => $c->systemLink($setDetailPage) =%>
+						'Edit set [_1] for ALL students assigned to this set.',
+						tag('strong', dir => 'ltr', format_set_name_display($setID))
+					) => $c->systemLink($setDetailPage) =%>
 				<% end =%>
 				% # Handy messages when editing gateway sets.
 				% if ($isGatewaySet && !$editingSetVersion) {
@@ -163,7 +157,7 @@
 			</div>
 			<div class="col-md-6 mt-md-0 mt-2">
 				% my $link = link_to(maketext('individual user settings') =>
-					% $c->systemLink(url_for 'instructor_users_assigned_to_set'));
+						% $c->systemLink(url_for 'instructor_users_assigned_to_set'));
 				<%== maketext('Edit [_1] for set [_2].',
 					$link, tag('span', dir => 'ltr', format_set_name_display($setID))) =%>
 			</div>
@@ -180,7 +174,6 @@
 </div>
 %
 <%= form_for current_route, method => 'POST', id => 'problem_set_form', name => 'problem_set_form', begin =%>
-	%
 	% for (@editForUser) {
 		<%= hidden_field editForUser => $_ =%>
 	% }
@@ -218,10 +211,15 @@
 			<%= hidden_field "set.$setID.description" => $setRecord->description, id => "set.$setID.description" =%>
 			<%= $setRecord->description || maketext('No Description') =%>
 		% } else {
-			<%= label_for "set.$setID.description" => maketext('Set Description'),
-				class => 'form-label fw-bold fs-4' =%>
-			<%= text_area "set.$setID.description" => $setRecord->description,
-				id => "set.$setID.description", rows => 5, cols => 62, class => 'form-control' =%>
+			<%= label_for
+				"set.$setID.description" => maketext('Set Description'),
+				class                    => 'form-label fw-bold fs-4' =%>
+			<%= text_area
+				"set.$setID.description" => $setRecord->description,
+				id                       => "set.$setID.description",
+				rows                     => 5,
+				cols                     => 62,
+				class                    => 'form-control' =%>
 		% }
 	</div>
 	%
@@ -237,7 +235,8 @@
 								<table>
 									<tr>
 										<td>
-											<%= label_for "set.$setID.$headerType" =>
+											<%= label_for
+												"set.$setID.$headerType" =>
 												maketext($field_properties->{$headerType}{name}),
 												class => 'form-label' =%>
 										</td>
@@ -245,9 +244,12 @@
 									<tr>
 										<td>
 											<%= link_to $c->systemLink(
-													url_for('instructor_problem_editor_withset_withproblem',
-														setID => $setID, problemID => 0),
-													params => { file_type => $headerType }
+												url_for(
+													'instructor_problem_editor_withset_withproblem',
+													setID     => $setID,
+													problemID => 0
+												),
+												params => { file_type => $headerType }
 												),
 												class  => 'psd_edit btn btn-secondary btn-sm',
 												target => 'WW_Editor',
@@ -261,11 +263,11 @@
 												<span class="visually-hidden"><%= maketext('Edit') =%></span>
 											<% end =%>
 											<%= link_to $c->systemLink(url_for(
-													{
-														set_header      => 'problem_list',
-														hardcopy_header => 'hardcopy_preselect_set'
-													}->{$headerType},
-													setID => $setID
+												{
+													set_header      => 'problem_list',
+													hardcopy_header => 'hardcopy_preselect_set'
+												}->{$headerType},
+												setID => $setID
 												)),
 												class  => 'psd_view btn btn-secondary btn-sm',
 												target => 'WW_View',
@@ -287,30 +289,26 @@
 									% # Browse available header/problem files
 									<div>
 										% my $skip = join("|", keys %{ $ce->{courseFiles}{problibs} });
-										<%= text_field "set.$setID.$headerType" =>
-												$setRecord->{$headerType} || 'defaultHeader',
-											id    => "set.$setID.$headerType",
-											class => 'combo-box-text form-control mb-1' =%>
-										<%= select_field "set.$setID.$headerType" => [
+										<%= text_field
+											"set.$setID.$headerType" => $setRecord->{$headerType} || 'defaultHeader',
+											id                       => "set.$setID.$headerType",
+											class                    => 'combo-box-text form-control mb-1' =%>
+										<%= select_field
+											"set.$setID.$headerType" => [
 												[
 													maketext('Use Default Header File') => 'defaultHeader',
-													($setRecord->{$headerType} || 'defaultHeader') eq 'defaultHeader'
-													? (selected => undef)
-													: ()
+													($setRecord->{$headerType} || 'defaultHeader') eq
+													'defaultHeader' ? (selected => undef) : ()
 												],
 												map { [
 													$_ => $_,
-													$setRecord->{$headerType} && $setRecord->{$headerType} eq $_
-													? (selected => undef)
-													: ()
+													$setRecord->{$headerType}
+													&& $setRecord->{$headerType} eq $_ ? (selected => undef) : ()
 												] } sortByName(
 													undef,
 													listFilesRecursive(
 														$ce->{courseDirs}{templates},
-														qr/header.*\.pg$/i,
-														qr/^(?:$skip)$/,
-														0,
-														1
+														qr/header.*\.pg$/i, qr/^(?:$skip)$/, 0, 1
 													)
 												)
 											],
@@ -327,8 +325,9 @@
 	% } else {
 		<p>
 			<b>
-				<%= maketext(
-					'Screen and Hardcopy set header information cannot be overridden for individual students.') =%>
+				<%=
+					maketext('Screen and Hardcopy set header information cannot be overridden for individual students.')
+				=%>
 			</b>
 		</p>
 	% }
@@ -359,8 +358,9 @@
 					<div class="input-group-text">
 						<%= check_box excludeCorrect => 0, id => 'excludeCorrect', class => 'form-check-input mt-0' =%>
 					</div>
-					<%= label_for excludeCorrect => maketext('if status less than 1'),
-						class => "form-check-label input-group-text mt-0" =%>
+					<%= label_for
+						excludeCorrect => maketext('if status less than 1'),
+						class          => "form-check-label input-group-text mt-0" =%>
 				</div>
 			% }
 			% if (!@editForUser) {
@@ -385,10 +385,10 @@
 			% }
 			<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
 				<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-				<%= select_field 'problem_displaymode' => [
-						grep { exists $display_modes->{$_} } @{ $ce->{pg}{displayModes} }
-					],
-					id => 'problem_displaymode', class => 'form-select w-auto flex-grow-0' =%>
+				<%= select_field
+					'problem_displaymode' => [ grep { exists $display_modes->{$_} } @{ $ce->{pg}{displayModes} } ],
+					id                    => 'problem_displaymode',
+					class                 => 'form-select w-auto flex-grow-0' =%>
 			</div>
 		</div>
 		%
@@ -402,10 +402,9 @@
 					% ? (
 						% $userProblemVersions->{$problemID} && $userProblemVersions->{$problemID}->source_file
 						% ? $userProblemVersions->{$problemID}->source_file
-						% : (
-							% $userProblems->{$problemID} && $userProblems->{$problemID}->source_file
-							% ? $userProblems->{$problemID}->source_file : $globalProblems->{$problemID}->source_file
-						% )
+						% : ($userProblems->{$problemID} && $userProblems->{$problemID}->source_file
+							% ? $userProblems->{$problemID}->source_file
+							% : $globalProblems->{$problemID}->source_file)
 					% )
 					% : $globalProblems->{$problemID}->source_file;
 				%
@@ -424,11 +423,14 @@
 					% $lastProblemNumber = pop @seq;
 					% $parentID          = seq_to_jitar_id(@seq) if @seq;
 					% my $button = begin
-						<button class="pdr_collapse me-1 collapsed btn btn-sm p-0"
+						<button
+							class="pdr_collapse me-1 collapsed btn btn-sm p-0"
 							data-expand-text="<%= maketext('Expand Nested Problems') %>"
 							data-collapse-text="<%= maketext('Collapse Nested Problems') %>"
 							data-bs-toggle="collapse"
-							aria-expanded="false" type="button">
+							aria-expanded="false"
+							type="button"
+						>
 							<i class="fas fa-chevron-right" data-bs-toggle="tooltip"></i>
 						</button>
 					% end
@@ -446,60 +448,85 @@
 				% my $problemRow = begin
 					<div class="problem_detail_row card d-flex flex-column p-2 mb-3 g-0">
 						<div class="pdr_block_1 row align-items-center">
-							<div class="d-flex align-items-center
-								<%= @editForUser ? 'col-12 col-lg-3 col-xl-2' : 'col col-lg-6 col-xl-4 col-xxl-3' %>">
+							<div
+								class="d-flex align-items-center
+								<%= @editForUser ? 'col-12 col-lg-3 col-xl-2' : 'col col-lg-6 col-xl-4 col-xxl-3' %>"
+							>
 								<div class="pdr_handle me-1 text-nowrap" id="pdr_handle_<%= $problemID %>">
 									<span class="pdr_problem_number"><%= $problemNumber %></span>
 									% if (!@editForUser) {
-										<i class="<%= $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v' %>"
-											data-bs-title="<%= maketext('Move') %>" data-bs-toggle="tooltip">
+										<i
+											class="<%= $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v' %>"
+											data-bs-title="<%= maketext('Move') %>"
+											data-bs-toggle="tooltip"
+										>
 										</i>
 									% }
 								</div>
 								<div class="d-flex align-items-center">
 									% if (!@editForUser) {
-										<div class="pdr_move_buttons btn-group btn-group-sm me-1" role="group"
-											aria-label="<%= maketext('Reorder problem') %>">
-											<button type="button" class="psd_move_up btn btn-secondary px-1 px-sm-2"
+										<div
+											class="pdr_move_buttons btn-group btn-group-sm me-1"
+											role="group"
+											aria-label="<%= maketext('Reorder problem') %>"
+										>
+											<button
+												type="button"
+												class="psd_move_up btn btn-secondary px-1 px-sm-2"
 												id="psd_move_up_<%= $problemID %>"
 												aria-label="<%= maketext('Move problem up') %>"
 												data-bs-title="<%= maketext('Move problem up') %>"
-												data-bs-toggle="tooltip">
+												data-bs-toggle="tooltip"
+											>
 												<i class="fas fa-chevron-up" aria-hidden="true"></i>
 											</button>
-											<button type="button" class="psd_move_down btn btn-secondary px-1 px-sm-2"
+											<button
+												type="button"
+												class="psd_move_down btn btn-secondary px-1 px-sm-2"
 												id="psd_move_down_<%= $problemID %>"
 												aria-label="<%= maketext('Move problem down') %>"
 												data-bs-title="<%= maketext('Move problem down') %>"
-												data-bs-toggle="tooltip">
+												data-bs-toggle="tooltip"
+											>
 												<i class="fas fa-chevron-down" aria-hidden="true"></i>
 											</button>
 										</div>
 										% if ($isJitarSet) {
-											<div class="pdr_nest_buttons btn-group btn-group-sm me-1" role="group"
-												aria-label="<%= maketext('Change nesting level') %>">
-												<button type="button" class="psd_denest btn btn-secondary px-1 px-sm-2"
+											<div
+												class="pdr_nest_buttons btn-group btn-group-sm me-1"
+												role="group"
+												aria-label="<%= maketext('Change nesting level') %>"
+											>
+												<button
+													type="button"
+													class="psd_denest btn btn-secondary px-1 px-sm-2"
 													id="psd_denest_<%= $problemID %>"
 													aria-label="<%= maketext('De-nest problem to parent level') %>"
 													data-bs-title="<%= maketext('De-nest problem') %>"
-													data-bs-toggle="tooltip">
+													data-bs-toggle="tooltip"
+												>
 													<i class="fas fa-outdent" aria-hidden="true"></i>
 												</button>
-												<button type="button" class="psd_nest btn btn-secondary px-1 px-sm-2"
+												<button
+													type="button"
+													class="psd_nest btn btn-secondary px-1 px-sm-2"
 													id="psd_nest_<%= $problemID %>"
 													aria-label="<%= maketext('Nest problem under previous problem') %>"
 													data-bs-title="<%= maketext('Nest problem') %>"
-													data-bs-toggle="tooltip">
+													data-bs-toggle="tooltip"
+												>
 													<i class="fas fa-indent" aria-hidden="true"></i>
 												</button>
 											</div>
 										% }
 										<%= $collapseButton =%>
 									% }
-									<%= hidden_field "prob_num_$problemID" => $lastProblemNumber,
-										id => "prob_num_$problemID" =%>
-									<%= hidden_field "prob_parent_id_$problemID" => $parentID,
-										id => "prob_parent_id_$problemID" =%>
+									<%= hidden_field
+										"prob_num_$problemID" => $lastProblemNumber,
+										id                    => "prob_num_$problemID" =%>
+									<%= hidden_field
+										"prob_parent_id_$problemID" => $parentID,
+										id                          => "prob_parent_id_$problemID" =%>
 									%
 									% # Show the "Render Problem", "Edit Problem", and "Open in New Window" links if
 									% # there is a well defined problem to view. This is when editing a homework set,
@@ -507,21 +534,25 @@
 									% # drawing from a grouping set.  Really the only case needed here is that of a
 									% # group problem.
 									% if (!$isGatewaySet || $editingSetVersion || $problemFile !~ /^group/) {
-										<button id="pdr_render_<%= $problemID %>"
+										<button
+											id="pdr_render_<%= $problemID %>"
 											class="pdr_render btn btn-secondary btn-sm
 												<%= @editForUser ? '' : 'px-1 px-sm-2' %>"
-											data-bs-toggle="tooltip" data-bs-placement="top"
+											data-bs-toggle="tooltip"
+											data-bs-placement="top"
 											data-bs-title="<%= maketext('Render Problem') %>"
-											type="button">
+											type="button"
+										>
 											<i class="icon far fa-image" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Render') %></span>
 										</button>
 										<%= link_to $c->systemLink(url_for(
-												'instructor_problem_editor_withset_withproblem',
-												setID => $setID, problemID => $problemID
+											'instructor_problem_editor_withset_withproblem',
+											setID     => $setID,
+											problemID => $problemID
 											)),
-											class  => 'psd_edit btn btn-secondary btn-sm'
-												. (@editForUser ? '' : ' px-1 px-sm-2'),
+											class => 'psd_edit btn btn-secondary btn-sm'
+											. (@editForUser ? '' : ' px-1 px-sm-2'),
 											target => 'WW_Editor',
 											data   => {
 												bs_toggle    => 'tooltip',
@@ -539,11 +570,13 @@
 											% if ($editingSetVersion) {
 												% my ($problemNumber, $pageNumber) =
 													% get_test_problem_position($db, $problemToShow);
-												% $problemLink = $c->systemLink(url_for('gateway_quiz',
-														% setID => $problemToShow->set_id
-															% . ',v' . $problemToShow->version_id,
+												% $problemLink = $c->systemLink(
+													% url_for(
+														% 'gateway_quiz',
+														% setID => $problemToShow->set_id . ',v'
+															% . $problemToShow->version_id,
 														% problemID => $problemToShow->problem_id
-													%),
+													% ),
 													% params => {
 														% effectiveUser => $editForUser[0],
 														% currentPage   => $pageNumber
@@ -551,29 +584,41 @@
 												% )->fragment("prob$problemNumber");
 											% } else {
 												% $problemLink = $c->systemLink(
-													% url_for('gateway_quiz', setID => 'Undefined_Set', problemID => '1'),
+													% url_for(
+														% 'gateway_quiz',
+														% setID     => 'Undefined_Set',
+														% problemID => '1'
+													% ),
 													% params => {
-														% effectiveUser  =>
-															% @editForUser == 1 ? $editForUser[0] : param('user'),
-														% problemSeed =>
-															% $problemToShow ? $problemToShow->problem_seed : '',
-														% sourceFilePath => $problemToShow && $problemToShow->source_file
-															% ? $problemToShow->source_file
-															% : $globalProblems->{$problemID}->source_file
+														% effectiveUser => @editForUser == 1 ? $editForUser[0]
+														% : param('user'),
+														% problemSeed => $problemToShow
+														% ? $problemToShow->problem_seed
+														% : '',
+														% sourceFilePath => $problemToShow
+															% && $problemToShow->source_file
+														% ? $problemToShow->source_file
+														% : $globalProblems->{$problemID}->source_file
 													% }
-												% )
+												% );
 											% }
 										% } else {
 											% $problemLink = $c->systemLink(
-												% url_for('problem_detail', setID => $setID, problemID => $problemID),
+												% url_for(
+													% 'problem_detail',
+													% setID     => $setID,
+													% problemID => $problemID
+												% ),
 												% params => {
-													% effectiveUser => @editForUser == 1 ? $editForUser[0] : param('user')
+													% effectiveUser => @editForUser == 1
+													% ? $editForUser[0]
+													% : param('user')
 												% }
-											% )
+											% );
 										% }
 										<%= link_to $problemLink,
-											class  => 'psd_view btn btn-secondary btn-sm'
-												. (@editForUser ? '' : ' px-1 px-sm-2'),
+											class => 'psd_view btn btn-secondary btn-sm'
+											. (@editForUser ? '' : ' px-1 px-sm-2'),
 											target => 'WW_View',
 											data   => {
 												bs_toggle    => 'tooltip',
@@ -587,13 +632,13 @@
 									% }
 									% if ($authz->hasPermissions(param('user'), 'problem_grader')) {
 										<%= link_to $c->systemLink(url_for(
-												'instructor_problem_grader',
-												setID     => $setID,
-												problemID => $problemID
+											'instructor_problem_grader',
+											setID     => $setID,
+											problemID => $problemID
 											)),
 											class => 'pdr_grader btn btn-secondary btn-sm'
-												. (@editForUser ? '' : ' px-1 px-sm-2'),
-											data  => {
+											. (@editForUser ? '' : ' px-1 px-sm-2'),
+											data => {
 												bs_toggle    => "tooltip",
 												bs_placement => "top",
 												bs_title     => maketext("Grade Problem")
@@ -606,49 +651,65 @@
 								</div>
 							</div>
 							<div class="row col-12 <%= @editForUser ? 'col-lg-9 col-xl-10' : 'col-lg order-last' %>">
-								<div class="<%= @editForUser ? 'col-2 col-xxl-1' : 'col-3' %> col-form-label
-									col-form-label-sm text-nowrap text-lg-end">
+								<div
+									class="<%= @editForUser ? 'col-2 col-xxl-1' : 'col-3' %> col-form-label
+									col-form-label-sm text-nowrap text-lg-end"
+								>
 									<%= $source_file_parts[0] =%>
 								</div>
 								<div class="<%= @editForUser ? 'col-10 col-xxl-11' : 'col col-lg-9' %>">
 									<%= $source_file_parts[2] =%>
-									<%= hidden_field "problem_${problemID}_default_source_file" =>
+									<%= hidden_field
+										"problem_${problemID}_default_source_file" =>
 										$globalProblems->{$problemID}->source_file,
 										id => "problem_${problemID}_default_source_file" =%>
 								</div>
 							</div>
 							% if (!@editForUser) {
-								<div class="accordion col-auto order-lg-last d-flex align-items-center justify-content-end">
-									<button class="accordion-button pdr_detail_collapse ps-0 w-auto" type="button"
-										aria-expanded="true" aria-controls="pdr_details_<%= $problemID %>"
+								<div
+									class="accordion col-auto order-lg-last d-flex align-items-center justify-content-end"
+								>
+									<button
+										class="accordion-button pdr_detail_collapse ps-0 w-auto"
+										type="button"
+										aria-expanded="true"
+										aria-controls="pdr_details_<%= $problemID %>"
 										aria-label="<%= maketext('Collapse Problem Details') %>"
-										data-bs-toggle="collapse" data-bs-target="#pdr_details_<%= $problemID %>"
+										data-bs-toggle="collapse"
+										data-bs-target="#pdr_details_<%= $problemID %>"
 										data-expand-text="<%= maketext('Expand Problem Details') %>"
-										data-collapse-text="<%= maketext('Collapse Problem Details') %>">
-									</button>
+										data-collapse-text="<%= maketext('Collapse Problem Details') %>"
+									></button>
 								</div>
 							% }
 						</div>
 						<div id="pdr_details_<%= $problemID %>" class="collapse show mt-1">
 							<div class="row">
-								<div class="<%= @editForUser ? 'col-2 col-lg-3 col-xl-2'
-									: 'col-12 col-lg-6 col-xl-4 col-xxl-3' %> d-flex flex-row align-items-center">
+								<div
+									class="<%=
+										@editForUser ? 'col-2 col-lg-3 col-xl-2' : 'col-12 col-lg-6 col-xl-4 col-xxl-3'
+									%> d-flex flex-row align-items-center"
+								>
 									% if (@editForUser != 1) {
 										% if (!@editForUser) {
 											<div class="form-check form-check-inline form-control-sm">
-												<%= check_box deleteProblem => $problemID, id =>
-													"delete-problem-$problemID", class => 'form-check-input' =%>
-												<%= label_for "delete-problem-$problemID" => maketext('Delete it?'),
-													class => 'form-check-label' =%>
+												<%= check_box
+													deleteProblem => $problemID,
+													id            => "delete-problem-$problemID",
+													class         => 'form-check-input' =%>
+												<%= label_for
+													"delete-problem-$problemID" => maketext('Delete it?'),
+													class                       => 'form-check-label' =%>
 											</div>
 										% }
 										<div class="form-check form-check-inline form-control-sm">
-											<%= check_box markCorrect => $problemID,
-												id    => "problem.${problemID}.mark_correct",
-												class => 'form-check-input' =%>
-											<%= label_for "problem.${problemID}.mark_correct" =>
-													maketext('Mark Correct?'),
-												class => 'form-check-label' =%>
+											<%= check_box
+												markCorrect => $problemID,
+												id          => "problem.${problemID}.mark_correct",
+												class       => 'form-check-input' =%>
+											<%= label_for
+												"problem.${problemID}.mark_correct" => maketext('Mark Correct?'),
+												class                               => 'form-check-label' =%>
 										</div>
 									% }
 								</div>
@@ -662,12 +723,8 @@
 							</div>
 							<div class="row">
 								<div class="col-12 col-lg-8">
-									<%= $c->fieldTable(
-										$userToShow, $setID, $problemID,
-										$globalProblems->{$problemID},
-										$problemToShow,
-										$setRecord->assignment_type
-									) =%>
+									<%= $c->fieldTable($userToShow, $setID, $problemID, $globalProblems->{$problemID},
+										$problemToShow, $setRecord->assignment_type) =%>
 								</div>
 								<div class="font-sm col-lg-4">
 									<div class="pdr_repeat_file_alert"></div>
@@ -684,14 +741,17 @@
 				% push @problemRows, $problemRow->();
 			% }
 			%
-			<ol id="psd_list" class="sortable-branch <%= @editForUser ? 'disable_renumber' : '' %>"
-				data-repeat-file-text="<%= maketext('This problem uses the same source file as number ~[_1~].') %>">
+			<ol
+				id="psd_list"
+				class="sortable-branch <%= @editForUser ? 'disable_renumber' : '' %>"
+				data-repeat-file-text="<%= maketext('This problem uses the same source file as number ~[_1~].') %>"
+			>
 				% if ($isJitarSet) {
 					% # If this is a jitar set then print nested lists.
 					% my $nestedIDHash = {};
 					%
 					% for (my $i = 0; $i <= $#$problemIDList; $i++) {
-						% my @id_seq = jitar_id_to_seq($problemIDList->[$i]);
+						% my @id_seq  = jitar_id_to_seq($problemIDList->[$i]);
 						% my $hashref = $nestedIDHash;
 						% for my $num (@id_seq) {
 							% $hashref->{$num} = {} unless defined $hashref->{$num};
@@ -719,15 +779,17 @@
 			<div class="input-group-text">
 				<%= check_box auto_render => 1, id => 'auto_render', class => 'form-check-input mt-0' =%>
 			</div>
-			<%= label_for auto_render => maketext('Automatically render problems on page load'),
-				class => 'input-group-text' =%>
+			<%= label_for
+				auto_render => maketext('Automatically render problems on page load'),
+				class       => 'input-group-text' =%>
 		</div>
 		<div class="input-group mb-2">
 			<div class="input-group-text">
 				<%= check_box force_renumber => '1', id => 'force_renumber', class => 'form-check-input mt-0' =%>
 			</div>
-			<%= label_for force_renumber => maketext('Force problems to be numbered consecutively from one'),
-				class => 'input-group-text' =%>
+			<%= label_for
+				force_renumber => maketext('Force problems to be numbered consecutively from one'),
+				class          => 'input-group-text' =%>
 		</div>
 	% } else {
 		<p><b><%= maketext("This set doesn't contain any problems yet.") %></b></p>
@@ -741,8 +803,9 @@
 			</div>
 			<%= label_for add_blank_problem => maketext('Add'), class => 'input-group-text' =%>
 			<%= text_field add_n_problems => 1, id => 'add_n_problems', class => 'form-control flex-grow-0' =%>
-			<%= label_for add_n_problems => maketext('blank problem template(s) to end of homework set'),
-				class => 'input-group-text' =%>
+			<%= label_for
+				add_n_problems => maketext('blank problem template(s) to end of homework set'),
+				class          => 'input-group-text' =%>
 		</div>
 	% }
 	%

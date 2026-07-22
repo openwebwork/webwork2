@@ -6,11 +6,12 @@
 % for my $studentUser (sort keys %$records) {
 	% for my $setName (sort keys %{ $records->{$studentUser} }) {
 		% for my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
-			% my @pastAnswerIDs = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
+			% my @pastAnswerIDs       = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
 			% my $prettyProblemNumber = stash->{prettyProblemNumbers}{$setName}{$problemNumber};
 			<h2 class="fs-3">
-				<%== maketext('Past Answers for [_1], set [_2], problem [_3]',
-					$studentUser, tag('span', dir => 'ltr', format_set_name_display($setName)), $prettyProblemNumber
+				<%== maketext(
+					'Past Answers for [_1], set [_2], problem [_3]',              $studentUser,
+					tag('span', dir => 'ltr', format_set_name_display($setName)), $prettyProblemNumber
 				) =%>
 			</h2>
 			<div class="table-responsive">
@@ -32,8 +33,8 @@
 									<small>
 										<%= maketext(
 											'Seed: [_1]',
-											defined $record{seed} && $record{seed} ne ''
-												?  $record{seed} : maketext('unknown')
+											defined $record{seed}
+												&& $record{seed} ne '' ? $record{seed} : maketext('unknown')
 										) %>
 									</small>
 								</td>
@@ -46,13 +47,15 @@
 								%
 								% # Color the answer if the user is an instructor, there is an answer,
 								% # there is a score, and it is not an essay question.
-								<td class="<%= join(
-									' ',
-									'px-3',
-									$answerType eq 'essay' ? 'essay' : (),
-									$isInstructor && $answer ne '' && defined $score && $answerType ne 'essay'
-										? ($score ? 'correct' : 'incorrect') : ()
-								) %>">
+								<td
+									class="<%= join(' ',
+										'px-3',
+										$answerType eq 'essay' ? 'essay' : (),
+										$isInstructor
+											&& $answer ne ''
+											&& defined $score
+											&& $answerType ne 'essay' ? ($score ? 'correct' : 'incorrect') : ()) %>"
+								>
 									% if ($answer eq '') {
 										<small><i><%= maketext('empty') %></i></small>
 									% } else {

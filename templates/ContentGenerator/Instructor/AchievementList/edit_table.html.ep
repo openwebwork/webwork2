@@ -3,7 +3,9 @@
 % } else {
 	<div class="table-responsive">
 		<table class="table table-sm table-bordered font-sm caption-top" id="achievement-table">
-			<caption><%= maketext('Achievement List') %></caption>
+			<caption>
+				<%= maketext('Achievement List') %>
+			</caption>
 			<thead class="table-group-divider">
 				<tr>
 					<th class="align-top"><%= maketext('Icon') %></th>
@@ -40,17 +42,17 @@
 						<tr>
 							<td>
 								<%= hidden_field selected_achievements => $achievement_id =%>
-								<%= image
-									$ce->{courseURLs}{achievements}
-										. '/'
-										. ($achievement->icon // 'defaulticon.png'),
-									alt => 'Achievement Icon', height => 60, class => 'm-1' =%>
+								<%= image $ce->{courseURLs}{achievements} . '/'
+									. ($achievement->icon // 'defaulticon.png'),
+									alt    => 'Achievement Icon',
+									height => 60,
+									class  => 'm-1' =%>
 							</td>
 							% for (
 								% { size => 30, fields => [ 'achievement_id', 'name',    'category' ] },
 								% { size => 8,  fields => [ 'number',         'enabled', 'points', 'max_counter' ] },
 								% { size => 85, fields => [ 'description',    'test',    'icon',   'assignment_type' ] }
-								% )
+							% )
 							% {
 								<td>
 									<div class="d-flex flex-column gap-1">
@@ -59,8 +61,8 @@
 												<%= include
 													'ContentGenerator/Instructor/AchievementList/edit_table_row',
 													fieldName => "achievement.$achievement_id.$field",
-													value => $achievement->$field,
-													size => $_->{size} =%>
+													value     => $achievement->$field,
+													size      => $_->{size} =%>
 											</span>
 										% }
 									</div>

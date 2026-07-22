@@ -5,8 +5,12 @@
 			<div class="editor-save-path input-group input-group-sm">
 				<span class="input-group-text">[ACHEVNOTIFYDIR]/</span>
 				% param('action.save_as.target_file', $c->getRelativeSourceFilePath($c->{sourceFilePath}));
-				<%= text_field 'action.save_as.target_file' => '', id => 'action.save_as.target_file_id', size => 40,
-					class => 'form-control form-control-sm', dir  => 'ltr' =%>
+				<%= text_field
+					'action.save_as.target_file' => '',
+					id                           => 'action.save_as.target_file_id',
+					size                         => 40,
+					class                        => 'form-control form-control-sm',
+					dir                          => 'ltr' =%>
 			</div>
 		</div>
 	</div>

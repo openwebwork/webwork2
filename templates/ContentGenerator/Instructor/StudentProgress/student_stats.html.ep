@@ -10,12 +10,16 @@
 			<th rowspan="2" scope="col"><%= maketext('Out Of') %></th>
 			<th colspan="<%= $max_problems %>" scope="col">
 				<%= maketext('Problems') %>
-				<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+				<a
+					class="help-popup"
+					role="button"
+					tabindex="0"
+					data-bs-placement="top"
 					data-bs-toggle="popover"
 					data-bs-content="<%= maketext(
 						'The top number is the percent score on the problem.  A period (.) indicates a problem '
-						. 'has not been attempted. The bottom number is the number of incorrect attempts.'
-					) =%>">
+							. 'has not been attempted. The bottom number is the number of incorrect attempts.') =%>"
+				>
 					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Problem Score Help') %></span>
 				</a>
@@ -36,8 +40,11 @@
 			<tr class="grades-course-total">
 				<th scope="row"><%= maketext('Homework Totals') %></th>
 				<td>
-					<span class="<%=
-						$totalRightPercent == 0 ? 'unattempted' : $totalRightPercent == 100 ? 'correct' : '' %>">
+					<span
+						class="<%=
+							$totalRightPercent == 0 ? 'unattempted' : $totalRightPercent == 100 ? 'correct' : ''
+						%>"
+					>
 						<%= $totalRightPercent . '%' %>
 					</span>
 				</td>
