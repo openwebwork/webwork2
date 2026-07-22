@@ -12,16 +12,17 @@ on:
 
 jobs:
   perltidy:
-    name: Check Perl file formatting with perltidy
+    name: Check file formatting with perltidy and prettier
     runs-on: ubuntu-24.04
-    container:
-      image: perl:5.38
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
       - name: Install dependencies
-        run: cpanm -n Perl::Tidy@20260204
-      - name: Run perltidy
+        run: |
+          sudo apt-get update && sudo apt-get install -y libmojolicious-perl cpanminus
+          sudo cpanm -n Perl::Tidy@20260204
+
+      - name: Check Perl file formatting with perltidy
         shell: bash
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -42,17 +43,11 @@ jobs:
               git diff --exit-code
           fi
 
-  prettier:
-    name: Check JavaScript, style, and HTML file formatting with prettier
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
       - name: Install Node
         uses: actions/setup-node@v6
         with:
           node-version: '24'
       - name: Install Dependencies
         run: cd htdocs && npm ci --ignore-scripts
-      - name: Check formatting with prettier
+      - name: Check JavaScript, style, and HTML file formatting with prettier
         run: cd htdocs && npm run prettier-check
