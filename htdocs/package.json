@@ -5,8 +5,8 @@
 	"scripts": {
 		"generate-assets": "node generate-assets",
 		"prepare": "npm run generate-assets",
-		"prettier-format": "prettier --ignore-path=../.gitignore --write \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\"",
-		"prettier-check": "prettier --ignore-path=../.gitignore --check \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\""
+		"prettier-format": "prettier --ignore-path=../.gitignore --write \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\" \"../templates/**/*.html.ep\"",
+		"prettier-check": "prettier --ignore-path=../.gitignore --check \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\" \"../templates/**/*.html.ep\""
 	},
 	"repository": {
 		"type": "git",
@@ -27,6 +27,7 @@
 		"sortablejs": "^1.15.7"
 	},
 	"devDependencies": {
+		"@openwebwork/prettier-plugin-mojolicious-html-template": "^0.0.1",
 		"autoprefixer": "^10.5.4",
 		"chokidar": "^5.0.0",
 		"cssnano": "^8.0.2",
@@ -51,5 +52,10 @@
 	"allowScripts": {
 		"@parcel/watcher": false,
 		"iframe-resizer": false
+	},
+	"overrides": {
+		"@awmottaz/prettier-plugin-void-html": {
+			"prettier": "^3.9.5"
+		}
 	}
 }

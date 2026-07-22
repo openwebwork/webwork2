@@ -4,5 +4,6 @@
 	"printWidth": 120,
 	"semi": true,
 	"singleQuote": true,
-	"trailingComma": "none"
+	"trailingComma": "none",
+	"plugins": ["@openwebwork/prettier-plugin-mojolicious-html-template"]
 }
