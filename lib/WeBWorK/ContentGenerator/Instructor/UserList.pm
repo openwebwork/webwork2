@@ -133,11 +133,11 @@ use constant FIELD_PROPERTIES => {
 				: 0;
 		}
 	},
-	section    => { name => x('Section'),          type => 'text', attributes => { size => 3 } },
-	recitation => { name => x('Recitation'),       type => 'text', attributes => { size => 3 } },
-	comment    => { name => x('Comment'),          type => 'text', attributes => { size => 20 } },
-	permission => { name => x('Permission Level'), type => 'permission' },
-	password   => { name => x('Password'),         type => 'password' },
+	section    => { name => x('Section'),                       type => 'text', attributes => { size => 3 } },
+	recitation => { name => x('Recitation'),                    type => 'text', attributes => { size => 3 } },
+	comment    => { name => x('Comment'),                       type => 'text', attributes => { size => 20 } },
+	permission => { name => x('Permission Level'),              type => 'permission' },
+	password   => { name => x('Password (set/delete/enforce)'), type => 'password' },
 };
 
 async sub pre_header_initialize ($c) {
