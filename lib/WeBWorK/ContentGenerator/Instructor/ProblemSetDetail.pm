@@ -14,7 +14,7 @@ use WeBWorK::Utils             qw(cryptPassword x);
 use WeBWorK::Utils::Files      qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Utils::Sets       qw(format_set_name_internal format_set_name_display);
+use WeBWorK::Utils::Sets       qw(format_set_name_display);
 require WeBWorK::PG;
 
 our @EXPORT_OK = qw(FIELD_PROPERTIES);
@@ -197,7 +197,7 @@ use constant FIELD_PROPERTIES => {
 		override  => 'any',
 		help_text => x(
 			'This set will be unavailable to students until they have earned the "Score Required for Release" on the '
-				. 'sets specified in this field.  The sets should be written as a comma separated list.'
+				. 'sets selected in this field.  Hold down Ctrl (or Cmd on Mac) to select or deselect multiple sets.'
 		)
 	},
 	restricted_status => {
@@ -886,14 +886,30 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 					if ($field eq 'problems_per_page'
 						&& $c->ce->{test}{maxProblemsPerPage}
 						&& ($value == 0 || $value > $c->ce->{test}{maxProblemsPerPage}));
-				$value = format_set_name_display($value =~ s/\s*,\s*/,/gr) if $field eq 'restricted_release';
 
 				my @field_args = (
 					id    => "$recordType.$recordID.${field}_id",
 					class => 'form-control form-control-sm',
-					$field eq 'restricted_release' || $field eq 'source_file' ? (dir => 'ltr') : ()
+					$field eq 'source_file' ? (dir => 'ltr') : ()
 				);
-				if ($field eq 'problem_seed') {
+				if ($field eq 'restricted_release') {
+					# Only sets that currently exist in the course are valid choices.
+					my @setIDs     = sort grep { $_ ne $setID } $db->listGlobalSets;
+					my %isSelected = map       { $_ => 1 } split(/\s*,\s*/, $value =~ s/^\s*|\s*$//gr);
+
+					$input = $c->select_field(
+						"$recordType.$recordID.$field",
+						[
+							map {
+								[ format_set_name_display($_) => $_, $isSelected{$_} ? (selected => undef) : () ]
+							} @setIDs
+						],
+						id       => "$recordType.$recordID.${field}_id",
+						class    => 'form-select form-select-sm',
+						multiple => undef,
+						size     => (@setIDs ? (@setIDs > 8 ? 8 : scalar(@setIDs)) : 1)
+					);
+				} elsif ($field eq 'problem_seed') {
 					# Insert a randomization button
 					$input = $c->tag(
 						'div',
@@ -1411,7 +1427,10 @@ sub initialize ($c) {
 					next unless canChange($forUsers, $field);
 
 					my @paramValues = $c->param("set.$setID.$field");
-					my $param = @paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+					my $param =
+						$field eq 'restricted_release'                       ? join(',', grep {$_} @paramValues)
+						: (@paramValues > 1 && $paramValues[0] eq 'numeric') ? $paramValues[1]
+						:                                                      $paramValues[0];
 					if ($param && $param ne '') {
 						$param = $param * $properties{$field}->{convertby} if $properties{$field}{convertby};
 
@@ -1488,13 +1507,12 @@ sub initialize ($c) {
 				next unless canChange($forUsers, $field);
 
 				my @paramValues = $c->param("set.$setID.$field");
-				my $param       = @paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
+				my $param =
+					$field eq 'restricted_release'                       ? join(',', grep {$_} @paramValues)
+					: (@paramValues > 1 && $paramValues[0] eq 'numeric') ? $paramValues[1]
+					:                                                      $paramValues[0];
 				$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
 					unless defined $param && $param ne '';
-				if ($field =~ /restricted_release/ && $param) {
-					$param = format_set_name_internal($param =~ s/\s*,\s*/,/gr);
-					$c->check_sets($db, $param);
-				}
 				if ($properties{$field}->{convertby} && $param) {
 					$param = $param * $properties{$field}->{convertby};
 				}
@@ -2091,17 +2109,6 @@ sub checkFile ($c, $filePath, $headerType) {
 	return $c->maketext("This source file is a directory!")  if -d $filePath;
 	return $c->maketext("This source file does not exist!") unless -e $filePath;
 	return $c->maketext("This source file is not a plain file!");
-}
-
-# Make sure restrictor sets exist.
-sub check_sets ($c, $db, $sets_string) {
-	my @proposed_sets = split(/\s*,\s*/, $sets_string);
-	for (@proposed_sets) {
-		$c->addbadmessage("Error: $_ is not a valid set name in restricted release list!")
-			unless $db->existsGlobalSet($_);
-	}
-
-	return;
 }
 
 sub userCountMessage ($c, $count, $numUsers) {
