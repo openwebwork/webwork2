@@ -93,6 +93,50 @@
 			</span>
 		% }
 	% }
+	% if (
+		% $authz->hasPermissions(param('user'), 'view_own_answers_early')
+		% && $c->{set}->assignment_type !~ /gateway/
+		% && param('user') eq param('effectiveUser')
+		% && time < $c->{set}->answer_date
+	% ) {
+		<%= link_to maketext('Show Answers Now') => '#modal_view_answers_early',
+			role  => 'button',
+			class => 'btn btn-primary',
+			id    => 'popup_view_answers_early',
+			data  => { bs_toggle => 'modal' }
+		=%>
+		<div id="modal_view_answers_early" class="modal fade" tabindex="-1">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title h4"><%= maketext('Show Answers Now?') %></h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="<%= maketext('close') %>"></button>
+					</div>
+					<div class="modal-body">
+						<p class="mb-0"><%= maketext(
+							'Are you sure you want to see the answer key now? This will change your answer date '
+								. 'for this set to the current time, making the correct answers to problems in this '
+								. 'set available to you immediately. If your close date and/or reduced scoring date '
+								. 'for this set are still in the future, those will also be changed to the current '
+								. 'time. This cannot be undone.'
+						) %></p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+							<%= maketext('Cancel') %>
+						</button>
+						<%= form_for current_route, method => 'POST', name => 'view_answers_early', begin =%>
+							<%= $c->hidden_authen_fields =%>
+							<%= submit_button maketext('Yes, Show Me the Answers'), name => 'viewAnswersEarly',
+								class => 'btn btn-primary' =%>
+						<%= end =%>
+					</div>
+				</div>
+			</div>
+		</div>
+	% }
+	%
 	% unless ($c->{set}->assignment_type =~ /gateway/) {
 		<%= link_to
 			maketext('Download Hardcopy') => $c->systemLink(url_for 'hardcopy_preselect_set'),
