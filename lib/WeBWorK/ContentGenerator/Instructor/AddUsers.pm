@@ -78,6 +78,7 @@ sub initialize ($c) {
 					my $newPassword = $db->newPassword;
 					$newPassword->user_id($new_user_id);
 					$newPassword->password(cryptPassword($password));
+					$newPassword->must_reset_password(1);
 					$db->addPassword($newPassword);
 				}
 

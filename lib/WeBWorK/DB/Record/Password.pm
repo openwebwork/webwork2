@@ -17,6 +17,7 @@ BEGIN {
 		otp_secret             => { type => "TEXT" },
 		reset_token            => { type => "TEXT" },
 		reset_token_expiration => { type => "BIGINT" },
+		must_reset_password    => { type => "INT" },
 	);
 }
 

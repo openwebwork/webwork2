@@ -38,7 +38,13 @@ sub pre_header_initialize ($c) {
 		}
 	}
 
-	$c->reply_with_redirect($authen->{redirect}) if $authen->{redirect};
+	if ($authen->{redirect}) {
+		$c->reply_with_redirect($authen->{redirect});
+	} elsif ($c->param('show_login')) {
+		# Allow a caller (e.g. the forced password reset page) to skip the logout confirmation page and go directly
+		# to the course's login page, so the user can immediately log in as someone else.
+		$c->reply_with_redirect($c->systemLink($c->url_for('set_list')));
+	}
 
 	return;
 }
