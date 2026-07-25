@@ -272,15 +272,12 @@
 			.then((data) => {
 				if (data.error) throw new Error(data.error);
 				if (!data.result_data) throw new Error('An invalid response was received.');
-				if (data.result_data.errors) {
+				if (data.result_data.error) {
 					renderArea.innerHTML =
 						'<div class="alert alert-danger p-1 m-2">' +
-						'<p class="fw-bold">PGML conversion errors:</p>' +
-						'<pre><code>' +
-						data.result_data.errors
-							.replace(/^[\s\S]*Begin Error Output Stream\n\n/, '')
-							.replace(/\n\d*: To save a full \.LOG file rerun with -g/, '') +
-						'</code></pre>';
+						'<p class="fw-bold">PGML conversion error:</p>' +
+						data.result_data.error +
+						'</div>';
 
 					showMessage('Errors occurred when converting code to PGML.', false);
 					return;
