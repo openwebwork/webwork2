@@ -79,8 +79,8 @@
 <div class="row">
 	<div class="col-md-8">
 		<div class="input-group input-group-sm mb-2">
-			<span class="input-group-text"><%= maketext('Format') %>:</span>
-			<div class="input-group-text flex-grow-1">
+			<span class="input-group-text" id="file-manager-format-label"><%= maketext('Format') %>:</span>
+			<div class="input-group-text flex-grow-1" role="group" aria-labelledby="file-manager-format-label">
 				<label class="form-check-label me-4">
 					<%= radio_button format => 'Text', class => 'form-check-input me-2' =%>
 					<%= maketext('Text') =%>
