@@ -42,10 +42,189 @@
 		}
 	};
 
+	const getSourceFilePath = (id) =>
+		document.getElementById(`problem.${id}.source_file_id`)?.value ||
+		document.getElementById(`problem_${id}_default_source_file`)?.value ||
+		'';
+
+	// Compute the "same source file" alerts for every problem based on the current order of the list.
+	const updateRepeatFileAlerts = () => {
+		if (!container) return;
+		const repeatFileText = container.dataset.repeatFileText;
+		if (!repeatFileText) return;
+
+		const shownYet = new Map();
+		for (const item of container.querySelectorAll('.psd_list_item')) {
+			const row = item.querySelector(':scope > .problem_detail_row');
+			const alertContainer = row?.querySelector('.pdr_repeat_file_alert');
+			if (!alertContainer) return;
+
+			alertContainer.innerHTML = '';
+
+			const problemID = item.id.replace('psd_list_item_', '');
+			const sourceFile = getSourceFilePath(problemID).replace(/^\//, '').replace(/\.\./g, '');
+			if (!sourceFile || sourceFile.startsWith('group:')) return;
+
+			if (shownYet.has(sourceFile)) {
+				const alert = document.createElement('div');
+				alert.className = 'alert alert-danger p-1 mb-2 fw-bold';
+				alert.textContent = repeatFileText.replace('[_1]', shownYet.get(sourceFile));
+				alertContainer.append(alert);
+			} else {
+				shownYet.set(sourceFile, row.querySelector('.pdr_problem_number')?.textContent ?? '');
+			}
+		}
+	};
+
 	const setProblemNumberFields = () => {
 		container.querySelectorAll('.psd_list_item .pdr_problem_number').forEach((num) => (num.textContent = ''));
 		recursiveRenumber(Sortable.get(container).toArray());
+		updateRepeatFileAlerts();
 	};
+
+	// Buttons to rearrange problems. Either up/down for rearranging order, or buttons for nestin/de-nesting JITAR
+	// problems. Buttons are disabled when the corresponding action isn't possible.
+	const updateReorderButtonStates = () => {
+		if (!container) return;
+		for (const list of [container, ...container.querySelectorAll('.sortable-branch')]) {
+			const items = list.querySelectorAll(':scope > .psd_list_item');
+			for (const [index, item] of items.entries()) {
+				const upButton = item.querySelector(':scope > .problem_detail_row .psd_move_up');
+				const downButton = item.querySelector(':scope > .problem_detail_row .psd_move_down');
+				if (upButton) upButton.disabled = index === 0;
+				if (downButton) downButton.disabled = index === items.length - 1;
+
+				// Nesting nests the item under its previous sibling, so it needs a previous sibling to nest under.
+				// Denesting moves the item up to its parent's list, so it isn't possible at the top level.
+				const nestButton = item.querySelector(':scope > .problem_detail_row .psd_nest');
+				const denestButton = item.querySelector(':scope > .problem_detail_row .psd_denest');
+				if (nestButton) nestButton.disabled = index === 0;
+				if (denestButton) denestButton.disabled = list === container;
+			}
+		}
+	};
+
+	// Recompute the nestDepth property (used by the drag-and-drop "put" rule) for a sub-list and all of its
+	// descendant sub-lists after the sub-list has moved to a new position in the tree.
+	const recomputeNestDepth = (list) => {
+		if (!list) return;
+		list.nestDepth = list.parentNode.closest('.sortable-branch').nestDepth + 1;
+		list.querySelectorAll(':scope > .psd_list_item > .sortable-branch').forEach(recomputeNestDepth);
+	};
+
+	// Show or hide each row's expand/collapse button depending on whether its sub-list currently has any children.
+	const updateCollapseButtonVisibility = () => {
+		if (!container) return;
+		for (const list of container.querySelectorAll('.sortable-branch')) {
+			if (list.firstElementChild) list.parentNode.collapseButton?.classList.remove('d-none');
+			else list.parentNode.collapseButton?.classList.add('d-none');
+		}
+	};
+
+	// Bookkeeping after any keyboard-driven reorder/nest/denest: update the hidden problem number/parent fields,
+	// re-enable/disable fields whose relevance depends on tree position, update this row's button states, and
+	// manage focus.
+	const finishReorder = (item, button, fallbackSelectors) => {
+		setProblemNumberFields();
+		disableFields();
+		updateReorderButtonStates();
+		updateCollapseButtonVisibility();
+
+		if (!button.disabled) {
+			button.focus();
+			return;
+		}
+		for (const selector of fallbackSelectors) {
+			const fallback = item.querySelector(selector);
+			if (fallback && !fallback.disabled) {
+				fallback.focus();
+				return;
+			}
+		}
+	};
+
+	const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	// Animate elements that just moved from where they used to be to where they ended up (the "FLIP" technique),
+	// so a move up/down reads as the two rows swapping places instead of an unexplained instant jump. Only the
+	// vertical position can change here, since these are stacked list items.
+	const animateReorder = (elementsAndFirstRects) => {
+		if (prefersReducedMotion) return;
+		for (const [el, firstRect] of elementsAndFirstRects) {
+			const deltaY = firstRect.top - el.getBoundingClientRect().top;
+			if (!deltaY) continue;
+			el.style.transition = 'none';
+			el.style.transform = `translateY(${deltaY}px)`;
+			el.getBoundingClientRect(); // Force a reflow so the starting position above is rendered before animating.
+			requestAnimationFrame(() => {
+				el.style.transition = 'transform 150ms ease-in-out';
+				el.style.transform = '';
+			});
+			el.addEventListener('transitionend', () => (el.style.transition = ''), { once: true });
+		}
+	};
+
+	const moveItem = (button, direction) => {
+		const item = button.closest('.psd_list_item');
+		const sibling = direction === 'up' ? item.previousElementSibling : item.nextElementSibling;
+		if (!sibling?.classList.contains('psd_list_item')) return;
+
+		const firstRects = [item, sibling].map((el) => [el, el.getBoundingClientRect()]);
+
+		if (direction === 'up') item.parentNode.insertBefore(item, sibling);
+		else item.parentNode.insertBefore(sibling, item);
+
+		animateReorder(firstRects);
+
+		finishReorder(item, button, [
+			direction === 'up' ? '.psd_move_down' : '.psd_move_up',
+			'.psd_denest',
+			'.psd_nest'
+		]);
+	};
+
+	const nestItem = (button) => {
+		const item = button.closest('.psd_list_item');
+		const prevSibling = item.previousElementSibling;
+		if (!prevSibling?.classList.contains('psd_list_item')) return;
+
+		const targetList = prevSibling.querySelector(':scope > .sortable-branch');
+		if (!targetList) return;
+
+		targetList.append(item);
+		recomputeNestDepth(item.querySelector(':scope > .sortable-branch'));
+
+		// Make sure the item's new position is actually visible, in case its new parent's children were collapsed.
+		bootstrap.Collapse.getInstance(targetList)?.show();
+
+		finishReorder(item, button, ['.psd_denest', '.psd_move_up', '.psd_move_down']);
+	};
+
+	const denestItem = (button) => {
+		const item = button.closest('.psd_list_item');
+		const currentList = item.parentNode;
+		if (currentList === container) return;
+
+		const parentItem = currentList.closest('.psd_list_item');
+		const grandParentList = parentItem.parentNode;
+
+		grandParentList.insertBefore(item, parentItem.nextSibling);
+		recomputeNestDepth(item.querySelector(':scope > .sortable-branch'));
+
+		finishReorder(item, button, ['.psd_nest', '.psd_move_up', '.psd_move_down']);
+	};
+
+	for (const button of document.querySelectorAll('.psd_move_up, .psd_move_down, .psd_nest, .psd_denest')) {
+		button.addEventListener('click', () => {
+			// Since focus stays on (or moves to another) reorder button after the click is handled below, the
+			// tooltip's own focus/hover triggers won't naturally hide it. Hide it explicitly so it doesn't get stuck.
+			bootstrap.Tooltip.getInstance(button)?.hide();
+			if (button.classList.contains('psd_move_up')) moveItem(button, 'up');
+			else if (button.classList.contains('psd_move_down')) moveItem(button, 'down');
+			else if (button.classList.contains('psd_nest')) nestItem(button);
+			else denestItem(button);
+		});
+	}
 
 	const setSortable = (list) => {
 		// Set up the bootstrap collapses.  Note that if a list is empty, then the collapse is shown.  Since it is empty
@@ -112,6 +291,7 @@
 			onSort() {
 				setProblemNumberFields();
 				disableFields();
+				updateReorderButtonStates();
 			},
 			onRemove() {
 				if (hiddenCollapse?._isTransitioning)
@@ -121,10 +301,7 @@
 				else hiddenCollapse?.show();
 			},
 			onChange(evt) {
-				container.querySelectorAll('.sortable-branch').forEach((list) => {
-					if (list.firstElementChild) list.parentNode.collapseButton?.classList.remove('d-none');
-					else list.parentNode.collapseButton?.classList.add('d-none');
-				});
+				updateCollapseButtonVisibility();
 				if (evt.from.querySelectorAll('.psd_list_item').length < 2)
 					evt.from.parentNode.collapseButton?.classList.add('d-none');
 			}
@@ -182,6 +359,8 @@
 
 	if (container) setSortable(container);
 	container?.querySelectorAll('.sortable-branch').forEach(setSortable);
+	updateReorderButtonStates();
+	updateRepeatFileAlerts();
 
 	// Recursively convert the sortable list to a tree.  Each entry of the tree has the problem id, the parent id if it
 	// has a parent, and a list of the child problems (each of which is again an entry of the tree).
@@ -211,7 +390,10 @@
 
 	// Initialize tooltips.
 	document
-		.querySelectorAll('.psd_view,.psd_edit,.pdr_render,.pdr_grader,.pdr_handle > i')
+		.querySelectorAll(
+			'.psd_view,.psd_edit,.pdr_render,.pdr_grader,.pdr_handle > i,' +
+				'.psd_move_up,.psd_move_down,.psd_nest,.psd_denest'
+		)
 		.forEach((el) => new bootstrap.Tooltip(el));
 
 	// If editing for user(s), then disable drag and drop re-ordering of problems.
@@ -345,9 +527,7 @@
 
 			const ro = {
 				problemSeed: document.getElementById(`problem.${id}.problem_seed_id`)?.value ?? 1,
-				sourceFilePath:
-					document.getElementById(`problem.${id}.source_file_id`)?.value ||
-					document.getElementById(`problem_${id}_default_source_file`)?.value
+				sourceFilePath: getSourceFilePath(id)
 			};
 
 			if (ro.sourceFilePath.startsWith('group')) {

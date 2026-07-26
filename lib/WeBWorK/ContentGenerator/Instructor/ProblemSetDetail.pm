@@ -668,8 +668,8 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 						colspan => 2,
 						$problemID ? '' : $c->maketext('General Parameters')
 					),
-					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('User Overrides')),
-					$c->tag('th', class => 'p-2', scope => 'col', $c->maketext('Set Values'))
+					$c->tag('th', class => 'p-2',             scope => 'col', $c->maketext('User Overrides')),
+					$c->tag('th', class => 'p-2 text-nowrap', scope => 'col', $c->maketext('Set Values'))
 				)->join('')
 			)
 		);
@@ -760,6 +760,8 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 			)
 		);
 	}
+
+	unshift @$rows, $c->tag('col') x 2, $c->tag('col', class => 'w-75'), $forOneUser ? $c->tag('col') : '';
 
 	return $c->tag(
 		'table',
