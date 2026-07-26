@@ -90,7 +90,7 @@
 	% end
 % }
 %
-<div id="select_user_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+<div id="select_user_err_msg" role="alert" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 	<%= maketext('Please select at least one user.') %>
 </div>
 <div class="table-responsive <%= $c->{editMode} ? 'edit-classlist-table-container' : '' %>">

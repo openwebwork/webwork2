@@ -47,14 +47,14 @@
 			</button>
 		</div>
 	</div>
-	<div id="choose_date_type_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+	<div id="choose_date_type_err_msg" role="alert" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 		<%= maketext('Please choose a set date type.') %>
 	</div>
-	<div id="choose_common_date_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+	<div id="choose_common_date_err_msg" role="alert" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 		<%= maketext('Please select a date.') %>
 	</div>
 % }
-<div id="select_set_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+<div id="select_set_err_msg" role="alert" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 	<%= maketext('Please select at least one set.') %>
 </div>
 <div class="table-responsive">
