@@ -516,12 +516,12 @@
 			% end
 		% }
 		% my $jumpLinks = begin
-			<div class="table-responsive">
-				<table class="gwNavigation" role="navigation" aria-label="problem navigation">
+			<nav class="table-responsive" aria-label="<%= maketext('problem navigation') %>">
+				<table class="gwNavigation">
 					<%= content 'gw-navigation-cols' =%>
 					<%= content 'gw-navigation-table-rows' =%>
 				</table>
-			</div>
+			</nav>
 			<%= content 'gw-previous-next-buttons' =%>
 		% end
 		<%= $jumpLinks->() =%>
