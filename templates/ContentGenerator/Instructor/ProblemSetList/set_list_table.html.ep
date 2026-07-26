@@ -80,7 +80,8 @@
 						<% end =%>
 				</th>
 				% for (@$fieldNames) {
-					<th id="<%= $_ %>_header">
+					<th id="<%= $_ %>_header"
+						<%== !$c->{editMode} && $sortableFields->{$_} ? $c->ariaSortAttr($_) : '' %>>
 						% if (!$c->{editMode} && $sortableFields->{$_}) {
 							<div class="d-flex justify-content-between align-items-end gap-1">
 								<%= link_to $fieldHeaders{$_} => '#', class => 'sort-header',

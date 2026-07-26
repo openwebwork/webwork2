@@ -1261,6 +1261,33 @@ sub read_scoring_file ($c, $fileName) {
 	return parse_scoring_file($c->ce->{courseDirs}{scoring} . "/$fileName");
 }
 
+=item ariaSortAttr($c, $field)
+
+Returns the C<aria-sort> attribute (as C<< aria-sort="..." >>) to use on the
+C<< <th> >> for the sortable column C<$field> of a table, based on the
+C<primarySortField>/C<primarySortOrder>, C<secondarySortField>, and
+C<ternarySortField> values for the content generator C<$c>.  Returns an
+empty string if C<$field> is not currently a sort field for the table.
+
+Some content generators store these values directly on C<$c>, and others
+store them in the stash, so both locations are checked.
+
+=cut
+
+sub ariaSortAttr ($c, $field) {
+	my $primarySortField   = $c->{primarySortField}   // $c->stash->{primarySortField}   // '';
+	my $primarySortOrder   = $c->{primarySortOrder}   // $c->stash->{primarySortOrder}   // '';
+	my $secondarySortField = $c->{secondarySortField} // $c->stash->{secondarySortField} // '';
+	my $ternarySortField   = $c->{ternarySortField}   // $c->stash->{ternarySortField}   // '';
+
+	if ($primarySortField eq $field) {
+		return $primarySortOrder eq 'ASC' ? 'aria-sort="ascending"' : 'aria-sort="descending"';
+	} elsif ($secondarySortField eq $field || $ternarySortField eq $field) {
+		return 'aria-sort="other"';
+	}
+	return '';
+}
+
 =back
 
 =cut
