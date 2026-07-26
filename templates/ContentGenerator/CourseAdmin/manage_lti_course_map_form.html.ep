@@ -30,7 +30,7 @@
 						</td>
 						<td class="text-center">
 							% if ($ltiConfigs->{$_}{LTIVersion} && $ltiConfigs->{$_}{LTIVersion} =~ /^v1p[13]$/) {
-								<a href="#" role="button" data-bs-toggle="modal"
+								<a href="#" role="button" class="lti-config-btn spacebar-activatable" data-bs-toggle="modal"
 									data-bs-target="#<%= $_ %>-config-modal">
 									<i class="fa-solid fa-circle-question fa-xl"></i>
 									<span class="visually-hidden"><%= maketext('LTI Configuration') %></span>
