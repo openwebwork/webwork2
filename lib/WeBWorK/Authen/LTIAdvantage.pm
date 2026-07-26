@@ -184,6 +184,13 @@ sub get_credentials ($self) {
 				[ recitation => 'https://purl.imsglobal.org/spec/lti/claim/custom#recitation' ],
 			);
 
+		# The last_name and first_name are things that the user might be able to configure in the LMS, and the user
+		# could set one of them to something that includes malicious JavaScript code. So any ampersands, less thans,
+		# greater thans, and quotes are stripped from these values in case something like that has been done. Note that
+		# a single quote is left because that is not uncommon in names and will not cause a problem in any case.
+		# Usually names will not actually be modified by this.
+		$self->{$_} =~ s/([&<>"])//e for 'last_name', 'first_name';
+
 		$self->{student_id} =
 			$ce->{LTI}{v1p3}{preferred_source_of_student_id}
 			? ($extract_claim->($ce->{LTI}{v1p3}{preferred_source_of_student_id}) // '')

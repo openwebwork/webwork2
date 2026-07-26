@@ -850,6 +850,14 @@ sub add_problem_handler ($c) {
 	my $templatesPath  = $c->ce->{courseDirs}{templates};
 	my $sourceFilePath = $c->{editFilePath} =~ s|^$templatesPath/||r;
 
+	unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{templates}, 1)) {
+		$c->addbadmessage($c->maketext(
+			'The source file path [_1] is not contained in the course templates directory and cannot be added.',
+			$c->{editFilePath}
+		));
+		return;
+	}
+
 	my $targetSetName  = $c->param('action.add_problem.target_set');
 	my $targetFileType = $c->param('action.add_problem.file_type');
 

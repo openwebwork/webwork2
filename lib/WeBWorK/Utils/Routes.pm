@@ -172,9 +172,10 @@ my %routeParameters = (
 		path   => '/render_rpc'
 	},
 	instructor_rpc => {
-		title  => 'instructor_rpc',
-		module => 'InstructorRPCHandler',
-		path   => '/instructor_rpc'
+		title   => 'instructor_rpc',
+		module  => 'InstructorRPCHandler',
+		path    => '/instructor_rpc',
+		methods => ['POST']
 	},
 
 	ltiadvanced_content_selection => {
