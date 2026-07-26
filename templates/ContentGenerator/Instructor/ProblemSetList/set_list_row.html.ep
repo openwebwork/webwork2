@@ -19,7 +19,7 @@
 	<td><%= check_box apply_date_sets => $set_id, class => 'form-check-input' =%></td>
 	<td dir="ltr">
 		% if ($iconClass) {
-			<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" alt="<%= $iconTitle =%>"></i>
+			<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" role="img" aria-label="<%= $iconTitle =%>"></i>
 		% }
 		<%= link_to $prettySetID => $c->systemLink(url_for('instructor_set_detail', setID => $set_id)) %>
 	</td>
@@ -34,7 +34,7 @@
 				<span class="set-label set-id-tooltip <%= $visibleClass %>" data-bs-toggle="tooltip"
 					data-bs-placement="right" data-bs-title="<%= $set->description %>">
 					% if ($iconClass) {
-						<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" alt="<%= $iconTitle =%>"></i>
+						<i class="<%= $iconClass =%>" title="<%= $iconTitle =%>" role="img" aria-label="<%= $iconTitle =%>"></i>
 					% }
 					<%= $prettySetID =%>
 				</span>
