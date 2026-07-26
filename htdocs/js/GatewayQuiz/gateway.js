@@ -10,6 +10,7 @@
 
 	// Gateway timer
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
+	const timerAnnounceDiv = document.getElementById('gwTimerAnnounce'); // Hidden live region for time announcements
 	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.
 	// The 'Grade Test' submit button.
 	const submitAnswers =
@@ -58,8 +59,30 @@
 		bsToast.show();
 	};
 
+	// Only announce the remaining time via the hidden live region at these checkpoints (seconds remaining).
+	// Announcing every second would be overwhelming, so this only fires at the last few seconds (when the test is
+	// about to auto-submit) and at a handful of longer-interval checkpoints on the way down from 30 minutes.
+	const shouldAnnounceRemainingTime = (t) =>
+		(t >= 1 && t <= 5) ||
+		t === 15 ||
+		t === 30 ||
+		t === 60 ||
+		t === 300 ||
+		t === 900 ||
+		(t >= 1800 && t % 1800 === 0);
+
+	// Update the hidden live region with the current remaining time, either because it just hit one of the
+	// checkpoints above, or because force is true (used to always announce the initial remaining time on page load).
+	const announceRemainingTime = (remainingTime, force = false) => {
+		if (!timerAnnounceDiv || (!force && !shouldAnnounceRemainingTime(remainingTime))) return;
+		timerAnnounceDiv.textContent =
+			remainingTime >= 0
+				? `${remainingTimeString}${formatTime(remainingTime)}`
+				: `${remainingTimeString}00:00:00`;
+	};
+
 	// Update the timer
-	const updateTimer = () => {
+	const updateTimer = (forceAnnounce = false) => {
 		const dateNow = new Date();
 		const browserTime = Math.round(dateNow.getTime() / 1000);
 		const remainingTime = serverDueTime - browserTime + timeDelta;
@@ -72,6 +95,7 @@
 		}
 
 		if (!timerDiv.dataset.acting) {
+			announceRemainingTime(remainingTime, forceAnnounce);
 			// Check to see if we should put up a low time alert, or submit the test if
 			// the time is near the end of the grace period.
 			const alertStatus = sessionStorage.getItem('gatewayAlertStatus');
@@ -167,8 +191,9 @@
 				submitAnswers.click();
 			}
 		} else {
-			// Set the timer text and check alerts at page load.
-			updateTimer();
+			// Set the timer text and check alerts at page load. Force the initial remaining time to be announced
+			// via the live region, regardless of whether it happens to land on a normal announcement checkpoint.
+			updateTimer(true);
 
 			// Start the timer.
 			setInterval(updateTimer, 1000);

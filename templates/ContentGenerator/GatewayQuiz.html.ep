@@ -251,6 +251,7 @@
 			# '00:00:00' is a placeholder that is replaced by the actual time remaining via javascript.
 			maketext('Remaining time: [_1]', '00:00:00')
 		) =%>
+		<div id="gwTimerAnnounce" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 	% }
 	%
 	% if ($timeLeft < 60 && $timeLeft > 0 && !$c->{can}{gradeUnsubmittedTest}
