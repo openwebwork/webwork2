@@ -4,8 +4,9 @@ use base qw/WeBWorK::Authen/;
 use strict;
 use warnings;
 
-use WeBWorK::Debug qw(debug);
-use Net::LDAP      qw(LDAP_INVALID_CREDENTIALS);
+use WeBWorK::Debug  qw(debug);
+use Net::LDAP       qw(LDAP_INVALID_CREDENTIALS);
+use Net::LDAP::Util qw(escape_filter_value);
 
 sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
@@ -69,7 +70,7 @@ sub ldap_authen_uid {
 	}
 
 	# look up user's DN
-	$msg = $ldap->search(base => $base, filter => "$rdn=$uid");
+	$msg = $ldap->search(base => $base, filter => "$rdn=" . escape_filter_value($uid));
 	if ($msg->is_error) {
 		warn "AUTH LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n", $searchdn, "\n", $base, "\n", $uid,
 			"\n";

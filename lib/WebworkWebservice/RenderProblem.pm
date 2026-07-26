@@ -12,7 +12,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::DB::Utils        qw(global2user fake_set fake_problem);
 use WeBWorK::Utils            qw(decode_utf8_base64);
-use WeBWorK::Utils::Files     qw(readFile);
+use WeBWorK::Utils::Files     qw(readFile path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 our $UNIT_TESTS_ON = 0;
@@ -26,19 +26,30 @@ async sub renderProblem {
 	# is enabled.  That is an expensive method to always call here.
 	debug(pretty_print_rh($rh)) if $WeBWorK::Debug::Enabled;
 
-	# If the problem source is provided, check user is allow to render problem source.
-	if (!$ws->authz->hasPermissions($rh->{user}, 'webservice_render_source')
-		&& ($rh->{problemSource} || $rh->{rawProblemSource} || $rh->{uriEncodedProblemSource}))
-	{
-		$ws->error_string(__PACKAGE__ . ": User $rh->{user} does not have permission to render problem source.");
-		return {};
+	my $ce = $ws->ce;
+
+	if ($rh->{problemSource} || $rh->{rawProblemSource} || $rh->{uriEncodedProblemSource}) {
+		# If the problem source is provided, check user is allow to render problem source.
+		unless ($ws->authz->hasPermissions($rh->{user}, 'webservice_render_source')) {
+			$ws->error_string(__PACKAGE__ . ": User $rh->{user} does not have permission to render problem source.");
+			return {};
+		}
+	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
+		# If the source file path is provided, ensure it is contained in the course's templates directory.
+		unless (path_is_subdir(
+			$ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath},
+			$ce->{courseDirs}{templates}
+		))
+		{
+			$ws->error_string(__PACKAGE__ . ": Source file path is unsafe.");
+			return {};
+		}
 	}
 
 	my $problemSeed = $rh->{problemSeed} // '1234';
 
 	my $beginTime = Benchmark->new;
 
-	my $ce = $ws->ce;
 	my $db = $ws->db;
 
 	# Determine an effective user for this interaction or create one if it is not given.

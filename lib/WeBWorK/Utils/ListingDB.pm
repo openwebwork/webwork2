@@ -115,10 +115,11 @@ sub getDBextras ($c, $path) {
 	$path =~ s|^Library/||;
 	my $filename = basename $path;
 	$path = dirname $path;
-	my $query =
+	my @res = $dbh->selectrow_array(
 		"SELECT pgfile.MO, pgfile.static FROM `$OPLtables{pgfile}` pgfile, `$OPLtables{path}` p "
-		. "WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
-	my @res = $dbh->selectrow_array($query);
+			. 'WHERE p.path = ? AND pgfile.path_id = p.path_id AND pgfile.filename = ?',
+		{}, $path, $filename
+	);
 	if (@res) {
 		$mo     = $res[0];
 		$static = $res[1];
