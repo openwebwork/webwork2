@@ -125,14 +125,14 @@
 			% # Sets Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_list') %></li>
 			% # Editor link.  Only shown for non-versioned sets
-			% if (defined $setID && $setID !~ /,v\d+$/) {
+			% if (defined $globalSetID || defined $setID && $setID !~ /,v\d+$/) {
 				<li class="list-group-item nav-item">
 					<ul class="nav flex-column">
 						<li class="nav-item">
 							<%= $makelink->(
 								'instructor_set_detail',
 								text       => $prettySetID,
-								captures   => { setID => $setID },
+								captures   => { setID => $globalSetID // $setID },
 								link_attrs => { dir => 'ltr' }
 							); %>
 						</li>
@@ -162,7 +162,7 @@
 									$c->tag('span', dir => 'ltr', $prettySetID),
 									$prettyProblemID
 								)),
-								captures => { setID => $setID, problemID => $problemID },
+								captures => { setID => $setID // $globalSetID, problemID => $problemID },
 								target   => 'WW_Editor'
 							) %>
 						</li>
@@ -177,7 +177,7 @@
 								text => param('file_type') eq 'set_header'
 									? b(maketext('[_1]: Set Header',      $c->tag('span', dir => 'ltr', $prettySetID)))
 									: b(maketext('[_1]: Hardcopy Header', $c->tag('span', dir => 'ltr', $prettySetID))),
-								captures          => { setID => $setID, problemID => 0 },
+								captures          => { setID => $setID // $globalSetID, problemID => 0 },
 								systemlink_params => { file_type => param('file_type') },
 								target            => 'WW_Editor'
 							) %>
@@ -221,14 +221,14 @@
 			% # Statistics
 			<li class="list-group-item nav-item">
 				<%= $makelink->('instructor_statistics') %>
-				% if (defined $setID) {
+				% if (defined $setID || defined $globalSetID) {
 					<ul class="nav flex-column">
 						<li class="nav-item" dir="ltr">
 							<%= $makelink->(
 								'instructor_set_statistics',
 								# Make sure a versioned set id is not used for the statistics link.
 								text     => $prettySetID =~ s/,v\d+$//r,
-								captures => { setID => $setID =~ s/,v\d+$//r }
+								captures => { setID => $globalSetID // $setID =~ s/,v\d+$//r }
 							) %>
 						</li>
 						% if (defined $problemID) {
@@ -239,7 +239,7 @@
 											'instructor_problem_statistics',
 											text     => maketext('Problem [_1]', $prettyProblemID),
 											captures => {
-												setID     => $setID =~ s/,v\d+$//r,
+												setID     => $globalSetID // $setID =~ s/,v\d+$//r,
 												problemID => $problemID
 											}
 										) =%>
@@ -252,7 +252,7 @@
 			</li>
 			% # Student Progress
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_progress') %>
-				% if ($userID ne $eUserID || defined $setID || defined $urlUserID) {
+				% if ($userID ne $eUserID || defined $setID || defined $globalSetID || defined $urlUserID) {
 					<ul class="nav flex-column">
 						% if (defined $urlUserID) {
 							<li class="nav-item">
@@ -276,13 +276,13 @@
 								) %>
 							</li>
 						% }
-						% if (defined $setID) {
+						% if (defined $setID || defined $globalSetID) {
 							<li class="nav-item" dir="ltr">
 								<%= $makelink->(
 									'instructor_set_progress',
 									# Make sure a versioned set id is not used for the progress link.
 									text     => $prettySetID =~ s/,v\d+$//r,
-									captures => { setID => $setID =~ s/,v\d+$//r },
+									captures => { setID => $globalSetID // $setID =~ s/,v\d+$//r },
 								) %>
 							</li>
 						% }

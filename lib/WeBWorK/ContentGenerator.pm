@@ -486,6 +486,7 @@ sub links ($c) {
 	my $setID         = $c->stash('setID');
 	my $problemID     = $c->stash('problemID');
 	my $achievementID = $c->stash('achievementID');
+	my $globalSetID   = defined $setID ? $setID =~ s/,v\d+$//r : undef;
 
 	# Determine if navigation is restricted for this user.
 	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
@@ -500,9 +501,13 @@ sub links ($c) {
 	if ($authen->was_verified) {
 		if (defined $setID && $db->existsUserSet($eUserID, $setID)) {
 			$problemID = undef unless (defined $problemID && $db->existsUserProblem($eUserID, $setID, $problemID));
-		} else {
+		} elsif (defined $globalSetID && $db->existsGlobalSet($globalSetID)) {
 			$setID     = undef;
-			$problemID = undef;
+			$problemID = undef unless (defined $problemID && $db->existsGlobalProblem($globalSetID, $problemID));
+		} else {
+			$setID       = undef;
+			$globalSetID = undef;
+			$problemID   = undef;
 		}
 	}
 
@@ -543,7 +548,8 @@ sub links ($c) {
 		eUserID               => $eUserID,
 		urlUserID             => $c->stash('userID'),
 		setID                 => $setID,
-		prettySetID           => format_set_name_display($setID // ''),
+		globalSetID           => $globalSetID,
+		prettySetID           => format_set_name_display($setID // $globalSetID // ''),
 		problemID             => $problemID,
 		prettyProblemID       => $prettyProblemID,
 		achievementID         => $achievementID,
