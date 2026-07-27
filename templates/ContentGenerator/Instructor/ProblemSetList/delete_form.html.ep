@@ -13,7 +13,7 @@
 				id => 'delete_select', class => 'form-select form-select-sm' =%>
 		</div>
 	</div>
-	<div id="delete_confirm_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+	<div id="delete_confirm_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
 		<%= maketext('Please confirm it is okay to delete selected sets permanently.') %>
 	</div>
 </div>

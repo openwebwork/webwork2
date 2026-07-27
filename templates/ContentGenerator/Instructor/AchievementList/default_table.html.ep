@@ -1,4 +1,4 @@
-<div id="select_achievement_err_msg" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
+<div id="select_achievement_err_msg" role="alert" class="alert alert-danger p-1 mb-0 mt-2 d-inline-flex d-none">
 	<%= maketext('Please select at least one achievement.') %>
 </div>
 <div class="table-responsive">

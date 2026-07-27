@@ -72,7 +72,7 @@
 			</div>
 		</div>
 	% }
-	<div id="import_file_err_msg" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
+	<div id="import_file_err_msg" role="alert" class="alert alert-danger p-1 mb-2 d-inline-flex d-none">
 		<%= maketext('Please select a set definition file to import.') %>
 	</div>
 </div>
