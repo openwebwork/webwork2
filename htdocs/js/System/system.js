@@ -5,6 +5,49 @@
 		const threshold = 768;
 		let currentWidth = window.innerWidth;
 		const content = document.getElementById('content');
+		const masthead = document.querySelector('.masthead');
+		const toggleButton = document.getElementById('toggle-sidebar');
+		const skipLink = document.getElementById('skip-to-main-content');
+
+		// Make masthead, content, and skip to main content link inert while the drawer is open.
+		let sidebarBackdrop = null;
+
+		const handleEscapeKey = (e) => {
+			if (e.key !== 'Escape') return;
+			navigation_element.classList.remove('toggle-width');
+			content.classList.remove('toggle-width');
+			closeNarrowScreenDrawer();
+			toggleButton?.focus();
+		};
+
+		const closeNarrowScreenDrawer = () => {
+			if (!sidebarBackdrop) return;
+			sidebarBackdrop.remove();
+			sidebarBackdrop = null;
+			document.body.classList.remove('no-scroll');
+			content.inert = false;
+			if (masthead) masthead.inert = false;
+			if (skipLink) skipLink.inert = false;
+			document.removeEventListener('keydown', handleEscapeKey);
+		};
+
+		const openNarrowScreenDrawer = () => {
+			content.inert = true;
+			if (masthead) masthead.inert = true;
+			if (skipLink) skipLink.inert = true;
+			document.body.classList.add('no-scroll');
+			document.addEventListener('keydown', handleEscapeKey);
+
+			sidebarBackdrop = document.createElement('div');
+			sidebarBackdrop.classList.add('sidebar-backdrop');
+			document.body.append(sidebarBackdrop);
+			sidebarBackdrop.addEventListener('click', () => {
+				navigation_element.classList.remove('toggle-width');
+				content.classList.remove('toggle-width');
+				closeNarrowScreenDrawer();
+				toggleButton?.focus();
+			});
+		};
 
 		const toggleSidebar = () => {
 			navigation_element.classList.toggle('toggle-width');
@@ -12,20 +55,12 @@
 			content.classList.toggle('toggle-width');
 
 			if (currentWidth <= threshold) {
-				const overlay = document.createElement('div');
-				overlay.classList.add('sidebar-backdrop');
-				document.body.append(overlay);
-				overlay.addEventListener('click', () => {
-					overlay.remove();
-					navigation_element.classList.toggle('toggle-width');
-					content.classList.toggle('toggle-width');
-					document.body.classList.remove('no-scroll');
-				});
-				document.body.classList.add('no-scroll');
+				if (sidebarBackdrop) closeNarrowScreenDrawer();
+				else openNarrowScreenDrawer();
 			}
 		};
 
-		document.getElementById('toggle-sidebar')?.addEventListener('click', toggleSidebar);
+		toggleButton?.addEventListener('click', toggleSidebar);
 
 		if (currentWidth <= threshold) navigation_element.classList.add('invisible');
 
@@ -52,8 +87,7 @@
 			) {
 				currentWidth = window.innerWidth;
 				toggleSidebar();
-				document.body.classList.remove('no-scroll');
-				document.querySelectorAll('.sidebar-backdrop').forEach((overlay) => overlay.remove());
+				closeNarrowScreenDrawer();
 			}
 			currentWidth = window.innerWidth;
 		});

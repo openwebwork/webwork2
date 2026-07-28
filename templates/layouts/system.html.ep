@@ -49,7 +49,7 @@
 %
 <body>
 <%= link_to 'Skip to main content' => '#page-title',
-	class => 'visually-hidden-focusable bg-light p-2 m-3 position-absolute' =%>
+	id => 'skip-to-main-content', class => 'visually-hidden-focusable bg-light p-2 m-3 position-absolute' =%>
 %
 % # Header
 <div class="masthead" role="banner">
