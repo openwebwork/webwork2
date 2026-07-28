@@ -1,17 +1,25 @@
 /* gateway styles */
 
-#gwTimer {
+#gwTimerContainer {
 	position: sticky;
 	width: 15em;
 	top: 2.75rem;
 	left: calc(100% - 15em - 0.75rem);
 	right: 0.75rem;
-	text-align: center;
 	z-index: 31;
+}
+
+#gwTimer {
+	text-align: center;
 }
 
 .gwAlert {
 	z-index: 32;
+
+	.toast-header + .toast-body {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
 }
 
 #gwScoreSummary {

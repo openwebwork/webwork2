@@ -30,6 +30,46 @@
 		return date.toISOString().substring(11, 19);
 	};
 
+	// Raise a toast to report the remaining time.
+	const showTimeToast = (text) => {
+		const toastContainer = document.createElement('div');
+		toastContainer.classList.add(
+			'gwAlert',
+			'toast-container',
+			'position-fixed',
+			'top-0',
+			'start-50',
+			'translate-middle-x',
+			'p-3'
+		);
+		toastContainer.innerHTML =
+			'<div class="toast bg-white" role="status" aria-live="polite" aria-atomic="true">' +
+			'<div class="toast-body alert alert-info mb-0 text-center d-flex align-items-center justify-content-center">' +
+			`<span class="me-2">${text}</span>` +
+			'<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close"></button>' +
+			'</div>' +
+			'</div>';
+		document.body.prepend(toastContainer);
+		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild, { delay: 4000 });
+		toastContainer.addEventListener('hidden.bs.toast', () => {
+			bsToast.dispose();
+			toastContainer.remove();
+		});
+
+		setTimeout(() => bsToast.show());
+	};
+
+	// Show the current amount of time remaining in a toast, in response to a click on the announce button.
+	const announceTimeRemaining = () => {
+		const remainingTime = serverDueTime - Math.round(new Date().getTime() / 1000) + timeDelta;
+		const text =
+			remainingTime >= 0
+				? `${remainingTimeString}${formatTime(remainingTime)}`
+				: `${remainingTimeString}00:00:00`;
+
+		showTimeToast(text);
+	};
+
 	const alertToast = (message, delay = 5000) => {
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
@@ -41,6 +81,7 @@
 			'translate-middle-x',
 			'p-3'
 		);
+		// Start the body empty and populate its content later, to have reliable capture of the update by screen readers.
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
 			'<div class="toast-header">' +
@@ -55,7 +96,8 @@
 			bsToast.dispose();
 			toastContainer.remove();
 		});
-		bsToast.show();
+
+		setTimeout(() => bsToast.show());
 	};
 
 	// Update the timer
@@ -155,6 +197,8 @@
 
 		updateTimeDelta();
 		setInterval(updateTimeDelta, Math.min((parseInt(timerDiv.dataset.sessionTimeout) - 60) * 1000, 2147483646));
+
+		document.getElementById('gwAnnounceTimeBtn')?.addEventListener('click', announceTimeRemaining);
 
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
