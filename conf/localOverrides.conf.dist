@@ -148,6 +148,19 @@ $mail{feedbackRecipients}    = [
 # the templates for a new course can be copied.
 #$modelCoursesForCopy = [ "modelCourse", "anotherModelCourse", "aThirdOne" ];
 
+# If set to true, and if not using Saml2, Shibboleth, or CAS authentication,
+# then a user who is not logged into course X, but whose browser still holds an
+# active session cookie for the admin course, will be logged into course X
+# automatically, provided that:
+#   - the site uses cookie session management (not key)
+#   - the admin course user holds the create_and_delete_courses permission there, and
+#   - course X has a user with the same user_id whose password hash matches the one in
+#     the admin course. Note that password hashes will match when a user is added to
+#     course X from the admin course at the time course X is initialized. However,
+#     password hashes will not match simply from setting the same password in course X
+#     directly.
+#$authen{admin_cross_course_login} = 1;
+
 ################################################################################
 # OpenProblemLibrary
 ################################################################################
