@@ -93,6 +93,16 @@
 		});
 	}
 
+	// Make elements with role="button" (that have been given the class below) activate upon use of the spacebar.
+	for (const btn of document.querySelectorAll('.spacebar-activatable')) {
+		btn.addEventListener('keydown', (e) => {
+			if (e.key === ' ') {
+				e.preventDefault();
+				btn.click();
+			}
+		});
+	}
+
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
 		popover.addEventListener('click', (e) => e.preventDefault());
