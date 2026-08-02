@@ -2,6 +2,8 @@ package WebworkSOAP;
 
 use strict;
 
+use Math::Random::Secure qw(irand);
+
 use WeBWorK::Utils::CourseManagement qw(listCourses);
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
@@ -129,8 +131,7 @@ sub login_user {
 	my $timestamp = time;
 	my @chars     = @{ $soapEnv->{ce}->{sessionKeyChars} };
 	my $length    = $soapEnv->{ce}->{sessionKeyLength};
-	srand;
-	$newKey = join("", @chars[ map rand(@chars), 1 .. $length ]);
+	$newKey = join("", @chars[ map irand(@chars), 1 .. $length ]);
 	my $Key = $soapEnv->{db}->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp);
 	eval { $soapEnv->{db}->deleteKey($userID) };
 	eval { $soapEnv->{db}->addKey($Key) };
