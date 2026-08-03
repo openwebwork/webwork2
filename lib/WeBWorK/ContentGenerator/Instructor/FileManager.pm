@@ -496,6 +496,21 @@ sub MakeArchive ($c) {
 	}
 }
 
+# Verify that symbolic links resolve, on the real filesystem, to locations inside the course directory, and remove any
+# that do not. This must be done after the links have already been created, since `realpath` only works in that case. A
+# broken link cannot be resolved with `realpath`, and so cannot be verified to point inside the course directory. It is
+# removed just like a link that is known to point outside of the course directory. Returns the names of the links that
+# are removed.
+sub prune_unsafe_links ($c, @links) {
+	my @unsafe;
+	for (@links) {
+		next if -e $_->[1]->to_string && path_is_subdir($_->[1]->realpath->to_string, $c->{courseRoot});
+		push(@unsafe, $_->[0]);
+		unlink($_->[1]->to_string);
+	}
+	return @unsafe;
+}
+
 # Unpack a gzipped tar archive
 sub UnpackArchive ($c) {
 	my $archive = $c->getFile('unpack');
@@ -511,7 +526,7 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	my (@members, @existing_files, @outside_files, @forbidden_files);
+	my (@members, @existing_files, @outside_files, @forbidden_files, @unsafe_links);
 	my $num_extracted = 0;
 
 	if ($archive =~ m/\.zip$/) {
@@ -525,6 +540,10 @@ sub unpack_archive ($c, $archive) {
 			chomp $error;
 			$c->addbadmessage($error);
 		});
+
+		# Symbolic links are extracted regardless of their target, and any
+		# links that point outside the course directory are pruned afterward.
+		my @created_links;
 
 		@members = $zip->members;
 		for (@members) {
@@ -546,10 +565,19 @@ sub unpack_archive ($c, $archive) {
 				push(@existing_files, $_->fileName);
 				next;
 			}
-			++$num_extracted if $zip->extractMember($_ => $out_file->to_string) == AZ_OK;
+
+			if ($zip->extractMember($_ => $out_file->to_string) == AZ_OK) {
+				++$num_extracted;
+				push(@created_links, [ $_->fileName, $out_file ]) if $_->isSymbolicLink;
+			}
 		}
 
 		Archive::Zip::setErrorHandler();
+
+		if (my @unsafe = $c->prune_unsafe_links(@created_links)) {
+			push(@unsafe_links, @unsafe);
+			$num_extracted -= @unsafe;
+		}
 	} elsif ($archive =~ m/\.(tar(\.gz)?|tgz)$/) {
 		local $Archive::Tar::WARN = 0;
 
@@ -560,6 +588,10 @@ sub unpack_archive ($c, $archive) {
 		}
 
 		$tar->setcwd($dir->to_string);
+
+		# Symbolic links are extracted regardless of their target, and any
+		# links that point outside the course directory are pruned afterward.
+		my @created_links;
 
 		@members = $tar->list_files;
 		for (@members) {
@@ -584,17 +616,22 @@ sub unpack_archive ($c, $archive) {
 
 			my ($member) = $tar->get_files($_);
 			if ($member && $member->is_symlink) {
-				# Secure extract mode refuses links whose targets leave the directory;
-				# recreate them directly (location already validated above).
+				# Secure extract mode refuses to extract links. So recreate them directly.
 				unless (symlink($member->linkname, $out_file->to_string)) {
 					$c->addbadmessage($c->maketext(q{Unable to extract "[_1]": [_2]}, $_, $!));
 					next;
 				}
+				push(@created_links, [ $_, $out_file ]);
 			} elsif (!$tar->extract_file($_)) {
 				$c->addbadmessage($tar->error);
 				next;
 			}
 			++$num_extracted;
+		}
+
+		if (my @unsafe = $c->prune_unsafe_links(@created_links)) {
+			push(@unsafe_links, @unsafe);
+			$num_extracted -= @unsafe;
 		}
 	} else {
 		$c->addbadmessage($c->maketext('Unsupported archive type in file "[_1]"', $archive));
@@ -626,6 +663,20 @@ sub unpack_archive ($c, $archive) {
 						)->join('')
 					)
 				)
+		);
+	}
+
+	if (@unsafe_links) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The following [plural,_1,symbolic link] in the archive [plural,_1,points,point] outside the '
+						. 'course directory or [plural,_1,is,are] broken, and [plural,_1,was,were] not created.',
+					scalar(@unsafe_links),
+				)
+				)
+				. $c->tag('div', $c->tag('ul', $c->c((map { $c->tag('li', $_) } @unsafe_links))->join('')))
 		);
 	}
 
