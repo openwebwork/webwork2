@@ -5,7 +5,33 @@ if (!window.MathJax) {
 		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
 		loader: {
 			load: ['input/asciimath', '[tex]/noerrors', '[bs-color-scheme]'],
-			paths: { 'bs-color-scheme': webworkConfig?.mathJaxBSColorSchemeUrl ?? './bs-color-scheme.js' }
+			paths: { 'bs-color-scheme': webworkConfig?.mathJaxBSColorSchemeUrl ?? './bs-color-scheme.js' },
+			'output/chtml': {
+				ready() {
+					const { CHTML } = MathJax._.output.chtml_ts;
+					Object.assign(CHTML.prototype, {
+						_createNode_: CHTML.prototype.createNode,
+						createNode() {
+							const node = this._createNode_();
+							this.adaptor.setAttribute(node, 'dir', 'ltr');
+							return node;
+						}
+					});
+				}
+			},
+			'output/svg': {
+				ready() {
+					const { SVG } = MathJax._.output.svg_ts;
+					Object.assign(SVG.prototype, {
+						_createNode_: SVG.prototype.createNode,
+						createNode() {
+							const node = this._createNode_();
+							this.adaptor.setAttribute(node, 'dir', 'ltr');
+							return node;
+						}
+					});
+				}
+			}
 		},
 		startup: {
 			ready() {
