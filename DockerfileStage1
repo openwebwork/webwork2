@@ -101,8 +101,6 @@ RUN apt-get update \
 	libpath-tiny-perl \
 	libperl-critic-perl \
 	libphp-serialization-perl \
-	libpod-wsdl-perl \
-	libsoap-lite-perl \
 	libsql-abstract-perl \
 	libssl-dev \
 	libstring-shellquote-perl \
