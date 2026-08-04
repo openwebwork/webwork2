@@ -13,7 +13,7 @@
 		% for (@$filters) {
 			<li>
 				<%= link_to $_->[0] => $c->systemLink(url_for, params => { %$params, filter => $_->[1] }),
-					$_->[1] eq $filter ? (style => 'background-color: #8F8') : (), class => 'dropdown-item' =%>
+					class => join(' ', 'dropdown-item', $_->[1] eq $filter ? 'active' : ()) =%>
 			</li>
 		% }
 	</ul>

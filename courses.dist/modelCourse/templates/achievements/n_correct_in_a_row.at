@@ -1,0 +1,18 @@
+# This achievement is awarded for answering n problems in a row without
+# any incorrect answers. This is done by resetting the $counter for any
+# incorrect submit.  This can be used by multiple achievements, so just
+# set the $maxCounter to determine how many in the row are needed.
+#
+# See [templates]/achievements/achievement_readme.txt for details.
+
+# Reset counter if they got something wrong.
+if ($problem->status < 1) {
+	$counter = 0;
+	return 0;
+}
+
+# Only increase the counter if this is the first time they got
+# got the problem correct.
+++$counter if $problem->num_correct == 1 && $problem->num_incorrect == 0;
+
+return $counter >= $maxCounter ? 1 : 0;

@@ -16,11 +16,11 @@
 					. 'string.'
 			) =%>
 		</p>
-		<div class="col-lg-7 col-md-8">
+		<div class="col-lg-9 col-md-11">
 			<div class="row mb-2">
 				<%= label_for rename_oldCourseID => maketext('Course ID:'),
-					class => 'col-sm-6 col-form-label fw-bold' =%>
-				<div class="col-sm-6">
+					class => 'col-lg-3 col-md-4 pe-0 col-form-label fw-bold' =%>
+				<div class="col-lg-9 col-md-8">
 					<%= select_field rename_oldCourseID => [ map { [ $_ => $_ ] } @courseIDs ],
 						class    => 'form-select',
 						size     => 10,
@@ -28,43 +28,43 @@
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-sm-6">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseID_label">
-							<%= maketext('Change CourseID to:') %>
+							<%= maketext('New ID:') %>
 							<%= check_box rename_newCourseID_checkbox => 'on', class => 'form-check-input' %>
 						</label>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-lg-9 col-md-8">
 					<%= text_field rename_newCourseID => '',
 						class => 'form-control', 'aria-labelledby' => 'rename_newCourseID_label' =%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-sm-6">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseTitle_label">
-							<%= maketext('Change Course Title to:') %>
+							<%= maketext('New Title:') %>
 							<%= check_box rename_newCourseTitle_checkbox => 'on', class => 'form-check-input' %>
 						</label>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-lg-9 col-md-8">
 					<%= text_field rename_newCourseTitle => '',
 						class => 'form-control', 'aria-labelledby' => 'rename_newCourseTitle_label' =%>
 				</div>
 			</div>
 			<div class="row mb-2 align-items-center">
-				<div class="col-sm-6">
+				<div class="col-lg-3 col-md-4 pe-0">
 					<div class="form-check">
 						<label class="form-check-label" id="rename_newCourseInstitution_label">
-							<%= maketext('Change Institution to:') %>
+							<%= maketext('New Institution:') %>
 							<%= check_box rename_newCourseInstitution_checkbox => 'on', class => 'form-check-input' %>
 						</label>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-lg-9 col-md-8">
 					<%= text_field rename_newCourseInstitution => '',
 						class => 'form-control', 'aria-labelledby' => 'rename_newCourseInstitution_label' =%>
 				</div>

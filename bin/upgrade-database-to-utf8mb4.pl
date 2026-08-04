@@ -32,7 +32,7 @@ latin1 to utf8mb4.
 Upgrade webwork course database tables from latin1 to utf8mb4.
 
 This script assumes that you have already properly configured the database to
-work with the utf8mb4 character set.  See L<https://webwork.maa.org/wiki/Converting_the_webwork_database_from_the_latin1_to_the_utf8mb4_character_set#Check_what_the_default_character_set_is_for_MySQL_on_your_new_or_upgraded_server>.
+work with the utf8mb4 character set.  See L<https://wiki.openwebwork.org/wiki/Converting_the_webwork_database_from_the_latin1_to_the_utf8mb4_character_set#Check_what_the_default_character_set_is_for_MySQL_on_your_new_or_upgraded_server>.
 
 Also, make sure to upgrade the course via webwork2/admin "Upgrade Courses"
 before running this script for the course.
@@ -81,7 +81,7 @@ this conversion is done the database automatically enlarges text datatypes.  If
 this option is enabled then the second pass will change those back to the
 smaller text datatypes as defined in the webwork database schema.
 
-This second pass is not strictly neccessary.  The larger text datatypes should
+This second pass is not strictly necessary.  The larger text datatypes should
 still work with WeBWorK.
 
 This pass is not run by default.  Note that running this script again will also

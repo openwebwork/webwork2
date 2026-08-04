@@ -3,7 +3,7 @@
 	% last;
 % }
 %
-% # Only instructors should be able to veiw other people's answers.
+% # Only instructors should be able to view other people's answers.
 % my $isInstructor = $authz->hasPermissions(param('user'), 'access_instructor_tools');
 %
 % if ($isInstructor) {

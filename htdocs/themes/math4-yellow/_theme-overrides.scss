@@ -38,10 +38,30 @@
 	color: $link-color !important;
 }
 
-a:not(.btn):focus {
-	outline-color: #{darken($link-hover-color, 1%)};
-}
-
 :root {
 	--ww-site-nav-link-active-background-color: #{$primary};
+	--ww-color-chooser-hover-color: #555;
+	--ww-color-chooser-focus-outline-color-rgb: 0, 0, 0;
+	--ww-course-config-tab-link-focus-outline-color: #{rgba(shade-color($primary, 40%), $focus-ring-opacity)};
+}
+
+@include color-mode(dark) {
+	--ww-site-nav-link-hover-background-color: #{shade-color($primary, 60%)};
+	--ww-course-config-tab-link-focus-outline-color: #{rgba(color-contrast($body-bg-dark), $focus-ring-opacity)};
+
+	.btn-outline-primary {
+		--#{$prefix}btn-color: #{tint_color($primary, 40%)};
+	}
+}
+
+.masthead {
+	.institution-logo {
+		a:not(.btn):focus {
+			outline-color: #{shade-color($link-hover-color-dark, 70%)};
+		}
+	}
+
+	.login-status .btn.btn-light {
+		--bs-btn-focus-shadow-rgb: 100, 100, 100;
+	}
 }

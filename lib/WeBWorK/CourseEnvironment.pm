@@ -240,7 +240,7 @@ sub new {
 		map {
 			my $name = $_;
 			map { $_ => $name } @{ $self->{statuses}{$name}{abbrevs} }
-		}
+			}
 			keys %{ $self->{statuses} }
 	};
 

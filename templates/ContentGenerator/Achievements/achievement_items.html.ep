@@ -15,7 +15,7 @@
 		<dt>
 			<%= $item->remaining_title($c) %>
 		</dt>
-		<dd class="ms-3 mb-2"><%= maketext($item->description) %></dd>
+		<dd class="ms-3 mb-2"><%= maketext(@{ $item->description }) %></dd>
 	% }
 	</dl>
 % } else {

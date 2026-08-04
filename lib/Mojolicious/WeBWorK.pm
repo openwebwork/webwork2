@@ -75,6 +75,7 @@ sub startup ($app) {
 	# WeBWorK::ContentGenerator::Instructor::JobManager.
 	$app->plugin(Minion => { $ce->{job_queue}{backend} => $ce->{job_queue}{database_dsn} });
 	$app->minion->add_task(lti_mass_update        => 'Mojolicious::WeBWorK::Tasks::LTIMassUpdate');
+	$app->minion->add_task(lti_set_date_sync      => 'Mojolicious::WeBWorK::Tasks::LTISetDateSync');
 	$app->minion->add_task(send_instructor_email  => 'Mojolicious::WeBWorK::Tasks::SendInstructorEmail');
 	$app->minion->add_task(send_achievement_email => 'Mojolicious::WeBWorK::Tasks::AchievementNotification');
 
@@ -100,13 +101,24 @@ sub startup ($app) {
 	);
 
 	# Add a hook to add extra headers if set in the config file.
-	if (ref $config->{extra_headers} eq 'HASH') {
+	if (ref $config->{extra_headers} eq 'HASH' || ref $config->{extra_ssl_headers} eq 'HASH') {
+		my $extraHeaders    = ref $config->{extra_headers} eq 'HASH'     ? $config->{extra_headers}     : {};
+		my $extraSSLHeaders = ref $config->{extra_ssl_headers} eq 'HASH' ? $config->{extra_ssl_headers} : {};
 		$app->hook(
 			before_dispatch => sub ($c) {
-				for my $path (keys %{ $config->{extra_headers} }) {
+				for my $path (keys %$extraHeaders) {
 					if ($c->req->url->path =~ /^$path/) {
-						for (keys %{ $config->{extra_headers}{$path} }) {
-							$c->res->headers->header($_ => $config->{extra_headers}{$path}{$_});
+						for (keys %{ $extraHeaders->{$path} }) {
+							$c->res->headers->header($_ => $extraHeaders->{$path}{$_});
+						}
+					}
+				}
+				if ($c->req->is_secure) {
+					for my $path (keys %$extraSSLHeaders) {
+						if ($c->req->url->path =~ /^$path/) {
+							for (keys %{ $extraSSLHeaders->{$path} }) {
+								$c->res->headers->header($_ => $extraSSLHeaders->{$path}{$_});
+							}
 						}
 					}
 				}
@@ -216,23 +228,6 @@ sub startup ($app) {
 		}
 	);
 
-	if ($config->{soap_authen_key}) {
-		# Only allow an authen key that consists entirely of digits.  The WebworkSOAP module uses a numeric != for
-		# comparison, and in perl all strings containing alphabetic characters are numerically equal.  So if this is not
-		# numeric all keys that are passed in will succeed in authentication.  Very dangerous!
-		if ($config->{soap_authen_key} =~ /^\d*$/) {
-			$app->log->info('SOAP endpoints enabled');
-			$WeBWorK::SeedCE{soap_authen_key} = $config->{soap_authen_key};
-
-			push(@{ $r->namespaces }, 'WebworkSOAP');
-			$r->any('/webwork2_wsdl')->to('SOAP#wsdl');
-			$r->post('/webwork2_rpc')->to('SOAP#dispatch');
-		} else {
-			$app->log->info(qq{Invalid soap_authen_key "$config->{soap_authen_key}". }
-					. 'It must consist entirely of digits.  SOAP endpoints NOT enabled.');
-		}
-	}
-
 	# Letsencrypt renewal route.
 	if ($config->{enable_certbot_webroot_routes}) {
 		$r->any(
@@ -251,7 +246,8 @@ sub startup ($app) {
 	$cg_r->get('/')->to('Home#go')->name('root');
 
 	# The course admin route is set up here because of its special stash value.
-	$cg_r->any("/$ce->{admin_course_id}")->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
+	$cg_r->any("/$ce->{admin_course_id}")
+		->to('CourseAdmin#go', courseID => $ce->{admin_course_id})
 		->name('course_admin');
 
 	setup_content_generator_routes($cg_r);

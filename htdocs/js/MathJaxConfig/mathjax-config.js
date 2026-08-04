@@ -1,7 +1,38 @@
 if (!window.MathJax) {
+	const problems = [];
+
 	window.MathJax = {
-		tex: { packages: { '[+]': ['noerrors'] } },
-		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
+		tex: { packages: { '[+]': webworkConfig?.showMathJaxErrors ? [] : ['noerrors'] } },
+		loader: {
+			load: ['input/asciimath', '[tex]/noerrors', '[bs-color-scheme]'],
+			paths: { 'bs-color-scheme': webworkConfig?.mathJaxBSColorSchemeUrl ?? './bs-color-scheme.js' },
+			'output/chtml': {
+				ready() {
+					const { CHTML } = MathJax._.output.chtml_ts;
+					Object.assign(CHTML.prototype, {
+						_createNode_: CHTML.prototype.createNode,
+						createNode() {
+							const node = this._createNode_();
+							this.adaptor.setAttribute(node, 'dir', 'ltr');
+							return node;
+						}
+					});
+				}
+			},
+			'output/svg': {
+				ready() {
+					const { SVG } = MathJax._.output.svg_ts;
+					Object.assign(SVG.prototype, {
+						_createNode_: SVG.prototype.createNode,
+						createNode() {
+							const node = this._createNode_();
+							this.adaptor.setAttribute(node, 'dir', 'ltr');
+							return node;
+						}
+					});
+				}
+			}
+		},
 		startup: {
 			ready() {
 				const AM = MathJax.InputJax.AsciiMath.AM;
@@ -98,25 +129,18 @@ if (!window.MathJax) {
 					AM.symbols.splice(i, 0, { input: trigger, ...newTriggers[trigger].symbols });
 				}
 
-				// The following is a workaround for a bug in MathJax when the math renderer is changed.
-				// Note that this should be removed when we have upgraded to MathJax 4.
-				const { STATE } = MathJax._.core.MathItem;
-				const { Menu } = MathJax._.ui.menu.Menu;
-				const { mathjax } = MathJax._.mathjax;
-				Menu.prototype.rerender = function (start = STATE.TYPESET) {
-					this.rerenderStart = Math.min(start, this.rerenderStart);
-					if (!Menu.loading) {
-						if (this.rerenderStart <= STATE.COMPILED) this.document.reset({ inputJax: [] });
-						MathJax.startup.promise.then(() => {
-							mathjax.handleRetriesFor(() => {
-								this.document.rerender(this.rerenderStart);
-								this.rerenderStart = STATE.LAST;
-							});
-						});
+				MathJax.startup.defaultReady();
+				MathJax.startup.document.constructor.ProcessBits.allocate('findScripts');
+			},
+			pageReady() {
+				return MathJax.startup.defaultPageReady().then(() => {
+					for (const [problemContent, loaderOverlay, resizeObserver] of problems) {
+						resizeObserver.disconnect();
+						loaderOverlay.remove();
+						problemContent.style.visibility = '';
 					}
-				};
-
-				return MathJax.startup.defaultReady();
+					problems.length = 0;
+				});
 			}
 		},
 		options: {
@@ -124,23 +148,68 @@ if (!window.MathJax) {
 				findScript: [
 					10,
 					(doc) => {
-						for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
-							const math = new doc.options.MathItem(
-								node.textContent,
-								doc.inputJax[0],
-								!!node.type.match(/; *mode=display/)
-							);
-							const text = document.createTextNode('');
-							node.parentNode.replaceChild(text, node);
-							math.start = { node: text, delim: '', n: 0 };
-							math.end = { node: text, delim: '', n: 0 };
-							doc.math.push(math);
+						if (doc.processed.isSet('findScripts')) return;
+						const containers = doc.adaptor.getElements(doc.options.elements || [doc.document.body], doc);
+						for (const container of containers) {
+							for (const node of container.querySelectorAll('script[type^="math/tex"]')) {
+								const math = new doc.options.MathItem(
+									node.textContent,
+									doc.inputJax[0],
+									!!node.type.match(/; *mode=display/)
+								);
+								const text = document.createTextNode('');
+								node.parentNode.replaceChild(text, node);
+								math.start = { node: text, delim: '', n: 0 };
+								math.end = { node: text, delim: '', n: 0 };
+								doc.math.push(math);
+							}
 						}
+						doc.processed.set('findScripts');
 					},
 					''
 				]
 			},
 			ignoreHtmlClass: 'tex2jax_ignore'
+		},
+		output: {
+			displayOverflow: 'linebreak',
+			linebreaks: {
+				inline: true,
+				width: '100%',
+				lineleading: 0.2,
+				LinebreakVisitor: null
+			}
 		}
 	};
+
+	for (const problemContent of document.querySelectorAll('.problem-content')) {
+		problemContent.style.visibility = 'hidden';
+		const loaderOverlay = document.createElement('div');
+		loaderOverlay.classList.add('problem-content');
+		const bodyRectangle = problemContent.getBoundingClientRect();
+		loaderOverlay.style.position = 'absolute';
+		loaderOverlay.style.top = `${bodyRectangle.y}px`;
+		loaderOverlay.style.left = `${bodyRectangle.x}px`;
+		loaderOverlay.style.width = `${bodyRectangle.width}px`;
+		loaderOverlay.style.height = `${bodyRectangle.height}px`;
+		loaderOverlay.style.overflow = 'clip';
+		loaderOverlay.style.transition = 'height 0.3s ease';
+		loaderOverlay.animate([{ opacity: 1 }, { opacity: 0.2 }, { opacity: 1 }], {
+			duration: 2000,
+			iterations: Infinity,
+			easing: 'ease-in-out'
+		});
+		loaderOverlay.style.cursor = 'wait';
+
+		problemContent.after(loaderOverlay);
+		const resizeObserver = new ResizeObserver(() => {
+			const bodyRectangle = problemContent.getBoundingClientRect();
+			loaderOverlay.style.top = `${bodyRectangle.top}px`;
+			loaderOverlay.style.left = `${bodyRectangle.left}px`;
+			loaderOverlay.style.width = `${bodyRectangle.width}px`;
+			loaderOverlay.style.height = `${bodyRectangle.height}px`;
+		});
+		resizeObserver.observe(problemContent);
+		problems.push([problemContent, loaderOverlay, resizeObserver]);
+	}
 }

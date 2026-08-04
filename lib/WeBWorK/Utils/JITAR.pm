@@ -112,7 +112,7 @@ sub is_jitar_problem_hidden ($db, $userID, $setID, $problemID) {
 		}
 
 		# the child problems are closed unless the number of incorrect attempts is above the
-		# attempts to open children, or if they have exausted their max_attempts
+		# attempts to open children, or if they have exhausted their max_attempts
 		# if att_to_open_children is -1 we just use max attempts
 		# if max_attempts is -1 then they are always less than max attempts
 		if (
@@ -347,7 +347,7 @@ is a specially crafted signed 32 bit integer of the form
 in binary.  Here A is the level 1 index, B is the level 2 index, and C, D, E and
 F are the indexes for levels 3 through 6.
 
-Note: Level 1 can contain indexes up to 125.  Levels 2 and 3 can contain indxes
+Note: Level 1 can contain indexes up to 125.  Levels 2 and 3 can contain indexes
 up to 63.  For levels 4 through six you are limited to 15.
 
 =head2 jitar_id_to_seq
@@ -380,7 +380,7 @@ Usage: C<jitar_problem_finished($userProblem, $db)>
 
 This returns 1 if the given problem is "finished".  This happens when the
 problem attempts have been maxed out, and the attempts of any children with the
-"counts_to_parent_grade" also have their attemtps maxed out.  (In other words if
+"counts_to_parent_grade" also have their attempts maxed out.  (In other words if
 the grade can't be raised any more.)
 
 =head2 jitar_problem_adjusted_status

@@ -1,63 +1,119 @@
 package WeBWorK::AchievementItems::ResurrectHW;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to resurrect a homework for 24 hours
+# Item to resurrect a homework for 24 * $achievementExtensionFactor hours
 
 use WeBWorK::Utils           qw(x);
-use WeBWorK::Utils::DateTime qw(after);
+use WeBWorK::Utils::DateTime qw(after getExtensionTime);
 
-use constant ONE_DAY => 86400;
+sub new ($class, $c) {
+	my ($time, $timeText) = getExtensionTime($c, 1);
 
-sub new ($class) {
 	return bless {
 		id          => 'ResurrectHW',
 		name        => x('Scroll of Resurrection'),
-		description => x("Reopens one closed homework set for 24 hours and rerandomizes all problems."),
+		description => [ x('Reopens one closed homework set for [_1] and rerandomizes all problems.', $timeText) ],
+		time        => $time,
+		timeText    => $timeText
 	}, $class;
 }
 
-sub can_use($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type eq 'default'
-		&& (after($set->due_date) || ($set->reduced_scoring_date && after($set->reduced_scoring_date)));
+		&& (
+			after($set->due_date)
+			|| ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+				&& $set->enable_reduced_scoring
+				&& after($set->reduced_scoring_date))
+		);
 }
 
 sub print_form ($self, $set, $records, $c) {
-	return $c->tag('p',
-		$c->maketext('Reopen this homework assignment for the next 24 hours. All problems will be rerandomized.'));
+	if (after($set->due_date)) {
+		return $c->tag(
+			'p',
+			$c->maketext(
+				'Reopen this homework assignment for the next [_1]. All problems will be rerandomized.',
+				$self->{timeText}
+			)
+		);
+	} else {
+		if (after($set->due_date - $self->{time})) {
+			return $c->tag(
+				'p',
+				$c->maketext(
+					'Reopen this homework assignment for full credit for the next [_1]. ',
+					$self->{timeText}
+				)
+			);
+		} else {
+			return $c->tag(
+				'p',
+				$c->maketext(
+					'Reopen this homework assignment for full credit for the next [_1]. After [_1] '
+						. 'any progress will revert to counting for [_2]% of the value until [_3].',
+					$self->{timeText},
+					$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
+					$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
+				)
+			);
+		}
+	}
 }
 
 sub use_item ($self, $set, $records, $c) {
-	my $db      = $c->db;
-	my $userSet = $db->getUserSet($set->user_id, $set->set_id);
+	my $db                 = $c->db;
+	my $userSet            = $db->getUserSet($set->user_id, $set->set_id);
+	my $rerandomizeMessage = '';
 
-	# Change the seed for all of the problems since the set is currently closed.
-	my %userProblems =
-		map { $_->problem_id => $_ } $db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
-	for my $problem (@$records) {
-		my $userProblem = $userProblems{ $problem->problem_id };
-		$userProblem->problem_seed($userProblem->problem_seed % 2**31 + 1);
-		$problem->problem_seed($userProblem->problem_seed);
-		$db->putUserProblem($userProblem);
+	# Change the seed for all of the problems if the set is currently closed.
+	if (after($set->due_date)) {
+		my %userProblems =
+			map { $_->problem_id => $_ }
+			$db->getUserProblemsWhere({ user_id => $set->user_id, set_id => $set->set_id });
+		for my $problem (@$records) {
+			my $userProblem = $userProblems{ $problem->problem_id };
+			$userProblem->problem_seed($userProblem->problem_seed % 2**31 + 1);
+			$problem->problem_seed($userProblem->problem_seed);
+			$db->putUserProblem($userProblem);
+		}
+		$rerandomizeMessage = $c->maketext('Problems have been rerandomized.');
 	}
 
 	# Add time to the reduced scoring date if it was defined in the first place
 	if ($set->reduced_scoring_date) {
-		$set->reduced_scoring_date(time + ONE_DAY);
+		$set->reduced_scoring_date(time + $self->{time});
 		$userSet->reduced_scoring_date($set->reduced_scoring_date);
 	}
-	# Add time to the close date
-	$set->due_date(time + ONE_DAY);
-	$userSet->due_date($set->due_date);
-	# This may require also extending the answer date.
-	if ($set->due_date > $set->answer_date) {
-		$set->answer_date($set->due_date);
-		$userSet->answer_date($set->answer_date);
+	# Add time to the close date if necessary
+	if (after($set->due_date - $self->{time})) {
+		$set->due_date(time + $self->{time});
+		$userSet->due_date($set->due_date);
+		# This may require also extending the answer date.
+		if ($set->due_date > $set->answer_date) {
+			$set->answer_date($set->due_date);
+			$userSet->answer_date($set->answer_date);
+		}
 	}
 	$db->putUserSet($userSet);
 
-	return $c->maketext(
-		'This assignment has been reopened and will now close on [_1]. Problems have been rerandomized.',
-		$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat}));
+	if ($c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+		&& $set->enable_reduced_scoring
+		&& ($set->reduced_scoring_date != $set->due_date))
+	{
+		return $c->maketext(
+			'This assignment has been reopened and is due on [_1].  After that date any work '
+				. 'completed will count for [_2]% of its value until [_3].',
+			$c->formatDateTime($set->reduced_scoring_date, $c->ce->{studentDateDisplayFormat}),
+			$c->ce->{pg}{ansEvalDefaults}{reducedScoringValue} * 100,
+			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
+		) . ($rerandomizeMessage ? " $rerandomizeMessage" : '');
+	} else {
+		return $c->maketext(
+			'This assignment has been reopened and will now close on [_1].',
+			$c->formatDateTime($set->due_date, $c->ce->{studentDateDisplayFormat})
+		) . ($rerandomizeMessage ? " $rerandomizeMessage" : '');
+	}
 }
 
 1;

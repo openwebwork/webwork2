@@ -36,11 +36,12 @@ use strict;
 use warnings;
 
 use Date::Format;
-use Scalar::Util qw(weaken);
-use Mojo::Util   qw(b64_encode b64_decode);
+use Scalar::Util         qw(weaken);
+use Mojo::Util           qw(b64_encode b64_decode);
+use Math::Random::Secure qw(irand);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils       qw(x runtime_use utf8Crypt);
+use WeBWorK::Utils       qw(x runtime_use utf8Crypt cryptPassword);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
@@ -161,7 +162,23 @@ sub verify {
 		$remember_2fa = 0;
 	}
 
-	if ($self->{was_verified}
+	# A forced password reset takes priority over two factor authentication setup.  This is checked directly against
+	# the database on every request (rather than relying solely on a session flag like two factor authentication
+	# does below) since unlike two factor authentication, once resolved it is resolved permanently and does not need
+	# a per-session bypass mechanism.
+	if (
+		$self->{was_verified}
+		&& $self->{login_type} eq 'normal'
+		&& !$self->{external_auth}
+		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
+		&& do { my $p = $c->db->getPassword($self->{user_id}); $p && $p->must_reset_password }
+		)
+	{
+		$self->{was_verified} = 0;
+		$self->session(password_reset_needed => 1);
+		$self->maybe_send_cookie;
+		$self->set_params;
+	} elsif ($self->{was_verified}
 		&& $self->{login_type} eq 'normal'
 		&& !$self->{external_auth}
 		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
@@ -327,7 +344,7 @@ sub get_credentials {
 			$self->{login_type}        = "normal";
 			$self->{credential_source} = "params_and_cookie";
 			debug(
-				'credential soure: "cookie (password from params)", user: "',
+				'credential source: "cookie (password from params)", user: "',
 				$self->{user_id}, '", key: "', $self->{session_key},
 				'", timestamp = "',
 				$self->{cookie_timestamp}, '"'
@@ -377,11 +394,34 @@ sub check_user {
 		return 0;
 	}
 
-	my $User = $db->getUser($user_id);
+	$self->{user} = $db->getUser($user_id);
 
-	unless ($User) {
+	unless ($self->{user}) {
 		$self->{log_error} = "user unknown";
 		$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
+		return 0;
+	}
+
+	return 1;
+}
+
+sub validate_user {
+	my $self = shift;
+	my $c    = $self->{c};
+
+	# Deny access for certain roles (dropped students, proctor roles).
+	unless ($self->{login_type} =~ /^proctor/
+		|| $c->ce->status_abbrev_has_behavior($self->{user}->status, 'allow_course_access'))
+	{
+		$self->{log_error} = 'user not allowed course access';
+		$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
+		return 0;
+	}
+
+	# Deny access for permission levels below 'login' permission level.
+	unless ($c->authz->hasPermissions($self->{user_id}, 'login')) {
+		$self->{log_error} = 'user not permitted to login';
+		$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
 		return 0;
 	}
 
@@ -437,6 +477,45 @@ sub verify_normal_user {
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
 
 	if ($sessionExists && $keyMatches && $timestampValid) {
+		if ($self->session->{password_reset_needed}) {
+			# All of the below falls through to below and returns 1.  That only lets the user into the course once
+			# password_reset_needed is deleted from the session (which only happens once the password has actually
+			# been changed).
+			my $newPassword     = trim($c->param('newPassword'));
+			my $confirmPassword = trim($c->param('confirmPassword'));
+			if (defined $newPassword && $newPassword ne '') {
+				if ($newPassword eq ($confirmPassword // '')) {
+					my $password = $c->db->getPassword($user_id);
+					if ($password->password && utf8Crypt($newPassword, $password->password) eq $password->password) {
+						$c->stash(
+							authen_error => $c->maketext(
+								'Your new password must be different from your current password. '
+									. 'Please choose a different password.'
+							)
+						);
+					} else {
+						$password->password(cryptPassword($newPassword));
+						$password->must_reset_password(0);
+						eval { $c->db->putPassword($password) };
+						if ($@) {
+							$c->stash(authen_error =>
+									$c->maketext('Your password was not changed due to an internal error.'));
+						} else {
+							delete $self->session->{password_reset_needed};
+						}
+					}
+				} else {
+					$c->stash(
+						authen_error => $c->maketext(
+							'The passwords you entered in the "New Password" and "Confirm New Password" fields do not '
+								. 'match. Please retype your new password and try again.'
+						)
+					);
+				}
+			} else {
+				$c->stash(authen_error => $c->maketext('You must enter a new password.'));
+			}
+		}
 		if ($self->session->{two_factor_verification_needed}) {
 			if ($c->param('cancel_otp_verification') || !$c->param('verify_otp')) {
 				delete $self->session->{two_factor_verification_needed};
@@ -485,29 +564,18 @@ sub verify_normal_user {
 				$c->stash(authen_error => $c->maketext('The security code is required.'));
 			}
 		}
+		return 0 unless $self->validate_user;
 		return 1;
 	} else {
 		my $auth_result = $self->authenticate;
 
-		# Don't try to obtain two factor verification in this case! Two factor authentication can only be done with an
-		# existing session.  This can still be set if a session times out, for example.
+		# Don't try to obtain two factor verification or a forced password reset in this case! Those can only be done
+		# with an existing session.  This can still be set if a session times out, for example.
 		delete $self->session->{two_factor_verification_needed};
+		delete $self->session->{password_reset_needed};
 
 		if ($auth_result > 0) {
-			# Deny certain roles (dropped students, proctor roles).
-			unless ($self->{login_type} =~ /^proctor/
-				|| $c->ce->status_abbrev_has_behavior($c->db->getUser($user_id)->status, "allow_course_access"))
-			{
-				$self->{log_error} = "user not allowed course access";
-				$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
-				return 0;
-			}
-			# Deny permission levels below "login" permission level.
-			unless ($c->authz->hasPermissions($user_id, "login")) {
-				$self->{log_error} = "user not permitted to login";
-				$self->{error}     = $c->maketext('This user is not allowed to log in to this course');
-				return 0;
-			}
+			return 0 unless $self->validate_user;
 			$self->{session_key}   = $self->create_session($user_id);
 			$self->{initial_login} = 1;
 			return 1;
@@ -694,8 +762,7 @@ sub create_session {
 
 	if (!$c->stash->{'webwork2.database_session'} || !$c->stash->{'webwork2.database_session'}{user_id}) {
 		my @chars = @{ $ce->{sessionKeyChars} };
-		srand;
-		$newKey = join('', @chars[ map rand(@chars), 1 .. $ce->{sessionKeyLength} ]);
+		$newKey = join('', @chars[ map irand(@chars), 1 .. $ce->{sessionKeyLength} ]);
 		$c->stash->{'webwork2.database_session'} =
 			{ user_id => $userID, key => $newKey, timestamp => time, session => {} };
 	} else {
@@ -844,7 +911,7 @@ sub store_session {
 		}
 	}
 
-	# The session parameters need to be set again, because another request may have occured during this
+	# The session parameters need to be set again, because another request may have occurred during this
 	# request in which case the session parameters for the app will now be set for that request.
 	$self->{c}->setSessionParams;
 

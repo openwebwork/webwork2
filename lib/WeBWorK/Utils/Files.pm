@@ -117,7 +117,7 @@ returned after transforming line endings into UNIX line feeds.
 
 =head2 listFilesRecursive
 
-    listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
+    listFilesRecursive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
 
 Traverses the directory tree rooted at C<$dir>, returning a list of files, named
 pipes, and sockets matching the regular expression C<$match_qr>. Directories

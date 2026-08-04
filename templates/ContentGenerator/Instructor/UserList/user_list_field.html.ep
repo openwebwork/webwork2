@@ -1,12 +1,13 @@
 % my $fieldName = 'user.' . $user->user_id . '.' . $field;
 % my $properties = $fieldProperties->{$field};
 %
-% if ($properties->{type} eq 'text') {
+% if ($properties->{type} eq 'text' || $properties->{type} eq 'number') {
 	% my $value = $user->$field;
 	% if ($c->{editMode}) {
-		<%= text_field $fieldName => $value, id => $fieldName . '_id', size => $properties->{size},
+		% my $field_method = "$properties->{type}_field";
+		<%= $c->$field_method($fieldName => $value, id => $fieldName . '_id', %{$properties->{attributes} // {}},
 			class => 'form-control form-control-sm d-inline w-auto',
-			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header' =%>
+			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header') =%>
 	% } else {
 		% if ($field eq 'email_address') {
 			% if ($value =~ /\S/) {
@@ -75,12 +76,31 @@
 					class => 'form-control form-control-sm d-inline w-auto', size => 14,
 					'aria-labelledby' => 'password_header' =%>
 			</div>
-			% if ($user->{passwordExists}) {
-				<div class="col-auto form-check d-flex align-items-center">
-					<%= check_box "${fieldName}_delete" => 1, class => 'form-check-input',
-					data => { bs_toggle => 'tooltip', bs_title => 'Check to delete password' } =%>
-				</div>
-			% }
+			% # This checkbox is always rendered (even when there is no password to delete) so that the columns of
+			% # checkboxes line up from row to row.  When there is no password, it is just made invisible and
+			% # disabled so it has no effect and cannot be interacted with.
+			<div class="col-auto form-check d-flex align-items-center">
+				<%= check_box "${fieldName}_delete" => 1,
+					class => 'form-check-input' . ($user->{passwordExists} ? '' : ' invisible'),
+					$user->{passwordExists}
+					? (data => { bs_toggle => 'tooltip', bs_title => 'Check to delete password' })
+					: (disabled => undef, tabindex => -1, 'aria-hidden' => 'true') =%>
+			</div>
+			<div class="col-auto form-check d-flex align-items-center">
+				% # For a user with no password, this checkbox is not checked by default (there is nothing to reset
+				% # yet). Instead, js/UserList/userlist.js automatically checks it once a new password is actually
+				% # typed into the password field above (unless the instructor has manually toggled it themselves).
+				<%= check_box "${fieldName}_must_reset" => 1, class => 'form-check-input',
+					'aria-label' => maketext('Prompt this user to reset their password at next login'),
+					data => {
+						bs_toggle => 'tooltip',
+						bs_title  => maketext(
+							'Check to require this user to change their password before they can access the '
+								. 'course again. Only takes effect if the user has or is given a password.'),
+						($user->{passwordExists} ? () : (auto_check => 'password'))
+					},
+					$user->{mustResetPassword} ? (checked => undef) : () =%>
+			</div>
 		</div>
 	% }
 

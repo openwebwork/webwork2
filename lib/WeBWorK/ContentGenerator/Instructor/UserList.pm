@@ -1,5 +1,5 @@
 package WeBWorK::ContentGenerator::Instructor::UserList;
-use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
+use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 =head1 NAME
 
@@ -47,36 +47,40 @@ Export users:
 
 use Mojo::File;
 
-use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
-use WeBWorK::Utils           qw(cryptPassword x);
+use WeBWorK::File::Classlist   qw(parse_classlist write_classlist);
+use WeBWorK::Utils             qw(cryptPassword x);
+use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
+use WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 
-use constant HIDE_USERS_THRESHHOLD => 200;
-use constant EDIT_FORMS            => [qw(save_edit cancel_edit)];
-use constant VIEW_FORMS            => [qw(filter sort edit import export add delete reset_2fa)];
+use constant HIDE_USERS_THRESHOLD => 200;
+use constant EDIT_FORMS           => [qw(save_edit cancel_edit)];
+use constant VIEW_FORMS           => [qw(filter sort edit import export add delete reset_2fa lms_roster_sync)];
 
 # Prepare the tab titles for translation by maketext
 use constant FORM_TITLES => {
-	save_edit   => x('Save Edit'),
-	cancel_edit => x('Cancel Edit'),
-	filter      => x('Filter'),
-	sort        => x('Sort'),
-	edit        => x('Edit'),
-	import      => x('Import'),
-	export      => x('Export'),
-	add         => x('Add'),
-	delete      => x('Delete'),
-	reset_2fa   => x('Reset Two Factor Authentication')
+	save_edit       => x('Save Edit'),
+	cancel_edit     => x('Cancel Edit'),
+	filter          => x('Filter'),
+	sort            => x('Sort'),
+	edit            => x('Edit'),
+	import          => x('Import'),
+	export          => x('Export'),
+	add             => x('Add'),
+	delete          => x('Delete'),
+	reset_2fa       => x('Reset Two Factor Authentication'),
+	lms_roster_sync => x('Synchronize LMS Roster')
 };
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
-	save_edit  => 'modify_student_data',
-	edit       => 'modify_student_data',
-	reset2_2fa => 'change_password',
-	import     => 'modify_student_data',
-	export     => 'modify_classlist_files',
-	add        => 'modify_student_data',
-	delete     => 'modify_student_data',
+	save_edit       => 'modify_student_data',
+	edit            => 'modify_student_data',
+	reset_2fa       => 'change_password',
+	import          => 'modify_student_data',
+	export          => 'modify_classlist_files',
+	add             => 'modify_student_data',
+	delete          => 'modify_student_data',
+	lms_roster_sync => 'modify_student_data'
 };
 
 use constant SORT_SUBS => {
@@ -93,27 +97,50 @@ use constant SORT_SUBS => {
 };
 
 use constant FIELDS => [
-	'user_id', 'first_name', 'last_name', 'email_address', 'student_id', 'status',
-	'section', 'recitation', 'comment',   'permission',    'password'
+	'user_id',    'first_name', 'last_name',                 'email_address',
+	'student_id', 'status',     'accommodation_time_factor', 'section',
+	'recitation', 'comment',    'permission',                'password'
 ];
 
-# Note that only the editable fields need a type (i.e. all but user_id),
-# and only the text fields need a size.
+# Note that only the editable fields need a type (i.e. all but user_id).
+# The fields of type text or number may also include optional attributes for the HTML input.
+# Any field may also contain a perlValidate method that will be called to validate user input. If provided, it should be
+# a subroutine that takes the parameter value as its only argument, and returns a translatable error string if the
+# parameter value is not valid for the field, and 0 otherwise.
 use constant FIELD_PROPERTIES => {
-	user_id       => { name => x('Login Name') },
-	first_name    => { name => x('First Name'),        type => 'text', size => 10 },
-	last_name     => { name => x('Last Name'),         type => 'text', size => 10 },
-	email_address => { name => x('Email Address'),     type => 'text', size => 20 },
-	student_id    => { name => x('Student ID'),        type => 'text', size => 11 },
-	status        => { name => x('Enrollment Status'), type => 'status' },
-	section       => { name => x('Section'),           type => 'text', size => 3 },
-	recitation    => { name => x('Recitation'),        type => 'text', size => 3 },
-	comment       => { name => x('Comment'),           type => 'text', size => 20 },
-	permission    => { name => x('Permission Level'),  type => 'permission' },
-	password      => { name => x('Password'),          type => 'password' },
+	user_id                   => { name => x('Login Name') },
+	first_name                => { name => x('First Name'),        type => 'text', attributes => { size => 10 } },
+	last_name                 => { name => x('Last Name'),         type => 'text', attributes => { size => 10 } },
+	email_address             => { name => x('Email Address'),     type => 'text', attributes => { size => 20 } },
+	student_id                => { name => x('Student ID'),        type => 'text', attributes => { size => 11 } },
+	status                    => { name => x('Enrollment Status'), type => 'status' },
+	accommodation_time_factor => {
+		name       => x('Accommodation Time Factor'),
+		type       => 'number',
+		attributes => {
+			size  => 5,
+			min   => 1,
+			step  => 'any',
+			title => 'Enter a decimal number that is greater than or equal to 1.'
+		},
+		perlValidate => sub {
+			my $value = shift;
+			return $value !~ /^(\d+(\.\d*)?|\.\d+)$/ || $value <= 0
+				? (x(
+					'Accommodation time factor for [_1] unchanged. '
+					. 'A value was given that is not a decimal number or is not greater than or equal to 1.'
+				))[0]
+				: 0;
+		}
+	},
+	section    => { name => x('Section'),                       type => 'text', attributes => { size => 3 } },
+	recitation => { name => x('Recitation'),                    type => 'text', attributes => { size => 3 } },
+	comment    => { name => x('Comment'),                       type => 'text', attributes => { size => 20 } },
+	permission => { name => x('Permission Level'),              type => 'permission' },
+	password   => { name => x('Password (set/delete/enforce)'), type => 'password' },
 };
 
-sub pre_header_initialize ($c) {
+async sub pre_header_initialize ($c) {
 	my $authz = $c->authz;
 	my $ce    = $c->ce;
 	my $db    = $c->db;
@@ -140,10 +167,10 @@ sub pre_header_initialize ($c) {
 	my %permissionLevels =
 		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	my %passwordExists =
-		map { $_->user_id => defined $_->password } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
+	my %passwordRecords =
+		map { $_->user_id => $_ } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	# Add permission level and a password exists field to the user record hash.
+	# Add permission level, a password exists field, and a must reset password field to the user record hash.
 	for my $user (@allUsersDB) {
 		unless (defined $permissionLevels{ $user->user_id }) {
 			# Uh oh! No permission level record found!
@@ -160,8 +187,11 @@ sub pre_header_initialize ($c) {
 			$permissionLevels{ $user->user_id } = 0;
 		}
 
-		$user->{permission}     = $permissionLevels{ $user->user_id };
-		$user->{passwordExists} = $passwordExists{ $user->user_id };
+		$user->{permission} = $permissionLevels{ $user->user_id };
+		$user->{passwordExists} =
+			$passwordRecords{ $user->user_id } && $passwordRecords{ $user->user_id }->password ? 1 : 0;
+		$user->{mustResetPassword} =
+			$passwordRecords{ $user->user_id } ? $passwordRecords{ $user->user_id }->must_reset_password : 0;
 	}
 
 	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
@@ -174,7 +204,7 @@ sub pre_header_initialize ($c) {
 
 	if (defined $c->param('visible_users')) {
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->every_param('visible_users') } };
-	} elsif (@allUsersDB > HIDE_USERS_THRESHHOLD || defined $c->param('no_visible_users')) {
+	} elsif (@allUsersDB > HIDE_USERS_THRESHOLD || defined $c->param('no_visible_users')) {
 		$c->{visibleUserIDs} = {};
 	} else {
 		$c->{visibleUserIDs} = { map { $_ => 1 } @{ $c->{allUserIDs} } };
@@ -206,7 +236,14 @@ sub pre_header_initialize ($c) {
 		if (!FORM_PERMS()->{$actionID} || $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
 			# Call the action handler
 			my $actionHandler = "${actionID}_handler";
-			$c->addgoodmessage($c->$actionHandler);
+			my @actionResult  = $c->$actionHandler;
+			@actionResult = await $actionResult[0]
+				if ref $actionResult[0] eq 'Future' || ref $actionResult[0] eq 'Mojo::Promise';
+			if ($actionResult[0]) {
+				$c->addgoodmessage($c->b($actionResult[1]));
+			} else {
+				$c->addbadmessage($c->b($actionResult[1]));
+			}
 		} else {
 			$c->addbadmessage($c->maketext('You are not authorized to perform this action.'));
 		}
@@ -291,7 +328,7 @@ sub filter_handler ($c) {
 		$c->{visibleUserIDs} = { map { $_ => 1 } @matchingUserIDs };
 	}
 
-	return $result;
+	return (1, $result);
 }
 
 sub sort_handler ($c) {
@@ -325,16 +362,19 @@ sub sort_handler ($c) {
 		$c->{ternarySortOrder}   = $c->param('action.sort.ternary.order');
 	}
 
-	return $c->maketext(
-		'Sets sorted by [_1] in [plural,_2,ascending,descending] order, '
-			. 'then by [_3] in [plural,_4,ascending,descending] order,'
-			. 'and then by [_5] in [plural,_6,ascending,descending] order.',
-		$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
-		$c->{primarySortOrder} eq 'ASC' ? 1 : 2,
-		$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
-		$c->{secondarySortOrder} eq 'ASC' ? 1 : 2,
-		$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name}),
-		$c->{ternarySortOrder} eq 'ASC' ? 1 : 2
+	return (
+		1,
+		$c->maketext(
+			'Sets sorted by [_1] in [plural,_2,ascending,descending] order, '
+				. 'then by [_3] in [plural,_4,ascending,descending] order,'
+				. 'and then by [_5] in [plural,_6,ascending,descending] order.',
+			$c->maketext(FIELD_PROPERTIES()->{ $c->{primarySortField} }{name}),
+			$c->{primarySortOrder} eq 'ASC' ? 1 : 2,
+			$c->maketext(FIELD_PROPERTIES()->{ $c->{secondarySortField} }{name}),
+			$c->{secondarySortOrder} eq 'ASC' ? 1 : 2,
+			$c->maketext(FIELD_PROPERTIES()->{ $c->{ternarySortField} }{name}),
+			$c->{ternarySortOrder} eq 'ASC' ? 1 : 2
+		)
 	);
 }
 
@@ -345,7 +385,7 @@ sub edit_handler ($c) {
 	$c->{visibleUserIDs} = { map { $_ => 1 } @usersToEdit };
 	$c->{editMode}       = 1;
 
-	return $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.');
+	return (1, $scope eq 'all' ? $c->maketext('Editing all users.') : $c->maketext('Editing selected users.'));
 }
 
 sub delete_handler ($c) {
@@ -354,7 +394,7 @@ sub delete_handler ($c) {
 	my $confirm = $c->param('action.delete.confirm');
 	my $num     = 0;
 
-	return $c->maketext('Deleted [_1] users.', $num) unless ($confirm eq 'yes');
+	return (1, $c->maketext('Deleted [_1] [plural,_1,user].', $num)) unless $confirm eq 'yes';
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsToDelete = keys %{ $c->{selectedUserIDs} };
@@ -378,13 +418,13 @@ sub delete_handler ($c) {
 		$num++;
 	}
 
-	unshift @resultText, $c->maketext('Deleted [_1] users.', $num);
-	return join(' ', @resultText);
+	unshift @resultText, $c->maketext('Deleted [_1] [plural,_1,user].', $num);
+	return (1, join(' ', @resultText));
 }
 
 sub add_handler ($c) {
 	# This action is redirected to the AddUsers.pm module using ../instructor/add_user/...
-	return '';
+	return (1, '');
 }
 
 sub import_handler ($c) {
@@ -393,7 +433,7 @@ sub import_handler ($c) {
 
 	unless (defined($fileName) and $fileName =~ /\.lst$/) {
 		$c->addbadmessage($c->maketext('No class list file provided.'));
-		return $c->maketext('No users added.');
+		return (0, $c->maketext('No users added.'));
 	}
 	my $replaceExisting;
 	my @replaceList;
@@ -428,8 +468,17 @@ sub import_handler ($c) {
 	my $numAdded    = @$added;
 	my $numSkipped  = @$skipped;
 
-	return $c->maketext('[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])',
-		$numReplaced, $numAdded, $numSkipped, join(', ', @$skipped));
+	return (
+		1,
+		$c->maketext(
+			'[_1] [plural,_1,user] replaced, [_2] [plural,_2,user] added, [_3] [plural,_3,user] skipped. '
+				. 'Skipped [plural,_3,user]: ([_4])',
+			$numReplaced,
+			$numAdded,
+			$numSkipped,
+			join(', ', @$skipped)
+		)
+	);
 }
 
 sub export_handler ($c) {
@@ -455,7 +504,7 @@ sub export_handler ($c) {
 	my @userIDsToExport = $scope eq 'all' ? @{ $c->{allUserIDs} } : keys %{ $c->{selectedUserIDs} };
 	$c->exportUsersToCSV($fileName, @userIDsToExport);
 
-	return $c->maketext('[_1] users exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName");
+	return (1, $c->maketext('[_1] [plural,_1,user] exported to file [_2]', scalar @userIDsToExport, "$dir/$fileName"));
 }
 
 sub reset_2fa_handler ($c) {
@@ -465,7 +514,8 @@ sub reset_2fa_handler ($c) {
 	my $confirm = $c->param('action.reset_2fa.confirm');
 	my $num     = 0;
 
-	return $c->maketext('Reset two factor authentication for [_1] users.', $num) unless $confirm eq 'yes';
+	return (1, $c->maketext('Reset two factor authentication for [_1] [plural,_1,user].', $num))
+		unless $confirm eq 'yes';
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsForReset = keys %{ $c->{selectedUserIDs} };
@@ -481,14 +531,265 @@ sub reset_2fa_handler ($c) {
 			push @resultText, $c->maketext('You are not allowed to reset two factor authenticatio for [_1].', $userID);
 			next;
 		}
-		my $password = $db->getPassword($userID);
-		$password->otp_secret('');
-		$db->putPassword($password);
-		$num++;
+		if (my $password = $db->getPassword($userID)) {
+			$password->otp_secret('');
+			$db->putPassword($password);
+		}
+		++$num;
 	}
 
 	unshift @resultText, $c->maketext('Reset two factor authentication for [quant,_1,user].', $num);
-	return join(' ', @resultText);
+	return (1, join(' ', @resultText));
+}
+
+async sub lms_roster_sync_handler ($c) {
+	my $db = $c->db;
+	my $ce = $c->ce;
+
+	return (0, $c->maketext('This course is not configured to import users from the LMS via LTI.'))
+		if !$ce->{LTIVersion}
+		|| $ce->{LTIVersion} ne 'v1p3'
+		|| !$ce->{LTI}{v1p3}{preferred_source_of_username};
+
+	my $namesRolesServiceURL = $db->getSettingValue('LTINamesRolesServiceURL');
+	return (0, $c->maketext('The LTI names/roles service URL is not available.')) unless $namesRolesServiceURL;
+
+	my $accessToken = await WeBWorK::Authen::LTIAdvantage::SubmitGrade->new($c)->get_access_token;
+	return (0, $c->maketext('Unable to obtain access token.')) unless $accessToken;
+
+	my $namesRolesServiceRequest = await Mojo::UserAgent->new->get_p($namesRolesServiceURL,
+		{ Authorization => "$accessToken->{token_type} $accessToken->{access_token}" })->catch(sub ($err) {
+		return $err;
+		});
+	return (0, $c->maketext("Error communicating with the names and roles service URL: $namesRolesServiceRequest\n"))
+		unless ref $namesRolesServiceRequest;
+
+	my $namesRolesServiceResult = $namesRolesServiceRequest->result;
+	if ($namesRolesServiceResult->is_success) {
+		my $namesRoles = $namesRolesServiceResult->json->{members};
+		return (0, $c->maketext('Invalid data received from the LMS.')) unless ref $namesRoles eq 'ARRAY';
+
+		my (@addedUsers, @userAchievementRecordsToAdd, @globalAchievementRecordsToAdd, %usersInLMSCourse);
+		my $updatedUsers = 0;
+
+		my @achievements = $db->getAchievementsWhere({ enabled => 1 }, ['achievement_id']);
+
+		my $preferredSourceOfUsername = $ce->{LTI}{v1p3}{namesroles_service_preferred_source_of_username}
+			|| $ce->{LTI}{v1p3}{preferred_source_of_username};
+		my $fallbackPasswordSource = $ce->{LTI}{v1p3}{namesroles_service_fallback_source_of_username}
+			|| $ce->{LTI}{v1p3}{fallback_source_of_username};
+		my $preferredSourceOfStudentId = $ce->{LTI}{v1p3}{namesroles_service_preferred_source_of_student_id}
+			|| $ce->{LTI}{v1p3}{preferred_source_of_student_id};
+
+		for my $user (@$namesRoles) {
+			my ($userIdSource, $typeOfSource) = ('', '');
+			my $userId = $user->{$preferredSourceOfUsername};
+			if (defined $userId) {
+				$userIdSource = $preferredSourceOfUsername;
+				$typeOfSource =
+					"$userIdSource which was "
+					. ($ce->{LTI}{v1p3}{namesroles_service_preferred_source_of_username}
+						? 'namesroles_service_preferred_source_of_username'
+						: 'preferred_source_of_username');
+			} elsif ($fallbackPasswordSource && !defined $userId && defined $user->{$fallbackPasswordSource}) {
+				$userIdSource = $fallbackPasswordSource;
+				$typeOfSource =
+					"$userIdSource which was"
+					. ($ce->{LTI}{v1p3}{namesroles_service_fallback_source_of_username}
+						? 'namesroles_service_fallback_source_of_username'
+						: 'fallback_source_of_username');
+				$userId = $user->{$fallbackPasswordSource};
+			}
+
+			unless (defined $userId) {
+				warn "=====================================\n"
+					. "Unable to determine a webwork user id for LMS user:\n"
+					. $c->dumper($user)
+					. "\n=====================================\n"
+					if $ce->{debug_lti_parameters};
+				next;
+			}
+
+			$userId =~ s/@.*$//   if $userIdSource eq 'email' && $ce->{LTI}{v1p3}{strip_domain_from_email};
+			$userId = lc($userId) if $ce->{LTI}{v1p3}{lowercase_username};
+
+			my $studentId = $preferredSourceOfStudentId ? ($user->{$preferredSourceOfStudentId} // '') : '';
+
+			if ($ce->{debug_lti_parameters}) {
+				warn "=========== USER SUMMARY ============\n";
+				warn "----------- LMS USER DATA -----------\n";
+				warn $c->dumper($user);
+				warn "\n-------------------------------------\n";
+				warn "User id is |$userId| (obtained from $typeOfSource)\n";
+				warn "User email address is |$user->{email}|\n";
+				warn "Student id is |$studentId|\n";
+				warn "=====================================\n";
+			}
+
+			$usersInLMSCourse{$userId} = 1;
+
+			if ($userId eq $c->param('user')) {
+				warn "Skipping $userId because this is you.\n" if $ce->{debug_lti_parameters};
+				next;
+			}
+
+			# Note that the only reliably obtained roles here are the membership roles. The issue is that these roles
+			# are allowed to be abbreviated (i.e., the http://purl.imsglobal.org/... part may be entirely omitted
+			# according to the specification). Moodle does this, but Canvas does not. However, both seem to add a prefix
+			# for non-membership roles. Also, "institution" roles are not sent, so it is not even possible to honor the
+			# $ce->{LTI}{v1p3}{AllowInstitutionRoles} setting.
+			my @LTIroles = map {s|^http://purl.imsglobal.org/vocab/lis/v2/membership#||r} @{ $user->{roles} };
+
+			warn "The LTI roles defined for $userId are: \n-- " . join("\n-- ", @LTIroles) . "\n"
+				if $ce->{debug_lti_parameters};
+
+			if (!defined($ce->{userRoles}{ $ce->{LTI}{v1p3}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } })) {
+				warn "Skipping $userId. Cannot find a WeBWorK role that corresponds to the "
+					. "LMS role of $LTIroles[0] for this user.\n"
+					if $ce->{debug_lti_parameters};
+				next;
+			}
+
+			my $permissionLevel = $ce->{userRoles}{ $ce->{LTI}{v1p3}{LMSrolesToWeBWorKroles}{ $LTIroles[0] } };
+			if (@LTIroles > 1) {
+				for (@LTIroles[ 1 .. $#LTIroles ]) {
+					my $wwRole = $ce->{LTI}{v1p3}{LMSrolesToWeBWorKroles}{$_};
+					next unless defined $wwRole;
+					$permissionLevel = $ce->{userRoles}{$wwRole} if $permissionLevel < $ce->{userRoles}{$wwRole};
+				}
+			}
+			if ($permissionLevel > $ce->{userRoles}{ $ce->{LTIAccountCreationCutoff} }) {
+				warn "Skipping $userId. User has a role above the LTI "
+					. "account creation cutoff of $ce->{LTIAccountCreationCutoff}.\n"
+					if $ce->{debug_lti_parameters};
+				next;
+			}
+
+			if ($c->{allUsers}{$userId}) {
+				next unless $ce->{LMSManageUserData};
+
+				# Create a temporary user with the LMS credentials and compare the user to the existing user.
+				my $tempUser = $db->newUser(
+					user_id        => $userId,
+					lis_source_did => $user->{user_id},
+					last_name      => $user->{family_name} =~ s/\+/ /gr,
+					first_name     => $user->{given_name}  =~ s/\+/ /gr,
+					email_address  => $user->{email},
+					status         => $user->{status} eq 'Active' ? 'C' : 'D',
+					comment        => $c->formatDateTime(time),
+					student_id     => $studentId,
+					section        => '',
+					recitation     => ''
+				);
+
+				my $change_made = 0;
+				for my $element (qw(last_name first_name email_address status student_id)) {
+					if ($c->{allUsers}{$userId}->$element ne $tempUser->$element) {
+						$change_made = 1;
+						warn "WeBWorK user has $element: "
+							. $c->{allUsers}{$userId}->$element
+							. ", but LMS user has $element: "
+							. $tempUser->$element . "\n"
+							if $ce->{debug_lti_parameters};
+						# Update the data for this page.
+						$c->{allUsers}{$userId}->$element($tempUser->$element);
+					}
+				}
+
+				if ($change_made) {
+					++$updatedUsers;
+					$tempUser->comment($c->formatDateTime(time));
+					eval { $db->putUser($tempUser) };
+					if ($@) {
+						$c->log->error("Failed to update user $userId when importing LMS user: $@");
+						warn "Failed to update user $userId.\n" if $ce->{debug_lti_parameters};
+					} else {
+						warn "Updated user $userId.\n" if $ce->{debug_lti_parameters};
+					}
+				} else {
+					warn "$userId not changed.\n" if $ce->{debug_lti_parameters};
+				}
+			} else {
+				warn "Adding user $userId with permission level $permissionLevel.\n" if $ce->{debug_lti_parameters};
+				push(@addedUsers, $userId);
+
+				my $newUser = $db->newUser(
+					user_id        => $userId,
+					lis_source_did => $user->{user_id},
+					last_name      => $user->{family_name} =~ s/\+/ /gr,
+					first_name     => $user->{given_name}  =~ s/\+/ /gr,
+					email_address  => $user->{email},
+					status         => $user->{status} eq 'Active' ? 'C' : 'D',
+					comment        => $c->formatDateTime(time),
+					student_id     => $studentId,
+					section        => '',
+					recitation     => ''
+				);
+				$db->addUser($newUser);
+
+				$db->addPermissionLevel($db->newPermissionLevel(user_id => $userId, permission => $permissionLevel));
+
+				for (@achievements) {
+					push(@userAchievementRecordsToAdd,
+						$db->newUserAchievement(user_id => $userId, achievement_id => $_->achievement_id));
+				}
+				push(@globalAchievementRecordsToAdd,
+					$db->newGlobalUserAchievement(user_id => $userId, achievement_points => 0));
+
+				# Update the data for this page.
+				$newUser->{permission}        = $permissionLevel;
+				$newUser->{passwordExists}    = 0;
+				$c->{allUsers}{$userId}       = $newUser;
+				$c->{visibleUserIDs}{$userId} = 1;
+				$c->{userIsEditable}{$userId} = 1;
+			}
+		}
+
+		# Assign visible sets to the added users.
+		assignSetsToUsers($db, $ce, [ map { $_->[0] } $db->listGlobalSetsWhere({ visible => 1 }) ], \@addedUsers)
+			if @addedUsers;
+
+		# Assign achievements to the added users.
+		$db->UserAchievement->insert_records(\@userAchievementRecordsToAdd) if @userAchievementRecordsToAdd;
+		$db->GlobalUserAchievement->insert_records(\@globalAchievementRecordsToAdd)
+			if @globalAchievementRecordsToAdd;
+
+		# Mark all users not in the LMS roster and at or below the LTIAccountCreationCutoff as dropped.
+		my @droppedUsers;
+		for my $user (values %{ $c->{allUsers} }) {
+			next
+				if $usersInLMSCourse{ $user->user_id }
+				|| $user->{permission} > $ce->{userRoles}{ $ce->{LTIAccountCreationCutoff} }
+				|| $user->status eq 'D';
+			$user->status('D');
+			push(@droppedUsers, $user);
+		}
+		$db->User->update_records(\@droppedUsers) if @droppedUsers;
+
+		return (
+			1,
+			$ce->{LMSManageUserData}
+			? $c->maketext(
+				'[_1] [plural,_1,user] added, [_2] [plural,_2,user] updated, '
+					. '[_3] [plural,_3,user] not in LMS [plural,_3,was,were] dropped',
+				scalar(@addedUsers),
+				$updatedUsers,
+				scalar(@droppedUsers)
+				)
+			: $c->maketext(
+				'[_1] [plural,_1,user] added, [_2] [plural,_2,user] not in LMS [plural,_2,was,were] dropped',
+				scalar(@addedUsers), scalar(@droppedUsers)
+			)
+		);
+	} else {
+		return (
+			0,
+			$c->maketext(
+				'There was an error obtaining the list of users from the LMS: [_1]',
+				$namesRolesServiceResult->message
+			)
+		);
+	}
 }
 
 sub cancel_edit_handler ($c) {
@@ -499,7 +800,7 @@ sub cancel_edit_handler ($c) {
 	}
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes abandoned.');
+	return (1, $c->maketext('Changes abandoned.'));
 }
 
 sub save_edit_handler ($c) {
@@ -517,7 +818,14 @@ sub save_edit_handler ($c) {
 
 		for my $field ($User->NONKEYFIELDS()) {
 			my $newValue = $c->param("user.$userID.$field");
-			$User->$field($newValue) if defined $newValue;
+			next unless defined $newValue;
+			if (ref(FIELD_PROPERTIES()->{$field}{perlValidate}) eq 'CODE'
+				&& (my $error = FIELD_PROPERTIES()->{$field}{perlValidate}->($newValue)))
+			{
+				$c->addbadmessage($c->maketext($error, $userID));
+				next;
+			}
+			$User->$field($newValue);
 		}
 		$db->putUser($User);
 
@@ -532,20 +840,30 @@ sub save_edit_handler ($c) {
 			# Thus if the password is set again later, the user will need to setup two factor authentication again.
 			$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
 		} else {
-			my $newPassword = $c->param("user.${userID}.password");
+			my $newPassword       = $c->param("user.${userID}.password");
+			my $mustResetPassword = $c->param("user.${userID}.password_must_reset") ? 1 : 0;
 			if ($newPassword && $newPassword =~ /\S/) {
-				my $Password      = eval { $db->getPassword($User->user_id) };
-				my $cryptPassword = cryptPassword($newPassword);
+				my $Password = eval { $db->getPassword($User->user_id) };
 				if ($Password) {
 					# Note that in this case the otp_secret will be preserved. So the user will still be able to use the
 					# configured two factor authentication with the new password.
 					$Password->password(cryptPassword($newPassword));
+					$Password->must_reset_password($mustResetPassword);
 					eval { $db->putPassword($Password) };
 				} else {
 					$Password = $db->newPassword();
 					$Password->user_id($userID);
 					$Password->password(cryptPassword($newPassword));
+					$Password->must_reset_password($mustResetPassword);
 					eval { $db->addPassword($Password) };
+				}
+			} else {
+				# No new password was typed, but the "prompt to reset password" checkbox may have changed for an
+				# existing password.
+				my $Password = eval { $db->getPassword($User->user_id) };
+				if ($Password && ($Password->must_reset_password ? 1 : 0) != $mustResetPassword) {
+					$Password->must_reset_password($mustResetPassword);
+					eval { $db->putPassword($Password) };
 				}
 			}
 		}
@@ -561,7 +879,7 @@ sub save_edit_handler ($c) {
 
 	$c->{editMode} = 0;
 
-	return $c->maketext('Changes saved.');
+	return (1, $c->maketext('Changes saved.'));
 }
 
 # Sort methods (ascending)
@@ -665,7 +983,10 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} && $record{status} ne '';
 
-		# Determine what to use for the password (if anything).
+		# Determine what to use for the password (if anything). If the crypted password field was not itself set
+		# directly in the classlist file, then the user must be prompted to reset their password once one is
+		# determined below (whether from an unencrypted password column or a fallback source column).
+		my $mustResetPassword = $record{password} ? 0 : 1;
 		if (!$record{password}) {
 			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
 				$record{password} = cryptPassword($record{unencrypted_password});
@@ -683,7 +1004,13 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password = $record{password} ? $db->newPassword(user_id => $user_id, password => $record{password}) : undef;
+		my $Password        = $record{password}
+			? $db->newPassword(
+				user_id             => $user_id,
+				password            => $record{password},
+				must_reset_password => $mustResetPassword
+			)
+			: undef;
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {

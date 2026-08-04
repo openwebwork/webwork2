@@ -98,7 +98,7 @@
 			</nav>
 		</div>
 	</aside>
-	<div class="main-content">
+	<main class="main-content">
 		<div class="tab-content p-3">
 			% if ($filePath eq 'techniques') {
 				% for (['A' .. 'C'], ['D' .. 'F'], ['G' .. 'N'], ['O' .. 'Z']) {
@@ -137,7 +137,7 @@
 				% }
 			% }
 		</div>
-	</div>
+	</main>
 </body>
 
 </html>

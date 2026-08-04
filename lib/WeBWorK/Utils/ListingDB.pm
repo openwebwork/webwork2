@@ -115,10 +115,11 @@ sub getDBextras ($c, $path) {
 	$path =~ s|^Library/||;
 	my $filename = basename $path;
 	$path = dirname $path;
-	my $query =
+	my @res = $dbh->selectrow_array(
 		"SELECT pgfile.MO, pgfile.static FROM `$OPLtables{pgfile}` pgfile, `$OPLtables{path}` p "
-		. "WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
-	my @res = $dbh->selectrow_array($query);
+			. 'WHERE p.path = ? AND pgfile.path_id = p.path_id AND pgfile.filename = ?',
+		{}, $path, $filename
+	);
 	if (@res) {
 		$mo     = $res[0];
 		$static = $res[1];
@@ -286,7 +287,7 @@ sub getDBListings ($c, $amcounter = 0) {
 	if ($amcounter) {
 		$selectwhat = "COUNT(DISTINCT $selectwhat)";
 	} else {
-		$selectwhat .= 'as filepath, pgf.morelt_id, pgf.pgfile_id, pgf.static, pgf.MO';
+		$selectwhat .= 'as filepath, MAX(pgf.morelt_id), MAX(pgf.pgfile_id), MAX(pgf.static), MAX(pgf.MO)';
 		$group_by = 'GROUP BY filepath';
 	}
 
@@ -308,7 +309,7 @@ sub getDBListings ($c, $amcounter = 0) {
 				ts.chapter_id = tc.chapter_id AND
 				prob.section_id = ts.section_id AND
 				p.path_id = pgf.path_id
-				$extrawhere $textextrawhere $kw_where $group_by";
+				$extrawhere $textextrawhere $kw_where $group_by ORDER BY FIELD('pgf.libraryroot', 'Library')";
 
 		$pg_file_ref =
 			$dbh->selectall_arrayref($query, {}, @select_parameters, @textInfo_parameters, @keyword_parameters);
@@ -319,7 +320,7 @@ sub getDBListings ($c, $amcounter = 0) {
 				dbc.DBchapter_id = dbsc.DBchapter_id AND
 				dbsc.DBsection_id = pgf.DBsection_id AND
 				p.path_id = pgf.path_id
-				$extrawhere $kw_where $group_by";
+				$extrawhere $kw_where $group_by ORDER BY FIELD('pgf.libraryroot', 'Library')";
 
 		$pg_file_ref = $dbh->selectall_arrayref($query, {}, @select_parameters, @keyword_parameters);
 	}
@@ -457,7 +458,7 @@ The parameter C<$c> must be a WeBWorK::Controller object.
 
 Returns an array of hash references with the keys "filepath" which is the
 relative file path in the OPL, "morelt" which is true if there are more problems
-like this one, "pgid" which is the internal datbase index of the problem,
+like this one, "pgid" which is the internal database index of the problem,
 "static" which is true if the problem is declared static (which it should be if
 it has no random parameters), and "MO" if the problem is declared to use
 MathObjects.

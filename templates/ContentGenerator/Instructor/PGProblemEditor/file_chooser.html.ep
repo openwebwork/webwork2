@@ -2,6 +2,7 @@
 %
 <%= form_for current_route, method => 'POST', name => 'pg-editor-file-chooser',
 	class => 'needs-validation', novalidate => undef, begin =%>
+	<%= hidden_field courseID => $c->{courseID} =%>
 	<div class="row align-items-center mb-3">
 		<div class="col-auto">
 			<div class="form-check">
@@ -25,7 +26,7 @@
 				<%= text_field sourceFilePath => '',
 					id => 'source_file_path', class => 'form-control form-control-sm', size => 60, dir  => 'ltr' =%>
 				<div class="invalid-feedback">
-					<%= maketext('Plese enter a file with path relative to the course templates directory.') %>
+					<%= maketext('Please enter a file with path relative to the course templates directory.') %>
 				</div>
 			</div>
 		</div>

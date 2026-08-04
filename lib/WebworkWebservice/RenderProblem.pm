@@ -12,7 +12,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::DB::Utils        qw(global2user fake_set fake_problem);
 use WeBWorK::Utils            qw(decode_utf8_base64);
-use WeBWorK::Utils::Files     qw(readFile);
+use WeBWorK::Utils::Files     qw(readFile path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
 our $UNIT_TESTS_ON = 0;
@@ -26,11 +26,30 @@ async sub renderProblem {
 	# is enabled.  That is an expensive method to always call here.
 	debug(pretty_print_rh($rh)) if $WeBWorK::Debug::Enabled;
 
+	my $ce = $ws->ce;
+
+	if ($rh->{problemSource} || $rh->{rawProblemSource} || $rh->{uriEncodedProblemSource}) {
+		# If the problem source is provided, check user is allow to render problem source.
+		unless ($ws->authz->hasPermissions($rh->{user}, 'webservice_render_source')) {
+			$ws->error_string(__PACKAGE__ . ": User $rh->{user} does not have permission to render problem source.");
+			return {};
+		}
+	} elsif (defined $rh->{sourceFilePath} && $rh->{sourceFilePath} =~ /\S/) {
+		# If the source file path is provided, ensure it is contained in the course's templates directory.
+		unless (path_is_subdir(
+			$ce->{courseDirs}{templates} . '/' . $rh->{sourceFilePath},
+			$ce->{courseDirs}{templates}
+		))
+		{
+			$ws->error_string(__PACKAGE__ . ": Source file path is unsafe.");
+			return {};
+		}
+	}
+
 	my $problemSeed = $rh->{problemSeed} // '1234';
 
 	my $beginTime = Benchmark->new;
 
-	my $ce = $ws->ce;
 	my $db = $ws->db;
 
 	# Determine an effective user for this interaction or create one if it is not given.
@@ -228,7 +247,7 @@ async sub renderProblem {
 		),
 		showMessages => (
 			$rh->{WWcorrectAnsOnly} ? 0
-			: ($rh->{showMessages} // ($rh->{previewAsnwers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
+			: ($rh->{showMessages} // ($rh->{previewAnswers} || $rh->{WWsubmit} || $rh->{WWcorrectAns}))
 		),
 		showCorrectAnswers =>
 			($rh->{WWcorrectAnsOnly} ? 1 : ($rh->{showCorrectAnswers} // ($rh->{WWcorrectAns} ? 2 : 0))),
@@ -250,26 +269,23 @@ async sub renderProblem {
 
 	# New version of output:
 	return {
-		text                    => $pg->{body_text},
-		header_text             => $pg->{head_text},
-		post_header_text        => $pg->{post_header_text},
-		answers                 => $pg->{answers},
-		errors                  => $pg->{errors},
-		pg_warnings             => $pg->{warnings},
-		PG_ANSWERS_HASH         => $pg->{PG_ANSWERS_HASH},
-		PERSISTENCE_HASH        => $pg->{PERSISTENCE_HASH},
-		problem_result          => $pg->{result},
-		problem_state           => $pg->{state},
-		flags                   => $pg->{flags},
-		psvn                    => $psvn,
-		problem_seed            => $problemSeed,
-		resource_list           => $pg->{resource_list},
-		warning_messages        => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
-		debug_messages          => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
-		internal_debug_messages => ref $pg->{internal_debug_messages} eq 'ARRAY'
-		? $pg->{internal_debug_messages}
-		: [],
-		compute_time => logTimingInfo($beginTime, Benchmark->new),
+		text             => $pg->{body_text},
+		header_text      => $pg->{head_text},
+		post_header_text => $pg->{post_header_text},
+		answers          => $pg->{answers},
+		errors           => $pg->{errors},
+		pg_warnings      => $pg->{warnings},
+		PG_ANSWERS_HASH  => $pg->{PG_ANSWERS_HASH},
+		PERSISTENCE_HASH => $pg->{PERSISTENCE_HASH},
+		problem_result   => $pg->{result},
+		problem_state    => $pg->{state},
+		flags            => $pg->{flags},
+		psvn             => $psvn,
+		problem_seed     => $problemSeed,
+		resource_list    => $pg->{resource_list},
+		warning_messages => ref $pg->{warning_messages} eq 'ARRAY' ? $pg->{warning_messages} : [],
+		debug_messages   => ref $pg->{debug_messages} eq 'ARRAY'   ? $pg->{debug_messages}   : [],
+		compute_time     => logTimingInfo($beginTime, Benchmark->new),
 	};
 }
 

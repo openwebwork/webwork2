@@ -11,8 +11,9 @@ as a student.
 
 use WeBWorK::Localize;
 use WeBWorK::Utils 'wwRound';
+use WeBWorK::Utils::DateTime qw(before);
 
-sub new ($class, $c, $pg, $userProblem) {
+sub new ($class, $c, $pg, $userProblem, $mergedSet) {
 	$class = ref($class) || $class;
 
 	my $db           = $c->db;
@@ -43,7 +44,12 @@ sub new ($class, $c, $pg, $userProblem) {
 		recorded_score => $recordedScore,
 		past_answer_id => $userPastAnswerID // 0,
 		comment_string => $comment,
-		c              => $c
+		c              => $c,
+		# The grader needs to also save the sub_status if reduced scoring is not enabled,
+		# or if it is but it is before the reduced scoring date.
+		save_sub_status => !$c->ce->{pg}{ansEvalDefaults}{enableReducedScoring}
+			|| !$mergedSet->enable_reduced_scoring
+			|| before($mergedSet->reduced_scoring_date)
 	};
 	bless $self, $class;
 

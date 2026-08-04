@@ -10,7 +10,7 @@
 %
 <body>
 	<!-- Request ID: <%= $c->req->request_id %> -->
-	<div style="text-align:left">
+	<main style="text-align:left">
 		<h1>WeBWorK error</h1>
 		<p>An error occurred while processing your request.</p>
 		<p>
@@ -19,7 +19,7 @@
 			<% if ($ENV{WEBWORK_SERVER_ADMIN}) { =%>
 				<%= link_to $ENV{WEBWORK_SERVER_ADMIN} => "mailto:$ENV{WEBWORK_SERVER_ADMIN}" %>\
 			<% } =%>\
-			, including all of the following information as well as what what you were doing when the error occurred.
+			, including all of the following information as well as what you were doing when the error occurred.
 		</p>
 		<h2>Error record identifier</h2>
 		<p style="margin-left:2em;color:#dc2a2a"><code><%= $uuid =%></code></p>
@@ -114,7 +114,7 @@
 		</div>
 		<h2>Time generated:</h2>
 		<p style="margin-left:2em;"><%= $time %></p>
-	</div>
+	</main>
 </body>
 %
 </html>

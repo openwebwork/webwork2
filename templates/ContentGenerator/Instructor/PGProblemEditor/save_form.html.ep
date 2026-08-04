@@ -1,8 +1,6 @@
-% # Can't save blank problems without changing names, and can't save if lacking write permissions.
-% last if $c->{file_type} eq 'blank_problem'
-	% || $c->{file_type} eq 'sample_problem'
-	% || $c->{editFilePath} =~ /newProblem\.pg$/
-	% || !-w $c->{editFilePath};
+% use WeBWorK::Utils::Files qw(path_is_subdir);
+% # Can't save files outside of the course templates directory, and can't save if lacking write permissions.
+% last if !path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1) || !-w $c->{editFilePath};
 %
 <div>
 	<div class="mb-2">

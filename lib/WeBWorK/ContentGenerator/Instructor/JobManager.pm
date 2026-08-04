@@ -14,6 +14,7 @@ use constant ACTION_FORMS => [ [ filter => x('Filter') ], [ sort => x('Sort') ],
 # All tasks added in the Mojolicious::WeBWorK module need to be listed here.
 use constant TASK_NAMES => {
 	lti_mass_update        => x('LTI Mass Update'),
+	lti_set_date_sync      => x('LTI Set Date Synchronization'),
 	send_instructor_email  => x('Send Instructor Email'),
 	send_achievement_email => x('Send Achiement Email')
 };
@@ -106,7 +107,7 @@ sub initialize ($c) {
 	# first three sorts do not determine a proper order.
 	$c->stash->{sortedJobs} = [
 		map  { $_->{id} }
-		sort { &$primarySortSub || &$secondarySortSub || &$ternarySortSub || byJobID }
+		sort { $primarySortSub->() || $secondarySortSub->() || $ternarySortSub->() || byJobID() }
 		grep { $c->stash->{visibleJobs}{ $_->{id} } } (values %{ $c->stash->{jobs} })
 	];
 

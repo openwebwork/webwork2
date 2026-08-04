@@ -30,7 +30,7 @@
 % };
 %
 <body>
-	<div class="container-fluid p-3">
+	<main class="container-fluid p-3">
 		<div class="row">
 			<div class="col">
 				<h1><%= title %></h1>
@@ -106,7 +106,7 @@
 				</div>
 			</div>
 		% }
-	</div>
+	</main>
 </body>
 %
 </html>

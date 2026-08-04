@@ -6,15 +6,16 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(after);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'DoubleSet',
 		name        => x('Cake of Enlargement'),
-		description => x('Cause the selected homework set to count for twice as many points as it normally would.')
+		description =>
+			[ x('Cause the selected homework set to count for twice as many points as it normally would.') ]
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type eq 'default' && after($set->open_date);
 }
 

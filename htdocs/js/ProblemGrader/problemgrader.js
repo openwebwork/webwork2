@@ -1,6 +1,45 @@
 'use strict';
 
 (() => {
+	const setPointInputValue = (pointInput, score) =>
+		(pointInput.value = parseFloat(
+			(Math.round((score * pointInput.max) / 100 / pointInput.step) * pointInput.step).toFixed(2)
+		));
+
+	// Update problem score if point value changes and is a valid value.
+	for (const pointInput of document.querySelectorAll('.problem-points')) {
+		pointInput.addEventListener('input', () => {
+			const userId = pointInput.id.replace(/\.points$/, '');
+			if (pointInput.checkValidity()) {
+				const scoreInput = document.getElementById(`${userId}.score`);
+				if (scoreInput) {
+					scoreInput.classList.remove('is-invalid');
+					scoreInput.value = Math.round((100 * pointInput.value) / pointInput.max);
+				}
+				pointInput.classList.remove('is-invalid');
+			} else {
+				pointInput.classList.add('is-invalid');
+			}
+		});
+	}
+
+	// Update problem points if score changes and is a valid value.
+	for (const scoreInput of document.querySelectorAll('.problem-score')) {
+		scoreInput.addEventListener('input', () => {
+			const userId = scoreInput.id.replace(/\.score$/, '');
+			if (scoreInput.checkValidity()) {
+				const pointInput = document.getElementById(`${userId}.points`);
+				if (pointInput) {
+					pointInput.classList.remove('is-invalid');
+					pointInput.value = setPointInputValue(pointInput, scoreInput.value);
+				}
+				scoreInput.classList.remove('is-invalid');
+			} else {
+				scoreInput.classList.add('is-invalid');
+			}
+		});
+	}
+
 	const userSelect = document.getElementById('student_selector');
 	if (!userSelect) return;
 
@@ -15,7 +54,8 @@
 			problemSeed: selectedUser.dataset.problemSeed,
 			set_id: document.getElementsByName('hidden_set_id')[0]?.value,
 			probNum: document.getElementsByName('hidden_problem_id')[0]?.value,
-			processAnswers: 1
+			processAnswers: 1,
+			WWcorrectAns: 1
 		};
 
 		if (selectedUser.dataset.versionId) ro.version_id = selectedUser.dataset.versionId;

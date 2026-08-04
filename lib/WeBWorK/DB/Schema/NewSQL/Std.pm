@@ -200,10 +200,10 @@ sub dump_table {
 		my $exit   = $? >> 8;
 		my $signal = $? & 127;
 		my $core   = $? & 128;
-		warn "Warning: Failed to dump table '"
+		warn "Failed to dump table '"
 			. $self->sql_table_name
 			. "' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
-		warn "This can be expected if the course was created with an earlier version of WeBWorK.";
+		return 0;
 	}
 
 	return 1;
@@ -468,7 +468,7 @@ sub get_fields_where {
 	return @results;
 }
 
-# returns an Iterator that generates refs to arrays containg field values for each matching row
+# returns an Iterator that generates refs to arrays containing field values for each matching row
 sub get_fields_where_i {
 	my ($self, $fields, $where, $order) = @_;
 	$fields ||= [ $self->fields ];
@@ -872,7 +872,7 @@ sub sql_field_name {
 	return $field;
 }
 
-# returns fully quoted expression refering to the specified field
+# returns fully quoted expression referring to the specified field
 # if $include_table is true, the field name is prefixed with the table name
 sub sql_field_expression {
 	my ($self, $field, $table) = @_;

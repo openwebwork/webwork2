@@ -64,7 +64,7 @@ sub do_verify ($self) {
 		my $idpCertificateFile = $self->idp(1);
 		unless ($idpCertificateFile) {
 			$c->stash->{authen_error} = $c->maketext(
-				'An internal server error occured. Please contact the system administrator for assistance.');
+				'An internal server error occurred. Please contact the system administrator for assistance.');
 			return 0;
 		}
 
@@ -194,7 +194,7 @@ sub sp ($self) {
 # with the identity provider's signing key which is extracted from the retrieved metadata.  On later requests the
 # metadata and certificate are used from the saved files.  This prevents the need to retrieve the metadata on every
 # login request.
-sub idp ($self, $ceritificateOnly = 0) {
+sub idp ($self, $certificateOnly = 0) {
 	if (!$self->{idp_certificate_file} || !$self->{idp}) {
 		my $ce = $self->{c}->ce;
 
@@ -218,12 +218,12 @@ sub idp ($self, $ceritificateOnly = 0) {
 				$self->{idp_certificate_file} = $certificateFile;
 			} else {
 				debug("Unable to retrieve metadata from identity provider $ce->{saml2}{active_idp} with "
-						. "metadata URL $ce->{samle}{idps}{$ce->{saml2}{active_idp}}");
+						. "metadata URL $ce->{saml2}{idps}{$ce->{saml2}{active_idp}}");
 			}
 		}
 	}
 
-	return $self->{idp_certificate_file} if $ceritificateOnly;
+	return $self->{idp_certificate_file} if $certificateOnly;
 	return $self->{idp};
 }
 
@@ -242,7 +242,7 @@ sub sendLoginRequest ($self) {
 	my $idp = $self->idp;
 	unless ($idp) {
 		$c->stash->{authen_error} =
-			$c->maketext('An internal server error occured. Please contact the system administrator for assistance.');
+			$c->maketext('An internal server error occurred. Please contact the system administrator for assistance.');
 		return 0;
 	}
 

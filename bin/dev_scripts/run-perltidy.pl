@@ -45,12 +45,12 @@ use feature 'say';
 
 use Perl::Tidy;
 use File::Find qw(find);
-use Mojo::File qw(curfile);
+use Mojo::File qw(curfile path);
 
 my $webwork_root = curfile->dirname->dirname->dirname;
 
-die "Version 20240903 of perltidy is required for this script.\nThe installed version is $Perl::Tidy::VERSION.\n"
-	unless $Perl::Tidy::VERSION == 20240903;
+die "Version 20260204 of perltidy is required for this script.\nThe installed version is $Perl::Tidy::VERSION.\n"
+	unless $Perl::Tidy::VERSION == 20260204;
 die "The .perltidyrc file in the webwork root directory is not readable.\n"
 	unless -r "$webwork_root/.perltidyrc";
 
@@ -65,10 +65,10 @@ for (@ARGV) {
 # Validate options that were passed.
 my %options;
 my $err = Perl::Tidy::perltidy(argv => \@args, dump_options => \%options);
-exit $err                                               if $err;
-die "The -pro option is not suppored by this script.\n" if defined $options{profile};
+exit $err                                                if $err;
+die "The -pro option is not supported by this script.\n" if defined $options{profile};
 
-unshift(@args, '-bext=/') unless defined $options{'backup-file-extension'};
+unshift(@args, '-bext=/tidybak') unless defined $options{'backup-file-extension'};
 
 if (@files) {
 	for (@files) {
@@ -91,7 +91,17 @@ if (@files) {
 					return;
 				}
 
-				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/;
+				my $isPerlScript = 0;
+				if (($dir =~ /\/bin$/ || $dir =~ /\/bin\/dev_scripts$/)
+					&& $path !~ /\.p[lm]$/
+					&& -f $path
+					&& (my $fh = path($path)->open('<')))
+				{
+					$isPerlScript = <$fh> =~ /^#!.*\bperl\b/;
+					$fh->close;
+				}
+
+				return unless $path =~ /\.p[lm]$/ || $path =~ /\.t$/ || $path =~ /\.at$/ || $isPerlScript;
 
 				say "Tidying file: $path" if $verbose;
 

@@ -58,7 +58,7 @@
 					}
 				} else {
 					element?.classList.remove('is-invalid');
-					if (element.id in event_listeners) {
+					if (element && element.id in event_listeners) {
 						element?.removeEventListener('change', event_listeners[element.id]);
 						delete event_listeners[element.id];
 					}
@@ -145,7 +145,26 @@
 		});
 	}
 
-	for (const deleteCheck of document.querySelectorAll('input[name$="password_delete"]')) {
-		new bootstrap.Tooltip(deleteCheck, { placement: 'top', fallbackPlacements: [] });
+	for (const tooltipCheck of document.querySelectorAll(
+		'input[name$="password_delete"]:not([disabled]), input[name$="password_must_reset"]'
+	)) {
+		new bootstrap.Tooltip(tooltipCheck, { placement: 'top', fallbackPlacements: [] });
+	}
+
+	// For a user with no password, the "force password reset" checkbox starts out unchecked (there is nothing to
+	// reset yet). Automatically check it once a new password is actually typed into the corresponding password
+	// field, and uncheck it again if that field is cleared back out. If the instructor manually toggles the
+	// checkbox themselves, stop overriding their choice for the rest of the page's lifetime.
+	for (const autoCheckbox of document.querySelectorAll('input[data-auto-check="password"]')) {
+		const passwordField = autoCheckbox.closest('.row')?.querySelector('input[name$=".password"]');
+		if (!passwordField) continue;
+
+		let manuallySet = false;
+		autoCheckbox.addEventListener('change', () => {
+			manuallySet = true;
+		});
+		passwordField.addEventListener('input', () => {
+			if (!manuallySet) autoCheckbox.checked = passwordField.value !== '';
+		});
 	}
 })();

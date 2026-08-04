@@ -96,7 +96,7 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 }
 
 # saveFileChanges does most of the work. It is a separate method so that it can
-# be called from either pre_header_initialize or initilize, depending on
+# be called from either pre_header_initialize or initialize, depending on
 # whether a redirect is needed or not.
 sub saveFileChanges ($c, $outputFilePath) {
 	my $ce = $c->ce;
@@ -212,7 +212,7 @@ sub save_as_handler ($c) {
 		));
 	} else {
 		$c->addbadmessage($c->maketext(
-			'Unable to change the achievement notification template for achivement [_1]. Unknown error.',
+			'Unable to change the achievement notification template for achievement [_1]. Unknown error.',
 			$achievementName
 		));
 	}

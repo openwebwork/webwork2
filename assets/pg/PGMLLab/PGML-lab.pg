@@ -286,7 +286,7 @@ TEXT(tag(
 						'External ANS' => [
 							<<~'ENDPG',
 								Context('Vector');
-								ANS(Vector(1, 2, 3)->cmp(showCoodinateHints => 0));
+								ANS(Vector(1, 2, 3)->cmp(showCoordinateHints => 0));
 								ENDPG
 							<<~'ENDPGML'
 								[:<1,2,3>:]* = [__________]
@@ -682,9 +682,9 @@ TEXT(tag(
 								>> At the right
 								
 								>> Several lines combined.
-								>> right justfied
+								>> right justified
 								
-								>> Or a whole paragaph
+								>> Or a whole paragraph
 								that is pushed to the right
 								
 								>> Or two lines  

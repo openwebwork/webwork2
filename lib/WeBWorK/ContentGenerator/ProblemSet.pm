@@ -17,19 +17,25 @@ use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display
 use WeBWorK::DB::Utils        qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
 use WeBWorK::AchievementItems;
+use WeBWorK::HTML::StudentNav qw(studentNav);
+
+sub can ($c, $arg) {
+	if ($arg eq 'info') {
+		return $c->{pg} ? 1 : 0;
+	}
+	return $c->SUPER::can($arg);
+}
 
 async sub initialize ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm
-	return
-		if $c->{invalidSet}
-		&& ($c->{invalidSet} !~ /^Client ip address .* is not in the list of addresses/
-			|| $authz->{merged_set}->assignment_type !~ /gateway/);
+	# $c->{invalidSet} is set in checkSet which is called by ContentGenerator.pm.
+	# If $c->{viewSetCheck} is also set, we want to view some information unless the set is hidden.
+	return if $c->{invalidSet} && (!$c->{viewSetCheck} || $c->{viewSetCheck} eq 'hidden');
 
-	# This will all be valid if checkSet did not set $c->{invalidSet}.
+	# This will all be valid if the above check passes.
 	my $userID  = $c->param('user');
 	my $eUserID = $c->param('effectiveUser');
 
@@ -41,6 +47,46 @@ async sub initialize ($c) {
 	my $user          = $db->getUser($userID);
 	my $effectiveUser = $db->getUser($eUserID);
 	$c->{set} = $authz->{merged_set};
+
+	# Allow a student to view their own answer key early by overriding their answer date to now, if this is
+	# enabled via the view_own_answers_early permission. If the close date and/or reduced scoring date are still
+	# in the future, they are moved up to now as well, since they cannot be allowed to remain later than the new
+	# answer date.
+	if ($c->param('viewAnswersEarly')
+		&& $authz->hasPermissions($userID, 'view_own_answers_early')
+		&& $userID eq $eUserID
+		&& !$c->{viewSetCheck}
+		&& $c->{set}->assignment_type !~ /gateway/)
+	{
+		my $now = time;
+		if ($now < $c->{set}->answer_date) {
+			my $userSet = $db->getUserSet($eUserID, $c->{set}->set_id);
+			if ($userSet) {
+				my $dueDate            = $c->{set}->due_date;
+				my $reducedScoringDate = $c->{set}->reduced_scoring_date;
+
+				$userSet->answer_date($now);
+				$userSet->due_date($now)             if $dueDate > $now;
+				$userSet->reduced_scoring_date($now) if $reducedScoringDate && $reducedScoringDate > $now;
+
+				eval { $db->putUserSet($userSet) };
+				if ($@) {
+					$c->log->error("Unable to reveal answers early for set @{[$c->{set}->set_id]} for $eUserID: $@");
+					$c->addbadmessage(
+						$c->maketext(
+							'The answer key for this set was not made available due to an internal error.')
+					);
+				} else {
+					$c->{set}->answer_date($now);
+					$c->{set}->due_date($now)             if $dueDate > $now;
+					$c->{set}->reduced_scoring_date($now) if $reducedScoringDate && $reducedScoringDate > $now;
+					$c->addgoodmessage($c->maketext('The answer key for this set is now available.'));
+				}
+			}
+		} else {
+			$c->addbadmessage($c->maketext('The answer key for this set is already available.'));
+		}
+	}
 
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
@@ -105,6 +151,7 @@ async sub initialize ($c) {
 
 	$c->{pg} =
 		await renderPG($c, $effectiveUser, $c->{set}, $problem, $c->{set}->psvn, {}, { displayMode => $displayMode });
+	$c->{pg} = '' unless $c->{pg}{body_text} =~ /\S/;
 
 	return;
 }
@@ -113,17 +160,24 @@ sub nav ($c, $args) {
 	# Don't show the nav if the user does not have unrestricted navigation permissions.
 	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
 
-	my @links = (
-		$c->maketext('Assignments'),
-		$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
-		$c->maketext('Assignments')
-	);
 	return $c->tag(
 		'div',
 		class        => 'row sticky-nav',
 		role         => 'navigation',
-		'aria-label' => 'problem navigation',
-		$c->tag('div', $c->navMacro($args, {}, @links))
+		'aria-label' => 'set navigation',
+		$c->c(
+			$c->tag(
+				'div',
+				class => 'd-flex submit-buttons-container',
+				$c->navMacro(
+					$args, {},
+					$c->maketext('Assignments'),
+					$c->url_for($c->app->routes->lookup($c->current_route)->parent->name),
+					$c->maketext('Assignments')
+				)
+			),
+			$c->{set} ? studentNav($c, $c->{set}->set_id) : ''
+		)->join('')
 	);
 }
 
@@ -161,10 +215,8 @@ sub siblings ($c) {
 	return $c->include('ContentGenerator/ProblemSet/siblings', setIDs => \@setIDs);
 }
 
-sub info {
-	my ($c) = @_;
-	return '' unless $c->{pg};
-	return $c->include('ContentGenerator/ProblemSet/info');
+sub info ($c) {
+	return $c->{pg} ? $c->include('ContentGenerator/ProblemSet/info') : '';
 }
 
 # This is called by the ContentGenerator/ProblemSet/body template for a regular homework set.
@@ -180,12 +232,14 @@ sub gateway_body ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 
-	my $set           = $c->{set};
-	my $effectiveUser = $c->param('effectiveUser');
-	my $user          = $c->param('user');
+	my $set             = $c->{set};
+	my $effectiveUserID = $c->param('effectiveUser');
+	my $userID          = $c->param('user');
+
+	my $effectiveUser = $db->getUser($effectiveUserID);
 
 	my $timeNow   = time;
-	my $timeLimit = $set->version_time_limit || 0;
+	my $timeLimit = ($set->version_time_limit || 0) * $effectiveUser->accommodation_time_factor;
 
 	# Compute how many versions have been launched within timeInterval to determine if a new version can be created,
 	# if a version can be continued, and the date a next version can be started.  If there is an open version that
@@ -206,8 +260,9 @@ sub gateway_body ($c) {
 		}
 
 		# Get a problem to determine how many submits have been made.
-		my @ProblemNums = $db->listUserProblems($effectiveUser, $set->set_id);
-		my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $verSet->version_id, $ProblemNums[0]);
+		my @ProblemNums = $db->listUserProblems($effectiveUserID, $set->set_id);
+		my $Problem =
+			$db->getMergedProblemVersion($effectiveUserID, $set->set_id, $verSet->version_id, $ProblemNums[0]);
 		my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
 		my $maxSubmits = $verSet->attempts_per_version || 0;
 
@@ -292,11 +347,11 @@ sub gateway_body ($c) {
 
 		$data->{score} = '';
 		# Only show score if user has permission and assignment has at least one submit.
-		if ($authz->hasPermissions($user, 'view_hidden_work')
+		if ($authz->hasPermissions($userID, 'view_hidden_work')
 			|| ($verSet->hide_score eq 'N'                && $verSubmits >= 1)
 			|| ($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
 		{
-			my ($total, $possible) = grade_set($db, $verSet, $effectiveUser, 1);
+			my ($total, $possible) = grade_set($db, $verSet, $effectiveUserID, 1);
 			$total = wwRound(2, $total);
 			$data->{score} = "$total/$possible";
 		}

@@ -1,0 +1,1 @@
+<span><%= maketext('Synchronize roster from the LMS.') =%></span>

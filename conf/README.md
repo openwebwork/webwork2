@@ -190,7 +190,7 @@ sudo systemctl enable /opt/webwork/webwork2/conf/webwork2.service
 sudo systemctl start webwork2
 ```
 
-### Deployment of the webwork2 job queue for all server arrangments
+### Deployment of the webwork2 job queue for all server arrangements
 
 Some long running processes are not directly run by the webwork2 Mojolicious app. Particularly mass grade updates via
 LTI and sending of instructor emails. Instead these tasks are executed via the webwork2 Minion job queue.

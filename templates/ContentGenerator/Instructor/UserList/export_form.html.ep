@@ -33,7 +33,7 @@
 			</div>
 		</div>
 	</div>
-	<div id="export_file_err_msg" class="alert alert-danger p-1 d-inline-flex d-none">
+	<div id="export_file_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
 		<%= maketext('Please input a file name to export to that does not contain forward slashes.') %>
 	</div>
 </div>

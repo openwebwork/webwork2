@@ -8,7 +8,7 @@
 % );
 %
 <div class="alert alert-info mb-3">
-	<%== $useReducedScoring ? '<p>' : '<p class="mb-0">' =%>
+	<%= tag 'p', $useReducedScoring ? () : (class => 'mb-0'), begin =%>
 		<strong>
 			% if (before($set->open_date)) {
 				<%= maketext('Set opens on [_1].',
@@ -23,7 +23,7 @@
 				<%= maketext('Set is closed.') %>
 			% }
 		</strong>
-	</p>
+	<%= end =%>
 	%
 	% if ($useReducedScoring) {
 		% my $reduced_scoring_date  = $set->reduced_scoring_date;

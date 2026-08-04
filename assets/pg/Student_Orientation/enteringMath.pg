@@ -21,9 +21,9 @@ expression automatically is converted to look like [::pi/sqrt(x+1)::]. [_]{Conte
 
 Occasionally you will want to answer with raw text that should not be converted into a math expression. For example, if
 the answer is a word. For this kind of answer, you should enter "text mode". There is a "Tt" button on the palette  that
-enters and exits text mode. You can also use the [|"|]* character to enter text mode, and then exit with the [|tab|]*
-key or right arrow. Try answering the following with and without using text mode. The answer is [|pirate|]*:
-[_]{Context("Numeric")->strings->add(pirate => {}), 'pirate'}{16}.
+enters and exits text mode. You can also use the double quote character ([|"|]*) to enter text mode, and then exit with
+the [|tab|]* key or right arrow. Try answering the following with and without using text mode. The answer is [|web|]*:
+[_]{Context("Numeric")->strings->add(web => {}), 'web'}{16}.
 
 The palette tool might be a distraction, especially to keyboard-only users. You can disable it by right-clicking (or
 control-clicking) in an answer blank. To "right click" without a mouse:

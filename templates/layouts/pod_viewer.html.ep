@@ -18,7 +18,7 @@
 </head>
 %
 <body>
-	<div class="pod-header navbar navbar-dark bg-primary px-3 position-fixed border-bottom border-dark">
+	<nav class="pod-header navbar navbar-dark bg-primary px-3 position-fixed border-bottom border-dark">
 		<div class="container-fluid d-flex flex-column d-md-block">
 			<h1 class="navbar-brand fw-bold fs-5 me-auto me-md-0 mb-2 mb-md-0"><%= title %></h1>
 			<button class="navbar-toggler d-md-none me-auto" type="button" data-bs-toggle="offcanvas"
@@ -26,7 +26,7 @@
 				<span class="navbar-toggler-icon"></span>
 			</button>
 		</div>
-	</div>
+	</nav>
 	<aside class="offcanvas-md offcanvas-start border-end border-dark position-fixed" tabindex="-1"
 		id="sidebar" aria-labelledby="sidebar-label">
 		<div class="offcanvas-header">
@@ -39,11 +39,11 @@
 			<%= content 'sidebar' %>
 		</div>
 	</aside>
-	<div class="pod-page-container d-flex">
+	<main class="pod-page-container d-flex">
 		<div class="container-fluid p-3 h-100" id="_podtop_">
 			<%= content =%>
 		</div>
-	</div>
+	</main>
 </body>
 %
 </html>

@@ -13,8 +13,8 @@ use feature 'say';
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use YAML::XS qw(LoadFile);
-	use Env qw(WEBWORK_ROOT PG_ROOT);
+	use YAML::XS   qw(LoadFile);
+	use Env        qw(WEBWORK_ROOT PG_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname->to_string;
 
@@ -51,7 +51,9 @@ my $latex_cmd =
 	. shell_quote($ce->{webworkDirs}{assetsTex}) . ':'
 	. shell_quote($ce->{pg}{directories}{assetsTex}) . ': '
 	. $ce->{externalPrograms}{latex2pdf}
-	. ' -interaction nonstopmode check_latex_exam.tex >> check_latex.nfo 2>&1';
+	. ' -interaction nonstopmode check_latex_exam.tex >> check_latex.nfo 2>&1 &&'
+	. "TEXINPUTS=$ENV{WEBWORK_ROOT}/bin: $ce->{externalPrograms}{latex2pdf}"
+	. ' -interaction nonstopmode check_latex_standalone.tex > check_latex.nfo 2>&1';
 
 if ((system $latex_cmd) >> 8) {
 	if (open(my $fh, '<', "$temp_dir/check_latex.nfo")) {

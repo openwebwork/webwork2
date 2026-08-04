@@ -14,10 +14,12 @@ my $filedir = $file =~ s!/[^/]+$!!r;
 $file =~ s!.*/!!;
 
 my @PGdirs = (
-	"../templates$filedir",  '../templates/macros',      "$root/pg/macros",      "$root/pg/macros/answers",
-	"$root/pg/macros/capa",  "$root/pg/macros/contexts", "$root/pg/macros/core", "$root/pg/macros/deprecated",
-	"$root/pg/macros/graph", "$root/pg/macros/math",     "$root/pg/macros/misc", "$root/pg/macros/parsers",
-	"$root/pg/macros/ui",
+	"../templates$filedir",       '../templates/macros',
+	"$root/pg/macros",            "$root/pg/macros/answers",
+	"$root/pg/macros/contexts",   "$root/pg/macros/core",
+	"$root/pg/macros/deprecated", "$root/pg/macros/graph",
+	"$root/pg/macros/math",       "$root/pg/macros/misc",
+	"$root/pg/macros/parsers",    "$root/pg/macros/ui",
 );
 
 for my $dir (@PGdirs) { ShowSource("$dir/$file") if (-e "$dir/$file") }

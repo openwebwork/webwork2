@@ -7,10 +7,10 @@ $info: #1a67ea;
 
 // Link colors
 $link-color: $primary;
-$link-hover-color: $info;
+$link-color-dark: tint-color($primary, 50%);
 
 // Webwork logo background color in the banner
 $ww-logo-background-color: darken($info, 14%);
 
-// Achievment level bar
+// Achievement level bar
 $ww-achievement-level-color: #88d;

@@ -1,4 +1,4 @@
-% use WeBWorK::Utils 'wwRound';
+% use WeBWorK::Utils qw(wwRound points_stepsize round_nearest_stepsize);
 %
 % if (!stash->{jsInserted}) {
 	% stash->{jsInserted} = 1;
@@ -7,8 +7,8 @@
 	% end
 % }
 %
-<div class="problem-grader">
-	<hr>
+<div class="problem-grader d-none" id="problem-grader-<%= $grader->{problem_id} %>"
+	data-grader-title="<%= maketext('Problem Grader') %>">
 	<div class="problem-grader-table">
 		% my $currentScore    = 0;
 		% my $rawCurrentScore = 0;
@@ -82,28 +82,11 @@
 		%
 		% # Total point value. Show only if configured to.
 		% unless ($ce->{problemGraderScore} eq 'Percent') {
-			% # Compute a reasonable step size based on point value.
-			% # First use some preset nice values, then only use whole
-			% # point values, such that the step size >= 1% of total.
-			% my $stepSize;
-			% if ($grader->{problem_value} == 1) {
-				% $stepSize = 0.01;
-			% } elsif ($grader->{problem_value} <= 5) {
-				% $stepSize = 0.05;
-			% } elsif ($grader->{problem_value} <= 10) {
-				% $stepSize = 0.1;
-			% } elsif ($grader->{problem_value} <= 25) {
-				% $stepSize = 0.25;
-			% } elsif ($grader->{problem_value} <= 50) {
-				% $stepSize = 0.5;
-			% } else {
-				% $stepSize = int(($grader->{problem_value} - 1) / 100) + 1;
-			% }
-			% # Round point score to the nearest $stepSize.
+			% my $stepSize       = points_stepsize($grader->{problem_value});
 			% my $recordedPoints =
-				% wwRound(2, wwRound(0, $grader->{recorded_score} * $grader->{problem_value} / $stepSize) * $stepSize);
+				% round_nearest_stepsize($grader->{recorded_score} * $grader->{problem_value}, $stepSize);
 			% my $currentPoints =
-				% wwRound(2, wwRound(0, $rawCurrentScore / 100 * $grader->{problem_value} / $stepSize) * $stepSize);
+				% round_nearest_stepsize($rawCurrentScore / 100 * $grader->{problem_value}, $stepSize);
 			% param('grader-problem-points', $recordedPoints);
 			<div class="row align-items-center mb-2">
 				<%= label_for "score_problem$grader->{problem_id}_points",
@@ -271,7 +254,8 @@
 					data-set-id="<%= $grader->{set_id} %>"
 					data-version-id="<%= $grader->{version_id} %>"
 					data-problem-id="<%= $grader->{problem_id} %>"
-					data-past-answer-id="<%= $grader->{past_answer_id} %>">
+					data-past-answer-id="<%= $grader->{past_answer_id} %>"
+					data-save-sub-status="<%= $grader->{save_sub_status} %>">
 					<%= maketext('Save') =%>
 				</button>
 			</div>
@@ -280,5 +264,4 @@
 			</div>
 		</div>
 	</div>
-	<hr>
 </div>

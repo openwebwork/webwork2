@@ -19,16 +19,37 @@
 			'p-3'
 		);
 		toastContainer.style.zIndex = 20;
-		toastContainer.innerHTML =
-			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
-			'<div class="toast-header">' +
-			`<strong class="me-auto">${title}</strong>` +
-			'<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close"></button>' +
-			'</div>' +
-			`<div class="toast-body alert ${good ? 'alert-success' : 'alert-danger'} mb-0 text-center">${msg}</div>` +
-			'</div>';
+
+		const toast = document.createElement('div');
+		toast.classList.add('toast', 'bg-white');
+		toast.setAttribute('role', 'alert');
+		toast.setAttribute('aria-live', 'assertive');
+		toast.setAttribute('aria-atomic', 'true');
+		toastContainer.append(toast);
+
+		const toastHeader = document.createElement('div');
+		toastHeader.classList.add('toast-header');
+		toast.append(toastHeader);
+
+		const toastTitle = document.createElement('strong');
+		toastTitle.classList.add('me-auto');
+		toastTitle.textContent = title;
+
+		const closeButton = document.createElement('button');
+		closeButton.classList.add('btn-close');
+		closeButton.type = 'button';
+		closeButton.dataset.bsDismiss = 'toast';
+		closeButton.setAttribute('aria-label', 'close');
+
+		toastHeader.append(toastTitle, closeButton);
+
+		const toastBody = document.createElement('div');
+		toastBody.classList.add('toast-body', 'alert', good ? 'alert-success' : 'alert-danger', 'mb-0', 'text-center');
+		toastBody.textContent = msg;
+		toast.append(toastBody);
+
 		document.body.prepend(toastContainer);
-		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild);
+		const bsToast = new bootstrap.Toast(toast);
 		toastContainer.addEventListener('hidden.bs.toast', () => {
 			bsToast.dispose();
 			toastContainer.remove();
@@ -78,6 +99,17 @@
 	const libraryKeywords = document.getElementsByName('library_keywords')[0];
 
 	const countLine = document.getElementById('library_count_line');
+
+	const settingStoreID = `WW.${document.getElementsByName('hidden_course_id')[0]?.value ?? 'unknownCourse'}.${
+		document.getElementsByName('user')[0]?.value ?? 'unknownUser'
+	}.setmaker`;
+	const includeOPLInitialStatus = includeOPL?.checked;
+	const includeContribInitialStatus = includeContrib?.checked;
+	if (includeOPL)
+		includeOPL.checked = localStorage.getItem(`${settingStoreID}.includeOPLChecked`) !== 'false' ? true : false;
+	if (includeContrib)
+		includeContrib.checked =
+			localStorage.getItem(`${settingStoreID}.includeContribChecked`) !== 'false' ? true : false;
 
 	const lib_update = async (who, what) => {
 		const child = { subject: 'chapter', chapter: 'section', section: 'count' };
@@ -200,10 +232,21 @@
 	libraryChapter?.addEventListener('change', () => lib_update('section', 'get'));
 	librarySubject?.addEventListener('change', () => lib_update('chapter', 'get'));
 	librarySection?.addEventListener('change', () => lib_update('count', 'clear'));
-	includeOPL?.addEventListener('change', () => lib_update('count', 'clear'));
-	includeContrib?.addEventListener('change', () => lib_update('count', 'clear'));
+	includeOPL?.addEventListener('change', () => {
+		localStorage.setItem(`${settingStoreID}.includeOPLChecked`, includeOPL.checked);
+		lib_update('count', 'clear');
+	});
+	includeContrib?.addEventListener('change', () => {
+		localStorage.setItem(`${settingStoreID}.includeContribChecked`, includeContrib.checked);
+		lib_update('count', 'clear');
+	});
 	levels.forEach((level) => level.addEventListener('change', () => lib_update('count', 'clear')));
 	libraryKeywords?.addEventListener('change', () => lib_update('count', 'clear'));
+
+	// If the local storage status of the checks are different than what they
+	// were when the page loaded, then the count needs to be updated.
+	if (includeOPL?.checked !== includeOPLInitialStatus || includeContrib?.checked !== includeContribInitialStatus)
+		lib_update('count', 'clear');
 
 	// Set up the advanced view selects to submit the form when changed.
 	const libraryBrowserForm = document.forms['library_browser_form'];

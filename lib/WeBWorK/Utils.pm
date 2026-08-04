@@ -30,7 +30,10 @@ our @EXPORT_OK = qw(
 	processEmailMessage
 	createEmailSenderTransportSMTP
 	generateURLs
+	formatEmailSubject
 	getAssetURL
+	points_stepsize
+	round_nearest_stepsize
 	x
 );
 
@@ -356,7 +359,6 @@ sub generateURLs ($c, %params) {
 				for my $name ('displayMode', 'showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
 					$args{$name} = [ $c->param($name) ] if defined $c->param($name) && $c->param($name) ne '';
 				}
-				$args{showProblemGrader} = 1;
 			} else {
 				$routePath = $c->url_for('problem_list', setID => $params{set_id});
 			}
@@ -380,6 +382,33 @@ sub generateURLs ($c, %params) {
 	} else {
 		return ($emailableURL, $returnURL);
 	}
+}
+
+sub formatEmailSubject ($formatString, $courseID, $userID, $setID, $problemID, $section, $recitation) {
+	my %subject_map = (
+		c   => $courseID,
+		u   => $userID,
+		s   => $setID,
+		p   => $problemID,
+		x   => $section,
+		r   => $recitation,
+		'%' => '%',
+	);
+	my $chars   = join('', keys %subject_map);
+	my $subject = $formatString;
+	# extract the brace pairs
+	my @braces = $formatString =~ /(\{(?:[^{}]*|(?0))*\})/xg;
+	if (@braces) {
+		# for each brace pair, do substitutions, but leave %c etc when variable is empty
+		my %braces = map { $_ => $_ =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : "%$1"/egr } @braces;
+		# If there is an instance of %c, etc, nullify the whole thing. Remove outer braces.
+		%braces = map { $_ => $braces{$_} =~ /%[$chars]/ ? '' : substr($braces{$_}, 1, -1) } keys %braces;
+		my $regex = join('|', map {"\Q$_\E"} keys %braces);
+		$regex = qr/$regex/;
+		$subject =~ s/($regex)/$braces{$1}/g;
+	}
+	$subject =~ s/%([$chars])/$subject_map{$1} ne '' ? $subject_map{$1} : ''/eg;
+	return $subject;
 }
 
 my $staticWWAssets;
@@ -506,6 +535,28 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
+sub points_stepsize ($points) {
+	my $stepsize;
+	if ($points == 1) {
+		$stepsize = 0.01;
+	} elsif ($points <= 5) {
+		$stepsize = 0.05;
+	} elsif ($points <= 10) {
+		$stepsize = 0.1;
+	} elsif ($points <= 25) {
+		$stepsize = 0.25;
+	} elsif ($points <= 50) {
+		$stepsize = 0.5;
+	} else {
+		$stepsize = int(($points - 1) / 100) + 1;
+	}
+	return $stepsize;
+}
+
+sub round_nearest_stepsize ($score, $stepsize) {
+	return wwRound(2, wwRound(0, $score / $stepsize) * $stepsize);
+}
+
 sub x (@args) { return @args }
 
 1;
@@ -566,7 +617,7 @@ appropriate method.
 
 Usage: C<encode_utf8_base64($in)>
 
-UTF-8 encodes, and then base 64 endcodes the input and returns the result.
+UTF-8 encodes, and then base 64 encodes the input and returns the result.
 
 =head2 decode_utf8_base64
 
@@ -679,7 +730,7 @@ that sender.
 Usage: C<processEmailMessage($text, $user_record, $STATUS, $merge_data, $for_preview)>
 
 Process the email message in C<$text> and replace macros with values from the
-C<$user_record>, the C<$STATUS>, and C<$merge_data>. If C<$for_prevew> is true
+C<$user_record>, the C<$STATUS>, and C<$merge_data>. If C<$for_preview> is true
 then the result is formatted to be display in HTML.
 
 The replaceable macros and what they will be replaced with are
@@ -735,6 +786,22 @@ Usage: C<getAssetURL($ce, $file, $isThemeFile)>
 Returns the URL for the asset specified in C<$file>.  If C<$isThemeFile> is
 true, then the asset will be assumed to be located in a theme directory.  The
 parameter C<$ce> must be a valid C<WeBWorK::CourseEnvironment> object.
+
+=head2 points_stepsize
+
+Usage: C<points_stepsize($points)>
+
+Returns a reasonable stepsize that best converts between a whole percent and
+a point value. The stepsize is the point value that is close to but greater
+than or equal to 1% per step. This is done by first using preset values of
+0.01, 0.05, 0.1, 0.25, or 0.5, then using only whole point values, such that
+the stepsize is greater than or equal to 1% of total points.
+
+=head2 round_nearest_stepsize
+
+Usage: C<round_nearest_stepsize($score, $stepsize)>
+
+Returns the value of the score rounded to the nearest stepsize.
 
 =head2 x
 

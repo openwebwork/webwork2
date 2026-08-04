@@ -50,7 +50,7 @@ sub sendEvents {
 	}
 
 	my $ce           = $c->ce;
-	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $resource_iri = Caliper::ResourceIri->new($ce);
 	my $async        = HTTP::Async->new;
 	$async->timeout(5);
 	$async->max_request_time(10);
@@ -130,7 +130,7 @@ sub formatted_timestamp {
 sub formatted_duration {
 	my ($duration) = @_;
 
-	# gererate the time portion of a ISO 8601 formatted duration
+	# generate the time portion of a ISO 8601 formatted duration
 	my $seconds = $duration % 60;
 	my $minutes = int($duration / 60) % 60;
 	my $hours   = int($duration / 3600);

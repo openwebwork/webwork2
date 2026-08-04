@@ -87,7 +87,7 @@
 							<i class="fa-solid fa-check-double" aria-hidden="true"></i>
 						<% end =%>
 					</th>
-					<th>
+					<th <%== $c->ariaSortAttr('id') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('Id') => '#', class => 'sort-header',
 								data => { sort_field => 'id' } =%>
@@ -95,44 +95,44 @@
 						</div>
 					</th>
 					% if ($courseID eq $ce->{admin_course_id}) {
-						<th>
+						<th <%== $c->ariaSortAttr('courseID') %>>
 							<div class="d-flex justify-content-between align-items-end gap-1">
 								<%= link_to maketext('Course Id') => '#', class => 'sort-header',
 									data => { sort_field => 'courseID' } =%>
 								<%= include 'ContentGenerator/Instructor/JobManager/sort_button',
-									field => 'course_id' =%>
+									field => 'courseID' =%>
 							</div>
 						</th>
 					% }
-					<th>
+					<th <%== $c->ariaSortAttr('task') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('Task') => '#', class => 'sort-header',
 								data => { sort_field => 'task' } =%>
 							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'task' =%>
 						</div>
 					</th>
-					<th>
+					<th <%== $c->ariaSortAttr('created') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('Created') => '#', class => 'sort-header',
 								data => { sort_field => 'created' } =%>
 							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'created' =%>
 						</div>
 					</th>
-					<th>
+					<th <%== $c->ariaSortAttr('started') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('Started') => '#', class => 'sort-header',
 								data => { sort_field => 'started' } =%>
 							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'started' =%>
 						</div>
 					</th>
-					<th>
+					<th <%== $c->ariaSortAttr('finished') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('Finished') => '#', class => 'sort-header',
 								data => { sort_field => 'finished' } =%>
 							<%= include 'ContentGenerator/Instructor/JobManager/sort_button', field => 'finished' =%>
 						</div>
 					</th>
-					<th>
+					<th <%== $c->ariaSortAttr('state') %>>
 						<div class="d-flex justify-content-between align-items-end gap-1">
 							<%= link_to maketext('State') => '#', class => 'sort-header',
 								data => { sort_field => 'state' } =%>
@@ -183,8 +183,8 @@
 							<div class="d-flex justify-content-between gap-1">
 								<%= maketext($jobs->{$jobID}{state}) =%>
 								% if (defined $jobs->{$jobID}{result}) {
-									<a role="button" class="result-btn" tabindex="0" data-bs-toggle="modal" href="#"
-										data-bs-target="<%= "#result-$jobID" %>">
+									<a role="button" class="result-btn spacebar-activatable" data-bs-toggle="modal"
+										href="#" data-bs-target="<%= "#result-$jobID" %>">
 										<i class="fa-solid fa-circle-info fa-xl" aria-hidden="true"></i>
 										<span class="visually-hidden">
 											<%= maketext('Result for job [_1]', $jobID) %>

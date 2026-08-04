@@ -197,8 +197,8 @@ sub importSetsFromDef ($ce, $db, $setDefFiles, $existingSets = undef, $assign = 
 				showMeAnother     => $rh_problem->{showMeAnother},
 				showHintsAfter    => $rh_problem->{showHintsAfter},
 				prPeriod          => $rh_problem->{prPeriod},
-				attToOpenChildren => $rh_problem->{attToOpenChildren},
-				countsParentGrade => $rh_problem->{countsParentGrade}
+				attToOpenChildren => $rh_problem->{att_to_open_children},
+				countsParentGrade => $rh_problem->{counts_parent_grade}
 			);
 		}
 
@@ -500,7 +500,7 @@ sub readSetDef ($ce, $fileName) {
 				# Anything left?
 				push(@line, $curr) if ($curr);
 
-				# Exract the problem data from the line.
+				# Extract the problem data from the line.
 				my ($name, $weight, $attemptLimit, $showMeAnother) = @line;
 
 				# Clean up problem values

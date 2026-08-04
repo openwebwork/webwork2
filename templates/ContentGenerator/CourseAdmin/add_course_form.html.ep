@@ -1,5 +1,9 @@
 % use WeBWorK::Utils::CourseManagement qw(listCourses);
 %
+% content_for js => begin
+    <%= javascript getAssetURL($ce, 'js/CourseAdmin/restrict_select.js'), defer => undef =%>
+% end
+%
 % # Create an array of permission values for the permission selects.
 % my $permissionLevels = [];
 % for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
@@ -217,26 +221,63 @@
 				<%= maketext('course institution (will override "Institution" input above)') =%>
 			</label>
 		</div>
-		<div class="form-check mt-3 mb-2">
-			<label class="form-check-label">
-				<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
-				<%= maketext('course configuration file') =%>
-				<a class="help-popup" role="button" tabindex="0" data-bs-placement="top" data-bs-toggle="popover"
-					 data-bs-content="<%= maketext('Copying the course configuration file may copy configuration '
-						. 'settings that are specific to the original course instructor. If this is a new course '
-						. 'for a new instructor, use the fields above to add the new instructor and do not copy '
-						. 'the course configuration file. Then if there is something in the course configuration '
-						. 'file that should be carried into the new course, the administrator can copy that manually. '
-						. 'Alternatively, do copy the course configuration file, but then the administrator should '
-						. 'inspect the new course configuration file and make adjustments for the new instructor.') =%>"
-					>
-					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
-					<span class="visually-hidden">
-						<%= maketext('Notes regarding copying the course configuration file') =%>
-					</span>
-				</a>
-			</label>
-		</div>
+		% my @addOnConfFiles;
+		% if (-d $ce->{webworkDirs}{addOnConf}) {
+			% @addOnConfFiles = glob "$ce->{webworkDirs}{addOnConf}/*.conf";
+			% for (0 .. $#addOnConfFiles){
+				% $addOnConfFiles[$_] =~ s/^.*\/|\.conf$//g;
+			% }
+		% }
+		% if (@addOnConfFiles) {
+			<div class="row my-2">
+				<%= label_for add_on_conf => maketext('Configuration File:'),
+					class => 'col-auto col-form-label fw-bold' =%>
+				<div class="col-auto">
+					<%= select_field add_on_conf => [
+							c(
+								maketext('Default')
+									=> [ [ maketext('Use distribution default config file') => '', selected => undef ] ],
+								'data-single' => 'true',
+							),
+							c(
+								maketext('Source Course')
+									=> [ [ maketext("Use source course's config file") => '*' ] ],
+								'data-single' => 'true'
+							),
+							c(
+								maketext('Append to distribution default')
+									=> [ map { [ $_ => "$_.conf" ] } @addOnConfFiles ]
+							)
+						],
+						id       => 'add_on_conf',
+						multiple => undef,
+						size     => 8,
+						class    => 'form-select' =%>
+				</div>
+			</div>
+		% } else {
+			<div class="form-check mt-3 mb-2">
+				<label class="form-check-label">
+					<%= check_box copy_config_file => 1, class => 'form-check-input' =%>
+					<%= maketext('course configuration file') =%>
+					<a class="help-popup" role="button" tabindex="0" data-bs-placement="top"
+						data-bs-toggle="popover" data-bs-content="<%= maketext('Copying the course configuration '
+							. 'file may copy configuration settings that are specific to the original course '
+							. 'instructor. If this is a new course for a new instructor, use the fields above to '
+							. 'add the new instructor and do not copy the course configuration file. Then if '
+							. 'there is something in the course configuration file that should be carried into '
+							. 'the new course, the administrator can copy that manually.  Alternatively, do copy '
+							. 'the course configuration file, but then the administrator should inspect the new '
+							. 'course configuration file and make adjustments for the new instructor.') =%>"
+						>
+						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+						<span class="visually-hidden">
+							<%= maketext('Notes regarding copying the course configuration file') =%>
+						</span>
+					</a>
+				</label>
+			</div>
+		% }
 	</fieldset>
 	<%= hidden_field last_page_was_add_course => 1 =%>
 	<%= $c->hidden_fields('number_of_additional_users') =%>

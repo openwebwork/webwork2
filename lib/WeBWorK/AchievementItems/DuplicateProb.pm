@@ -6,15 +6,15 @@ use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 use WeBWorK::Utils           qw(x);
 use WeBWorK::Utils::DateTime qw(between);
 
-sub new ($class) {
+sub new ($class, $c) {
 	return bless {
 		id          => 'DuplicateProb',
 		name        => x('Box of Transmogrification'),
-		description => x('Causes a homework problem to become a clone of another problem from the same set.')
+		description => [ x('Causes a homework problem to become a clone of another problem from the same set.') ]
 	}, $class;
 }
 
-sub can_use ($self, $set, $records) {
+sub can_use ($self, $set, $records, $c) {
 	return $set->assignment_type eq 'default' && between($set->open_date, $set->due_date);
 }
 

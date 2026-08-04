@@ -109,7 +109,17 @@ sub listCourses {
 
 =item listArchivedCourses($ce)
 
-Lists the courses which have been archived (end in .tar.gz).
+Lists the courses which have been archived (end in .tar.gz). The courses found
+are returned as a hash whose keys are the course ids and the values are
+references to hashes containing the C<filename> (the basename of the file
+including the .tar.gz extension) and file C<size>. For example,
+
+    {
+        myTestCourse => {
+            filename => 'myTestCourse.tar.gz',
+            size     => '605 KB'
+        }
+    }
 
 =cut
 
@@ -117,7 +127,37 @@ sub listArchivedCourses {
 	my ($ce) = @_;
 	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
-	return @{ $archivesDir->list->grep(qr/\.tar\.gz$/)->map('basename') };
+
+	my $archives = $archivesDir->list->grep(qr/\.tar\.gz$/i);
+
+	my %return;
+	for (@$archives) {
+		my $size     = $_->stat->size;
+		my @units    = qw(B KB MB GB);
+		my $unit_idx = 0;
+		while ($size >= 1024 && $unit_idx < $#units) {
+			$size /= 1024;
+			++$unit_idx;
+		}
+		my $basename = $_->basename;
+		my $arch     = Archive::Tar->new($_);
+		my %top_level;
+		for my $file ($arch->get_files) {
+			(my $first = $file->full_path) =~ s{/.*}{}s;
+			$top_level{$first} = 1 if length $first;
+		}
+		unless (keys %top_level == 1) {
+			warn "The archive $basename does not contain a single top-level course directory.\n";
+			next;
+		}
+		my ($currCourseID) = keys %top_level;
+		my $round = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
+		$return{$currCourseID} = {
+			filename => $basename,
+			size     => sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx])
+		};
+	}
+	return %return;
 }
 
 ################################################################################
@@ -126,10 +166,9 @@ sub listArchivedCourses {
 
 %options must contain:
 
- courseID      => course ID for the new course,
- ce            => a course environment for the new course,
- courseOptions => hash ref explained below
- users         => array ref explained below
+ courseID => course ID for the new course,
+ ce       => a course environment for the new course,
+ users    => array ref explained below
 
 %options may contain:
 
@@ -149,12 +188,6 @@ Create a new course with ID $courseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the new course's
 environment.
-
-$courseOptions is a reference to a hash containing the following options:
-
-    PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}
-
-C<PRINT_FILE_NAMES_FOR> is a reference to an array.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -187,11 +220,10 @@ sub addCourse {
 		debug("$key  : $value");
 	}
 
-	my $courseID      = $options{courseID};
-	my $sourceCourse  = $options{copyFrom} // '';
-	my $ce            = $options{ce};
-	my %courseOptions = %{ $options{courseOptions} // {} };
-	my @users         = exists $options{users} ? @{ $options{users} } : ();
+	my $courseID     = $options{courseID};
+	my $sourceCourse = $options{copyFrom} // '';
+	my $ce           = $options{ce};
+	my @users        = exists $options{users} ? @{ $options{users} } : ();
 
 	debug \@users;
 
@@ -235,13 +267,12 @@ sub addCourse {
 	{
 		# does the directory already exist?
 		-e $root and croak "Can't create the course '$courseID' because the root directory '$root' already exists.";
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @rootElements = File::Spec->splitdir($root);
 		pop @rootElements;
 		my $rootParent = File::Spec->catdir(@rootElements);
 		-w $rootParent
-			or croak
-			"Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+			or croak "Can't create the course '$courseID' because the courses directory '$rootParent' is not writable.";
 		# try to create it
 		eval { path($root)->make_path };
 		croak "Can't create the course '$courseID' because the root directory '$root' could not be created: $@." if $@;
@@ -260,12 +291,12 @@ sub addCourse {
 			next;
 		}
 
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @courseDirElements = File::Spec->splitdir($courseDir);
 		pop @courseDirElements;
 		my $courseDirParent = File::Spec->catdir(@courseDirElements);
 		unless (-w $courseDirParent) {
-			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. "
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writable. "
 				. "You will have to create this directory manually.\n";
 			next;
 		}
@@ -432,7 +463,12 @@ sub addCourse {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
 		open my $fh, ">:utf8", $courseEnvFile
 			or die "failed to open $courseEnvFile for writing.\n";
-		writeCourseConf($fh, $ce, %courseOptions);
+		my $addOnConf     = $options{addOnConf} // [];
+		my $relConfFolder = File::Spec->abs2rel($ce->{webworkDirs}{addOnConf}, $ce->{webworkDirs}{root});
+		for (@$addOnConf) {
+			$_ = File::Spec->catfile($relConfFolder, $_);
+		}
+		writeCourseConf($fh, $addOnConf);
 		close $fh;
 	}
 
@@ -498,9 +534,9 @@ sub addCourse {
 %options may also contain:
 
  skipDBRename => $skipDBRename,
- courseTitle => $courseTitle
- courseInstitution => $courseInstitution
-
+ courseTitle => $courseTitle,
+ courseInstitution => $courseInstitution,
+ updateLTICourseMap => $updateLTICourseMap
 
 Rename the course named $courseID to $newCourseID.
 
@@ -509,15 +545,15 @@ environment.
 
 The name of the course's directory is changed to $newCourseID.
 
-If the course's database layout is C<sql_single> or C<sql_moodle>, new tables
-are created in the current database, course data is copied from the old tables
-to the new tables, and the old tables are deleted.
-
-If the course's database layout is something else, no database changes are made.
+New tables are created in the current database, course data is copied from the
+old tables to the new tables, and the old tables are deleted.
 
 If $skipDBRename is true, no database changes are made. This is useful if a
 course is being unarchived and no database was found, or for renaming the
 modelCourse.
+
+If $updateLTICourseMap is true, then the LTI course map is updated to associate
+the LMS context id to the new course name.
 
 Any errors encountered while renaming the course are returned.
 
@@ -588,23 +624,23 @@ sub renameCourse {
 				next;
 			}
 
-			# is oldDir's parent writeable
+			# is oldDir's parent writable
 			my @oldDirElements = File::Spec->splitdir($oldDir);
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
 				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
-					. "writeable. You will have to move this directory manually.\n";
+					. "writable. You will have to move this directory manually.\n";
 				next;
 			}
 
-			# is newDir's parent writeable?
+			# is newDir's parent writable?
 			my @newDirElements = File::Spec->splitdir($newDir);
 			pop @newDirElements;
 			my $newDirParent = File::Spec->catdir(@newDirElements);
 			unless (-w $newDirParent) {
 				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is "
-					. "not writeable. You will have to move this directory manually.\n";
+					. "not writable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -635,6 +671,16 @@ sub renameCourse {
 			}
 		};
 		warn "Problems from resetting course title and institution = $@" if $@;
+
+		# Remap the LTI course mapping for the renamed course to the new course if that is requested.
+		if ($options{updateLTICourseMap}) {
+			my @ltiCourseMaps = $newDB->getLTICourseMapsWhere({ course_id => $oldCE->{courseName} });
+			$newDB->deleteLTICourseMapWhere({ course_id => $oldCE->{courseName} });
+			for (@ltiCourseMaps) {
+				$newDB->setLTICourseMap($newCE->{courseName}, $_->lms_context_id);
+				last;
+			}
+		}
 	}
 }
 
@@ -683,7 +729,7 @@ Options must contain:
  ce => $ce,
 
 $ce is a WeBWorK::CourseEnvironment object that describes the course's
-environment. It is your responsability to pass a course environment object that
+environment. It is your responsibility to pass a course environment object that
 describes the course to be deleted. Do not pass the course environment object
 associated with the request, unless you are deleting the course you're currently
 using.
@@ -706,7 +752,7 @@ sub deleteCourse {
 
 	my %courseDirs = %{ $ce->{courseDirs} };
 
-	##### step 0: make sure course directory is deleteable #####
+	##### step 0: make sure course directory is deletable #####
 
 	# deal with root directory first -- if we won't be able to delete it, we have to give up.
 
@@ -715,13 +761,12 @@ sub deleteCourse {
 		"Can't delete the course '$courseID' because no root directory is specified in the '%courseDirs' hash.";
 	my $root = $courseDirs{root};
 	if (-e $root) {
-		# is the parent directory writeable?
+		# is the parent directory writable?
 		my @rootElements = File::Spec->splitdir($root);
 		pop @rootElements;
 		my $rootParent = File::Spec->catdir(@rootElements);
 		-w $rootParent
-			or croak
-			"Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+			or croak "Can't delete the course '$courseID' because the courses directory '$rootParent' is not writable.";
 	} else {
 		warn "Warning: the course root directory '$root' does not exist. "
 			. "Attempting to delete the course database and other course directories...\n";
@@ -753,13 +798,13 @@ sub deleteCourse {
 				next;
 			}
 
-			# is the parent writeable
+			# is the parent writable
 			my @courseDirElements = File::Spec->splitdir($courseDir);
 			pop @courseDirElements;
 			my $courseDirParent = File::Spec->catdir(@courseDirElements);
 			unless (-w $courseDirParent) {
 				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not "
-					. "writeable. If it is not wanted, you will have to delete it manually.\n";
+					. "writable. If it is not wanted, you will have to delete it manually.\n";
 				next;
 			}
 
@@ -913,7 +958,6 @@ sub _archiveCourse_remove_dump_dir {
 
 %options must contain:
 
- oldCourseID => $oldCourseID,
  archivePath => $archivePath,
  ce          => $ce,
 
@@ -921,12 +965,13 @@ sub _archiveCourse_remove_dump_dir {
 
  newCourseID => $newCourseID,
 
-Restores course $oldCourseID from a gzipped tar archive (.tar.gz) located at
-$archivePath. After unarchiving, the course database is restored from a
-subdirectory of the course's DATA directory.
+Restores the course contained in the gzipped tar archive (.tar.gz) located at
+$archivePath. The ID of the course being restored is taken from the archive's
+top-level directory, not from the file name. After unarchiving, the course
+database is restored from a subdirectory of the course's DATA directory.
 
-If $newCourseID is defined and differs from $oldCourseID, the course is renamed
-after unarchiving.
+If $newCourseID is defined and differs from the archived course ID, the course
+is renamed after unarchiving.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the some course's
 environment. (Usually this would be the admin course.) This is used to access
@@ -939,10 +984,9 @@ If an error occurs, an exception is thrown.
 sub unarchiveCourse {
 	my (%options) = @_;
 
-	my $newCourseID  = $options{newCourseID};
-	my $currCourseID = $options{oldCourseID};
-	my $archivePath  = $options{archivePath};
-	my $ce           = $options{ce};
+	my $newCourseID = $options{newCourseID};
+	my $archivePath = $options{archivePath};
+	my $ce          = $options{ce};
 
 	my $coursesDir = $ce->{webworkDirs}{courses};
 
@@ -955,24 +999,52 @@ sub unarchiveCourse {
 	croak "New course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
 		if (length($newCourseID) > $ce->{maxCourseIdLength});
 
-	##### step 1: move a conflicting course away #####
-
-	# if this function returns undef, it means there was no course in the way
-	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
-
-	##### step 2: crack open the tarball #####
+	##### step 1: open the tarball and determine the archived course ID #####
 
 	my $arch = Archive::Tar->new($archivePath);
 	die "The tar file $archivePath is not valid." unless $arch;
 	$arch->setcwd($coursesDir);
+
+	# Archive::Tar extracts to the directory name stored in the archive, so the
+	# source course ID must come from there and not from the caller-supplied name
+	# -- otherwise a renamed .tar.gz restores files under one name while the
+	# database dump is sought under another.
+	my %top_level;
+	for my $file ($arch->get_files) {
+		(my $first = $file->full_path) =~ s{/.*}{}s;
+		$top_level{$first} = 1 if length $first;
+	}
+	die "The archive $archivePath does not contain a single top-level course directory.\n"
+		unless keys %top_level == 1;
+	my ($currCourseID) = keys %top_level;
+
+	##### step 2: move a conflicting course away #####
+
+	# if this function returns undef, it means there was no course in the way
+	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
+
+	##### step 3: crack open the tarball #####
+
+	# Secure extract mode refuses symbolic/hard links whose targets leave the
+	# course directory (CVE-2026-42496/-42497), which the standard template links
+	# do. Extract the files under secure mode, then recreate the symbolic links.
+	my @symlinks = grep { $_->is_symlink } $arch->get_files;
+	$arch->remove(map { $_->full_path } grep { $_->is_symlink || $_->is_hardlink } $arch->get_files);
 	$arch->extract();
 
 	if ($arch->error) {
+		# Remove the partial extraction so move_back can restore a displaced course.
+		path("$coursesDir/$currCourseID")->remove_tree if -e "$coursesDir/$currCourseID";
 		_unarchiveCourse_move_back($restoreCourseData);
 		die "Failed to unarchive course directory for course $newCourseID: $arch->error";
 	}
 
-	##### step 3: read the course environment for this course #####
+	for my $symlink (@symlinks) {
+		my $link_path = "$coursesDir/" . $symlink->full_path;
+		symlink($symlink->linkname, $link_path) unless -e $link_path;
+	}
+
+	##### step 4: read the course environment for this course #####
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
@@ -981,7 +1053,7 @@ sub unarchiveCourse {
 	my $data_dir   = $ce2->{courseDirs}{DATA};
 	my $dump_dir   = "$data_dir/mysqldump";
 
-	##### step 4: restore the database tables #####
+	##### step 5: restore the database tables #####
 
 	my $no_database;
 	my $restore_db_result = 1;
@@ -998,7 +1070,7 @@ sub unarchiveCourse {
 		warn "database restore of course '$currCourseID' failed: the course will probably not be usable.\n";
 	}
 
-	##### step 5: delete dump_dir #####
+	##### step 6: delete dump_dir #####
 
 	_archiveCourse_remove_dump_dir($ce, $dump_dir) if -e $dump_dir;
 
@@ -1029,7 +1101,7 @@ sub unarchiveCourse {
 		}
 	}
 
-	##### step 6: rename course #####
+	##### step 7: rename course #####
 
 	if (defined $newCourseID && $newCourseID ne $currCourseID) {
 		renameCourse(
@@ -1040,7 +1112,7 @@ sub unarchiveCourse {
 		);
 	}
 
-	##### step 7: return conflicting course to its rightful place #####
+	##### step 8: return conflicting course to its rightful place #####
 
 	_unarchiveCourse_move_back($restoreCourseData);
 }
@@ -1170,45 +1242,34 @@ sub protectQString {
 	return $string;
 }
 
-=item writeCourseConf($fh, $ce, %options)
+=item writeCourseConf($fh, $addOnConf)
 
-Writes a course.conf file to $fh, a file handle, using defaults from the course
-environment object $ce and overrides from %options. %options can contain any of
-the pairs accepted in %courseOptions by addCourse(), above.
+Writes the course.conf file to C<$fh>, a file handle. System administrators can
+use this file to override global settings for a course.  If C<$addOnConf> is
+provided, then it should be a reference to an array of config files to be
+included at the end of the course.conf file.
 
 =back
 
 =cut
 
 sub writeCourseConf {
-	my ($fh, $ce, %options) = @_;
+	my ($fh, $addOnConf) = @_;
 
-	print $fh <<'EOF';
+	my $content = <<'EOF';
 #!perl
 
 # This file is used to override the global WeBWorK course environment for this course.
 
 EOF
 
-	print $fh <<'EOF';
-# Users for whom to label problems with the PG file name (global value typically "professor")
-# For users in this list, PG will display the source file name when rendering a problem.
-# defaults.config values:
-EOF
-
-	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ",
-			map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }),
-			'];', "\n";
-	} else {
-		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ ];', "\n";
+	if (ref $addOnConf eq 'ARRAY') {
+		for my $conf (@$addOnConf) {
+			$content .= "\ninclude('$conf');";
+		}
 	}
 
-	if (defined $options{PRINT_FILE_NAMES_FOR}) {
-		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
-			join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
-	}
+	print $fh $content;
 }
 
 sub get_SeedCE

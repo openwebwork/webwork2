@@ -10,7 +10,7 @@
 					url_for('instructor_set_statistics'),
 					params => param('filter') ? { filter => param('filter') } : {}
 				),
-				class => 'dropdown-item', $c->{prettyID} ? () : (style => 'background-color: #8F8') =%>
+				class => join(' ', 'dropdown-item', $c->{prettyID} ? () : 'active') =%>
 		</li>
 		% for (@$problems) {
 			% my $probID =
@@ -22,8 +22,7 @@
 						url_for('instructor_problem_statistics', problemID => $_->problem_id),
 						params => param('filter') ? { filter => param('filter') } : {}
 					),
-					class => 'dropdown-item',
-					$probID eq ($c->{prettyID} // '') ? (style => 'background-color: #8F8') : () =%>
+					class => join(' ', 'dropdown-item', $probID eq ($c->{prettyID} // '') ? 'active' : ()) =%>
 			</li>
 		% }
 	</ul>

@@ -2,6 +2,7 @@
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
+	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/themes/dark.css'), id => 'flatpickr-dark-theme' =%>
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css') =%>
 % end
 %
@@ -77,6 +78,13 @@
 	% my $default_choice;
 	%
 	% for my $actionID (@$formsToShow) {
+		% next
+			% if $actionID eq 'lms_roster_sync' && (
+				% !$ce->{LTIVersion}
+				% || $ce->{LTIVersion} ne 'v1p3'
+				% || $ce->{LTIGradeMode} ne 'homework'
+				% || !$db->getSettingValue('LTILineitemsURL')
+			% );
 		% # Check permissions
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%

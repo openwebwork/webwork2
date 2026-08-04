@@ -15,7 +15,7 @@ pg_dir: /opt/webwork/pg
 
 # Setting MIN_HTML_ERRORS to 1 will minimize the data provided on HTML error
 # pages, which some security reviews request, as in particular the older output
-# provided backtrace information which could help idenfify the code and version
+# provided backtrace information which could help identify the code and version
 # of the code being used on the server.  The useful information will be in the
 # Mojolicious webwork2.log file, with a UID displayed also in the HTML error
 # page to help match up records.
@@ -38,25 +38,15 @@ JSON_ERROR_LOG: 0
 # does not forward the server root location.
 #server_root_url_redirect: https://mysite.edu/mypage.html
 
-# Uncomment the line below to use the WebworkSOAP handlers.  Make sure that you
-# change the value to something more secure.  Note that it must consist entirely
-# of digits.
-#soap_authen_key: 123456789123456789
-
 # If a remote site is using this WW server to process WW problems and embed them
 # into web pages, the web browser might not permit the WW problems to be
 # displayed, as it violates security policy to mix content from different
 # origins without an explicit directive from the server that it is safe.
 # Uncomment the extra_headers setting as is to set the header to enable
 # Cross-Origin Resource Sharing (CORS) for url responses to requests to urls
-# that start with /webwork2/render_rpc, /webwork2/html2xml, and /webwork2_files.
-# This may be needed to use the client formats if they are accessed from a
-# *remote* server.
-#
-# Note that the /webwork2/html2xml url is deprecated, and code should be adapted
-# to use the /webwork2/render_rpc path instead.  They both do the same thing
-# that the /webwork2/html2xml endpoint did before, but they no longer pass
-# through the XMLRPC middle man.
+# that start with /webwork2/render_rpc, /webwork2_files, and /pg_files.  This
+# may be needed to use the client formats if they are accessed from a *remote*
+# server.
 #
 # Additional urls may also be added, and multiple headers may be set per url.
 # The headers will be added to all responses to urls that start with the url
@@ -65,12 +55,20 @@ JSON_ERROR_LOG: 0
 #extra_headers:
 #  /webwork2/render_rpc:
 #    Access-Control-Allow-Origin: '*'
-#  /webwork2/html2xml:
-#    Access-Control-Allow-Origin: '*'
 #  /webwork2_files:
 #    Access-Control-Allow-Origin: '*'
 #  /pg_files:
 #    Access-Control-Allow-Origin: '*'
+
+# The extra_ssl_headers option is much like the extra_headers option above,
+# except that these headers are only added to responses to secure SSL requests.
+# The example below adds the Strict-Transport-Security header to responses to
+# all SSL requests. Note that like the extra_headers option above, headers can
+# be added to only specific paths as well (but only if the request is secure).
+
+#extra_ssl_headers:
+#  '.*':
+#    Strict-Transport-Security: 'max-age=31536000; includeSubDomains; preload'
 
 # The user and group to run the server as.  These are only used when the
 # webwork2 app is in production mode and run as the root user.  This means that
@@ -202,10 +200,13 @@ hypnotoad:
   # Try to set to provide enough spare time to avoid such problems!
   graceful_timeout: 120
 
-  # The following timeout settings will be sufficient in most cases.  However, if you have large class sizes they may
-  # not be enough.  If you are seeing long requests fail then increase these.  This may happen, for example, if you have
-  # a class with thousands of users and try to assign a set to all users.  In that case you may need much larger values.
-  # Note that if you are serving via a proxy, you may also need to increase the timeouts for the proxy server.
+  # The following timeout settings will be sufficient in most cases.  However,
+  # if you have large class sizes they may not be enough.  If you are seeing
+  # long requests fail then increase these.  This may happen, for example, if
+  # you have a class with thousands of users and try to assign a set to all
+  # users.  In that case you may need much larger values.  Note that if you are
+  # serving via a proxy, you may also need to increase the timeouts for the
+  # proxy server.
   inactivity_timeout: 60
   heartbeat_timeout: 60
 
@@ -240,9 +241,21 @@ hardcopy:
   # If 1, don't delete temporary files created when a hardcopy is generated.
   preserve_temp_files: 0
 
-# Set this to 1 to allow the html2xml and render_rpc endpoints to disable
-# cookies and thus skip two factor authentication. This should never be enabled
-# for a typical webwork server.  This should only be enabled if you want to
-# allow serving content via these endpoints to links in external websites with
-# usernames and passwords embedded in them such as for PreTeXt textbooks.
+# Set this to 1 to allow the render_rpc endpoint to disable cookies and thus
+# skip two factor authentication for all courses. To disable cookies for a
+# single course, set this to a hash whose keys are the course IDs with a value
+# of 1. Further to only disable cookies for specific users in a course, set the
+# course ID to a hash whose keys are user IDs with a value of 1. For example:
+# allow_unsecured_rpc:
+#   # Disable cookies for full PreTeXt course.
+#   PreTeXt: 1
+#   # Disable cookies for specific users in a course.
+#   courseID:
+#     user1ID: 1
+#     user2ID: 1
+#
+# This should never be enabled for a typical webwork server.  This should only be
+# enabled if you want to allow serving content via these endpoints to links in
+# external websites with usernames and passwords embedded in them such as for
+# PreTeXt textbooks.
 allow_unsecured_rpc: 0

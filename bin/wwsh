@@ -11,7 +11,7 @@ use warnings;
 
 BEGIN {
 	use Mojo::File qw(curfile);
-	use Env qw(WEBWORK_ROOT);
+	use Env        qw(WEBWORK_ROOT);
 
 	$WEBWORK_ROOT = curfile->dirname->dirname;
 }
@@ -25,8 +25,8 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use Data::Dumper;
 
-my $courseID = shift @ARGV;
-my $scriptFile   = shift @ARGV;
+my $courseID   = shift @ARGV;
+my $scriptFile = shift @ARGV;
 
 unless ($courseID and $scriptFile) {
 	die "usage: $0 courseID  scriptFile\n";
@@ -38,7 +38,6 @@ $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName  => $courseID,
 });
-
 
 $db = WeBWorK::DB->new($ce);
 
@@ -52,9 +51,8 @@ EOF
 print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
 do $scriptFile;
 if ($@) {
-	print "errors ", $@,"\n" ;
+	print "errors ", $@, "\n";
 } else {
 	print "--------------------------------\ndone\n";
 }
-
 

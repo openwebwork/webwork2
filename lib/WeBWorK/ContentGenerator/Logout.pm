@@ -8,7 +8,6 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 =cut
 
 use WeBWorK::Localize;
-use WeBWorK::Authen qw(write_log_entry);
 
 sub pre_header_initialize ($c) {
 	my $ce     = $c->ce;
@@ -20,7 +19,7 @@ sub pre_header_initialize ($c) {
 	$authen->logout_user if $authen->can('logout_user');
 
 	$authen->killSession;
-	$authen->WeBWorK::Authen::write_log_entry('LOGGED OUT');
+	$authen->write_log_entry('LOGGED OUT');
 
 	# Check to see if there is a proctor key associated with this login.  If there is a proctor user, then there must be
 	# a proctored test.  So try and delete the key.
@@ -39,7 +38,13 @@ sub pre_header_initialize ($c) {
 		}
 	}
 
-	$c->reply_with_redirect($authen->{redirect}) if $authen->{redirect};
+	if ($authen->{redirect}) {
+		$c->reply_with_redirect($authen->{redirect});
+	} elsif ($c->param('show_login')) {
+		# Allow a caller (e.g. the forced password reset page) to skip the logout confirmation page and go directly
+		# to the course's login page, so the user can immediately log in as someone else.
+		$c->reply_with_redirect($c->systemLink($c->url_for('set_list')));
+	}
 
 	return;
 }

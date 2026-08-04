@@ -11,13 +11,12 @@
 	<dd class="list-group-item">
 		<dl>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Problem_Techniques" target="techniques_window">
-					<%= maketext('Problem Techniques') =%>
-				</a>
+				<%= link_to maketext('Sample Problems') => url_for('sample_problem_index'),
+					target => 'techniques_window' =%>
 			</dt>
-			<dd><%= maketext('This links to a list of problem authoring techniques.') %></dd>
+			<dd><%= maketext('Sample problem code with documentation.') %></dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:MathObjects" target="math_objects">
+				<a href="https://wiki.openwebwork.org/wiki/Category:MathObjects" target="math_objects">
 					<%= maketext('Math Objects') %>
 				</a>
 			</dt>
@@ -28,29 +27,16 @@
 					. 'macro files themselves.') =%>
 			</dd>
 			<dt>
-				% if (-e "$ce->{courseDirs}{templates}/PGMLLab/PGML-lab.pg") {
-					<%= link_to maketext('PGML') => $c->systemLink(
-							url_for('problem_detail', setID => 'Undefined_Set', problemID => 1),
-							params => {
-								displayMode    => $ce->{pg}{options}{displayMode},
-								problemSeed    => 1234,
-								editMode       => 'temporaryFile',
-								sourceFilePath => 'PGMLLab/PGML-lab.pg'
-							}
-						),
-						target => 'PGML' =%>
-					% } else {
-						<a><%= maketext('PGML') %></a>
-					% }
+				<%= link_to PGML => '#', class  => 'pgml-lab', target => 'PGML',
+					data => { source => url_escape(readFile("$ce->{webworkDirs}{assets}/pg/PGMLLab/PGML-lab.pg")) } =%>
 			</dt>
 			<dd>
-				<%= maketext('This links to a WeBWorK "problem" which allows you to try out fragments of PGML code. '
-					. 'This link will not be available if the file [_1] is not located in the templates directory of '
-					. 'the course.',
-					'PGMLLab/PGML-lab.pg') =%>
+				<%= maketext(
+					'This links to a WeBWorK "problem" which allows you to try out fragments of PGML code.'
+				) =%>
 			</dd>
 			<dt>
-				<a href="https://webwork.maa.org/wiki/Category:Authors" target="author_info">
+				<a href="https://wiki.openwebwork.org/wiki/Category:Authors" target="author_info">
 					<%= maketext('Author Info') %>
 				</a>
 			</dt>
@@ -72,7 +58,7 @@
 			<tbody class="table-group-divider">
 				<tr>
 					<td>Ctrl-m</td>
-					<td>Alt-Shift-m</td>
+					<td>Option-Shift-m</td>
 					<td>
 						<%= maketext('Enable or disable tab-focus mode. When tab-focus mode is off, pressing Tab '
 							. 'inside the editor window indents the current line. When tab-focus mode is on '
@@ -80,7 +66,7 @@
 					</td>
 				<tr>
 					<td>Ctrl-Shift-[</td>
-					<td>Cmd-Shift-[</td>
+					<td>Cmd-Option-[</td>
 					<td>
 						<%= maketext('Fold the region that begins on the current line. Triangles in the gutter '
 						. 'next to line numbers indicate which regions can be folded.') %>
@@ -88,24 +74,31 @@
 				</tr>
 				<tr>
 					<td>Ctrl-Shift-]</td>
-					<td>Cmd-Shift-]</td>
+					<td>Cmd-Option-]</td>
 					<td><%= maketext('Unfold the region that begins on the current line.') %></td>
 				</tr>
-				<tr><td>Ctrl-Alt-[</td><td>Cmd-Alt-[</td><td><%= maketext('Fold all regions.') %></td></tr>
-				<tr><td>Cmd-Alt-]</td><td>Cmd-Alt-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-[</td><td>Ctrl-Option-[</td><td><%= maketext('Fold all regions.') %></td></tr>
+				<tr><td>Ctrl-Alt-]</td><td>Ctrl-Option-]</td><td><%= maketext('Unfold all regions.') %></td></tr>
 				<tr><td>Ctrl-/</td><td>Cmd-/</td><td><%= maketext('Toggle comment.') %></td></tr>
 				<tr>
 					<td>Shift-Alt-a</td>
-					<td></td>
+					<td>Shift-Option-a</td>
 					<td><%= maketext('Toggle block comment. (Only has effect inside PGML blocks.)') %></td>
 				</tr>
 				<tr>
 					<td>Ctrl-Space</td>
-					<td>Alt-`</td>
+					<td>Option-`</td>
 					<td><%= maketext('Show available autocompletions at the current cursor location.') %></td>
 				</tr>
 			</tbody>
 		</table>
+		<%= maketext('There are resize grips that can be moved to resize the editor windows.  This can be done by '
+			. 'clicking and dragging or by focusing the resize grip and using the arrow keys. If the resize grip is '
+			. 'focused and the Ctrl key (Ctrl + Cmd keys on Mac) is held down then the size is only changed by one '
+			. 'pixel for each arrow key press, and if the Alt key (Option key for Mac) is held down then the size is '
+			. 'changed by 50 pixels for each arrow key press. With no modifier key the size is changed by 20 pixels. '
+			. 'Double clicking on a resize grip or pressing Enter or Space while a resize grip is focused resets the '
+			. 'windows to their default sizes.') =%>
 	</dd>
 	<dt><%= maketext('Text Editor Options') %></dt>
 	<dd class="list-group-item">
@@ -134,61 +127,101 @@
 </dl>
 
 <h2><%= maketext('Actions:') %></h2>
-<i><%= maketext('(If an action cannot be executed it will not appear.)') %></i>
 <dl>
 	<dt><%= maketext('View/Reload') %></dt>
 	<dd>
-		<%= maketext('Render or re-render the problem, course info file, or set header being edited. This does not '
-			. 'change the permanent file on the disk. You can view different versions of the same problem by changing '
-			. 'the seed. You can also change the manner in which the mathematics is typeset. If "Open in new window" '
-			. 'is checked, then the problem will open in a new tab or window showing the problem as it will be '
-			. 'rendered for students in the set.') =%>
+		<p>
+			<%= maketext('Render or re-render the problem, course info file, or set header being edited. This does not '
+				. 'change the permanent file on the disk. You can view different versions of the same problem by '
+				. 'changing the seed. You can also change the manner in which the mathematics is typeset. If "Open in '
+				. 'new window" is checked, then the problem will open in a new tab or window showing the problem as it '
+				. 'will be rendered for students in the set.') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is available for all file types except hardcopy header files.') =%>
+		</p>
 	</dd>
 
 	<dt><%= maketext('Generate Hardcopy') %></dt>
 	<dd>
 		<p>
-		<%= maketext('Generate a hardcopy of the problem being edited. This does not change the permanent file on the '
-			. 'disk. You can generate a hardcopy for different versions of the same problem by changing the seed. You '
-			. 'can also change the format to "PDF" or "TeX Source". If "PDF" is selected, then a PDF file will be '
-			. 'generated for download, unless there are errors. If errors occur or "TeX Source" is selected, then a '
-			. 'zip file will be generated for download that contains the TeX source file and resources needed for '
-			. 'generating the PDF file using LaTeX.') =%>
+			<%= maketext('Generate a hardcopy of the problem being edited. This does not change the permanent file on '
+				. 'the disk. You can generate a hardcopy for different versions of the same problem by changing the '
+				. 'seed. You can also change the format to "PDF" or "TeX Source". If "PDF" is selected, then a PDF '
+				. 'file will be generated for download, unless there are errors. If errors occur or "TeX Source" is '
+				. 'selected, then a zip file will be generated for download that contains the TeX source file and '
+				. 'resources needed for generating the PDF file using LaTeX.') =%>
 		</p>
 		<p>
-		<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be saved to '
-			. 'the templates/hardcopyThemes folder.') =%>
+			<%= maketext('You can also click "Edit Selected Theme" to edit a hardcopy theme.  The new theme will be '
+				. 'saved to the templates/hardcopyThemes folder.') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is only available for PG problem files, set header files, and hardcopy header '
+				. 'files.') =%>
 		</p>
 	</dd>
 
-	<dt><%= maketext('Format Code') %></dt>
+	<dt><%= maketext('Code Maintenance') %></dt>
 	<dd>
-		<%= maketext('Reformat the code using perltidy or a conversion to PGML. Using perltidy will change the code '
-			. 'in the editor window, and save changes to the temporary file. In some cases (if the code contains '
-			. 'backslashes or double tildes) this can result in odd spacing in the code. The convert to PGML '
-			. 'feature changes the code in text blocks in the code to use PGML features. Generally the conversion of '
-			. 'many of the formatting and LaTeX is performed correctly, however answer blanks need attention. In '
-			. 'either case, make sure to inspect the formatted code, and edit further or revert if needed.') =%>
+		<p>
+			<%= maketext('Three code maintenance tools can be utilized. First, the code can be reformatted using '
+				. 'perltidy. Using perltidy will change the code in the editor window, and save changes to the '
+				. 'temporary file. In some cases (if the code contains backslashes or double tildes) this can result '
+				. 'in odd spacing in the code. Second the code can be converted to PGML. This changes the code in text '
+				. 'blocks to use PGML features. Generally the conversion of much of the formatting and LaTeX is '
+				. 'performed correctly. However, answer blanks need attention. In any case, make sure to inspect the '
+				. 'formatted code, and edit further or revert if needed. Third, the code can be analyzed by the "PG '
+				. 'Critic." This checks that the code does not use old or deprecated features of PG and conforms to '
+				. 'current best-practices in problem authoring, and offers suggestions on how to fix issues that are '
+				. 'found.') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is only available for problem files, set header files, and hardcopy header '
+				. 'files. In addition, only the option to reformat code with perltidy is available for set header '
+				. 'files and hardcopy header files.') =%>
+		</p>
 	</dd>
 
 	<dt><%= maketext('Save') %></dt>
 	<dd>
-		<%= maketext('Save the contents of the editor window to the file on disk and re-render the problem. If '
-			. '"Open in new window" is checked, then the problem will open in a new tab or window showing the problem '
-			. 'as it will be rendered for students in the set. If "Create backup" is checked then a backup of the '
-			. 'current file on disk will be created before overwriting it with the contents of the editor window. If a '
-			. 'backup already exists, then a "Delete oldest backup" check box will be present. If that is checked, '
-			. 'then the oldest backup will be deleted when "Save" is clicked. These backups can be reverted '
-			. 'to and managed on the "Revert" tab.') =%>
+		<p>
+			<%= maketext('Save the contents of the editor window to the file on disk and re-render the problem. If '
+				. '"Open in new window" is checked, then the problem will open in a new tab or window showing the '
+				. 'problem as it will be rendered for students in the set. If "Create backup" is checked then a backup '
+				. 'of the current file on disk will be created before overwriting it with the contents of the editor '
+				. 'window. If a backup already exists, then a "Delete oldest backup" check box will be present. If '
+				. 'that is checked, then the oldest backup will be deleted when "Save" is clicked. These backups can '
+				. 'be reverted to and managed on the "Revert" tab.') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is available for all files, but is only active for files in the course templates '
+				. 'directory that are writable by the server. For files outside of the course templates directory, '
+				. 'such as sample problems or a new problem template, or files that are not writable by the server, '
+				. 'such as OPL problems, first use the "Save As" tab to save to a file in the course templates '
+				. 'directory.') =%>
+		</p>
 	</dd>
 
 	<dt><%= maketext('Save As') %></dt>
 	<dd>
 		<p>
 			<%= maketext(q{Makes a new copy of the file you are editing at the location relative to the course's }
-				. 'templates (~[TMPL~]) directory. You may choose to replace the current problem in the current set, '
-				. 'append to the end to then end of the current set as a new problem, or create a problem that is not '
-				. 'attached to a problem set.') =%>
+				. 'templates (~[TMPL~]) directory.') =%>
+		</p>
+		<p>
+			<%= maketext('For problem files you may choose to replace the current problem in the current set, '
+				. 'append to the end of an existing set as a new problem, or create a problem that is not attached '
+				. 'to a problem set.') =%>
+		</p>
+		<p>
+			<%= maketext('For set or hardcopy header files you may choose to set the file as the same kind of header '
+				. 'for an existing problem set, or create a header file that is not attached to a problem set.') =%>
+		</p>
+		<p>
+			<%= maketext('When saving a problem in a new location (directory), by default all auxiliary files, such '
+				. 'as images, or other files that do not end in ".pg", will also be copied to the new location.  To '
+				. 'stop this behavior, uncheck the "Copy auxiliary files" option.') =%>
 		</p>
 		<p>
 			<%= maketext('You may want to create an unattached problem if you are using the current problem as a model '
@@ -201,23 +234,36 @@
 				. 'solution. All locally created and edited files will then appear in a subdirectory named '
 				. '"local".') =%>
 		</p>
-		<p class="mb-0">
-			<%= maketext('A new problem whose path ends in newProblem.pg should be given a new name, for example, '
-				. '"myNewProblem.pg".') =%>
+		<p>
+			<%= maketext('This tab is available for all file types except for the course information file.') =%>
 		</p>
 	</dd>
 
 	<dt><%= maketext('Append') %></dt>
 	<dd>
-		<%= maketext('Add this problem as the last problem of an existing set, either as a problem or as the set '
-			. 'header (the text that appears on the home page of a homework set). You can rearrange the order of the '
-			. 'problems later using the "Sets Manager".') =%>
+		<p>
+			<%= maketext('Add this problem as the last problem of an existing set, either as a problem, as the set '
+				. 'header (the text that appears on the home page of a homework set), or the hardcopy header (the text '
+				. 'that appears in the beginning of hardcopy for a set). You can rearrange the order of the problems '
+				. 'later using the "Sets Manager".') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is only available for problem files, set header files, and hardcopy header files, '
+				. 'but is not active for a new problem template or a sample problem. To append a new problem template '
+				. 'or sample problem to a set, first use "Save As" to save the file to the course templates '
+				. 'directory.') =%>
+		</p>
 	</dd>
 
 	<dt><%= maketext('Revert') %></dt>
 	<dd>
-		<%= maketext('Reverts to the copy of the file saved on the disk or to a backup file. All unsaved editing '
-			. 'changes will be lost. This option is only active when a temporary file or a backup file exists. You '
-			. 'may also delete backups that have been made with this tab.') =%>
+		<p>
+			<%= maketext('Reverts to the copy of the file saved on the disk or to a backup file. All unsaved editing '
+				. 'changes will be lost. You may also delete backups that have been made with this tab.') =%>
+		</p>
+		<p>
+			<%= maketext('This tab is available for all files, but is only active when a temporary file or backup file '
+				. 'exists.') =%>
+		</p>
 	</dd>
 </dl>

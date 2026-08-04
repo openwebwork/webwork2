@@ -14,7 +14,12 @@
 		% if (stash->{contextData}) {
 			<div class="mb-3">
 				<%= maketext('An LTI content item request was received with no associated LMS course. '
-					. 'The following parameters were received which can be used to make this association:') =%>
+					. 'The following parameters were received which can be used to make this association. '
+					. 'If you have sufficient permissions in the WeBWorK course, you can visit the Course '
+					. 'Configuration page. Go to the LTI tab if it is enabled for your course. You might have '
+					. 'permission to change the "LMS Context ID". If so, enter the Context ID given below. '
+					. 'If you are unable to complete these steps, contact your WeBWorK administrator with the '
+					. 'information below.') =%>
 			</div>
 			<table class="table table-bordered m-auto w-auto">
 				% for (@{ stash->{contextData} }) {

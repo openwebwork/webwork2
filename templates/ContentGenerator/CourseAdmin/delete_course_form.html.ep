@@ -6,7 +6,7 @@
 			<%= maketext(
 				'Courses are listed either alphabetically or in order by the time of most recent login activity, '
 					. 'oldest first. To change the listing order check the mode you want and click "Refresh Listing". '
-					. 'The listing format is: Course_Name (status :: date/time of most recent login) where status is '
+					. 'The listing format is: Course_ID (status :: date/time of most recent login) where status is '
 					. '"hidden" or "visible".'
 			) =%>
 		</p>
@@ -35,7 +35,7 @@
 		<%= $c->hidden_fields('subDisplay') =%>
 		<div class="mb-2"><%= maketext('Select a course to delete.') %></div>
 		<div class="row mb-2">
-			<%= label_for delete_courseID => maketext('Course Name:'), class => 'col-auto col-form-label fw-bold' =%>
+			<%= label_for delete_courseID => maketext('Course ID:'), class => 'col-auto col-form-label fw-bold' =%>
 			<div class="col-auto">
 				<%= select_field delete_courseID => [ map { [ $courseLabels->{$_} => $_ ] } @$courseIDs ],
 					id       => 'delete_courseID',

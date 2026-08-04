@@ -359,19 +359,22 @@ sub delete_tables {
 sub dump_tables {
 	my ($self, $dump_dir) = @_;
 
+	my $success = 1;
 	foreach my $table (keys %$self) {
 		next if $table =~ /^_/;                         # skip non-table self fields (none yet)
 		next if $self->{$table}{params}{non_native};    # skip non-native tables
 		my $schema_obj = $self->{$table};
-		if ($schema_obj->can("dump_table")) {
-			my $dump_file = "$dump_dir/$table.sql";
-			$schema_obj->dump_table($dump_file);
-		} else {
+		unless ($schema_obj->can("dump_table")) {
 			warn "skipping dump of '$table' table: no dump_table method\n";
+			next;
 		}
+		# A course created with an earlier version of WeBWorK may not have every
+		# table; skip the missing ones rather than counting them as failures.
+		next         unless $schema_obj->tableExists;
+		$success = 0 unless $schema_obj->dump_table("$dump_dir/$table.sql");
 	}
 
-	return 1;
+	return $success;
 }
 
 sub restore_tables {
@@ -383,6 +386,9 @@ sub restore_tables {
 		my $schema_obj = $self->{$table};
 		if ($schema_obj->can("restore_table")) {
 			my $dump_file = "$dump_dir/$table.sql";
+			# Tables absent when the course was archived have no dump file; skip
+			# them rather than restoring from a nonexistent file.
+			next unless -e $dump_file;
 			$schema_obj->restore_table($dump_file);
 		} else {
 			warn "skipping restore of '$table' table: no restore_table method\n";
@@ -436,11 +442,17 @@ sub abort_transaction {
 
 BEGIN {
 	*User            = gen_schema_accessor("user");
-	*newUser         = gen_new("user");
 	*countUsersWhere = gen_count_where("user");
 	*existsUserWhere = gen_exists_where("user");
 	*listUsersWhere  = gen_list_where("user");
 	*getUsersWhere   = gen_get_records_where("user");
+}
+
+sub newUser {
+	my ($self, @data) = @_;
+	my $user = $self->{user}{record}->new(@data);
+	$user->accommodation_time_factor(1) unless defined $user->accommodation_time_factor;
+	return $user;
 }
 
 sub countUsers { return scalar shift->listUsers(@_) }
@@ -968,6 +980,16 @@ BEGIN {
 	*existsLTICourseMapWhere = gen_exists_where("lti_course_map");
 	*getLTICourseMapsWhere   = gen_get_records_where("lti_course_map");
 	*deleteLTICourseMapWhere = gen_delete_where("lti_course_map");
+}
+
+sub getLTICourseMap {
+	my ($self, $courseID) = shift->checkArgs(\@_, qw/course_id/);
+	return ($self->getLTICourseMaps($courseID))[0];
+}
+
+sub getLTICourseMaps {
+	my ($self, @courseIDs) = shift->checkArgs(\@_, qw/course_id*/);
+	return $self->{lti_course_map}->gets(map { [$_] } @courseIDs);
 }
 
 sub setLTICourseMap {
@@ -2227,11 +2249,8 @@ sub checkArgs {
 
 		if (defined $table) {
 			my $class = $self->{$table}{record};
-			#print "arg=$arg class=$class\n";
 			croak "argument $pos must be of type $class"
-				unless defined $arg
-				and ref $arg
-				and $arg->isa($class);
+				unless blessed $arg && $arg->isa($class);
 			eval { checkKeyfields($arg, $versioned) };
 			croak "argument $pos contains $@" if $@;
 		} else {

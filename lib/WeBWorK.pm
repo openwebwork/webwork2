@@ -33,6 +33,7 @@ use WeBWorK::Debug;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::ForcePasswordChange;
 use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
 
@@ -74,7 +75,7 @@ async sub dispatch ($c) {
 
 	debug("The raw params:\n");
 	for my $key ($c->param) {
-		# Make it so we dont debug plain text passwords
+		# Make it so we do not debug plain text passwords.
 		my $vals;
 		if ($key eq 'passwd'
 			|| $key eq 'confirmPassword'
@@ -140,18 +141,23 @@ async sub dispatch ($c) {
 		# This route could have the courseID set, but does not need authentication.
 		return 1 if $c->current_route eq 'saml2_metadata';
 
-		return (0, 'This course does not exist.')
+		return (0, "The course $routeCaptures{courseID} does not exist.")
 			unless (-e $ce->{courseDirs}{root}
 				|| -e "$ce->{webwork_courses_dir}/$ce->{admin_course_id}/archives/$routeCaptures{courseID}.tar.gz");
-		return (0, 'This course has been archived and closed.') unless -e $ce->{courseDirs}{root};
+		return (0, "The course $routeCaptures{courseID} has been archived and closed.")
+			unless -e $ce->{courseDirs}{root};
 
 		my $db = WeBWorK::DB->new($ce);
 		debug("(here's the DB handle: $db)\n");
 		$c->db($db);
 
+		# The "forgot_password" and "reset_password" routes must have a valid courseID and the database,
+		# but will not be able to authenticate.
+		return 1 if $c->current_route eq 'forgot_password' || $c->current_route eq 'reset_password';
+
 		if ($authen->verify) {
 			# If this is the first phase of LTI 1.3 authentication, then return so its special content generator
-			# module will render and submit the login repost form.  This does not contain the neccessary information
+			# module will render and submit the login repost form.  This does not contain the necessary information
 			# to continue here.
 			return 1 if $c->current_route eq 'ltiadvantage_login';
 
@@ -213,7 +219,11 @@ async sub dispatch ($c) {
 			# If the user is logging out and authentication failed, still logout.
 			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
 
-			if ($c->authen->session->{two_factor_verification_needed}) {
+			if ($c->authen->session->{password_reset_needed}) {
+				debug("Login succeeded but the user's password must be reset.\n");
+				debug("Rendering WeBWorK::ContentGenerator::ForcePasswordChange\n");
+				await WeBWorK::ContentGenerator::ForcePasswordChange->new($c)->go();
+			} elsif ($c->authen->session->{two_factor_verification_needed}) {
 				debug("Login succeeded but two factor authentication is needed.\n");
 				debug("Rendering WeBWorK::ContentGenerator::TwoFactorAuthentication\n");
 				await WeBWorK::ContentGenerator::TwoFactorAuthentication->new($c)->go();

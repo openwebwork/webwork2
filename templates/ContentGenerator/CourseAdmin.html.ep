@@ -33,7 +33,7 @@
 		<h2><%= maketext('Directory permission errors') %></h2>
 		<p>
 			<%= maketext(
-				'The webwork server must be able to write to these directories. Please correct the permssion errors.'
+				'The webwork server must be able to write to these directories. Please correct the permission errors.'
 			) =%>
 		</p>
 		<ul>
@@ -65,8 +65,9 @@
 		) =%>
 	</p>
 	<ol>
-		% for (sort { lc($a) cmp lc($b) } listArchivedCourses($ce)) {
-			<li><%= $_ %></li>
+		% my %courseArchives = listArchivedCourses($ce);
+		% for (sort { lc($a) cmp lc($b) } keys %courseArchives) {
+			<li><%= "$_ ($courseArchives{$_}{size})" %></li>
 		% }
 	</ol>
 % }

@@ -10,7 +10,7 @@
 %
 <body>
 	<!-- Request ID: <%= $c->req->request_id %> -->
-	<div style="text-align:left">
+	<main style="text-align:left">
 		<h1>WeBWorK error</h1>
 		<p>An error occurred while processing your request.</p>
 		<p>
@@ -25,7 +25,7 @@
 		<p style="margin-left:5em;color:#dc2a2a"><code><%= $uuid %></code></p>
 		<h2>Time generated:</h2>
 		<p style="margin-left:5em;"><%= $time %></p>
-	</div>
+	</main>
 </body>
 %
 </html>

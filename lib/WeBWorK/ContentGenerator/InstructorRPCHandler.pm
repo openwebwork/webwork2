@@ -9,7 +9,7 @@ calls to the rpc WebworkWebservice
 =head1 Description
 
 Receives requests containing WebworkWebservice remote procedure call commands,
-executes them, and returns the resutls.
+executes them, and returns the results.
 
 Note that the WebworkWebservice renderProblem command is not supported by this
 endpoint.  The render_rpc endpoint defined in the

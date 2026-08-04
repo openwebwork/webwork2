@@ -4,13 +4,9 @@
 % }
 %
 % if (current_route eq 'instructor_user_progress') {
-	% # Stats and StudentProgress share this template.
-	<%= include 'ContentGenerator/Instructor/Stats/student_stats' =%>
+	<%= include 'ContentGenerator/Instructor/StudentProgress/student_progress' =%>
 % } elsif (current_route eq 'instructor_set_progress') {
 	<%= $c->displaySets =%>
 % } else {
-	% # Stats and StudentProgress share this template also.
-	<%= include 'ContentGenerator/Instructor/Stats/index',
-		set_header     => maketext('View student progress by set'),
-		student_header => maketext('View student progress by student') =%>
+	<%= include 'ContentGenerator/Instructor/StudentProgress/index' =%>
 % }

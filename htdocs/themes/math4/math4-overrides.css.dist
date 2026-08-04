@@ -4,7 +4,7 @@
  *
  * If you upgrade webwork this file will not be overwritten.  However, the math4.css and
  * math4-overrides.css.dist file may change.  If this happens it may cause problems with
- * your theme until your reconcile the changes with your modifactions here.  (Similar to
+ * your theme until your reconcile the changes with your modifications here.  (Similar to
  * how localOverrides.conf works.)
  *
  * Note that theming is no longer done with this file.  Instead copy one of the existing

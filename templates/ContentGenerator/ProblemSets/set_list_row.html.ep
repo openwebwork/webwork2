@@ -16,20 +16,33 @@
 	</div>
 	<div class="ms-3 me-auto">
 		<div dir="ltr">
-			% if ($link_is_active) {
-				<%= link_to $display_name => $c->systemLink(url_for('problem_list', setID => $set->set_id)),
-					class => 'fw-bold set-id-tooltip',
-					data  => { bs_toggle => 'tooltip', bs_placement => 'right', bs_title => $set->description }
-				=%>
-			% } else {
-				<span class="set-id-tooltip" data-bs-toggle="tooltip" data-bs-placement="right"
-					data-bs-title="<%= $set->description %>">
-					<%= $display_name =%>
-				</span>
-				<span class="visually-hidden"><%= $set->description %></span>
+			<%= link_to $display_name => $c->systemLink(url_for('problem_list', setID => $set->set_id)),
+				class => 'fw-bold'
+			=%>
+			% if ($set->description =~ /\S/) {
+				<a class="set-id-tooltip px-1" role="button" tabindex="0" data-bs-placement="right"
+						data-bs-toggle="tooltip" data-bs-title="<%= $set->description =%>"
+						data-fallback-placements="top bottom">
+					<i class="icon fas fa-circle-info" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Assignment Description') =%></span>
+				</a>
 			% }
 		</div>
-		<div class="font-sm"><%= $status_msg %></div>
+		<div class="font-sm">
+		% if (ref $status_msg) {
+			<%= $status_msg->{msg} %>
+			% if ($status_msg->{override} && $c->authz->hasPermissions(param('user'), 'override_indicator')) {
+				<a class="set-id-tooltip px-1" role="button" tabindex="0" data-bs-placement="right"
+						data-bs-toggle="tooltip" data-fallback-placements="top bottom"
+						data-bs-title="<%= maketext('This date overrides the assignment date.') =%>">
+					<i class="icon fas fa-calendar-plus" aria-hidden="true"></i>
+					<span class="visually-hidden"><%= maketext('Date override alert') =%></span>
+				</a>
+			% }
+		% } else {
+			<%= $status_msg %>
+		% }
+		</div>
 		% if (!$set->visible && $authz->hasPermissions(param('user'), 'view_unopened_sets')) {
 			<div class="font-sm"><em><%= maketext('(This set is hidden from students.)') %></em></div>
 		% }

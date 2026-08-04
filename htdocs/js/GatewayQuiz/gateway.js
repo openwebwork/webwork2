@@ -30,6 +30,46 @@
 		return date.toISOString().substring(11, 19);
 	};
 
+	// Raise a toast to report the remaining time.
+	const showTimeToast = (text) => {
+		const toastContainer = document.createElement('div');
+		toastContainer.classList.add(
+			'gwAlert',
+			'toast-container',
+			'position-fixed',
+			'top-0',
+			'start-50',
+			'translate-middle-x',
+			'p-3'
+		);
+		toastContainer.innerHTML =
+			'<div class="toast bg-white" role="status" aria-live="polite" aria-atomic="true">' +
+			'<div class="toast-body alert alert-info mb-0 text-center d-flex align-items-center justify-content-center">' +
+			`<span class="me-2">${text}</span>` +
+			'<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="close"></button>' +
+			'</div>' +
+			'</div>';
+		document.body.prepend(toastContainer);
+		const bsToast = new bootstrap.Toast(toastContainer.firstElementChild, { delay: 4000 });
+		toastContainer.addEventListener('hidden.bs.toast', () => {
+			bsToast.dispose();
+			toastContainer.remove();
+		});
+
+		setTimeout(() => bsToast.show());
+	};
+
+	// Show the current amount of time remaining in a toast, in response to a click on the announce button.
+	const announceTimeRemaining = () => {
+		const remainingTime = serverDueTime - Math.round(new Date().getTime() / 1000) + timeDelta;
+		const text =
+			remainingTime >= 0
+				? `${remainingTimeString}${formatTime(remainingTime)}`
+				: `${remainingTimeString}00:00:00`;
+
+		showTimeToast(text);
+	};
+
 	const alertToast = (message, delay = 5000) => {
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
@@ -41,6 +81,7 @@
 			'translate-middle-x',
 			'p-3'
 		);
+		// Start the body empty and populate its content later, to have reliable capture of the update by screen readers.
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
 			'<div class="toast-header">' +
@@ -55,7 +96,8 @@
 			bsToast.dispose();
 			toastContainer.remove();
 		});
-		bsToast.show();
+
+		setTimeout(() => bsToast.show());
 	};
 
 	// Update the timer
@@ -156,6 +198,8 @@
 		updateTimeDelta();
 		setInterval(updateTimeDelta, Math.min((parseInt(timerDiv.dataset.sessionTimeout) - 60) * 1000, 2147483646));
 
+		document.getElementById('gwAnnounceTimeBtn')?.addEventListener('click', announceTimeRemaining);
+
 		const remainingTime = serverDueTime - browserTime + timeDelta;
 
 		if (!timerDiv.dataset.acting && remainingTime <= 10 - gracePeriod) {
@@ -188,6 +232,41 @@
 
 			if (actuallySubmit) return;
 
+			const inputs = Array.from(document.querySelectorAll('input, select'));
+
+			// All problem numbers are represented by a probstatus hidden input. Use those to determine the problem
+			// numbers of problems in the test. Note that problem numbering displayed on the page will not match these
+			// numbers in the cases that the test definition has non-consecutive numbering or that problem order is
+			// randomized. But the problem numbering will always match the quiz prefix numbering.
+			const problems = [];
+			for (const input of inputs.filter((i) => /^probstatus\d*/.test(i.name))) {
+				problems[parseInt(input.name.replace('probstatus', ''))] = {};
+			}
+
+			// Determine which questions have been answered.  Note that there can be multiple inputs for a
+			// given question (for example for checkbox or radio answers).
+			for (const input of inputs.filter(
+				(i) => /Q\d{4}_/.test(i.name) && !/^MaThQuIlL_/.test(i.name) && !/^previous_/.test(i.name)
+			)) {
+				const answered =
+					input.type === 'radio' || input.type === 'checkbox' ? !!input.checked : /\S/.test(input.value);
+				const match = /Q(\d{4})_/.exec(input.name);
+				const problemNumber = parseInt(match?.[1] ?? '0');
+				if (!(input.name in problems[problemNumber])) problems[problemNumber][input.name] = answered;
+				else if (answered) problems[problemNumber][input.name] = 1;
+			}
+
+			// Determine if there are any unanswered questions in each problem.
+			let numProblemsWithUnanswered = 0;
+			for (const problem of problems) {
+				// Skip problem 0 and any problems that don't exist in the test
+				// due to non-consecutive numbering in the test definition.
+				if (!problem) continue;
+
+				if (!Object.keys(problem).length || !Object.values(problem).every((answered) => answered))
+					++numProblemsWithUnanswered;
+			}
+
 			// Prevent the gwquiz form from being submitted until after confirmation.
 			evt.preventDefault();
 
@@ -219,8 +298,25 @@
 
 			const modalBody = document.createElement('div');
 			modalBody.classList.add('modal-body');
-			const modalBodyContent = document.createElement('div');
 
+			if (numProblemsWithUnanswered) {
+				const modalSecondaryContent = document.createElement('div');
+				modalSecondaryContent.classList.add('mb-3');
+				modalSecondaryContent.textContent =
+					(numProblemsWithUnanswered > 1
+						? submitAnswers.dataset.unansweredQuestionsMessage
+							? submitAnswers.dataset.unansweredQuestionsMessage.replace('%d', numProblemsWithUnanswered)
+							: `There are ${numProblemsWithUnanswered} problems with unanswered questions.`
+						: (submitAnswers.dataset.unansweredQuestionMessage ??
+							'There is a problem with unanswered questions.')) +
+					' ' +
+					(submitAnswers.dataset.returnToTestMessage ??
+						'Are you sure you want to grade the test? ' +
+							'Select "No" if you would like to return to the test to enter more answers.');
+				modalBody.append(modalSecondaryContent);
+			}
+
+			const modalBodyContent = document.createElement('div');
 			modalBodyContent.textContent = submitAnswers.dataset.confirmDialogMessage;
 			modalBody.append(modalBodyContent);
 

@@ -73,28 +73,30 @@
 % if (@selected) {
 	<p class="mt-2"><%= maketext('All of these files will also be made available for mail merge.') %></p>
 	<dl>
-	% for my $setID (@selected) {
-		% my @validFiles;
-		% for my $type ('scr', 'ful') {
-			% my $filename = "s$setID$type.csv";
-			% my $path     = "$scoringDir/$filename";
-			% push @validFiles, $filename if -f $path;
-		% }
-		% if (@validFiles) {
-			<dt dir="ltr"><%= format_set_name_display($setID) %></dt>
-			<dd>
-				<ul>
-				% for my $filename (@validFiles) {
-					<li>
-						<%= link_to $filename =>
-							$c->systemLink(url_for('instructor_scoring_download'), params => { getFile => $filename }) =%>
-					</li>
-				% }
-				</ul>
-			</dd>
+		% for my $setID (@selected) {
+			% my @validFiles;
+			% for my $type ('scr', 'ful') {
+				% my $filename = "s$setID$type.csv";
+				% my $path     = "$scoringDir/$filename";
+				% push @validFiles, $filename if -f $path;
+			% }
+			% if (@validFiles) {
+				<dt dir="ltr"><%= format_set_name_display($setID) %></dt>
+				<dd>
+					<ul>
+						% for my $filename (@validFiles) {
+							<li>
+								<%= link_to $filename => $c->systemLink(
+									url_for('instructor_scoring_download'),
+									params => { getFile => $filename }
+								) =%>
+							</li>
+						% }
+					</ul>
+				</dd>
+			% }
 		% }
 	</dl>
-	% }
 % }
 %
 % if (-f "$scoringDir/$c->{scoringFileName}") {

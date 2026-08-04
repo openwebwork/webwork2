@@ -48,6 +48,13 @@
 	%
 	% for my $actionID (@$formsToShow) {
 		% next if $actionID eq 'reset_2fa' && !$ce->two_factor_authentication_enabled;
+		% next
+			% if $actionID eq 'lms_roster_sync' && (
+				% !$ce->{LTIVersion}
+				% || $ce->{LTIVersion} ne 'v1p3'
+				% || !$ce->{LTI}{v1p3}{preferred_source_of_username}
+				% || !$db->getSettingValue('LTINamesRolesServiceURL')
+			% );
 		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';
@@ -59,10 +66,15 @@
 				<%= link_to maketext($formTitles->{$actionID}) => "#$actionID",
 					class            => "nav-link action-link$active$disabled",
 					id               => "$actionID-tab",
-					data             => { action => $actionID, bs_toggle => 'tab', bs_target => "#$actionID" },
+					data             => {
+						action    => $actionID,
+						bs_toggle => 'tab',
+						bs_target => "#$actionID",
+						$actionID eq 'cancel_edit' ? (no_validate => 1) : ()
+					},
 					role             => 'tab',
 					'aria-controls'  => $actionID,
-					'aria-selected'  => $active ? 'true' : 'false' =%>
+					'aria-selected'  => $active ? 'true' : 'false', =%>
 			</li>
 		% end
 		% content_for 'tab-content' => begin

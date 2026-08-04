@@ -436,7 +436,7 @@ sub assignProblemToAllSetUsers {
 
     addProblemToSet($db, $problemDefaults, %args)
 
-Adds a problem to a set.  The paramters C<setName> and C<sourceFile>C<%args>
+Adds a problem to a set.  The parameters C<setName> and C<sourceFile>C<%args>
 must be specified in C<%args>.
 
 =cut
@@ -554,10 +554,7 @@ sub getDefList {
 	find(
 		{
 			wanted => sub {
-				if ($File::Find::dir =~ /^$topdir\/Library/
-					|| $File::Find::dir =~ /^$topdir\/Contrib/
-					|| $File::Find::dir =~ /^$topdir\/capaLibrary/)
-				{
+				if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
 					$File::Find::prune = 1;
 					return;
 				}
