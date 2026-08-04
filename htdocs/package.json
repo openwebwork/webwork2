@@ -30,12 +30,12 @@
 		"autoprefixer": "^10.5.4",
 		"chokidar": "^5.0.0",
 		"cssnano": "^8.0.2",
-		"postcss": "^8.5.21",
+		"postcss": "^8.5.25",
 		"prettier": "^3.9.6",
 		"rtlcss": "^4.3.0",
-		"sass": "^1.101.3",
+		"sass": "^1.102.0",
 		"terser": "^5.49.0",
-		"yargs": "^18.0.0"
+		"yargs": "^18.1.0"
 	},
 	"browserslist": [
 		"last 10 Chrome versions",
