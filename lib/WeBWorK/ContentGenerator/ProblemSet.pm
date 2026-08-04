@@ -48,6 +48,46 @@ async sub initialize ($c) {
 	my $effectiveUser = $db->getUser($eUserID);
 	$c->{set} = $authz->{merged_set};
 
+	# Allow a student to view their own answer key early by overriding their answer date to now, if this is
+	# enabled via the view_own_answers_early permission. If the close date and/or reduced scoring date are still
+	# in the future, they are moved up to now as well, since they cannot be allowed to remain later than the new
+	# answer date.
+	if ($c->param('viewAnswersEarly')
+		&& $authz->hasPermissions($userID, 'view_own_answers_early')
+		&& $userID eq $eUserID
+		&& !$c->{viewSetCheck}
+		&& $c->{set}->assignment_type !~ /gateway/)
+	{
+		my $now = time;
+		if ($now < $c->{set}->answer_date) {
+			my $userSet = $db->getUserSet($eUserID, $c->{set}->set_id);
+			if ($userSet) {
+				my $dueDate            = $c->{set}->due_date;
+				my $reducedScoringDate = $c->{set}->reduced_scoring_date;
+
+				$userSet->answer_date($now);
+				$userSet->due_date($now)             if $dueDate > $now;
+				$userSet->reduced_scoring_date($now) if $reducedScoringDate && $reducedScoringDate > $now;
+
+				eval { $db->putUserSet($userSet) };
+				if ($@) {
+					$c->log->error("Unable to reveal answers early for set @{[$c->{set}->set_id]} for $eUserID: $@");
+					$c->addbadmessage(
+						$c->maketext(
+							'The answer key for this set was not made available due to an internal error.')
+					);
+				} else {
+					$c->{set}->answer_date($now);
+					$c->{set}->due_date($now)             if $dueDate > $now;
+					$c->{set}->reduced_scoring_date($now) if $reducedScoringDate && $reducedScoringDate > $now;
+					$c->addgoodmessage($c->maketext('The answer key for this set is now available.'));
+				}
+			}
+		} else {
+			$c->addbadmessage($c->maketext('The answer key for this set is already available.'));
+		}
+	}
+
 	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
 
 	# Import problem records for assignments or test version records for tests now. Then initialize all

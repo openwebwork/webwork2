@@ -642,6 +642,19 @@ sub getConfigValues ($ce) {
 				type => 'permission'
 			},
 			{
+				var  => 'permissionLevels{view_own_answers_early}',
+				doc  => x('Allowed to view their own answer key early'),
+				doc2 => x(
+					'Users at this level and higher are given a button on the problem set page that lets them '
+						. 'override their own answer date for that set to the current time, immediately making the '
+						. 'correct answers to problems in that set available to them. If their close date and/or '
+						. 'reduced scoring date for the set are still in the future, those are also moved up to the '
+						. 'current time. This cannot be undone by the student. By default this is disabled '
+						. '("nobody").'
+				),
+				type => 'permission'
+			},
+			{
 				var  => 'permissionLevels{navigation_allowed}',
 				doc  => x('Allowed to view course home page'),
 				doc2 => x(
