@@ -159,13 +159,11 @@ sub tidyPGCode {
 
 sub convertCodeToPGML {
 	my ($invocant, $self, $params) = @_;
-	my $code = $params->{pgCode};
 
 	return {
-		ra_out => { pgmlCode => convertToPGML($code) },
+		ra_out => convertToPGML($params->{pgCode}),
 		text   => 'Converted to PGML'
 	};
-
 }
 
 sub runPGCritic {
