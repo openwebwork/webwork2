@@ -91,6 +91,7 @@
 					<th id="comment_header"><%= maketext('Comment') %></th>
 					<th id="permission_header"><%= maketext('Permission Level') %></th>
 					<th id="password_header"><%= maketext('Password') %></th>
+					<th id="must_reset_header"><%= maketext('Force Password Reset') %></th>
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
@@ -153,6 +154,14 @@
 							% param("password_$_", undef);
 							<%= text_field "password_$_" => '', size => '16', 'aria-labelledby' => 'password_header',
 							class => 'form-control form-control-sm w-auto new_password' =%>
+						</td>
+						<td class="text-center align-middle">
+							% # Unchecked by default. js/AddUsers/add-users.js automatically checks this once a
+							% # password is typed into the password field above, or once a fallback password source
+							% # other than "None" is selected (unless the instructor manually toggles it themselves).
+							<%= check_box "must_reset_$_" => 1, class => 'form-check-input',
+								'aria-label' => maketext('Force this user to reset their password at first login'),
+								data         => { auto_check => 'password' } =%>
 						</td>
 					</tr>
 				% }

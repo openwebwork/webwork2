@@ -41,7 +41,7 @@ use Mojo::Util           qw(b64_encode b64_decode);
 use Math::Random::Secure qw(irand);
 
 use WeBWorK::Debug;
-use WeBWorK::Utils       qw(x runtime_use utf8Crypt);
+use WeBWorK::Utils       qw(x runtime_use utf8Crypt cryptPassword);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Localize;
@@ -162,7 +162,23 @@ sub verify {
 		$remember_2fa = 0;
 	}
 
-	if ($self->{was_verified}
+	# A forced password reset takes priority over two factor authentication setup.  This is checked directly against
+	# the database on every request (rather than relying solely on a session flag like two factor authentication
+	# does below) since unlike two factor authentication, once resolved it is resolved permanently and does not need
+	# a per-session bypass mechanism.
+	if (
+		$self->{was_verified}
+		&& $self->{login_type} eq 'normal'
+		&& !$self->{external_auth}
+		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
+		&& do { my $p = $c->db->getPassword($self->{user_id}); $p && $p->must_reset_password }
+		)
+	{
+		$self->{was_verified} = 0;
+		$self->session(password_reset_needed => 1);
+		$self->maybe_send_cookie;
+		$self->set_params;
+	} elsif ($self->{was_verified}
 		&& $self->{login_type} eq 'normal'
 		&& !$self->{external_auth}
 		&& (!$c->{rpc} || ($c->{rpc} && !$c->stash->{disable_cookies}))
@@ -461,6 +477,45 @@ sub verify_normal_user {
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
 
 	if ($sessionExists && $keyMatches && $timestampValid) {
+		if ($self->session->{password_reset_needed}) {
+			# All of the below falls through to below and returns 1.  That only lets the user into the course once
+			# password_reset_needed is deleted from the session (which only happens once the password has actually
+			# been changed).
+			my $newPassword     = trim($c->param('newPassword'));
+			my $confirmPassword = trim($c->param('confirmPassword'));
+			if (defined $newPassword && $newPassword ne '') {
+				if ($newPassword eq ($confirmPassword // '')) {
+					my $password = $c->db->getPassword($user_id);
+					if ($password->password && utf8Crypt($newPassword, $password->password) eq $password->password) {
+						$c->stash(
+							authen_error => $c->maketext(
+								'Your new password must be different from your current password. '
+									. 'Please choose a different password.'
+							)
+						);
+					} else {
+						$password->password(cryptPassword($newPassword));
+						$password->must_reset_password(0);
+						eval { $c->db->putPassword($password) };
+						if ($@) {
+							$c->stash(authen_error =>
+									$c->maketext('Your password was not changed due to an internal error.'));
+						} else {
+							delete $self->session->{password_reset_needed};
+						}
+					}
+				} else {
+					$c->stash(
+						authen_error => $c->maketext(
+							'The passwords you entered in the "New Password" and "Confirm New Password" fields do not '
+								. 'match. Please retype your new password and try again.'
+						)
+					);
+				}
+			} else {
+				$c->stash(authen_error => $c->maketext('You must enter a new password.'));
+			}
+		}
 		if ($self->session->{two_factor_verification_needed}) {
 			if ($c->param('cancel_otp_verification') || !$c->param('verify_otp')) {
 				delete $self->session->{two_factor_verification_needed};
@@ -514,9 +569,10 @@ sub verify_normal_user {
 	} else {
 		my $auth_result = $self->authenticate;
 
-		# Don't try to obtain two factor verification in this case! Two factor authentication can only be done with an
-		# existing session.  This can still be set if a session times out, for example.
+		# Don't try to obtain two factor verification or a forced password reset in this case! Those can only be done
+		# with an existing session.  This can still be set if a session times out, for example.
 		delete $self->session->{two_factor_verification_needed};
+		delete $self->session->{password_reset_needed};
 
 		if ($auth_result > 0) {
 			return 0 unless $self->validate_user;

@@ -133,11 +133,11 @@ use constant FIELD_PROPERTIES => {
 				: 0;
 		}
 	},
-	section    => { name => x('Section'),          type => 'text', attributes => { size => 3 } },
-	recitation => { name => x('Recitation'),       type => 'text', attributes => { size => 3 } },
-	comment    => { name => x('Comment'),          type => 'text', attributes => { size => 20 } },
-	permission => { name => x('Permission Level'), type => 'permission' },
-	password   => { name => x('Password'),         type => 'password' },
+	section    => { name => x('Section'),                       type => 'text', attributes => { size => 3 } },
+	recitation => { name => x('Recitation'),                    type => 'text', attributes => { size => 3 } },
+	comment    => { name => x('Comment'),                       type => 'text', attributes => { size => 20 } },
+	permission => { name => x('Permission Level'),              type => 'permission' },
+	password   => { name => x('Password (set/delete/enforce)'), type => 'password' },
 };
 
 async sub pre_header_initialize ($c) {
@@ -167,10 +167,10 @@ async sub pre_header_initialize ($c) {
 	my %permissionLevels =
 		map { $_->user_id => $_->permission } $db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	my %passwordExists =
-		map { $_->user_id => defined $_->password } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
+	my %passwordRecords =
+		map { $_->user_id => $_ } $db->getPasswordsWhere({ user_id => { not_like => 'set_id:%' } });
 
-	# Add permission level and a password exists field to the user record hash.
+	# Add permission level, a password exists field, and a must reset password field to the user record hash.
 	for my $user (@allUsersDB) {
 		unless (defined $permissionLevels{ $user->user_id }) {
 			# Uh oh! No permission level record found!
@@ -187,8 +187,11 @@ async sub pre_header_initialize ($c) {
 			$permissionLevels{ $user->user_id } = 0;
 		}
 
-		$user->{permission}     = $permissionLevels{ $user->user_id };
-		$user->{passwordExists} = $passwordExists{ $user->user_id };
+		$user->{permission} = $permissionLevels{ $user->user_id };
+		$user->{passwordExists} =
+			$passwordRecords{ $user->user_id } && $passwordRecords{ $user->user_id }->password ? 1 : 0;
+		$user->{mustResetPassword} =
+			$passwordRecords{ $user->user_id } ? $passwordRecords{ $user->user_id }->must_reset_password : 0;
 	}
 
 	my %allUsers = map { $_->user_id => $_ } @allUsersDB;
@@ -837,20 +840,30 @@ sub save_edit_handler ($c) {
 			# Thus if the password is set again later, the user will need to setup two factor authentication again.
 			$db->deletePassword($User->user_id) if $db->existsPassword($User->user_id);
 		} else {
-			my $newPassword = $c->param("user.${userID}.password");
+			my $newPassword       = $c->param("user.${userID}.password");
+			my $mustResetPassword = $c->param("user.${userID}.password_must_reset") ? 1 : 0;
 			if ($newPassword && $newPassword =~ /\S/) {
-				my $Password      = eval { $db->getPassword($User->user_id) };
-				my $cryptPassword = cryptPassword($newPassword);
+				my $Password = eval { $db->getPassword($User->user_id) };
 				if ($Password) {
 					# Note that in this case the otp_secret will be preserved. So the user will still be able to use the
 					# configured two factor authentication with the new password.
 					$Password->password(cryptPassword($newPassword));
+					$Password->must_reset_password($mustResetPassword);
 					eval { $db->putPassword($Password) };
 				} else {
 					$Password = $db->newPassword();
 					$Password->user_id($userID);
 					$Password->password(cryptPassword($newPassword));
+					$Password->must_reset_password($mustResetPassword);
 					eval { $db->addPassword($Password) };
+				}
+			} else {
+				# No new password was typed, but the "prompt to reset password" checkbox may have changed for an
+				# existing password.
+				my $Password = eval { $db->getPassword($User->user_id) };
+				if ($Password && ($Password->must_reset_password ? 1 : 0) != $mustResetPassword) {
+					$Password->must_reset_password($mustResetPassword);
+					eval { $db->putPassword($Password) };
 				}
 			}
 		}
@@ -970,7 +983,10 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} && $record{status} ne '';
 
-		# Determine what to use for the password (if anything).
+		# Determine what to use for the password (if anything). If the crypted password field was not itself set
+		# directly in the classlist file, then the user must be prompted to reset their password once one is
+		# determined below (whether from an unencrypted password column or a fallback source column).
+		my $mustResetPassword = $record{password} ? 0 : 1;
 		if (!$record{password}) {
 			if (defined $record{unencrypted_password} && $record{unencrypted_password} =~ /\S/) {
 				$record{password} = cryptPassword($record{unencrypted_password});
@@ -988,7 +1004,13 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 
 		my $User            = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
-		my $Password = $record{password} ? $db->newPassword(user_id => $user_id, password => $record{password}) : undef;
+		my $Password        = $record{password}
+			? $db->newPassword(
+				user_id             => $user_id,
+				password            => $record{password},
+				must_reset_password => $mustResetPassword
+			)
+			: undef;
 
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {

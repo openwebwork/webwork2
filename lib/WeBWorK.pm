@@ -33,6 +33,7 @@ use WeBWorK::Debug;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::ForcePasswordChange;
 use WeBWorK::ContentGenerator::TwoFactorAuthentication;
 use WeBWorK::ContentGenerator::LoginProctor;
 
@@ -218,7 +219,11 @@ async sub dispatch ($c) {
 			# If the user is logging out and authentication failed, still logout.
 			return 1 if $displayModule eq 'WeBWorK::ContentGenerator::Logout';
 
-			if ($c->authen->session->{two_factor_verification_needed}) {
+			if ($c->authen->session->{password_reset_needed}) {
+				debug("Login succeeded but the user's password must be reset.\n");
+				debug("Rendering WeBWorK::ContentGenerator::ForcePasswordChange\n");
+				await WeBWorK::ContentGenerator::ForcePasswordChange->new($c)->go();
+			} elsif ($c->authen->session->{two_factor_verification_needed}) {
 				debug("Login succeeded but two factor authentication is needed.\n");
 				debug("Rendering WeBWorK::ContentGenerator::TwoFactorAuthentication\n");
 				await WeBWorK::ContentGenerator::TwoFactorAuthentication->new($c)->go();

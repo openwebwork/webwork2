@@ -347,8 +347,9 @@ sub do_add_course ($c) {
 				status        => $permissionLevel == $ce->{userRoles}{student} ? 'C' : 'O',
 			);
 			my $Password = $db->newPassword(
-				user_id  => $userID,
-				password => $password ? cryptPassword($password) : '',
+				user_id             => $userID,
+				password            => $password ? cryptPassword($password) : '',
+				must_reset_password => $password ? 1                        : 0,
 			);
 			my $PermissionLevel = $db->newPermissionLevel(
 				user_id    => $userID,
