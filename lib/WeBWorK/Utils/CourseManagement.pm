@@ -123,6 +123,9 @@ containing the C<courseID>, file C<size>, and C<lastModified> time. For example,
         }
     }
 
+Note that archive files that contain the same C<courseID> will also have the
+C<duplicateCourseID> key set to 1.
+
 =cut
 
 sub listArchivedCourses {
@@ -135,15 +138,30 @@ sub listArchivedCourses {
 	my $archiveDataFile = $archivesDir->child('archive-cache.json');
 	my $archiveData     = eval { decode_json($archiveDataFile->slurp) } || {};
 
+	my %seenCourseIDs;
 	my %updatedArchiveData;
 	my %return;
+
+	my $setReturnData = sub {
+		my $basename = shift;
+		$return{$basename} = { %{ $updatedArchiveData{$basename} } };
+
+		if ($seenCourseIDs{ $updatedArchiveData{$basename}{courseID} }) {
+			$return{$basename}{duplicateCourseID} = 1;
+			$return{ $seenCourseIDs{ $updatedArchiveData{$basename}{courseID} } }{duplicateCourseID} = 1;
+		} else {
+			$seenCourseIDs{ $updatedArchiveData{$basename}{courseID} } = $basename;
+		}
+		return;
+	};
+
 	for (@$archives) {
 		my $basename     = $_->basename;
 		my $lastModified = $_->stat->mtime;
 
 		if ($archiveData->{$basename} && $archiveData->{$basename}{lastModified} >= $lastModified) {
 			$updatedArchiveData{$basename} = $archiveData->{$basename};
-			$return{$basename} = $updatedArchiveData{$basename} if defined $archiveData->{$basename}{courseID};
+			$setReturnData->($basename) if defined $archiveData->{$basename}{courseID};
 			next;
 		}
 
@@ -163,7 +181,7 @@ sub listArchivedCourses {
 
 		$updatedArchiveData{$basename}{courseID} = $currCourseID;
 		$updatedArchiveData{$basename}{size}     = getHumanReadableFileSize($_);
-		$return{$basename}                       = $updatedArchiveData{$basename};
+		$setReturnData->($basename);
 	}
 
 	$archiveDataFile->spew(encode_json(\%updatedArchiveData));
