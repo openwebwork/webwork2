@@ -111,14 +111,15 @@ sub listCourses {
 =item listArchivedCourses($ce)
 
 Lists the courses which have been archived (end in .tar.gz). The courses found
-are returned as a hash whose keys are the course ids and the values are
-references to hashes containing the C<filename> (the basename of the file
-including the .tar.gz extension) and file C<size>. For example,
+are returned as a hash whose keys are the filenames (the basename of the file
+including the .tar.gz extension) and the values are references to hashes
+containing the C<courseID>, file C<size>, and C<lastModified> time. For example,
 
     {
-        myTestCourse => {
-            filename => 'myTestCourse.tar.gz',
-            size     => '605 KB'
+        'myTestCourse.tar.gz' => {
+            courseID     => 'myTestCourse',
+            size         => '605 KB',
+            lastModified => 1778667472
         }
     }
 
@@ -134,23 +135,19 @@ sub listArchivedCourses {
 	my $archiveDataFile = $archivesDir->child('archive-cache.json');
 	my $archiveData     = eval { decode_json($archiveDataFile->slurp) } || {};
 
-	my $archiveDataUpdated = 0;
+	my %updatedArchiveData;
 	my %return;
 	for (@$archives) {
 		my $basename     = $_->basename;
 		my $lastModified = $_->stat->mtime;
 
 		if ($archiveData->{$basename} && $archiveData->{$basename}{lastModified} >= $lastModified) {
-			$return{ $archiveData->{$basename}{courseID} } = {
-				filename => $basename,
-				size     => $archiveData->{$basename}{size}
-				}
-				if defined $archiveData->{$basename}{courseID};
+			$updatedArchiveData{$basename} = $archiveData->{$basename};
+			$return{$basename} = $updatedArchiveData{$basename} if defined $archiveData->{$basename}{courseID};
 			next;
 		}
 
-		$archiveDataUpdated = 1;
-		$archiveData->{$basename} = { lastModified => $lastModified };
+		$updatedArchiveData{$basename} = { lastModified => $lastModified };
 
 		my $archive = Archive::Tar->new($_);
 		my %top_level;
@@ -164,20 +161,12 @@ sub listArchivedCourses {
 		}
 		my ($currCourseID) = keys %top_level;
 
-		$archiveData->{$basename}{courseID} = $currCourseID;
-		$archiveData->{$basename}{size}     = getHumanReadableFileSize($_);
-		$return{$currCourseID}              = { filename => $basename, size => $archiveData->{$basename}{size} };
+		$updatedArchiveData{$basename}{courseID} = $currCourseID;
+		$updatedArchiveData{$basename}{size}     = getHumanReadableFileSize($_);
+		$return{$basename}                       = $updatedArchiveData{$basename};
 	}
 
-	my %archives = map { $_->basename => 1 } @$archives;
-	for (keys %$archiveData) {
-		unless ($archives{$_}) {
-			delete $archiveData->{$_};
-			$archiveDataUpdated = 1;
-		}
-	}
-
-	$archiveDataFile->spew(encode_json($archiveData)) if $archiveDataUpdated;
+	$archiveDataFile->spew(encode_json(\%updatedArchiveData));
 
 	return %return;
 }
