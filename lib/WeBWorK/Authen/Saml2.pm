@@ -73,7 +73,8 @@ sub do_verify ($self) {
 			->handle_response($c->stash->{saml2}{samlResp});
 		my $assertion = Net::SAML2::Protocol::Assertion->new_from_xml(
 			xml      => $decodedXml,
-			key_file => $self->spKeyFile->to_string
+			key_file => $self->spKeyFile->to_string,
+			cacert   => $idpCertificateFile->to_string
 		);
 
 		# Get the database key containing the authReqId that was generated before redirecting to the identity provider.
