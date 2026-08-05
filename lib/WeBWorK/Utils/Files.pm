@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(
 	readFile
 	listFilesRecursive
 	path_is_subdir
+	getHumanReadableFileSize
 );
 
 sub surePathToFile ($start_directory, $path) {
@@ -93,6 +94,19 @@ sub path_is_subdir ($path, $dir, $allow_relative = 0) {
 	return 1;
 }
 
+sub getHumanReadableFileSize ($file) {
+	my $size     = $file->stat->size;
+	my @units    = qw(B KB MB GB);
+	my $unit_idx = 0;
+	while ($size >= 1024 && $unit_idx < $#units) {
+		$size /= 1024;
+		++$unit_idx;
+	}
+	my $round = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
+
+	return sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx]);
+}
+
 1;
 
 =head1 NAME
@@ -144,5 +158,13 @@ prefix of it matches C<$dir>.
 
 If either of these checks fails, a false value is returned. Otherwise, a true
 value is returned.
+
+=head2 getHumanReadableFileSize
+
+    getHumanReadableFileSize($file)
+
+Returns the human readable size (the size with the appropriate unit of C<B>,
+C<KB>, C<MB>, or C<GB>) of a C<$file> where C<$file> is a C<Mojo::File> object.
+Note that this method assumes the passed C<$file> exists and is readable.
 
 =cut
