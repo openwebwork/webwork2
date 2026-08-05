@@ -15,6 +15,7 @@ use DBI;
 use String::ShellQuote;
 use UUID::Tiny            qw(create_uuid_as_string);
 use Mojo::File            qw(path);
+use Mojo::JSON            qw(decode_json encode_json);
 use File::Copy::Recursive qw(dircopy);
 use File::Spec;
 use Archive::Tar;
@@ -23,7 +24,7 @@ use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Utils             qw(runtime_use);
-use WeBWorK::Utils::Files      qw(surePathToFile);
+use WeBWorK::Utils::Files      qw(surePathToFile getHumanReadableFileSize);
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 our @EXPORT_OK = qw(
@@ -125,24 +126,35 @@ including the .tar.gz extension) and file C<size>. For example,
 
 sub listArchivedCourses {
 	my ($ce) = @_;
-	my $archivesDir = path("$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives");
+	my $archivesDir = path($ce->{webworkDirs}{courses})->child($ce->{admin_course_id}, 'archives');
 	surePathToFile($ce->{webworkDirs}{courses}, "$archivesDir/test");    # Ensure archives directory exists.
 
 	my $archives = $archivesDir->list->grep(qr/\.tar\.gz$/i);
 
+	my $archiveDataFile = $archivesDir->child('archive-cache.json');
+	my $archiveData     = eval { decode_json($archiveDataFile->slurp) } || {};
+
+	my $archiveDataUpdated = 0;
 	my %return;
 	for (@$archives) {
-		my $size     = $_->stat->size;
-		my @units    = qw(B KB MB GB);
-		my $unit_idx = 0;
-		while ($size >= 1024 && $unit_idx < $#units) {
-			$size /= 1024;
-			++$unit_idx;
+		my $basename     = $_->basename;
+		my $lastModified = $_->stat->mtime;
+
+		if ($archiveData->{$basename} && $archiveData->{$basename}{lastModified} >= $lastModified) {
+			$return{ $archiveData->{$basename}{courseID} } = {
+				filename => $basename,
+				size     => $archiveData->{$basename}{size}
+				}
+				if defined $archiveData->{$basename}{courseID};
+			next;
 		}
-		my $basename = $_->basename;
-		my $arch     = Archive::Tar->new($_);
+
+		$archiveDataUpdated = 1;
+		$archiveData->{$basename} = { lastModified => $lastModified };
+
+		my $archive = Archive::Tar->new($_);
 		my %top_level;
-		for my $file ($arch->get_files) {
+		for my $file ($archive->get_files) {
 			(my $first = $file->full_path) =~ s{/.*}{}s;
 			$top_level{$first} = 1 if length $first;
 		}
@@ -151,12 +163,22 @@ sub listArchivedCourses {
 			next;
 		}
 		my ($currCourseID) = keys %top_level;
-		my $round = 10**($unit_idx > 0 ? $unit_idx - 1 : 0);
-		$return{$currCourseID} = {
-			filename => $basename,
-			size     => sprintf("%s %s", int($size * $round) / $round, $units[$unit_idx])
-		};
+
+		$archiveData->{$basename}{courseID} = $currCourseID;
+		$archiveData->{$basename}{size}     = getHumanReadableFileSize($_);
+		$return{$currCourseID}              = { filename => $basename, size => $archiveData->{$basename}{size} };
 	}
+
+	my %archives = map { $_->basename => 1 } @$archives;
+	for (keys %$archiveData) {
+		unless ($archives{$_}) {
+			delete $archiveData->{$_};
+			$archiveDataUpdated = 1;
+		}
+	}
+
+	$archiveDataFile->spew(encode_json($archiveData)) if $archiveDataUpdated;
+
 	return %return;
 }
 
@@ -935,6 +957,21 @@ sub archiveCourse {
 		croak "Failed to create archived file at '$archive_path'. File already exists.";
 	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
+
+	# Update the admin course archive cache if this is saved to the archives directory of the admin course.
+	if (-e $archive_path
+		&& $archive_path eq "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$courseID.tar.gz")
+	{
+		my $archiveDataFile =
+			path($ce->{webworkDirs}{courses})->child($ce->{admin_course_id}, 'archives', 'archive-cache.json');
+		my $archiveData = eval { decode_json($archiveDataFile->slurp) } || {};
+		$archiveData->{"$courseID.tar.gz"} = {
+			courseID     => $courseID,
+			size         => getHumanReadableFileSize(path($archive_path)),
+			lastModified => time
+		};
+		$archiveDataFile->spew(encode_json($archiveData));
+	}
 
 	return $message;
 }
