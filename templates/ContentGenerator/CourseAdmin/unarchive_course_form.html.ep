@@ -19,9 +19,11 @@
 					class => 'col-md-2 pe-0 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
 					<%= select_field
-						unarchive_courseID =>
-						[ map { [ "$courseArchives{$_}{courseID} ($_, $courseArchives{$_}{size})" => $_ ] }
-							@archiveFiles ],
+						unarchive_courseID => [
+							map { [ "$courseArchives{$_}{courseID} ("
+								. ($courseArchives{$_}{courseID} eq ($_ =~ s/\.tar\.gz$//ir) ? '' : "$_, ")
+								. "$courseArchives{$_}{size})" => $_ ] } @archiveFiles
+						],
 						id    => 'unarchive_courseID',
 						class => 'form-select',
 						size  => 10
