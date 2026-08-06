@@ -695,6 +695,7 @@ sub webwork_js_config ($c, $showMathJaxErrors = 0) {
 	return encode_json({
 		webwork_url             => $c->location,
 		mathJaxBSColorSchemeUrl => getAssetURL($c->ce, 'js/MathJaxConfig/bs-color-scheme.js'),
+		csrf_token              => $c->csrf_token,
 		$showMathJaxErrors ? (showMathJaxErrors => true) : ()
 	});
 }
