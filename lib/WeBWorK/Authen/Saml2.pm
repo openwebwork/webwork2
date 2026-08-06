@@ -277,8 +277,10 @@ sub logout_user ($self) {
 		return unless $idp;
 
 		my $logoutReq = $self->sp->logout_request(
-			$idp->slo_url(BINDING_HTTP_REDIRECT), $self->session->{saml2_nameid},
-			$idp->format || undef,                $self->session->{saml2_session}
+			$ce->{saml2}{sp}{logout_url} || $idp->slo_url(BINDING_HTTP_REDIRECT),
+			$self->session->{saml2_nameid},
+			$idp->format || undef,
+			$self->session->{saml2_session}
 		);
 
 		debug('Redirecting user to the identity provider for logout');

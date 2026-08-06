@@ -134,4 +134,11 @@ $saml2{sp}{private_key_file} = 'docker-config/idp/certs/saml.pem';
 # session for the user with the identity provider.
 $saml2{sp}{enable_sp_initiated_logout} = 0;
 
+# The URL of the identity provider's single logout service is normally read from
+# the SingleLogoutService location in the identity provider's metadata.  If the
+# identity provider's metadata does not advertise a SingleLogoutService, then
+# this can be set to a custom logout URL to use instead. This is only used if
+# $saml2{sp}{enable_sp_initiated_logout} is set to 1.
+#$saml2{sp}{logout_url} = 'https://idp.example.edu/saml2/logout';
+
 1;
