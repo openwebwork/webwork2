@@ -48,6 +48,9 @@ sub go ($c) {
 	return $c->renderError($c->maketext('Authentication failed. Log in again to continue.'))
 		unless $c->authen->was_verified;
 
+	return $c->renderError($c->maketext('Cross-site request rejected.'))
+		unless $c->requestIsSameOrigin;
+
 	writeCourseLog($c->ce, 'activity_log', $c->prepare_activity_entry)
 		if $c->stash('courseID') && $c->ce->{courseFiles}{logs}{activity_log};
 
