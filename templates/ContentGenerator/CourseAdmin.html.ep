@@ -65,7 +65,11 @@
 	<ol>
 		% my %courseArchives = listArchivedCourses($ce);
 		% for (sort { lc($a) cmp lc($b) } keys %courseArchives) {
-			<li><%= "$_ ($courseArchives{$_}{size})" %></li>
+			<li>
+				<%= "$courseArchives{$_}{courseID} ("
+					. ($courseArchives{$_}{courseID} eq ($_ =~ s/\.tar\.gz$//ir) ? '' : "$_, ")
+					. "$courseArchives{$_}{size})" %>
+			</li>
 		% }
 	</ol>
 % }

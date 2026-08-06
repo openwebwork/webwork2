@@ -4,9 +4,9 @@
 %
 % # Find courses which have been archived.
 % my %courseArchives = listArchivedCourses($ce);
-% my @courseIDs      = sort { lc($a) cmp lc($b) } keys %courseArchives;
+% my @archiveFiles   = sort { lc($a) cmp lc($b) } keys %courseArchives;
 %
-% if (@courseIDs) {
+% if (@archiveFiles) {
 	<%= form_for current_route, method => 'POST', begin =%>
 		<%= $c->hidden_authen_fields =%>
 		<%= $c->hidden_fields('subDisplay') =%>
@@ -20,8 +20,11 @@
 					class                => 'col-md-2 pe-0 col-form-label fw-bold' =%>
 				<div class="col-lg-9 col-md-8">
 					<%= select_field
-						unarchive_courseID =>
-						[ map { [ "$_ ($courseArchives{$_}{size})" => $courseArchives{$_}{filename} ] } @courseIDs ],
+						unarchive_courseID => [
+							map { [ "$courseArchives{$_}{courseID} ("
+								. ($courseArchives{$_}{courseID} eq ($_ =~ s/\.tar\.gz$//ir) ? '' : "$_, ")
+								. "$courseArchives{$_}{size})" => $_ ] } @archiveFiles
+						],
 						id    => 'unarchive_courseID',
 						class => 'form-select',
 						size  => 10 =%>
