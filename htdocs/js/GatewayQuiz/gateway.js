@@ -167,7 +167,11 @@
 		const response = await fetch(`${webworkConfig?.webwork_url ?? '/webwork2'}/api/getCurrentServerTime`, {
 			method: 'post',
 			mode: 'same-origin',
-			body: new URLSearchParams({ ...authenParams, courseID: timerDiv.dataset.courseId }),
+			body: new URLSearchParams({
+				...authenParams,
+				courseID: timerDiv.dataset.courseId,
+				csrf_token: webworkConfig.csrf_token
+			}),
 			signal: controller.signal
 		}).catch(() => {
 			/* Errors are ignored */

@@ -73,6 +73,7 @@
 		if (user) authenParams.user = user.value;
 		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) authenParams.key = sessionKey.value;
+		authenParams.csrf_token = webworkConfig.csrf_token;
 
 		return {
 			library_name: 'Library',

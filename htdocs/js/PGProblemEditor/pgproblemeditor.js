@@ -129,7 +129,10 @@
 	// Send a request to the server to save the temporary file for the currently edited file.
 	// This temporary file could be used for recovery, and is displayed if the page is reloaded.
 	const saveTempFile = () => {
-		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+		const request_object = {
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			csrf_token: webworkConfig.csrf_token
+		};
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
@@ -212,7 +215,10 @@
 
 	// Send a request to the server to perltidy the current PG code in the CodeMirror editor.
 	const tidyPGCode = () => {
-		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+		const request_object = {
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			csrf_token: webworkConfig.csrf_token
+		};
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
@@ -260,7 +266,10 @@
 
 	// Send a request to the server to convert the current PG code in the CodeMirror editor.
 	const convertCodeToPGML = () => {
-		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+		const request_object = {
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			csrf_token: webworkConfig.csrf_token
+		};
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
@@ -302,7 +311,10 @@
 
 	// Send a request to the server to run the PG critic in the CodeMirror editor.
 	const runPGCritic = () => {
-		const request_object = { courseID: document.getElementsByName('courseID')[0]?.value };
+		const request_object = {
+			courseID: document.getElementsByName('courseID')[0]?.value,
+			csrf_token: webworkConfig.csrf_token
+		};
 
 		const user = document.getElementsByName('user')[0];
 		if (user) request_object.user = user.value;
