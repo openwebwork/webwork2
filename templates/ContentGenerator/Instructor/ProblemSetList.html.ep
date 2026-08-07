@@ -84,7 +84,7 @@
 	%
 	% for my $actionID (@$formsToShow) {
 		% next
-			% if $actionID eq 'lms_roster_sync'
+			% if $actionID eq 'lms_date_sync'
 			% && (!$ce->{LTIVersion}
 				% || $ce->{LTIVersion} ne 'v1p3'
 				% || $ce->{LTIGradeMode} ne 'homework'
