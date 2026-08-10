@@ -99,7 +99,7 @@ with Shibboleth authentication.
 First set up the webwork2 Mojolicious app:
 
 - Copy `webwork2.mojolicious.dist.yml` to `webwork2.mojolicious.yml`.
-- Change `server_user` and `server_group` to the appropriate values for your system.  On Ubuntu appropriate values are
+- Change `server_user` and `server_group` to the appropriate values for your system. On Ubuntu appropriate values are
   `www-data` for both.
 - To run the server without SSL certificates change `listen` in the `hypnotoad` section at the end of the file to
   `- http://*:80`. This is not recommended for production use.
@@ -112,9 +112,9 @@ First set up the webwork2 Mojolicious app:
 - Install the Perl module `Mojolicious::Plugin::SetUserGroup`.
 
 The Mojolicious hypnotoad server will be started by the root user and the user and group will be switched to what is set
-for `server_user` and `server_group` after the app starts.  It is not advisable to run the Mojolicious hypnotoad server
-as a user that can directly login to the server.  On Ubuntu systems you can use the `www-data` user that is already
-available. If a user is needed you can create the user `webwork`, for example, with `sudo useradd -M webwork`.  Make
+for `server_user` and `server_group` after the app starts. It is not advisable to run the Mojolicious hypnotoad server
+as a user that can directly login to the server. On Ubuntu systems you can use the `www-data` user that is already
+available. If a user is needed you can create the user `webwork`, for example, with `sudo useradd -M webwork`. Make
 sure that the user has read access to the SSL certificates given in the configuration above if using certificates.
 Usually the user and group will be the same.
 
