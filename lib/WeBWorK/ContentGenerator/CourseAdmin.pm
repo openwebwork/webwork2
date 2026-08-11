@@ -1011,15 +1011,6 @@ sub do_archive_course ($c) {
 
 	my $ce2 = WeBWorK::CourseEnvironment->new({ courseName => $archive_courseID });
 
-	# Remove course specific temp files before archiving, but don't delete the temp directory itself.
-	remove_tree($ce2->{courseDirs}{html_temp}, { keep_root => 1 });
-
-	# Remove the original default tmp directory if it exists
-	my $orgDefaultCourseTempDir = "$ce2->{courseDirs}{html}/tmp";
-	if (-d $orgDefaultCourseTempDir) {
-		remove_tree($orgDefaultCourseTempDir);
-	}
-
 	my $message = eval { archiveCourse(courseID => $archive_courseID, ce => $ce2); };
 
 	if ($@) {
