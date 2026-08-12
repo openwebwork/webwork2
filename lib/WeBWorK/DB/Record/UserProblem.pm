@@ -1,5 +1,5 @@
 package WeBWorK::DB::Record::UserProblem;
-use base WeBWorK::DB::Record;
+use parent qw(WeBWorK::DB::Record);
 
 =head1 NAME
 

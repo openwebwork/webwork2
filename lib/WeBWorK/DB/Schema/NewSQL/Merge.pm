@@ -14,7 +14,6 @@ use Iterator::Util;
 use Scalar::Util qw(weaken);
 
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-use WeBWorK::Debug;
 
 =head1 SUPPORTED PARAMS
 
@@ -102,6 +101,8 @@ sub merge_init {
 	$self->{sql_fieldexprs}    = \%sql_fieldexprs;
 	$self->{sql_whereprefix}   = join(" AND ", @sql_whereprefix);
 	$self->{sql_tableexpr}     = join(", ",    @sql_tableexprs);
+
+	return;
 }
 
 sub sql_init {
@@ -135,12 +136,14 @@ sub sql_init {
 		return "`$table`.`$field`";
 	};
 
-	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
+	$self->{sql} = WeBWorK::DB::Utils::SQLAbstractIdentTrans->new(
 		quote_char      => "`",
 		name_sep        => ".",
 		transform_table => $transform_table,
 		transform_all   => $transform_all,
 	);
+
+	return;
 }
 
 ################################################################################
@@ -161,7 +164,7 @@ sub _get_fields_where_prepex {
 	my @where = $self->{sql_whereprefix};
 	my @bind_vals;
 
-	my ($base_where_clause, @base_bind_vals) = $self->sql->_recurse_where($where) if $where;
+	my ($base_where_clause, @base_bind_vals) = $where ? $self->sql->_recurse_where($where) : ();
 	if (defined $base_where_clause and $base_where_clause =~ /\S/) {
 		push @where,     $base_where_clause;
 		push @bind_vals, @base_bind_vals;
@@ -184,13 +187,13 @@ sub _get_fields_where_prepex {
 ################################################################################
 
 sub conv_where {
-	my $self = shift;
-	return $self->{db}{ $self->{pri} }->conv_where(@_);
+	my ($self, @where) = @_;
+	return $self->{db}{ $self->{pri} }->conv_where(@where);
 }
 
 sub keyparts_to_where {
-	my $self = shift;
-	return $self->{db}{ $self->{pri} }->keyparts_to_where(@_);
+	my ($self, @keyparts) = @_;
+	return $self->{db}{ $self->{pri} }->keyparts_to_where(@keyparts);
 }
 
 ################################################################################

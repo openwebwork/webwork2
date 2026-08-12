@@ -1,5 +1,5 @@
 package WeBWorK::File::Scoring;
-use base qw/Exporter/;
+use parent qw(Exporter);
 
 =head1 NAME
 
@@ -9,35 +9,34 @@ WeBWorK::File::Scoring - parse scoring files.
 
 use strict;
 use warnings;
+
 use IO::File;
 
-our $MIN_FIELDS = 6;    # there are six "info" fields. we need at least those
-#our $MAX_FIELDS; # no maximum in scoring files
+our @EXPORT_OK = qw(parse_scoring_file);
 
-our $KEY_INDEX = 0;     # index of field to use for record key in resulting hash
+our $MIN_FIELDS = 6;    # There are six "info" fields. we need at least those.
+our $KEY_INDEX  = 0;    # Index of field to use for record key in resulting hash.
 
-our @EXPORT = qw/parse_scoring_file/;
-
-sub parse_scoring_file($) {
+sub parse_scoring_file {
 	my ($file) = @_;
 
-	my $fh = new IO::File($file, "<")
+	my $fh = IO::File->new($file, '<')
 		or die "Failed to open scoring file '$file' for reading: $!\n";
 
 	my %records;
 
-	while (<$fh>) {
-		chomp;
-		next if /^#/;
-		next unless /\S/;
-		s/^\s*//;
-		s/\s*$//;
+	while (my $line = <$fh>) {
+		chomp $line;
+		next if $line     =~ /^#/;
+		next unless $line =~ /\S/;
+		$line             =~ s/^\s*//;
+		$line             =~ s/\s*$//;
 
-		my @fields = split /\s*,\s*/, $_, -1;    # -1 == don't delete empty trailing fields
+		my @fields = split /\s*,\s*/, $line, -1;    # -1 == don't delete empty trailing fields
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
-			warn
-				"Skipped invalid line $. of scoring files '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
+			warn "Skipped invalid line $. of scoring files '$file': "
+				. "expected at least $MIN_FIELDS fields, got $fields fields.\n";
 			next;
 		}
 

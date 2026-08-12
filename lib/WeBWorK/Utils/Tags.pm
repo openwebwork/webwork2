@@ -6,18 +6,15 @@
 
 package WeBWorK::Utils::Tags;
 
-use base qw(Exporter);
 use strict;
 use warnings;
+
 use Carp;
 use IO::File;
 
-our @EXPORT    = ();
-our @EXPORT_OK = qw();
-
 use constant BASIC =>
-	qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language Static MO Status );
-use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
+	qw(DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language Static MO Status);
+use constant NUMBERED => qw(TitleText AuthorText EditionText Section Problem);
 
 # KEYWORDS and RESOURCES are treated specially since each takes a list of values
 
@@ -71,6 +68,7 @@ sub mergekeywords {
 		push @kw, $j unless ($old);
 	}
 	$self->{keywords} = \@kw;
+	return;
 }
 
 # Note on texts, we store them in an array, but the index is one less than on
@@ -101,6 +99,7 @@ sub mergetexts {
 			$self->{textinfo} = \@tia;
 		}
 	}
+	return;
 }
 
 # Set a tag with a value
@@ -117,6 +116,8 @@ sub settag {
 		$self->{modified} = 1;
 		$self->{$tagname} = $newval;
 	}
+
+	return;
 }
 
 # Similar, but add a resource to the list
@@ -127,10 +128,12 @@ sub addresource {
 	if (not defined($self->{resources})) {
 		$self->{resources} = [$resc];
 	} else {
-		unless (grep(/^$resc$/, @{ $self->{resources} })) {
+		unless (grep {/^$resc$/} @{ $self->{resources} }) {
 			push @{ $self->{resources} }, $resc;
 		}
 	}
+
+	return;
 }
 
 sub printtextinfo {
@@ -140,6 +143,7 @@ sub printtextinfo {
 		print "$k -> " . $textref->{$k} . ", ";
 	}
 	print "}\n";
+	return;
 }
 
 sub printalltextinfo {
@@ -147,6 +151,7 @@ sub printalltextinfo {
 	for my $j (@{ $self->{textinfo} }) {
 		printtextinfo $j;
 	}
+	return;
 }
 
 sub maybenewtext {
@@ -179,6 +184,7 @@ sub tidytextinfo {
 		my @tmptexts = grep { defined $_ } @{ $self->{textinfo} };
 		$self->{textinfo} = \@tmptexts;
 	}
+	return;
 }
 
 # name is a path
@@ -196,7 +202,7 @@ sub new {
 	my $textno;
 	my $textinfo = [];
 
-	open(IN, '<:encoding(UTF-8)', "$name") or die "cannot open $name: $!";
+	my $IN = IO::File->new($name, '<:encoding(UTF-8)') or die "cannot open $name: $!";
 	if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
 		warn "Not a pg file";    #print caused trouble with XMLRPC
 		$self->{file} = undef;
@@ -214,11 +220,11 @@ sub new {
 	$self->{resources} = [];
 	#$self->{Language} = 'eng'; # Default to English
 
-	while (<IN>) {
+	while (my $line = <$IN>) {
 		$lineno++;
 		eval {
 		SWITCH: {
-				if (/#\s*\bKEYWORDS\((.*)\)/i) {
+				if ($line =~ /#\s*\bKEYWORDS\((.*)\)/i) {
 
 					my @keyword = keywordcleaner($1);
 					@keyword          = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
@@ -226,7 +232,7 @@ sub new {
 					$lasttag          = $lineno;
 					last SWITCH;
 				}
-				if (/#\s*\bRESOURCES\((.*)\)/i) {
+				if ($line =~ /#\s*\bRESOURCES\((.*)\)/i) {
 					my @resc = keywordcleaner($1);    # splits on comma
 					s/["'\s]*$//g for (@resc);
 					s/^["'\s]*//g for (@resc);
@@ -235,7 +241,7 @@ sub new {
 					$lasttag           = $lineno;
 					last SWITCH;
 				}
-				if (/$re/) {    # Checks all other un-numbered tags
+				if ($line =~ /$re/) {    # Checks all other un-numbered tags
 					my $tmp1 = $1;
 					my $tmp  = $2;
 					#$tmp =~ s/'/\'/g;
@@ -246,7 +252,7 @@ sub new {
 					last SWITCH;
 				}
 
-				if (/#\s*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if ($line =~ /#\s*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$text   = $2;
 					$text =~ s/'/\'/g;
@@ -257,7 +263,7 @@ sub new {
 					$lasttag = $lineno;
 					last SWITCH;
 				}
-				if (/#\s*\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if ($line =~ /#\s*\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno  = $1;
 					$edition = $2;
 					$edition =~ s/'/\'/g;
@@ -268,7 +274,7 @@ sub new {
 					$lasttag = $lineno;
 					last SWITCH;
 				}
-				if (/#\s*\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if ($line =~ /#\s*\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno     = $1;
 					$textauthor = $2;
 					$textauthor =~ s/'/\'/g;
@@ -279,7 +285,7 @@ sub new {
 					$lasttag = $lineno;
 					last SWITCH;
 				}
-				if (/#\s*\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if ($line =~ /#\s*\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno      = $1;
 					$textsection = $2;
 					$textsection =~ s/'/\'/g;
@@ -298,7 +304,7 @@ sub new {
 					$lasttag = $lineno;
 					last SWITCH;
 				}
-				if (/#\s*\bProblem(\d+)\(\s*(.*?)\s*\)/) {
+				if ($line =~ /#\s*\bProblem(\d+)\(\s*(.*?)\s*\)/) {
 					$textno      = $1;
 					$textproblem = $2;
 					$textproblem =~ s/\D/ /g;
@@ -319,6 +325,8 @@ sub new {
 
 	}    #end of while
 	$self->{textinfo} = $textinfo;
+
+	$IN->close;
 
 	if (defined($self->{DBchapter}) and $self->{DBchapter} eq 'ZZZ-Inserted Text') {
 		$self->{isplaceholder} = 1;
@@ -400,16 +408,20 @@ sub dumptags {
 		s/$/'/g for (@resc);
 		print $fh "## RESOURCES(" . join(',', @resc) . ")\n";
 	}
+
+	return;
 }
 
 # Write the file
-sub write {
+sub write_to_file {
 	my $self = shift;
+
 	# First read it into an array
-	open(IN, $self->{file}) or die "cannot open $self->{file}: $!";
-	my @lines = <IN>;
-	close(IN);
-	my $fh = IO::File->new(">" . $self->{file}) or die "cannot open $self->{file}: $!";
+	open(my $IN, '<', $self->{file}) or die "cannot open $self->{file}: $!";
+	my @lines = <$IN>;
+	close($IN);
+
+	my $fh = IO::File->new($self->{file}, '>') or die "cannot open $self->{file}: $!";
 	my ($line, $lineno) = ('', 0);
 	while ($line = shift @lines) {
 		$lineno++;
@@ -417,9 +429,9 @@ sub write {
 		next                 if istagline($line);
 		print $fh $line;
 	}
-
 	$fh->close();
+
+	return;
 }
 
 1;
-

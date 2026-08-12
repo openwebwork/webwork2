@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
 use Data::Dumper;
 use Data::UUID;
 
@@ -17,7 +16,7 @@ sub add_defaults {
 	my ($c, $event_hash) = @_;
 	my $ce = $c->ce;
 	my $db = $c->db;
-	my $ug = new Data::UUID;
+	my $ug = Data::UUID->new;
 
 	my $user_id     = $c->param('user');
 	my $session_key = $c->param('key');
@@ -43,6 +42,7 @@ sub add_defaults {
 	if (defined($ENV{HTTP_REFERER})) {
 		$event_hash->{'extensions'}{'referer'} = $ENV{HTTP_REFERER};
 	}
+	return;
 }
 
 1;

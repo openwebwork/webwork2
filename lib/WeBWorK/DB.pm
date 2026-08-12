@@ -81,9 +81,8 @@ use Mojo::JSON     qw(encode_json decode_json);
 use WeBWorK::DB::Database;
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Layout qw(databaseLayout);
-use WeBWorK::DB::Utils  qw(make_vsetID grok_vsetID grok_setID_from_vsetID_sql grok_versionID_from_vsetID_sql);
-use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::DB::Utils  qw(grok_vsetID);
+use WeBWorK::Utils      qw(runtime_use);
 
 # How these exceptions should be used:
 #
@@ -139,6 +138,9 @@ For each table defined in the database layout, C<new> loads the record and
 schema modules.
 
 =cut
+
+# Ignore this rule in this file for now.
+## no critic (Subroutines::RequireArgUnpacking)
 
 sub new {
 	my ($invocant, $ce) = @_;
@@ -1044,7 +1046,7 @@ sub latestProblemPastAnswer {
 	my @answerIDs = $self->listProblemPastAnswers($userID, $setID, $problemID);
 
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
-	return $answerIDs[$#answerIDs];
+	return $answerIDs[-1];
 }
 
 sub existsPastAnswer {
@@ -2125,14 +2127,13 @@ sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
 		return 1;
 	} else {
 		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,@])";
-		return 0;
 	}
 }
 
 # The (optional) second argument to checkKeyfields is to support versioned
 # (gateway) sets, which may include commas in certain fields (in particular,
 # set names (e.g., setDerivativeGateway,v1)).
-sub checkKeyfields($;$) {
+sub checkKeyfields {
 	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
 		my $value     = $Record->$keyfield;
@@ -2145,8 +2146,9 @@ sub checkKeyfields($;$) {
 			unless $value ne "";
 
 		validateKeyfieldValue($keyfield, $value, $versioned);
-
 	}
+
+	return;
 }
 
 sub validateKeyfieldValue {
@@ -2160,7 +2162,7 @@ sub validateKeyfieldValue {
 			. encode_entities($value)
 			. "' (valid characters are [0-9])"
 			unless $value =~ m/^[0-9]*$/;
-	} elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
+	} elsif ($versioned && ($keyfield eq "set_id" || $keyfield eq 'setID')) {
 		croak "invalid characters in '"
 			. encode_entities($keyfield)
 			. "' field: '"
@@ -2183,6 +2185,7 @@ sub validateKeyfieldValue {
 			unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
 	}
 
+	return;
 }
 
 # checkArgs spec syntax:

@@ -8,7 +8,7 @@ use Date::Format;
 use Time::HiRes    qw/gettimeofday/;
 use WeBWorK::Utils qw/undefstr/;
 
-our @EXPORT = qw(debug);
+our @EXPORT_OK = qw(debug);
 
 =head1 NAME
 

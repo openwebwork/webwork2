@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 
 =cut
 
-use WeBWorK::Debug;
+use WeBWorK::Debug        qw(debug);
 use WeBWorK::Utils        qw(wwRound x);
 use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);

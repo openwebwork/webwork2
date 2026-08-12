@@ -1,5 +1,5 @@
 package WeBWorK::Authen::LTIAdvanced;
-use base qw/WeBWorK::Authen/;
+use parent qw(WeBWorK::Authen);
 
 =head1 NAME
 
@@ -17,7 +17,7 @@ use Mojo::URL;
 use URI::Escape;
 use Net::OAuth;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Localize;
@@ -592,7 +592,7 @@ sub create_user {
 	$c->authz->{PermissionLevel} = $newPermissionLevel;    #cache the Permission Level Record.
 
 	# Assign existing sets
-	my @setsToAssign = ();
+	my @setsToAssign;
 
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets   = $db->getGlobalSets(@globalSetIDs);

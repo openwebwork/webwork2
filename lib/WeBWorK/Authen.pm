@@ -40,7 +40,7 @@ use Scalar::Util         qw(weaken);
 use Mojo::Util           qw(b64_encode b64_decode);
 use Math::Random::Secure qw(irand);
 
-use WeBWorK::Debug;
+use WeBWorK::Debug       qw(debug);
 use WeBWorK::Utils       qw(x runtime_use utf8Crypt cryptPassword);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 use WeBWorK::Utils::TOTP;
@@ -76,7 +76,7 @@ the C<%authen> hash, an exception is thrown.
 
 =cut
 
-sub class {
+sub class {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($ce, $type) = @_;
 
 	if (exists $ce->{authen}{$type}) {
@@ -762,7 +762,7 @@ sub create_session {
 
 	if (!$c->stash->{'webwork2.database_session'} || !$c->stash->{'webwork2.database_session'}{user_id}) {
 		my @chars = @{ $ce->{sessionKeyChars} };
-		$newKey = join('', @chars[ map irand(@chars), 1 .. $ce->{sessionKeyLength} ]);
+		$newKey = join('', @chars[ map { irand(@chars) } 1 .. $ce->{sessionKeyLength} ]);
 		$c->stash->{'webwork2.database_session'} =
 			{ user_id => $userID, key => $newKey, timestamp => time, session => {} };
 	} else {

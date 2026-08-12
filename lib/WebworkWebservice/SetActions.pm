@@ -11,8 +11,8 @@ use Data::Structure::Util qw(unbless);
 use WeBWorK::Utils             qw(max);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers assignSetToGivenUsers);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Debug;
-use WeBWorK::DB::Utils qw(initializeUserProblem);
+use WeBWorK::Debug             qw(debug);
+use WeBWorK::DB::Utils         qw(initializeUserProblem);
 
 sub listGlobalSets {
 	my ($invocant, $self) = @_;

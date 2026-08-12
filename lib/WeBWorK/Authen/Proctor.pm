@@ -1,5 +1,5 @@
 package WeBWorK::Authen::Proctor;
-use base 'WeBWorK::Authen';
+use parent 'WeBWorK::Authen';
 
 =head1 NAME
 

@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
 use Data::Dumper;
 
 # Constructor

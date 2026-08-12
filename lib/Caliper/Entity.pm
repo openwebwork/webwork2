@@ -8,7 +8,6 @@ use Digest::SHA qw(sha1_base64);
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::Sets qw(grade_set grade_gateway);
 use Caliper::ResourceIri;

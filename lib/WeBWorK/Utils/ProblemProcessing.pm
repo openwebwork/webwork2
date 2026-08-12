@@ -12,7 +12,7 @@ use Email::Stuffer;
 use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::Debug;
+use WeBWorK::Debug                      qw(debug);
 use WeBWorK::Utils                      qw(encodeAnswers createEmailSenderTransportSMTP formatEmailSubject);
 use WeBWorK::Utils::DateTime            qw(before after);
 use WeBWorK::Utils::JITAR               qw(jitar_id_to_seq jitar_problem_adjusted_status);

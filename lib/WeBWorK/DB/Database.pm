@@ -93,7 +93,7 @@ sub character_set ($self) {
 
 # DBI wrapper methods. (All currently used methods are implemented.  Add more as needed.)
 
-sub do ($self, $statement, $attr = undef, @bind_values) {
+sub do ($self, $statement, $attr = undef, @bind_values) {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	return $self->dbh->do($statement, $attr, @bind_values);
 }
 

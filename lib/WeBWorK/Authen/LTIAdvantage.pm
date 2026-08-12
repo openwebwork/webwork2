@@ -12,7 +12,7 @@ use strict;
 use warnings;
 use experimental 'signatures';
 
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use WeBWorK::Localize;
 use WeBWorK::Utils::DateTime   qw(formatDateTime);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);

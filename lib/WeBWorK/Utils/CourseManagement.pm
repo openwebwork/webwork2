@@ -1,5 +1,5 @@
 package WeBWorK::Utils::CourseManagement;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 =head1 NAME
 
@@ -20,7 +20,7 @@ use File::Copy::Recursive qw(dircopy);
 use File::Spec;
 use Archive::Tar;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Utils             qw(runtime_use);
@@ -50,10 +50,6 @@ use constant {    # constants describing the comparison of two hashes.
 =head1 FUNCTIONS
 
 =over
-
-=cut
-
-################################################################################
 
 =item listCourses($ce)
 
@@ -171,8 +167,6 @@ sub listArchivedCourses {
 	return %return;
 }
 
-################################################################################
-
 =item addCourse(%options)
 
 %options must contain:
@@ -223,7 +217,7 @@ boolean options:
 =cut
 
 sub addCourse {
-	my (%options) = @_;
+	my %options = @_;
 
 	for my $key (keys(%options)) {
 		my $value = '####UNDEF###';
@@ -468,11 +462,11 @@ sub addCourse {
 		}
 	}
 
-##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
+	##### step 4: write course.conf file (unless that is going to be copied from a source course) #####
 
 	unless ($sourceCourse ne '' && $options{copyConfig}) {
 		my $courseEnvFile = $ce->{courseFiles}{environment};
-		open my $fh, ">:utf8", $courseEnvFile
+		open my $fh, '>:encoding(UTF-8)', $courseEnvFile
 			or die "failed to open $courseEnvFile for writing.\n";
 		my $addOnConf     = $options{addOnConf} // [];
 		my $relConfFolder = File::Spec->abs2rel($ce->{webworkDirs}{addOnConf}, $ce->{webworkDirs}{root});
@@ -483,7 +477,7 @@ sub addCourse {
 		close $fh;
 	}
 
-##### step 5: copy templates, html, simple.conf, course.conf if desired #####
+	##### step 5: copy templates, html, simple.conf, course.conf if desired #####
 
 	if ($sourceCourse ne '') {
 		my $sourceCE = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $sourceCourse });
@@ -530,9 +524,9 @@ sub addCourse {
 			}
 		}
 	}
-}
 
-################################################################################
+	return;
+}
 
 =item renameCourse(%options)
 
@@ -640,8 +634,8 @@ sub renameCourse {
 			pop @oldDirElements;
 			my $oldDirParent = File::Spec->catdir(@oldDirElements);
 			unless (-w $oldDirParent) {
-				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not "
-					. "writable. You will have to move this directory manually.\n";
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is "
+					. "not writable. You will have to move this directory manually.\n";
 				next;
 			}
 
@@ -693,9 +687,8 @@ sub renameCourse {
 			}
 		}
 	}
+	return;
 }
-
-################################################################################
 
 =item retitleCourse
 
@@ -730,6 +723,7 @@ sub retitleCourse {
 	};
 	warn "Problems from resetting course title and institution = $@" if $@;
 
+	return;
 }
 
 =item deleteCourse(%options)
@@ -827,9 +821,9 @@ sub deleteCourse {
 			debug("courseDir $courseDir was already deleted.\n");
 		}
 	}
-}
 
-################################################################################
+	return;
+}
 
 =item archiveCourse(%options)
 
@@ -977,8 +971,6 @@ sub _archiveCourse_remove_dump_dir {
 	}
 	return;
 }
-
-################################################################################
 
 =item unarchiveCourse(%options)
 
@@ -1141,6 +1133,8 @@ sub unarchiveCourse {
 	##### step 8: return conflicting course to its rightful place #####
 
 	_unarchiveCourse_move_back($restoreCourseData);
+
+	return;
 }
 
 sub _unarchiveCourse_move_away {
@@ -1182,9 +1176,9 @@ sub _unarchiveCourse_move_back {
 
 	debug("Moving $$restore_course_data{courseID} back to $$restore_course_data{newCourseID} after course unarchiving");
 	renameCourse(%$restore_course_data);
-}
 
-################################################################################
+	return;
+}
 
 =item initNonNativeTables($ce, $db, %options)
 
@@ -1245,10 +1239,6 @@ sub initNonNativeTables {
 	return @messages;
 }
 
-################################################################################
-# utilities
-################################################################################
-
 =head1 UTILITIES
 
 These functions are used by this class's public functions and should not be
@@ -1296,6 +1286,7 @@ EOF
 	}
 
 	print $fh $content;
+	return;
 }
 
 sub get_SeedCE

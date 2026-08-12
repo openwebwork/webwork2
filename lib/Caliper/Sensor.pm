@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use Data::Dumper;
 use Mojo::JSON  qw(encode_json);
 use Time::HiRes qw/gettimeofday/;
@@ -96,6 +96,7 @@ sub sendEvents {
 			debug($response->content);
 		}
 	}
+	return;
 }
 
 sub log_error {
@@ -119,6 +120,7 @@ sub log_error {
 	} else {
 		debug("Error, unable to open caliper error log file '$logfile' in append mode: $!");
 	}
+	return;
 }
 
 sub formatted_timestamp {

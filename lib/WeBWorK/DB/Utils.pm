@@ -1,5 +1,5 @@
 package WeBWorK::DB::Utils;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 =head1 NAME
 
@@ -27,7 +27,7 @@ our @EXPORT_OK = qw(
 
 use constant fakeSetName => 'Undefined_Set';
 
-sub global2user($$) {
+sub global2user {
 	my ($userRecordClass, $GlobalRecord) = @_;
 	my $UserRecord = $userRecordClass->new();
 	foreach my $field ($GlobalRecord->FIELDS()) {
@@ -36,7 +36,7 @@ sub global2user($$) {
 	return $UserRecord;
 }
 
-sub user2global($$) {
+sub user2global {
 	my ($globalRecordClass, $UserRecord) = @_;
 	my $GlobalRecord = $globalRecordClass->new();
 	foreach my $field ($GlobalRecord->FIELDS()) {
@@ -133,7 +133,7 @@ sub fake_problem {
 # versioning utilities
 ################################################################################
 
-sub make_vsetID($$) {
+sub make_vsetID {
 	my ($setID, $versionID) = @_;
 	return "$setID,v$versionID";
 }
@@ -145,7 +145,7 @@ sub make_vsetID_sql {
 	return "CONCAT($setID,',v',$versionID)";
 }
 
-sub grok_vsetID($) {
+sub grok_vsetID {
 	my ($vsetID) = @_;
 	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,v(.*))?/;
 	return $setID, $versionID;
@@ -153,14 +153,14 @@ sub grok_vsetID($) {
 
 # does not quote $field, because it could be a string, a qualified or
 # unqualified field name, or a complex expression
-sub grok_setID_from_vsetID_sql($) {
+sub grok_setID_from_vsetID_sql {
 	my ($field) = @_;
 	return "SUBSTRING($field,1,INSTR($field,',v')-1)";
 }
 
 # does not quote $field, because it could be a string, a qualified or
 # unqualified field name, or a complex expression
-sub grok_versionID_from_vsetID_sql($) {
+sub grok_versionID_from_vsetID_sql {
 	my ($field) = @_;
 	# the "+0" casts the resulting value as a number
 	return "(SUBSTRING($field,INSTR($field,',v')+2)+0)";

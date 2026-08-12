@@ -42,7 +42,7 @@ use Opcode qw(empty_opset);
 
 use WeBWorK::WWSafe;
 use WeBWorK::Utils::Files qw(readFile);
-use WeBWorK::Debug;
+use WeBWorK::Debug        qw(debug);
 
 =head1 CONSTRUCTION
 
@@ -163,7 +163,7 @@ sub new {
 	# determine location of courseEnvironmentFile and simple configuration file
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
-	no strict 'refs';
+	no strict 'refs';    ## no critic (TestingAndDebugging::ProhibitNoStrict)
 	my $courseEnvironmentFile = ${ *{ ${ $safe->root . "::" }{courseFiles} } }{environment};
 	my $courseWebConfigFile   = $seedVars->{web_config_filename}
 		|| ${ *{ ${ $safe->root . "::" }{courseFiles} } }{simpleConfig};
@@ -185,7 +185,7 @@ sub new {
 	warn $_ for @warnings;
 
 	# get the safe compartment's namespace as a hash
-	no strict 'refs';
+	no strict 'refs';    ## no critic (TestingAndDebugging::ProhibitNoStrict)
 	my %symbolHash = %{ $safe->root . "::" };
 	use strict 'refs';
 
@@ -220,7 +220,7 @@ sub new {
 		my $PG_version_file_contents = readFile($PG_version_file) // '';
 		$safe->reval($PG_version_file_contents);
 
-		no strict 'refs';
+		no strict 'refs';    ## no critic (TestingAndDebugging::ProhibitNoStrict)
 		my %symbolHash2 = %{ $safe->root . "::" };
 		use strict 'refs';
 		$self->{PG_VERSION} = ${ *{ $symbolHash2{PG_VERSION} } };
@@ -363,6 +363,7 @@ sub status_abbrev_has_behavior {
 		return $ce->status_has_behavior($status_name, $behavior);
 	} else {
 		warn "status abbreviation '$status_abbrev' not found in \%statuses -- assuming no behaviors.\n";
+		return;
 	}
 }
 

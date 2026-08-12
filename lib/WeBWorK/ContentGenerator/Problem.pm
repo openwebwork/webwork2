@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
 
-use WeBWorK::Debug;
+use WeBWorK::Debug           qw(debug);
 use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
 use WeBWorK::Utils::Files    qw(path_is_subdir);

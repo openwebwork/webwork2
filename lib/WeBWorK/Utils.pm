@@ -47,7 +47,7 @@ sub runtime_use ($module, @import_list) {
 		# \Q = quote metachars \E = end quoting
 		$import_string = "import $module " . join(',', map {qq|"\Q$_\E"|} @import_list);
 	}
-	eval "package $package; require $module; $import_string";
+	eval "package $package; require $module; $import_string";    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 	die $@ if $@;
 	return;
 }
@@ -557,7 +557,7 @@ sub round_nearest_stepsize ($score, $stepsize) {
 	return wwRound(2, wwRound(0, $score / $stepsize) * $stepsize);
 }
 
-sub x (@args) { return @args }
+sub x (@args) { return @args }    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 
 1;
 

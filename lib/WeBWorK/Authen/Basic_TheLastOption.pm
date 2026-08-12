@@ -1,5 +1,5 @@
 package WeBWorK::Authen::Basic_TheLastOption;
-use base qw/WeBWorK::Authen/;
+use parent qw(WeBWorK::Authen);
 
 =head1 NAME
 
@@ -12,5 +12,8 @@ to provide those options, then this module should
 be the last one in the array of the Authen module hashes.
 
 =cut
+
+use strict;
+use warnings;
 
 1;

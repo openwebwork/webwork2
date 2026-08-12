@@ -15,6 +15,7 @@ our @EXPORT_OK = qw(
 	getAllDBsections
 	getDBListings
 	countDBListings
+	getMLTleader
 );
 
 use constant LIBRARY_STRUCTURE => {

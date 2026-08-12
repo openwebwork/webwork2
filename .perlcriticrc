@@ -1,0 +1,10 @@
+severity = 4
+
+# Prototypes are bad, but signatures are good.  Perlcritic doesn't know the difference.
+[-Subroutines::ProhibitSubroutinePrototypes]
+
+# Perlcritic does not know how to properly deal with async/await.
+[-Modules::RequireEndWithOne]
+
+# Disable this rule for now. Webwork uses too many constants.
+[-ValuesAndExpressions::ProhibitConstantPragma]

@@ -1,11 +1,12 @@
 package WeBWorK::Authen::CAS;
-use base qw/WeBWorK::Authen/;
+use parent qw(WeBWorK::Authen);
 
 use strict;
 use warnings;
+
 use AuthCAS;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 #$WeBWorK::Debug::Enabled = 1;
 #$WeBWorK::Debug::Logfile = "/opt/webwork/webwork2/logs/cas-debug.log";
 #$WeBWorK::Debug::AllowSubroutineOutput = "get_credentials";
@@ -98,7 +99,7 @@ sub get_credentials {
 		#my $cas_certs = $ce->{authen}{cas_options}{certs};
 		#my $cas = new AuthCAS(casUrl => $cas_url,
 		#    CAFile => $cas_certs);
-		my $cas = new AuthCAS(%{ $ce->{authen}{cas_options}{AuthCAS_opts} });
+		my $cas = AuthCAS->new(%{ $ce->{authen}{cas_options}{AuthCAS_opts} });
 
 		my $service = $c->req->url->to_string;
 		# Remove the "ticket=..." parameter that the CAS server added
@@ -170,6 +171,8 @@ sub logout_user {
 	my $go_to = $ce->{authen}{cas_options}{AuthCAS_opts}{casUrl} . '/logout';
 	debug("logging out.  Redirecting to $go_to");
 	$self->{redirect} = $go_to;
+
+	return;
 }
 
 1;

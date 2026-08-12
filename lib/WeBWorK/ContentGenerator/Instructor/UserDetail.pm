@@ -10,7 +10,7 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 use WeBWorK::DB::Utils         qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Utils             qw(x);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 
 # We use the x function to mark strings for localizaton
 use constant DATE_FIELDS => {

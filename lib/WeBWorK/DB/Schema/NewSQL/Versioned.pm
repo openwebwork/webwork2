@@ -210,7 +210,7 @@ sub update_where {
 		delete $fieldvals{version_id};
 	}
 
-	$self->SUPER::update_where(\%fieldvals, $where);
+	return $self->SUPER::update_where(\%fieldvals, $where);
 }
 
 # this is mostly a copy of Std::_update_fields_prep

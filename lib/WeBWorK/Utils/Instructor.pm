@@ -10,8 +10,8 @@ WeBWorK::Utils::Instructor - Useful instructor utility tools.
 use File::Find;
 use Mojo::JSON qw(decode_json);
 
-use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Debug;
+use WeBWorK::DB::Utils    qw(initializeUserProblem);
+use WeBWorK::Debug        qw(debug);
 use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
 
 our @EXPORT_OK = qw(

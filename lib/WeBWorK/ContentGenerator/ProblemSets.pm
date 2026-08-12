@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 
 =cut
 
-use WeBWorK::Debug;
+use WeBWorK::Debug           qw(debug);
 use WeBWorK::Utils           qw(sortByName);
 use WeBWorK::Utils::DateTime qw(after);
 use WeBWorK::Utils::Files    qw(readFile path_is_subdir);

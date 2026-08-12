@@ -467,7 +467,7 @@ sub content_selection ($c) {
 	);
 }
 
-sub keys ($c) {
+sub keys ($c) {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($public_keyset, $err) = WeBWorK::Authen::LTIAdvantage::SubmitGrade::get_site_key($c->ce);
 	return $c->render(json => $public_keyset) if $public_keyset;
 
