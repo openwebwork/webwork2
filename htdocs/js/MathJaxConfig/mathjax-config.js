@@ -143,34 +143,7 @@ if (!window.MathJax) {
 				});
 			}
 		},
-		options: {
-			renderActions: {
-				findScript: [
-					10,
-					(doc) => {
-						if (doc.processed.isSet('findScripts')) return;
-						const containers = doc.adaptor.getElements(doc.options.elements || [doc.document.body], doc);
-						for (const container of containers) {
-							for (const node of container.querySelectorAll('script[type^="math/tex"]')) {
-								const math = new doc.options.MathItem(
-									node.textContent,
-									doc.inputJax[0],
-									!!node.type.match(/; *mode=display/)
-								);
-								const text = document.createTextNode('');
-								node.parentNode.replaceChild(text, node);
-								math.start = { node: text, delim: '', n: 0 };
-								math.end = { node: text, delim: '', n: 0 };
-								doc.math.push(math);
-							}
-						}
-						doc.processed.set('findScripts');
-					},
-					''
-				]
-			},
-			ignoreHtmlClass: 'tex2jax_ignore'
-		},
+		options: { ignoreHtmlClass: 'tex2jax_ignore' },
 		output: {
 			displayOverflow: 'linebreak',
 			linebreaks: {
