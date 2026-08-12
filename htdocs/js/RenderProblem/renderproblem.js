@@ -13,7 +13,6 @@
 			const ro = {
 				courseID: document.getElementsByName('hidden_course_id')[0]?.value,
 				language: document.getElementsByName('hidden_language')[0]?.value ?? 'en',
-				displayMode: document.getElementById('problem_displaymode').value ?? 'MathJax',
 				problemSeed: 1,
 				permissionLevel: 10,
 				outputformat: 'simple',

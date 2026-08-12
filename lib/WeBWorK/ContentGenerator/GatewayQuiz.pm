@@ -774,8 +774,6 @@ async sub pre_header_initialize ($c) {
 	# false if the "pageChangeHack" input is set (a page change link was used).
 	$c->param('previewAnswers', 0) if $c->param('pageChangeHack');
 
-	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
-
 	# Set options from request parameters.
 	$c->{redisplay}      = $c->param('redisplay');
 	$c->{submitAnswers}  = $c->param('submitAnswers') || 0;
@@ -1484,7 +1482,6 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 		$set->psvn,
 		$formFields,
 		{
-			displayMode        => $c->{displayMode},
 			showHints          => $c->{will}{showHints},
 			showSolutions      => $c->{will}{showSolutions},
 			processAnswers     => 1,

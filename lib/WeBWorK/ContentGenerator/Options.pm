@@ -144,16 +144,16 @@ sub initialize ($c) {
 
 	if ($changeOptions && $authz->hasPermissions($userID, 'change_pg_display_settings')) {
 		if (
-			(defined($c->param('displayMode')) && $c->{effectiveUser}->displayMode() ne $c->param('displayMode'))
-			|| (defined($c->param('showOldAnswers'))
-				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers'))
+			(
+				defined($c->param('showOldAnswers'))
+				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers')
+			)
 			|| (defined($c->param('useMathQuill'))
 				&& $c->{effectiveUser}->useMathQuill() ne $c->param('useMathQuill'))
 			|| (defined($c->param('useMathView'))
 				&& $c->{effectiveUser}->useMathView() ne $c->param('useMathView'))
 			)
 		{
-			$c->{effectiveUser}->displayMode($c->param('displayMode'));
 			$c->{effectiveUser}->showOldAnswers($c->param('showOldAnswers'));
 			$c->{effectiveUser}->useMathQuill($c->param('useMathQuill'));
 			$c->{effectiveUser}->useMathView($c->param('useMathView'));

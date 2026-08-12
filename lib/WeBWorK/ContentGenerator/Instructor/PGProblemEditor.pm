@@ -146,7 +146,7 @@ sub pre_header_initialize ($c) {
 	# Determine displayMode and problemSeed that are needed for viewing the problem.
 	# They are also two of the parameters which can be set by the editor.
 	# Note that the problem seed may be overridden by the value obtained from the problem record later.
-	$c->{displayMode} = $c->param('displayMode') // $ce->{pg}{options}{displayMode};
+	$c->{displayMode} = $c->param('displayMode') // 'MathJax';
 	$c->{problemSeed} = (($c->param('problemSeed') // '') =~ s/^\s*|\s*$//gr) || DEFAULT_SEED();
 
 	# Insure that file_type is defined
@@ -745,7 +745,7 @@ sub fixProblemContents {
 
 sub view_handler ($c) {
 	my $problemSeed = $c->param('action.view.seed')        // DEFAULT_SEED();
-	my $displayMode = $c->param('action.view.displayMode') // $c->ce->{pg}{options}{displayMode};
+	my $displayMode = $c->param('action.view.displayMode') // 'MathJax';
 
 	# Grab the problemContents from the form in order to save it to the tmp file.
 	$c->{r_problemContents} = \(fixProblemContents($c->param('problemContents')));

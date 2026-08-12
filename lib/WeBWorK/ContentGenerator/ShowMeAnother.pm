@@ -186,7 +186,6 @@ async sub pre_header_initialize ($c) {
 		$c->{set}->psvn,
 		$c->{formFields},
 		{
-			displayMode              => $c->{displayMode},
 			showHints                => $c->{will}{showHints},
 			showSolutions            => $c->{will}{showSolutions},
 			processAnswers           => 1,

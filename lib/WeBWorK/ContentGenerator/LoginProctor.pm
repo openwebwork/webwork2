@@ -91,7 +91,7 @@ async sub initialize ($c) {
 		),
 		$set->psvn,
 		{},
-		{ displayMode => $c->param('displayMode') || $ce->{pg}{options}{displayMode} }
+		{}
 	);
 
 	return;

@@ -88,8 +88,6 @@ async sub initialize ($c) {
 		}
 	}
 
-	$c->{displayMode} = $user->displayMode || $ce->{pg}{options}{displayMode};
-
 	# Import problem records for assignments or test version records for tests now. Then initialize all
 	# achievement item data to have access to the updated records if an achievement item was used.
 	if ($c->{set}->assignment_type =~ /gateway/) {
@@ -124,9 +122,6 @@ async sub initialize ($c) {
 		? $ce->{webworkFiles}{screenSnippets}{setHeader}
 		: $c->{set}->set_header;
 
-	# Note this may be different than the display mode above when previewing a temporary set header file.
-	my $displayMode = $c->param('displayMode') || $ce->{pg}{options}{displayMode};
-
 	if ($authz->hasPermissions($userID, 'modify_problem_sets')) {
 		if (defined $c->param('editMode') && $c->param('editMode') eq 'temporaryFile') {
 			$screenSetHeader = $c->param('sourceFilePath');
@@ -150,7 +145,7 @@ async sub initialize ($c) {
 	);
 
 	$c->{pg} =
-		await renderPG($c, $effectiveUser, $c->{set}, $problem, $c->{set}->psvn, {}, { displayMode => $displayMode });
+		await renderPG($c, $effectiveUser, $c->{set}, $problem, $c->{set}->psvn, {}, {});
 	$c->{pg} = '' unless $c->{pg}{body_text} =~ /\S/;
 
 	return;

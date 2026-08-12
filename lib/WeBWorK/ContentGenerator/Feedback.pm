@@ -21,7 +21,6 @@ use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients format
 # route
 # set (if from ProblemSet or Problem)
 # problem (if from Problem)
-# displayMode (if from Problem)
 # showOldAnswers (if from Problem)
 # showCorrectAnswers (if from Problem)
 # showHints (if from Problem)

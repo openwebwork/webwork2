@@ -155,7 +155,6 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% [ maketext('Display Mode'),         param('displayMode') ],
 						% [ maketext('Show Old Answers'),     param('showOldAnswers')     ? $yes : $no ],
 						% [ maketext('Show Correct Answers'), param('showCorrectAnswers') ? $yes : $no ],
 						% [ maketext('Show Hints'),           param('showHints')          ? $yes : $no ],

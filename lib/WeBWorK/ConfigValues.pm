@@ -690,34 +690,6 @@ sub getConfigValues ($ce) {
 		[
 			x('Problem Display/Answer Checking'),
 			{
-				# FIXME: Perhaps the pg{displayModes} and pg{options}{displayMode} options should just be deleted. The
-				# only real display mode is MathJax.  Why would anyone ever choose plainText?
-				var  => 'pg{displayModes}',
-				doc  => x('List of display modes made available to students'),
-				doc2 => x(
-					'<p>When viewing a problem, users may choose different methods of rendering formulas via an '
-						. 'options box in the left panel. Here, you can adjust what display modes are listed.</p>'
-						. '<p>The display modes are</p><ul><li>plainText: shows the raw LaTeX strings for formulas.'
-						. '</li><li>MathJax: uses javascript to render mathematics.</li></ul><p>You must use at least '
-						. 'one display mode. If you select only one, then the options box will not give a choice of '
-						. 'modes (since there will only be one active).</p>'
-				),
-				min    => 1,
-				values => [ 'MathJax', 'plainText' ],
-				type   => 'checkboxlist'
-			},
-			{
-				var  => 'pg{options}{displayMode}',
-				doc  => x('The default display mode'),
-				doc2 => x(
-					'Enter one of the allowed display mode types above. See the help for the '
-						. '"List of display modes made available to students" options for descriptions.'
-				),
-				min    => 1,
-				values => [qw(MathJax plainText)],
-				type   => 'popuplist'
-			},
-			{
 				var  => 'pg{specialPGEnvironmentVars}{entryAssist}',
 				doc  => x('Assist with the student answer entry process.'),
 				doc2 => x(

@@ -75,7 +75,6 @@
 	route              => current_route,
 	set                => '',
 	problem            => '',
-	displayMode        => '',
 	showOldAnswers     => '',
 	showCorrectAnswers => '',
 	showHints          => '',

@@ -148,28 +148,6 @@
 		<h2><%= maketext('Display Settings') %></h2>
 		%
 		% my $display_settings_block = begin
-			% my $curr_displayMode = $c->{effectiveUser}->displayMode || $ce->{pg}{options}{displayMode};
-			% my %display_modes    = %{ WeBWorK::PG::DISPLAY_MODES() };
-			% my @active_modes     = grep { exists $display_modes{$_} } @{ $ce->{pg}{displayModes} };
-			%
-			% if (@active_modes > 1) {
-				<div class="mb-3">
-					<fieldset>
-						<legend class="lead"><%= maketext('View equations as') . ':' =%></legend>
-						% for (@active_modes) {
-							<div class="form-check form-check-inline">
-								<%= radio_button
-									displayMode => $_,
-									id          => "displayMode-$_",
-									class       => 'form-check-input',
-									$_ eq $curr_displayMode ? (checked => undef) : () =%>
-								<%= label_for "displayMode-$_" => $_, class => 'form-check-label' =%>
-							</div>
-						% }
-					</fieldset>
-				</div>
-			%}
-			%
 			% if ($authz->hasPermissions($userID, 'can_show_old_answers')) {
 				% my $curr_showOldAnswers =
 					% $c->{effectiveUser}->showOldAnswers ne ''
