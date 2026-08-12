@@ -60,7 +60,6 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{setOpen}              = time > $set->open_date;
 	$options{pastDue}              = time > $set->due_date;
 	$options{answersAvailable}     = time > $set->answer_date;
-	$options{refreshMath2img}      = $translationOptions->{refreshMath2img};
 	$options{feedback_button_name} = $ce->{feedback_button_name};
 
 	# Default values for evaluating answers

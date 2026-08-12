@@ -140,7 +140,6 @@ async sub initialize ($c) {
 								processAnswers           => 1,
 								showHints                => 0,
 								showSolutions            => 0,
-								refreshMath2img          => 0,
 								permissionLevel          => 0,
 								effectivePermissionLevel => 0,
 							},

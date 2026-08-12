@@ -217,7 +217,6 @@ async sub renderProblem {
 		displayMode              => $rh->{displayMode} // 'MathJax',
 		showHints                => $rh->{showHints},
 		showSolutions            => $rh->{showSolutions},
-		refreshMath2img          => $rh->{showHints} || $rh->{showSolutions},
 		processAnswers           => $rh->{processAnswers} // 1,
 		catchWarnings            => 1,
 		r_source                 => $r_problem_source,

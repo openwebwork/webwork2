@@ -1487,7 +1487,6 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 			displayMode        => $c->{displayMode},
 			showHints          => $c->{will}{showHints},
 			showSolutions      => $c->{will}{showSolutions},
-			refreshMath2img    => $c->{will}{showHints} || $c->{will}{showSolutions},
 			processAnswers     => 1,
 			QUIZ_PREFIX        => 'Q' . sprintf('%04d', $mergedProblem->problem_id) . '_',
 			useMathQuill       => $c->{will}{useMathQuill},

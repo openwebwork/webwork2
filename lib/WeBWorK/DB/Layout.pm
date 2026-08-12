@@ -87,11 +87,6 @@ sub databaseLayout ($courseName) {
 			schema => "WeBWorK::DB::Schema::NewSQL::Std",
 			params => { non_native => 1 },
 		},
-		depths => {
-			record => "WeBWorK::DB::Record::Depths",
-			schema => "WeBWorK::DB::Schema::NewSQL::Std",
-			params => { non_native => 1 },
-		},
 		lti_launch_data => {
 			record => "WeBWorK::DB::Record::LTILaunchData",
 			schema => "WeBWorK::DB::Schema::NewSQL::Std",
@@ -201,7 +196,6 @@ sub databaseLayout ($courseName) {
 			schema => "WeBWorK::DB::Schema::NewSQL::Std",
 			params => { tableOverride => "${courseName}_past_answer" },
 		},
-
 		achievement_user => {
 			record => "WeBWorK::DB::Record::UserAchievement",
 			schema => "WeBWorK::DB::Schema::NewSQL::Std",

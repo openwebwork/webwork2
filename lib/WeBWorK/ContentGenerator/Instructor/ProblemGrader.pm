@@ -185,7 +185,6 @@ async sub initialize ($c) {
 			displayMode              => $user->displayMode || $c->ce->{pg}{options}{displayMode},
 			showHints                => 0,
 			showSolutions            => 0,
-			refreshMath2img          => 0,
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,

@@ -559,7 +559,6 @@ async sub pre_header_initialize ($c) {
 			showHints                => $will{showHints},
 			showSolutions            => $will{showSolutions},
 			showResourceInfo         => $will{showResourceInfo},
-			refreshMath2img          => $will{showHints} || $will{showSolutions},
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserID)->permission,

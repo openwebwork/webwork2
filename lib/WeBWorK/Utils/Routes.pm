@@ -45,7 +45,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  grades                              /$courseID/grades
  achievements                        /$courseID/achievements
  achievements_leaderboard            /$courseID/achievements/leaderboard
- equation_display                    /$courseID/equation
  feedback                            /$courseID/feedback
  gateway_quiz                        /$courseID/test_mode/$setID
 
@@ -285,7 +284,6 @@ my %routeParameters = (
 	set_list => {
 		title    => '[_4]',
 		children => [ qw(
-			equation_display
 			feedback
 			gateway_quiz
 			proctored_gateway_quiz
@@ -342,11 +340,6 @@ my %routeParameters = (
 		module       => 'AchievementsLeaderboard',
 		path         => '/leaderboard',
 		unrestricted => 1
-	},
-	equation_display => {
-		title  => x('Equation Display'),
-		module => 'EquationDisplay',
-		path   => '/equation'
 	},
 	feedback => {
 		title        => x('Feedback'),

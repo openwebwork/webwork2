@@ -19,7 +19,7 @@ latin1 to utf8mb4.
                               be the defaults for webwork.  This pass is not run
                               by default.
     -n|--upgrade-non-native   Upgrade the non-native tables
-                              (locations, location_addresses, depths)
+                              (locations, location_addresses, etc.)
     --no-backup               Do not backup the database before making changes
                               to the database. (Not recommended)
     -b|--backup-file [file]   Filename for the database backup file.
