@@ -40,7 +40,7 @@ sub pre_header_initialize ($c) {
 
 	$c->{sourceFilePath} =
 		$c->ce->{courseDirs}{achievement_notifications} . '/'
-		. ($c->{achievement}->email_template || 'default.html.ep');
+		. ($c->{achievement}->email_template || 'default.txt.epl');
 
 	my $actionID = $c->param('action');
 
@@ -185,8 +185,8 @@ sub save_as_handler ($c) {
 	$c->addbadmessage($c->maketext('Achievement notification contents is empty.'))
 		unless $c->stash->{achievementNotification};
 
-	# Rescue the user in case they forgot to end the file name with .html.ep
-	$new_file_name =~ s/(\.html)?(\.ep)?$/.html.ep/;
+	# Rescue the user in case they forgot to end the file name with .txt.epl
+	$new_file_name =~ s/(\.html|\.txt)?(\.epl?)?$/.txt.epl/;
 
 	# Construct the output file path.
 	my $outputFilePath = $c->ce->{courseDirs}{achievement_notifications} . '/' . $new_file_name;

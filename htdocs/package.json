@@ -5,8 +5,8 @@
 	"scripts": {
 		"generate-assets": "node generate-assets",
 		"prepare": "npm run generate-assets",
-		"prettier-format": "prettier --ignore-path=../.gitignore --write \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\" \"../templates/**/*.html.ep\"",
-		"prettier-check": "prettier --ignore-path=../.gitignore --check \"**/*.{js,css,scss,html}\" \"../**/*.dist.yml\" \"../templates/**/*.html.ep\""
+		"prettier-format": "prettier --ignore-path=../.gitignore --ignore-path=../.prettierignore --write \"..\"",
+		"prettier-check": "prettier --ignore-path=../.gitignore --ignore-path=../.prettierignore --check \"..\""
 	},
 	"repository": {
 		"type": "git",
@@ -52,10 +52,5 @@
 	"allowScripts": {
 		"@parcel/watcher": false,
 		"iframe-resizer": false
-	},
-	"overrides": {
-		"@awmottaz/prettier-plugin-void-html": {
-			"prettier": "^3.9.5"
-		}
 	}
 }

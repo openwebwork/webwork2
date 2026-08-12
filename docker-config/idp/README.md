@@ -19,7 +19,7 @@ Without the docker build a few changes are needed.
   `'http://localhost:3000/webwork2/saml2'`.
 - In the `$saml2{sp}{org}` hash change the `url` to `'https://localhost:3000/'`.
 
-The above settings assume you will use `morbo` with the default port.  Change
+The above settings assume you will use `morbo` with the default port. Change
 the port as needed.
 
 ## Development IdP test instance with docker
@@ -47,7 +47,7 @@ Effective development is not done with docker. So it is usually more useful to
 set up an identity provider without docker. The following instructions are for
 Ubuntu 24.04, but could be adapted for other operating systems.
 
-A web server and php are needed to serve the SimpleSAMLphp files.  Install these
+A web server and php are needed to serve the SimpleSAMLphp files. Install these
 and other dependencies with:
 
 ```bash
@@ -117,13 +117,13 @@ port, so change the port if necessary.
 Restart (or start) apache2 with `sudo systemctl restart apache2`.
 
 The SimpleSAMLphp identity provider needs to fetch webwork2's service provider
-metadata.  For this execute
+metadata. For this execute
 
 ```bash
 curl -f http://localhost/simplesaml/module.php/cron/run/metarefresh/webwork2
 ```
 
-That is done automatically with the docker build.  The command usually only
+That is done automatically with the docker build. The command usually only
 needs to be done once, but may need to be run again if settings are changed.
 
 ## Identity provider administration

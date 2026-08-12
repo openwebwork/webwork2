@@ -76,7 +76,7 @@ WeBWorK.
 
 Every PG problem is a small program written by an instructor or author, not by
 the WeBWorK/PG development team. The PG rendering engine provides substantial
-accessibility *tools*, but whether an individual problem is accessible depends
+accessibility _tools_, but whether an individual problem is accessible depends
 heavily on whether its author used them, and used them correctly.
 
 A problem file might be:
@@ -179,4 +179,3 @@ issue.
   section 3 of this guide. And if you improve the accessibility of the
   problem, contact your WeBWorK administrator to ask how you could contirubute
   the improvement upstream.
-

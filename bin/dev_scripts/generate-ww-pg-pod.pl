@@ -116,8 +116,10 @@ sub process_dir {
 sub write_index {
 	my $fh = shift;
 
-	print $fh Mojo::Template->new(vars => 1)->render_file("$webwork_root/bin/dev_scripts/pod-templates/main-index.mt",
-		{ base_url => $base_url, webwork_root => $webwork_root, pg_root => $pg_root });
+	print $fh Mojo::Template->new(vars => 1)->render_file(
+		"$webwork_root/bin/dev_scripts/pod-templates/main-index.html.epl",
+		{ base_url => $base_url, webwork_root => $webwork_root, pg_root => $pg_root }
+	);
 
 	return;
 }
