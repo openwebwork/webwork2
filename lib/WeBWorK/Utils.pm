@@ -356,7 +356,7 @@ sub generateURLs ($c, %params) {
 		if (defined $params{set_id} && $params{set_id} ne '') {
 			if ($params{problem_id}) {
 				$routePath = $c->url_for('problem_detail', setID => $params{set_id}, problemID => $params{problem_id});
-				for my $name ('displayMode', 'showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
+				for my $name ('showCorrectAnswers', 'showHints', 'showOldAnswers', 'showSolutions') {
 					$args{$name} = [ $c->param($name) ] if defined $c->param($name) && $c->param($name) ne '';
 				}
 			} else {

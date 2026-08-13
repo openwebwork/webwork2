@@ -89,14 +89,6 @@
 				id    => 'student_selector',
 				class => 'form-select' =%>
 		</div>
-		<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
-			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-			<%= select_field
-				'problem_displaymode' =>
-				[ grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} } ],
-				id    => 'problem_displaymode',
-				class => 'form-select' =%>
-		</div>
 	</div>
 </div>
 %

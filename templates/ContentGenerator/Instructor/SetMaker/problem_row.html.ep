@@ -311,10 +311,6 @@
 						editMode       => 'SetMaker',
 						problemSeed    => $c->{problem_seed},
 						sourceFilePath => $sourceFileName,
-						displayMode    =>
-							(!defined param('problem_displaymode') || param('problem_displaymode') eq 'None')
-						? $ce->{pg}{options}{displayMode}
-						: param('problem_displaymode'),
 					}
 					),
 					id     => "tryit$cnt",

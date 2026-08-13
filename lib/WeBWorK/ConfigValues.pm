@@ -690,31 +690,6 @@ sub getConfigValues ($ce) {
 		[
 			x('Problem Display/Answer Checking'),
 			{
-				var  => 'pg{displayModes}',
-				doc  => x('List of display modes made available to students'),
-				doc2 => x(
-					'<p>When viewing a problem, users may choose different methods of rendering formulas via an '
-						. 'options box in the left panel. Here, you can adjust what display modes are listed.</p>'
-						. '<p>The display modes are</p><ul><li>plainText: shows the raw LaTeX strings for formulas.'
-						. '</li><li>images: produces images using the external programs LaTeX and dvipng.</li>'
-						. '<li>MathJax: uses javascript to render mathematics.</li></ul><p>You must use at least '
-						. 'one display mode. If you select only one, then the options box will not give a choice of '
-						. 'modes (since there will only be one active).</p>'
-				),
-				min    => 1,
-				values => [ 'MathJax', 'images', 'plainText' ],
-				type   => 'checkboxlist'
-			},
-			{
-				var  => 'pg{options}{displayMode}',
-				doc  => x('The default display mode'),
-				doc2 => x(
-					'Enter one of the allowed display mode types above. See \'display modes entry\' for descriptions.'),
-				min    => 1,
-				values => [qw(MathJax images plainText)],
-				type   => 'popuplist'
-			},
-			{
 				var  => 'pg{specialPGEnvironmentVars}{entryAssist}',
 				doc  => x('Assist with the student answer entry process.'),
 				doc2 => x(

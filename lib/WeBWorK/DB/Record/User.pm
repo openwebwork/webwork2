@@ -22,7 +22,6 @@ BEGIN {
 		section                   => { type => "TEXT" },
 		recitation                => { type => "TEXT" },
 		comment                   => { type => "TEXT" },
-		displayMode               => { type => "TEXT" },
 		showOldAnswers            => { type => "INT" },
 		useMathView               => { type => "INT" },
 		useMathQuill              => { type => "INT" },

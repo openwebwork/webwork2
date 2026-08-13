@@ -4,8 +4,6 @@
 
 	if (!webworkConfig.renderProblem) return;
 
-	const displayModeSelector = document.getElementById('problem_displaymode');
-
 	const render = () => {
 		webworkConfig.renderProblem('problem_render_area', {
 			set_id: document.getElementById('hidden_set_id')?.value,
@@ -16,7 +14,4 @@
 
 	// Render the problem on page load.
 	render();
-
-	// Re-render when a new display mode is selected.
-	displayModeSelector?.addEventListener('change', render);
 })();

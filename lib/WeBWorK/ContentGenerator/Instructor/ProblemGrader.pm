@@ -171,7 +171,7 @@ async sub initialize ($c) {
 	# These should always be defined except for some odd edge cases.
 	return unless $set && $problem;
 
-	# Get the current user for the displayMode.
+	# Get the current user.
 	my $user = $db->getUser($userID);
 
 	# Render the problem text.
@@ -182,10 +182,8 @@ async sub initialize ($c) {
 		$set->psvn,
 		{},
 		{
-			displayMode              => $user->displayMode || $c->ce->{pg}{options}{displayMode},
 			showHints                => 0,
 			showSolutions            => 0,
-			refreshMath2img          => 0,
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,

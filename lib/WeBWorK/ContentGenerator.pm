@@ -512,10 +512,7 @@ sub links ($c) {
 	}
 
 	# System link parameters that are common to all links (except the Courses link).
-	my %systemlink_params = (
-		$c->param('displayMode')    ? (displayMode    => $c->param('displayMode'))    : (),
-		$c->param('showOldAnswers') ? (showOldAnswers => $c->param('showOldAnswers')) : ()
-	);
+	my %systemlink_params = ($c->param('showOldAnswers') ? (showOldAnswers => $c->param('showOldAnswers')) : ());
 
 	my $current_url = $c->url_for;
 

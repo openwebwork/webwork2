@@ -44,8 +44,6 @@ use WeBWorK::HTML::StudentNav qw(studentNav);
 #
 # Rendering options:
 #
-#     displayMode - name of display mode to use
-#
 #     showOldAnswers - request that last entered answer be shown (if allowed)
 #     showCorrectAnswers - request that correct answers be shown (if allowed)
 #     showHints - request that hints be shown (if allowed)
@@ -384,8 +382,7 @@ async sub pre_header_initialize ($c) {
 	# Form processing
 
 	# Set options from form fields (see comment at top of file for form fields).
-	my $displayMode = $c->param('displayMode') || $user->displayMode || $ce->{pg}->{options}->{displayMode};
-	my $redisplay   = $c->param('redisplay');
+	my $redisplay = $c->param('redisplay');
 	$c->{submitAnswers} = $c->param('submitAnswers');
 	my $checkAnswers   = $c->param('checkAnswers');
 	my $previewAnswers = $c->param('previewAnswers');
@@ -410,7 +407,6 @@ async sub pre_header_initialize ($c) {
 		delete $formFields->{submitAnswers};
 	}
 
-	$c->{displayMode}    = $displayMode;
 	$c->{redisplay}      = $redisplay;
 	$c->{checkAnswers}   = $checkAnswers;
 	$c->{previewAnswers} = $previewAnswers;
@@ -555,11 +551,9 @@ async sub pre_header_initialize ($c) {
 			&& !$problem->{prCount}
 			&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers || $showOnlyCorrectAnswers) ? {} : $formFields,
 		{
-			displayMode              => $displayMode,
 			showHints                => $will{showHints},
 			showSolutions            => $will{showSolutions},
 			showResourceInfo         => $will{showResourceInfo},
-			refreshMath2img          => $will{showHints} || $will{showSolutions},
 			processAnswers           => 1,
 			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserID)->permission,
@@ -835,7 +829,6 @@ sub nav ($c, $args) {
 	}
 
 	my %tail;
-	$tail{displayMode}      = $c->{displayMode}             if defined $c->{displayMode};
 	$tail{showOldAnswers}   = 1                             if $c->{will}{showOldAnswers};
 	$tail{studentNavFilter} = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
@@ -1244,9 +1237,7 @@ sub output_misc ($c) {
 	my $output = $c->c;
 
 	# Save state for viewOptions
-	push(@$output,
-		$c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}),
-		$c->hidden_field(displayMode    => $c->{displayMode}));
+	push(@$output, $c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}));
 
 	# Only allow file editing for users that have the permission to modify problem sets.
 	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')) {
@@ -1488,7 +1479,6 @@ sub output_email_instructor ($c) {
 			problem_id => $c->{problem}->problem_id
 		),
 		studentName        => $user->full_name,
-		displayMode        => $c->{displayMode},
 		showOldAnswers     => $c->{will}{showOldAnswers},
 		showCorrectAnswers => $c->{will}{showCorrectAnswers},
 		showHints          => $c->{will}{showHints},

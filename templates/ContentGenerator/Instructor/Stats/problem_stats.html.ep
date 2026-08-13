@@ -146,14 +146,6 @@
 	<%= hidden_field problemID => $problemID, id => 'hidden_problem_id' =%>
 	<%= hidden_field sourceFilePath => $c->{problemRecord}->source_file, id => 'hidden_source_file' =%>
 	<div class="btn-toolbar gap-3">
-		<div class="input-group pt-1">
-			<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-			<%= select_field
-				'problem_displaymode' =>
-				[ grep { exists WeBWorK::PG::DISPLAY_MODES()->{$_} } @{ $ce->{pg}{displayModes} } ],
-				id    => 'problem_displaymode',
-				class => 'form-select' =%>
-		</div>
 		<div class="btn-group pt-1">
 			<%= link_to maketext('Edit Problem') =>
 				$c->systemLink(url_for('instructor_problem_editor_withset_withproblem')),

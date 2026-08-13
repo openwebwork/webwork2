@@ -20,7 +20,6 @@ and course.conf files.
  });
 
  my $timeout = $courseEnv->{sessionTimeout};
- my $mode    = $courseEnv->{pg}->{options}->{displayMode};
  # etc...
 
 =head1 DESCRIPTION
