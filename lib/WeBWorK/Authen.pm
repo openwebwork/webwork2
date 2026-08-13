@@ -417,39 +417,36 @@ sub try_admin_cross_course_credentials {
 	return 0 if $@ || !$db_admin || ($ce_admin->{session_management_via} // '') ne 'session_cookie';
 
 	# Decode the admin course's session cookie
-	my $sessions        = $c->app->sessions;
-	my $adminCookieName = 'WeBWorKCourseSession.' . $ce->{admin_course_id};
-	my $cookieMethod    = $sessions->encrypted ? 'encrypted_cookie' : 'signed_cookie';
-	my $rawValue        = $c->$cookieMethod($adminCookieName);
+	my $sessions = $c->app->sessions;
+	my $rawValue = $c->signed_cookie('WeBWorKCourseSession.' . $ce->{admin_course_id});
 	return 0 unless $rawValue;
 	$rawValue =~ y/-/=/;
-	my $adminSession = eval { $sessions->deserialize->(b64_decode($rawValue)) };
-	return 0 unless $adminSession;
+	return 0 unless my $adminSession = $sessions->deserialize->(b64_decode($rawValue));
 
-	my $expiration = $adminSession->{expiration} // $sessions->default_expiration;
-	my $expires    = delete $adminSession->{expires};
-	return 0 if !$expires && $expiration || defined $expires && $expires <= time;
+	return 0
+		if !$adminSession->{expires} && ($adminSession->{expiration} // $sessions->default_expiration)
+		|| defined $adminSession->{expires} && $adminSession->{expires} <= time;
 
 	my ($adminUserID, $adminKey, $adminTimestamp) = @{$adminSession}{qw(user_id key timestamp)};
 	return 0 unless $adminUserID && $adminKey;
 
 	# Confirm the admin session is still valid
-	my $AdminKey = $db_admin->getKey($adminUserID);
+	my $adminKeyRecord = $db_admin->getKey($adminUserID);
 	return 0
-		unless defined $AdminKey
-		&& $AdminKey->key eq $adminKey
-		&& time <= ($adminTimestamp // $AdminKey->timestamp) + $ce_admin->{sessionTimeout};
+		unless defined $adminKeyRecord
+		&& $adminKeyRecord->key eq $adminKey
+		&& time <= ($adminTimestamp // $adminKeyRecord->timestamp) + $ce_admin->{sessionTimeout};
 
 	return 0 unless _admin_course_has_create_delete_permission($ce_admin, $db_admin, $adminUserID);
 
-	my $AdminPassword = $db_admin->getPassword($adminUserID);
-	return 0 unless defined $AdminPassword && $AdminPassword->password =~ /\S/;
+	my $adminPasswordRecord = $db_admin->getPassword($adminUserID);
+	return 0 unless defined $adminPasswordRecord && $adminPasswordRecord->password =~ /\S/;
 
 	$self->{user_id}                     = $adminUserID;
-	$self->{admin_cross_course_password} = $AdminPassword->password;
+	$self->{admin_cross_course_password} = $adminPasswordRecord->password;
 	$self->{login_type}                  = 'normal';
 	$self->{credential_source}           = 'admin_cross_course';
-	debug('credential source: "admin_cross_course", user: "', $self->{user_id}, '"');
+	debug(qq{credential source: "admin_cross_course", user: "$self->{user_id}"});
 	return 1;
 }
 
@@ -463,10 +460,10 @@ sub _admin_course_has_create_delete_permission {
 	return 0 unless defined $activity_role && exists $ce_admin->{userRoles}{$activity_role};
 	my $role_permlevel = $ce_admin->{userRoles}{$activity_role};
 
-	my $PermissionLevel = $db_admin->getPermissionLevel($user);
-	return 0 unless defined $PermissionLevel && defined $PermissionLevel->permission;
+	my $permissionLevel = $db_admin->getPermissionLevel($user);
+	return 0 unless defined $permissionLevel && $permissionLevel->permission ne '';
 
-	return $PermissionLevel->permission >= $role_permlevel;
+	return $permissionLevel->permission >= $role_permlevel;
 }
 
 sub check_user {
@@ -694,21 +691,18 @@ sub verify_admin_cross_course_user {
 	my $self = shift;
 	my $c    = $self->{c};
 
-	my $user_id = $self->{user_id};
-
-	my $coursePassword = $c->db->getPassword($user_id);
+	my $coursePassword = $c->db->getPassword($self->{user_id});
 	unless (defined $coursePassword
 		&& $coursePassword->password =~ /\S/
 		&& $coursePassword->password eq $self->{admin_cross_course_password})
 	{
 		$self->{log_error} = 'admin cross-course login: no matching password for this user in this course';
-		$self->{error}     = $c->maketext(GENERIC_ERROR_MESSAGE);
 		return 0;
 	}
 
 	return 0 unless $self->validate_user;
 
-	$self->{session_key}   = $self->create_session($user_id);
+	$self->{session_key}   = $self->create_session($self->{user_id});
 	$self->{initial_login} = 1;
 	return 1;
 }
