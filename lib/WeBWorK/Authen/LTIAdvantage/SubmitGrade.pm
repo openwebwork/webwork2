@@ -22,7 +22,7 @@ use Math::Random::Secure qw(irand);
 use Digest::SHA          qw(sha256_hex);
 use Time::HiRes;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug                      qw(debug);
 use WeBWorK::Utils                      qw(wwRound);
 use WeBWorK::Utils::Sets                qw(grade_all_sets);
 use WeBWorK::Authen::LTI::GradePassback qw(getSetPassbackScore);
