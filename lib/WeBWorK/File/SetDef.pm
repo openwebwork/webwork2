@@ -9,7 +9,7 @@ WeBWorK::File::SetDef - utilities for dealing with set definition files.
 
 use Carp;
 
-use WeBWorK::Debug;
+use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils             qw(x);
 use WeBWorK::Utils::DateTime   qw(formatDateTime getDefaultSetDueDate parseDateTime timeToSec);
 use WeBWorK::Utils::Files      qw(surePathToFile);
