@@ -661,7 +661,11 @@
 								</div>
 							</div>
 							<div class="row">
-								<div class="col-12 col-lg-8">
+								<div
+									class="col-12<%=
+										@editForUser ? ' col-lg-7 col-xxl-6' : ' col-lg-6 col-xl-5 col-xxl-4'
+									%>"
+								>
 									<%= $c->fieldTable(
 										$userToShow, $setID, $problemID,
 										$globalProblems->{$problemID},
@@ -669,7 +673,11 @@
 										$setRecord->assignment_type
 									) =%>
 								</div>
-								<div class="font-sm col-lg-4">
+								<div
+									class="font-sm col-12<%=
+										@editForUser ? ' col-lg-5 col-xxl-6' : ' col-lg-6 col-xl-7 col-xxl-8'
+									%>"
+								>
 									<div class="pdr_repeat_file_alert"></div>
 									<div class="rpc_render_area" id="psr_render_area_<%= $problemID %>">\
 										<% if ($error) { =%>\
