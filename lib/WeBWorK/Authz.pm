@@ -434,6 +434,18 @@ sub checkSet {
 		return $c->maketext("Requested set '[_1]' is not available yet.", $setName);
 	}
 
+	if (!$self->hasPermissions($userName, 'navigation_allowed') && ($c->authen->session->{set_id} // '') ne $setName) {
+		$c->{viewSetCheck} = 'restricted';
+		if ($ce->{LTI}) {
+			# Note that this content is HTML escaped in the template, and so this may not contain the link to
+			# $ce->{LTI}{ $ce->{LTIVersion} }{LMS_url} as is done with similar such messages for this.
+			return $c->maketext('You must access this assignment from your Course Management System ([_1]).',
+				$ce->{LTI}{ $ce->{LTIVersion} }{LMS_name});
+		} else {
+			return $c->maketext('You do not have permission to access this set.');
+		}
+	}
+
 	# Check to see if conditional release conditions have been met.
 	my $conditional_msg = restricted_set_message($c, $set, 'conditional');
 	if ($conditional_msg) {
