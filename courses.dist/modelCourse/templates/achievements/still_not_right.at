@@ -6,6 +6,7 @@
 
 # Initialize $localData.
 $localData->{incorrect_streak} //= 0;
+$localData->{set_id}           //= '';
 
 # If the problem is correct, reset counter and move on.
 if ($problem->status == 1) {
