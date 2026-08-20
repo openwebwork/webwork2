@@ -3,9 +3,9 @@
 #
 # See [templates]/achievements/achievement_readme.txt for details.
 
-# If the set id doest equal the id of the last set then set
+# If the set id doesn't equal the id of the last set then set
 # *this* set as the last set, and set the start time.
-if ($problem->set_id ne $localData->{last_set}) {
+if (!$localData->{last_set} || $problem->set_id ne $localData->{last_set}) {
 	$localData->{last_set}   = $problem->set_id;
 	$localData->{start_time} = time;
 	return 0;
