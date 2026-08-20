@@ -761,7 +761,7 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 		);
 	}
 
-	unshift @$rows, $c->tag('col') x 2, $c->tag('col', class => 'w-75'), $forOneUser ? $c->tag('col') : '';
+	unshift @$rows, $c->tag('col') x ($forOneUser ? 4 : 3);
 
 	return $c->tag(
 		'table',
