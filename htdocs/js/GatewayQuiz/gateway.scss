@@ -2,15 +2,15 @@
 
 #gwTimerContainer {
 	position: sticky;
-	width: 15em;
+	width: 18em;
 	top: 2.75rem;
-	left: calc(100% - 15em - 0.75rem);
+	left: calc(100% - 18em - 0.75rem);
 	right: 0.75rem;
 	z-index: 31;
 }
 
-#gwTimer {
-	text-align: center;
+#gwAnnounceTimeBtn {
+	padding: 1px 2px;
 }
 
 .gwAlert {
