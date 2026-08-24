@@ -18,7 +18,7 @@
 			data-bs-toggle="popover"
 			role="button"
 		>
-			<i aria-hidden="true" class="fas fa-question-circle"></i>
+			<i aria-hidden="true" class="fa-solid fa-question-circle"></i>
 			<span class="visually-hidden"><%= maketext('Perltidy Help') %></span>
 		</a>
 	</div>
@@ -42,7 +42,7 @@
 				data-bs-toggle="popover"
 				role="button"
 			>
-				<i aria-hidden="true" class="fas fa-question-circle"></i>
+				<i aria-hidden="true" class="fa-solid fa-question-circle"></i>
 				<span class="visually-hidden"><%= maketext('PGML Conversion Help') %></span>
 			</a>
 		</div>
@@ -63,7 +63,7 @@
 				data-bs-toggle="popover"
 				role="button"
 			>
-				<i aria-hidden="true" class="fas fa-question-circle"></i>
+				<i aria-hidden="true" class="fa-solid fa-question-circle"></i>
 				<span class="visually-hidden"><%= maketext('PG Critic Help') %></span>
 			</a>
 		</div>

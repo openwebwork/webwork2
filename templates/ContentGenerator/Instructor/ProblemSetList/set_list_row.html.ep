@@ -64,7 +64,7 @@
 							bs_title     => maketext('Edit Set Data')
 						},
 						begin =%>
-						<i class="fas fa-pencil-alt" aria-hidden="true"></i>
+						<i class="fa-solid fa-pencil-alt" aria-hidden="true"></i>
 					<% end =%>
 				% }
 			</div>

@@ -268,7 +268,7 @@
 													bs_placement => 'top'
 												},
 												begin =%>
-												<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+												<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
 												<span class="visually-hidden"><%= maketext('Edit') =%></span>
 											<% end =%>
 											<%= link_to $c->systemLink(url_for(
@@ -286,7 +286,7 @@
 													bs_title     => maketext('Open in New Window')
 												},
 												begin =%>
-												<i class="icon far fa-eye" aria-hidden="true"></i>
+												<i class="icon fa-regular fa-eye" aria-hidden="true"></i>
 												<span class="visually-hidden"><%= maketext('View') =%></span>
 											<% end =%>
 										</td>
@@ -441,7 +441,7 @@
 							aria-expanded="false"
 							type="button"
 						>
-							<i class="fas fa-chevron-right" data-bs-toggle="tooltip"></i>
+							<i class="fa-solid fa-chevron-right" data-bs-toggle="tooltip"></i>
 						</button>
 					% end
 					% $collapseButton = $button->();
@@ -466,7 +466,9 @@
 									<span class="pdr_problem_number"><%= $problemNumber %></span>
 									% if (!@editForUser && !$problemsLocked) {
 										<i
-											class="<%= $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v' %>"
+											class="<%=
+												$isJitarSet ? 'fa-solid fa-arrows-alt' : 'fa-solid fa-arrows-alt-v'
+											%>"
 											data-bs-title="<%= maketext('Move') %>"
 											data-bs-toggle="tooltip"
 										>
@@ -489,7 +491,7 @@
 													data-bs-title="<%= maketext('Move problem up') %>"
 													data-bs-toggle="tooltip"
 												>
-													<i class="fas fa-chevron-up" aria-hidden="true"></i>
+													<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
 												</button>
 												<button
 													type="button"
@@ -499,7 +501,7 @@
 													data-bs-title="<%= maketext('Move problem down') %>"
 													data-bs-toggle="tooltip"
 												>
-													<i class="fas fa-chevron-down" aria-hidden="true"></i>
+													<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
 												</button>
 											</div>
 											% if ($isJitarSet) {
@@ -516,7 +518,7 @@
 														data-bs-title="<%= maketext('De-nest problem') %>"
 														data-bs-toggle="tooltip"
 													>
-														<i class="fas fa-outdent" aria-hidden="true"></i>
+														<i class="fa-solid fa-outdent" aria-hidden="true"></i>
 													</button>
 													<button
 														type="button"
@@ -528,7 +530,7 @@
 														data-bs-title="<%= maketext('Nest problem') %>"
 														data-bs-toggle="tooltip"
 													>
-														<i class="fas fa-indent" aria-hidden="true"></i>
+														<i class="fa-solid fa-indent" aria-hidden="true"></i>
 													</button>
 												</div>
 											% }
@@ -557,7 +559,7 @@
 											data-bs-title="<%= maketext('Render Problem') %>"
 											type="button"
 										>
-											<i class="icon far fa-image" aria-hidden="true"></i>
+											<i class="icon fa-regular fa-image" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Render') %></span>
 										</button>
 										<%= link_to $c->systemLink(url_for(
@@ -574,7 +576,7 @@
 												bs_title     => maketext('Edit Problem')
 											},
 											begin =%>
-											<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+											<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Edit') =%></span>
 										<% end =%>
 										% my $problemLink;
@@ -640,7 +642,7 @@
 												bs_title     => maketext('Open in New Window')
 											},
 											begin =%>
-											<i class="icon far fa-eye" aria-hidden="true"></i>
+											<i class="icon fa-regular fa-eye" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('View') =%></span>
 										<% end =%>
 									% }
@@ -658,7 +660,7 @@
 												bs_title     => maketext("Grade Problem")
 											},
 											begin =%>
-											<i class="icon fas fa-edit" aria-hidden="true"></i>
+											<i class="icon fa-solid fa-edit" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Grade') =%></span>
 										<% end =%>
 									% }
