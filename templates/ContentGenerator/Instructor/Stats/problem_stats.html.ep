@@ -75,7 +75,7 @@
 						'Success index is the square of the average score divided by the average number of attempts.'
 					) %>"
 				>
-					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 				</a>
 			</th>
@@ -116,7 +116,7 @@
 			maketext('Success index is the square of the score divided by the number of attempts.')
 		=%>"
 	>
-		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+		<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
 % end

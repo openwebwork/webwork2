@@ -36,7 +36,7 @@
 				role     => 'button',
 				tabindex => 0,
 				begin =%>
-				<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+				<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 				<span class="visually-hidden"><%= maketext('Hardcopy Format Help') =%></span>
 			<% end =%>
 		<% end =%>

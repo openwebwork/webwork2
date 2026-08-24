@@ -274,7 +274,7 @@
 						role="button"
 						aria-label="rerandomize problem"
 					>
-						<i class="fas fa-random" aria-hidden="true"></i>
+						<i class="fa-solid fa-random" aria-hidden="true"></i>
 					</span>
 				% }
 				<%= link_to $c->systemLink(
@@ -297,7 +297,7 @@
 						bs_placement => 'top'
 					},
 					begin =%>
-					<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
+					<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Edit') =%></span>
 				<% end =%>
 				<%= link_to $c->systemLink(
@@ -322,7 +322,7 @@
 						bs_placement => 'top'
 					},
 					begin =%>
-					<i class="far fa-eye"></i>
+					<i class="fa-regular fa-eye"></i>
 				<% end =%>
 				<span
 					class="dont-show btn btn-sm btn-secondary"
@@ -334,7 +334,7 @@
 					role="button"
 					aria-label="hide this problem"
 				>
-					<i class="fas fa-times" aria-hidden="true"></i>
+					<i class="fa-solid fa-times" aria-hidden="true"></i>
 				</span>
 			</div>
 		</div>

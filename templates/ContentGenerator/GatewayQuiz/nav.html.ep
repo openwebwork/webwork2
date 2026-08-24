@@ -23,10 +23,10 @@
 						title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
 						class => 'btn btn-primary student-nav-button',
 						begin =%>
-						<i class="fas fa-chevron-left"></i>
+						<i class="fa-solid fa-chevron-left"></i>
 					<% end =%>
 				% } else {
-					<span class="btn btn-primary disabled"><i class="fas fa-chevron-left"></i></span>
+					<span class="btn btn-primary disabled"><i class="fa-solid fa-chevron-left"></i></span>
 				% }
 			% }
 			<div class="btn-group student-nav-selector">
@@ -77,10 +77,10 @@
 						title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
 						class => 'btn btn-primary student-nav-button',
 						begin =%>
-						<i class="fas fa-chevron-right"></i>
+						<i class="fa-solid fa-chevron-right"></i>
 					<% end =%>
 				% } else {
-					<span class="btn btn-primary disabled"><i class="fas fa-chevron-right"></i></span>
+					<span class="btn btn-primary disabled"><i class="fa-solid fa-chevron-right"></i></span>
 				% }
 			% }
 		</div>

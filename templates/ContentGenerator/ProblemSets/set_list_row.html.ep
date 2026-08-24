@@ -38,7 +38,7 @@
 					data-bs-title="<%= $set->description =%>"
 					data-fallback-placements="top bottom"
 				>
-					<i class="icon fas fa-circle-info" aria-hidden="true"></i>
+					<i class="icon fa-solid fa-circle-info" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Assignment Description') =%></span>
 				</a>
 			% }
@@ -56,7 +56,7 @@
 						data-fallback-placements="top bottom"
 						data-bs-title="<%= maketext('This date overrides the assignment date.') =%>"
 					>
-						<i class="icon fas fa-calendar-plus" aria-hidden="true"></i>
+						<i class="icon fa-solid fa-calendar-plus" aria-hidden="true"></i>
 						<span class="visually-hidden"><%= maketext('Date override alert') =%></span>
 					</a>
 				% }
@@ -88,7 +88,7 @@
 				class => 'hardcopy-link',
 				begin =%>
 				<i
-					class="hardcopy-tooltip far fa-arrow-alt-circle-down fa-lg"
+					class="hardcopy-tooltip fa-regular fa-arrow-alt-circle-down fa-lg"
 					aria-hidden="true"
 					title="<%= $hardcopyTitle =%>"
 					data-bs-toggle="tooltip"
