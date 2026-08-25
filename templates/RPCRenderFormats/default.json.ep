@@ -72,7 +72,7 @@
 	% },
 	%
 	% # Add the current score to the json output
-	% score => $ws->{inputs_ref}{WWsubmit} && $rh_result->{problem_result}
+	% score => $c->req->param('WWsubmit') && $rh_result->{problem_result}
 		% ? wwRound(0, $rh_result->{problem_result}{score} * 100)
 		% : 0,
 	%

@@ -55,7 +55,7 @@
 
 	const taxonomy = await response.json();
 
-	const webServiceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
+	const apiURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/api`;
 
 	const readFromTaxonomy = (category, values) => {
 		const subjectTaxonomy = taxonomy;
@@ -72,7 +72,7 @@
 		return []; // Should not get here
 	};
 
-	const createWebServiceObject = (command, values = {}) => {
+	const createWebServiceObject = (values = {}) => {
 		const authenParams = {};
 		const user = document.getElementsByName('user')[0];
 		if (user) authenParams.user = user.value;
@@ -80,7 +80,6 @@
 		if (sessionKey) authenParams.key = sessionKey.value;
 
 		return {
-			rpc_command: command,
 			library_name: 'Library',
 			command: 'searchLib',
 			courseID: document.getElementsByName('hidden_course_id')[0]?.value,
@@ -237,16 +236,16 @@
 		}
 
 		async getTags() {
-			const response = await fetch(webServiceURL, {
+			const response = await fetch(`${apiURL}/getProblemTags`, {
 				method: 'post',
 				mode: 'same-origin',
-				body: new URLSearchParams(createWebServiceObject('getProblemTags', { command: this.filePath }))
+				body: new URLSearchParams(createWebServiceObject({ command: this.filePath }))
 			}).catch((err) => `Error requesting problem tags: ${err.message ?? err}`);
 			if (typeof response === 'string') return showMessage(response);
 			if (!response.ok) return showMessage('Unable to obtain problem tags.');
 			const data = await response.json();
 			if (data.error) return showMessage(data.error);
-			this.tags = data.result_data;
+			this.tags = data;
 		}
 
 		update(category, values, clear = false) {
@@ -304,11 +303,11 @@
 		}
 
 		async savetags() {
-			const response = await fetch(webServiceURL, {
+			const response = await fetch(`${apiURL}/setProblemTags`, {
 				method: 'post',
 				mode: 'same-origin',
 				body: new URLSearchParams(
-					createWebServiceObject('setProblemTags', {
+					createWebServiceObject({
 						library_subject: this.subjectSelect.value,
 						library_chapter: this.chapterSelect.value,
 						library_section: this.sectionSelect.value,
@@ -322,7 +321,7 @@
 			if (!response.ok) return showMessage('Unable to save problem tags.');
 			const data = await response.json();
 			if (data.error) return showMessage(data.error);
-			showMessage(data.server_response, true);
+			showMessage(data.message, true);
 		}
 	}
 

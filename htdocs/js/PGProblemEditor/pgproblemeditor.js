@@ -124,7 +124,7 @@
 		bsToast.show();
 	};
 
-	const webserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
+	const apiURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/api`;
 
 	// Send a request to the server to save the temporary file for the currently edited file.
 	// This temporary file could be used for recovery, and is displayed if the page is reloaded.
@@ -136,7 +136,6 @@
 		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) request_object.key = sessionKey.value;
 
-		request_object.rpc_command = 'saveFile';
 		request_object.outputFilePath = document.getElementsByName('temp_file_path')[0]?.value ?? '';
 		request_object.fileContents =
 			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
@@ -151,11 +150,14 @@
 			revertRadio.checked = true;
 		}
 
-		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+		fetch(`${apiURL}/saveFile`, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
 			.then((response) => response.json())
 			.then((data) => {
-				showMessage(data.server_response, data.result_data);
-				if (data.result_data) {
+				if (data.error) {
+					showMessage(data.error);
+				} else {
+					showMessage(data.message, true);
+
 					// Add the temporary file coloring and change the current file to the saved file.
 					document.querySelectorAll('.set-file-info').forEach((nfo) => nfo.classList.add('temporaryFile'));
 					for (const currentFile of document.querySelectorAll('.current-file')) {
@@ -217,22 +219,24 @@
 		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) request_object.key = sessionKey.value;
 
-		request_object.rpc_command = 'tidyPGCode';
 		request_object.pgCode =
 			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
-		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+		fetch(`${apiURL}/tidyPGCode`, {
+			method: 'post',
+			mode: 'same-origin',
+			body: new URLSearchParams(request_object)
+		})
 			.then((response) => response.json())
 			.then((data) => {
 				if (data.error) throw new Error(data.error);
-				if (!data.result_data) throw new Error('An invalid response was received.');
-				if (data.result_data.status) {
-					if (data.result_data.errors) {
+				if (data.status) {
+					if (data.errors) {
 						renderArea.innerHTML =
 							'<div class="alert alert-danger p-1 m-2">' +
 							'<p class="fw-bold">PG perltidy errors:</p>' +
 							'<pre><code>' +
-							data.result_data.errors
+							data.errors
 								.replace(/^[\s\S]*Begin Error Output Stream\n\n/, '')
 								.replace(/\n\d*: To save a full \.LOG file rerun with -g/, '') +
 							'</code></pre>';
@@ -240,12 +244,12 @@
 					showMessage('Errors occurred perltidying code.', false);
 					return;
 				}
-				if (request_object.pgCode === data.result_data.tidiedPGCode) {
+				if (request_object.pgCode === data.tidiedPGCode) {
 					showMessage('There were no changes to the code.', true);
 					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
 				} else {
-					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.tidiedPGCode;
-					else document.getElementById('problemContents').value = data.result_data.tidiedPGCode;
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.tidiedPGCode;
+					else document.getElementById('problemContents').value = data.tidiedPGCode;
 					saveTempFile();
 					showMessage('Successfully perltidied code.', true);
 					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
@@ -263,30 +267,31 @@
 		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) request_object.key = sessionKey.value;
 
-		request_object.rpc_command = 'convertCodeToPGML';
 		request_object.pgCode =
 			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
-		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+		fetch(`${apiURL}/convertCodeToPGML`, {
+			method: 'post',
+			mode: 'same-origin',
+			body: new URLSearchParams(request_object)
+		})
 			.then((response) => response.json())
 			.then((data) => {
-				if (data.error) throw new Error(data.error);
-				if (!data.result_data) throw new Error('An invalid response was received.');
-				if (data.result_data.error) {
+				if (data.error) {
 					renderArea.innerHTML =
 						'<div class="alert alert-danger p-1 m-2">' +
 						'<p class="fw-bold">PGML conversion error:</p>' +
-						data.result_data.error +
+						data.error +
 						'</div>';
 
 					showMessage('Errors occurred when converting code to PGML.', false);
 					return;
 				}
-				if (request_object.pgCode === data.result_data.pgmlCode) {
+				if (request_object.pgCode === data.pgmlCode) {
 					showMessage('There were no changes to the code.', true);
 				} else {
-					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.result_data.pgmlCode;
-					else document.getElementById('problemContents').value = data.result_data.pgmlCode;
+					if (webworkConfig?.pgCodeMirror) webworkConfig.pgCodeMirror.source = data.pgmlCode;
+					else document.getElementById('problemContents').value = data.pgmlCode;
 					saveTempFile();
 					showMessage('Successfully converted code to PGML', true);
 					if (!(renderArea.firstChild instanceof HTMLIFrameElement)) render();
@@ -304,16 +309,18 @@
 		const sessionKey = document.getElementsByName('key')[0];
 		if (sessionKey) request_object.key = sessionKey.value;
 
-		request_object.rpc_command = 'runPGCritic';
 		request_object.pgCode =
 			webworkConfig?.pgCodeMirror?.source ?? document.getElementById('problemContents')?.value ?? '';
 
-		fetch(webserviceURL, { method: 'post', mode: 'same-origin', body: new URLSearchParams(request_object) })
+		fetch(`${apiURL}/runPGCritic`, {
+			method: 'post',
+			mode: 'same-origin',
+			body: new URLSearchParams(request_object)
+		})
 			.then((response) => response.json())
 			.then((data) => {
 				if (data.error) throw new Error(data.error);
-				if (!data.result_data) throw new Error('An invalid response was received.');
-				renderArea.innerHTML = data.result_data.html;
+				renderArea.innerHTML = data.html;
 				scrollToRenderArea();
 			})
 			.catch((err) => showMessage(`Error: ${err?.message ?? err}`));

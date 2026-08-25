@@ -14,7 +14,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  course_admin                        /$ce->{admin_course_id} -> logout, options, instructor_tools
 
  render_rpc                          /render_rpc
- instructor_rpc                      /instructor_rpc
+ api                                 /api/$command
 
  ltiadvanced_content_selection       /ltiadvanced/content_selection
 
@@ -140,7 +140,7 @@ my %routeParameters = (
 		# 'course_admin' is also a child of 'root' but that is a special case that is setup separately.
 		children => [ qw(
 			render_rpc
-			instructor_rpc
+			api
 			ltiadvanced_content_selection
 			ltiadvantage_login
 			ltiadvantage_launch
@@ -170,10 +170,10 @@ my %routeParameters = (
 		module => 'RenderViaRPC',
 		path   => '/render_rpc'
 	},
-	instructor_rpc => {
-		title   => 'instructor_rpc',
-		module  => 'InstructorRPCHandler',
-		path    => '/instructor_rpc',
+	api => {
+		title   => 'api',
+		module  => 'API',
+		path    => { '/api/#command' => [ command => qr/[\w-]*/ ] },
 		methods => ['POST']
 	},
 

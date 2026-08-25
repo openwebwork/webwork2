@@ -154,8 +154,6 @@
 		}
 	};
 
-	const basicWebserviceURL = `${webworkConfig?.webwork_url ?? '/webwork2'}/instructor_rpc`;
-
 	const updateTimeDelta = async () => {
 		const authenParams = {};
 		const user = document.getElementsByName('user')[0];
@@ -166,14 +164,10 @@
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-		const response = await fetch(basicWebserviceURL, {
+		const response = await fetch(`${webworkConfig?.webwork_url ?? '/webwork2'}/api/getCurrentServerTime`, {
 			method: 'post',
 			mode: 'same-origin',
-			body: new URLSearchParams({
-				...authenParams,
-				rpc_command: 'getCurrentServerTime',
-				courseID: timerDiv.dataset.courseId
-			}),
+			body: new URLSearchParams({ ...authenParams, courseID: timerDiv.dataset.courseId }),
 			signal: controller.signal
 		}).catch(() => {
 			/* Errors are ignored */
@@ -183,7 +177,7 @@
 
 		if (response && response.ok) {
 			const data = await response.json();
-			timeDelta = Math.round(new Date().getTime() / 1000) - data.result_data.currentServerTime;
+			timeDelta = Math.round(new Date().getTime() / 1000) - data.currentServerTime;
 		}
 	};
 
