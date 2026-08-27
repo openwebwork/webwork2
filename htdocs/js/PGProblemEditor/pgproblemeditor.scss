@@ -126,7 +126,7 @@
 		}
 	}
 
-	@media (prefers-color-scheme: dark) {
+	[data-bs-theme='dark'] & {
 		.pgedit-resizer {
 			background-color: #000;
 			color: white;
