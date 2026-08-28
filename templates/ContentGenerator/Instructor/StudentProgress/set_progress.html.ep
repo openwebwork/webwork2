@@ -253,7 +253,10 @@
 						% if ($rec->{total} != -1) {
 							% # Make a versioned set name format nicer and link to the test version.
 							% my $versionLink = link_to "version $rec->{version}" => $c->systemLink(
-								% url_for('gateway_quiz', setID => "$setID,v$rec->{version}"),
+								% url_for(
+									% $rec->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
+									% setID => "$setID,v$rec->{version}",
+								% ),
 								% params => { effectiveUser => $rec->{record}{user_id} }
 							% );
 							%
