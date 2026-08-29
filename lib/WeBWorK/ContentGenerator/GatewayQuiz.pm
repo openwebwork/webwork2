@@ -1378,86 +1378,82 @@ sub nav ($c, $args) {
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
 		my @userVersions =
 			$db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => { like => "$setID,v\%" } });
+
+		return '' unless @userVersions;
+
 		my %users = map { $_->[0] => 1 } @userVersions;
-		my @allUserRecords =
+		my %allUserRecords =
+			map  { $_->{user_id} => $_ }
 			grep { $users{ $_->{user_id} } }
-			$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
-				[qw/last_name first_name user_id/]);
+			$c->db->getUsersWhere(
+				{ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } });
 
-		if (@allUserRecords) {
-			my $filter = $c->param('studentNavFilter');
+		my $filter = $c->param('studentNavFilter');
 
-			# Format the student names for display, and associate the users with the test versions.
-			my %filters;
-			my @userRecords;
-			for (0 .. $#allUserRecords) {
-				# Add to the sections and recitations if defined.  Also store the first user found in that section or
-				# recitation.  This user will be switched to when the filter is selected.
-				my $section = $allUserRecords[$_]->section;
-				$filters{"section:$section"} = [
-					$c->maketext('Filter by section [_1]', $section), $allUserRecords[$_]->user_id,
-					$userVersions[$_][2]
-					]
-					if $section && !$filters{"section:$section"};
-				my $recitation = $allUserRecords[$_]->recitation;
-				$filters{"recitation:$recitation"} = [
-					$c->maketext('Filter by recitation [_1]', $recitation), $allUserRecords[$_]->user_id,
-					$userVersions[$_][2]
-					]
-					if $recitation && !$filters{"recitation:$recitation"};
+		# Format the student names for display, and associate the users with the test versions.
+		my %filters;
+		my @userRecords;
+		for (@userVersions) {
+			my $user = $db->newUser($allUserRecords{ $_->[0] });
 
-				# Only keep this user if it satisfies the selected filter if a filter was selected.
-				next
-					unless !$filter
-					|| ($filter =~ /^section:(.*)$/    && $allUserRecords[$_]->section eq $1)
-					|| ($filter =~ /^recitation:(.*)$/ && $allUserRecords[$_]->recitation eq $1);
+			# Add to the sections and recitations if defined.  Also store the first user found in that section or
+			# recitation.  This user will be switched to when the filter is selected.
+			my $section = $user->section;
+			$filters{"section:$section"} = [ $c->maketext('Filter by section [_1]', $section), $user->user_id, $_->[2] ]
+				if $section && !$filters{"section:$section"};
+			my $recitation = $user->recitation;
+			$filters{"recitation:$recitation"} =
+				[ $c->maketext('Filter by recitation [_1]', $recitation), $user->user_id, $_->[2] ]
+				if $recitation && !$filters{"recitation:$recitation"};
 
-				my $addRecord = $allUserRecords[$_];
-				push @userRecords, $addRecord;
+			# Only keep this user if it satisfies the selected filter if a filter was selected.
+			next
+				unless !$filter
+				|| ($filter =~ /^section:(.*)$/    && $user->section eq $1)
+				|| ($filter =~ /^recitation:(.*)$/ && $user->recitation eq $1);
 
-				$addRecord->{displayName} =
-					($addRecord->last_name || $addRecord->first_name
-						? $addRecord->last_name . ', ' . $addRecord->first_name
-						: $addRecord->user_id);
-				$addRecord->{setVersion} = $userVersions[$_][2];
-			}
+			push @userRecords, $user;
 
-			# Sort by last name, then first name, then user_id, then set version.
-			@userRecords = sort {
-				lc($a->last_name) cmp lc($b->last_name)
-					|| lc($a->first_name) cmp lc($b->first_name)
-					|| lc($a->user_id) cmp lc($b->user_id)
-					|| lc($a->{setVersion}) <=> lc($b->{setVersion})
-			} @userRecords;
-
-			# Find the previous, current, and next test.
-			my $currentTestIndex = 0;
-			for (0 .. $#userRecords) {
-				if ($userRecords[$_]->user_id eq $effectiveUserID && $userRecords[$_]->{setVersion} == $setVersion) {
-					$currentTestIndex = $_;
-					last;
-				}
-			}
-			my $prevTest = $currentTestIndex > 0             ? $userRecords[ $currentTestIndex - 1 ] : 0;
-			my $nextTest = $currentTestIndex < $#userRecords ? $userRecords[ $currentTestIndex + 1 ] : 0;
-
-			# Mark the current test.
-			$userRecords[$currentTestIndex]{currentTest} = 1;
-
-			# Show the student nav.
-			return $c->include(
-				'ContentGenerator/GatewayQuiz/nav',
-				userID           => $userID,
-				eUserID          => $effectiveUserID,
-				userRecords      => \@userRecords,
-				setVersion       => $setVersion,
-				prevTest         => $prevTest,
-				nextTest         => $nextTest,
-				currentTestIndex => $currentTestIndex,
-				filters          => \%filters,
-				filter           => $filter
-			);
+			$user->{displayName} =
+				($user->last_name || $user->first_name ? $user->last_name . ', ' . $user->first_name : $user->user_id);
+			$user->{setVersion} = $_->[2];
 		}
+
+		# Sort by last name, then first name, then user_id, then set version.
+		@userRecords = sort {
+			lc($a->last_name) cmp lc($b->last_name)
+				|| lc($a->first_name) cmp lc($b->first_name)
+				|| lc($a->user_id) cmp lc($b->user_id)
+				|| $a->{setVersion} <=> $b->{setVersion}
+		} @userRecords;
+
+		# Find the previous, current, and next test.
+		my $currentTestIndex = 0;
+		for (0 .. $#userRecords) {
+			if ($userRecords[$_]->user_id eq $effectiveUserID && $userRecords[$_]->{setVersion} == $setVersion) {
+				$currentTestIndex = $_;
+				last;
+			}
+		}
+		my $prevTest = $currentTestIndex > 0             ? $userRecords[ $currentTestIndex - 1 ] : 0;
+		my $nextTest = $currentTestIndex < $#userRecords ? $userRecords[ $currentTestIndex + 1 ] : 0;
+
+		# Mark the current test.
+		$userRecords[$currentTestIndex]{currentTest} = 1;
+
+		# Show the student nav.
+		return $c->include(
+			'ContentGenerator/GatewayQuiz/nav',
+			userID           => $userID,
+			eUserID          => $effectiveUserID,
+			userRecords      => \@userRecords,
+			setVersion       => $setVersion,
+			prevTest         => $prevTest,
+			nextTest         => $nextTest,
+			currentTestIndex => $currentTestIndex,
+			filters          => \%filters,
+			filter           => $filter
+		);
 	}
 	return '';
 }
