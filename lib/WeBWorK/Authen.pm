@@ -40,6 +40,8 @@ use Scalar::Util         qw(weaken);
 use Mojo::Util           qw(b64_encode b64_decode);
 use Math::Random::Secure qw(irand);
 
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
 use WeBWorK::Debug       qw(debug);
 use WeBWorK::Utils       qw(x runtime_use utf8Crypt cryptPassword);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
@@ -199,7 +201,9 @@ sub verify {
 	} else {
 		$self->write_log_entry("LOGIN FAILED $self->{log_error}") if defined $self->{log_error};
 		$self->maybe_kill_cookie;
-		$c->stash(authen_error => $self->{error}) if $self->{error} && $self->{error} =~ /\S/;
+		# A failed admin cross-course login attempt should not surface an error to the user.
+		$c->stash(authen_error => $self->{error})
+			if $self->{error} && $self->{error} =~ /\S/ && ($self->{credential_source} // '') ne 'admin_cross_course';
 	}
 
 	my $caliper_sensor = Caliper::Sensor->new($c->ce);
@@ -261,6 +265,8 @@ sub do_verify {
 
 	if (defined $self->{login_type} && $self->{login_type} eq 'guest') {
 		return $self->verify_practice_user;
+	} elsif (($self->{credential_source} // '') eq 'admin_cross_course') {
+		return $self->verify_admin_cross_course_user;
 	} else {
 		return $self->verify_normal_user;
 	}
@@ -378,7 +384,86 @@ sub get_credentials {
 		return 1;
 	}
 
-	return 0;
+	return $self->try_admin_cross_course_credentials;
+}
+
+=head2 try_admin_cross_course_credentials
+
+This is a last resort used by C<get_credentials> when a request for this course has no cookie or
+C<user> parameter. If C<< $ce->{authen}{admin_cross_course_login} >> is enabled, the admin course
+uses C<session_cookie> session management, and the browser still holds an active session cookie
+for the admin course, this decodes that cookie, confirms the session is still valid, and confirms
+the admin course user has the C<create_and_delete_courses> permission. If all of that succeeds,
+C<user_id> and C<credential_source> are set so that C<verify_admin_cross_course_user> can finish
+authenticating the user into this course.
+
+=cut
+
+sub try_admin_cross_course_credentials {
+	my $self = shift;
+	my $c    = $self->{c};
+	my $ce   = $c->ce;
+
+	return 0
+		unless $ce->{authen}{admin_cross_course_login}
+		&& defined $ce->{admin_course_id}
+		&& $ce->{courseName} ne $ce->{admin_course_id};
+
+	my ($ce_admin, $db_admin);
+	eval {
+		$ce_admin = WeBWorK::CourseEnvironment->new({ courseName => $ce->{admin_course_id} });
+		$db_admin = WeBWorK::DB->new($ce_admin);
+	};
+	return 0 if $@ || !$db_admin || ($ce_admin->{session_management_via} // '') ne 'session_cookie';
+
+	# Decode the admin course's session cookie
+	my $sessions = $c->app->sessions;
+	my $rawValue = $c->signed_cookie('WeBWorKCourseSession.' . $ce->{admin_course_id});
+	return 0 unless $rawValue;
+	$rawValue =~ y/-/=/;
+	return 0 unless my $adminSession = $sessions->deserialize->(b64_decode($rawValue));
+
+	return 0
+		if !$adminSession->{expires} && ($adminSession->{expiration} // $sessions->default_expiration)
+		|| defined $adminSession->{expires} && $adminSession->{expires} <= time;
+
+	my ($adminUserID, $adminKey, $adminTimestamp) = @{$adminSession}{qw(user_id key timestamp)};
+	return 0 unless $adminUserID && $adminKey;
+
+	# Confirm the admin session is still valid
+	my $adminKeyRecord = $db_admin->getKey($adminUserID);
+	return 0
+		unless defined $adminKeyRecord
+		&& $adminKeyRecord->key eq $adminKey
+		&& time <= ($adminTimestamp // $adminKeyRecord->timestamp) + $ce_admin->{sessionTimeout};
+
+	return 0 unless _admin_course_has_create_delete_permission($ce_admin, $db_admin, $adminUserID);
+
+	my $adminPasswordRecord = $db_admin->getPassword($adminUserID);
+	return 0 unless defined $adminPasswordRecord && $adminPasswordRecord->password =~ /\S/;
+
+	$self->{user_id}                     = $adminUserID;
+	$self->{admin_cross_course_password} = $adminPasswordRecord->password;
+	$self->{login_type}                  = 'normal';
+	$self->{credential_source}           = 'admin_cross_course';
+	debug(qq{credential source: "admin_cross_course", user: "$self->{user_id}"});
+	return 1;
+}
+
+# Mirrors the relevant part of WeBWorK::Authz::hasPermissions for the admin course, since that method requires a
+# full Mojolicious controller bound to the admin course, and here the controller is bound to the course being
+# entered instead.
+sub _admin_course_has_create_delete_permission {
+	my ($ce_admin, $db_admin, $user) = @_;
+
+	my $activity_role = $ce_admin->{permissionLevels}{create_and_delete_courses};
+	return 0 unless defined $activity_role && exists $ce_admin->{userRoles}{$activity_role};
+	my $role_permlevel = $ce_admin->{userRoles}{$activity_role};
+
+	my $permissionLevel = $db_admin->getPermissionLevel($user);
+	return 0 unless defined $permissionLevel && $permissionLevel->permission ne '';
+
+	return $permissionLevel->permission >= $role_permlevel;
 }
 
 sub check_user {
@@ -592,6 +677,34 @@ sub verify_normal_user {
 			return 0;
 		}
 	}
+}
+
+=head2 verify_admin_cross_course_user
+
+Finishes authenticating a user identified by C<try_admin_cross_course_credentials>.
+Compares this course's password hash for the user against the admin course's hash
+captured by C<try_admin_cross_course_credentials>.
+
+=cut
+
+sub verify_admin_cross_course_user {
+	my $self = shift;
+	my $c    = $self->{c};
+
+	my $coursePassword = $c->db->getPassword($self->{user_id});
+	unless (defined $coursePassword
+		&& $coursePassword->password =~ /\S/
+		&& $coursePassword->password eq $self->{admin_cross_course_password})
+	{
+		$self->{log_error} = 'admin cross-course login: no matching password for this user in this course';
+		return 0;
+	}
+
+	return 0 unless $self->validate_user;
+
+	$self->{session_key}   = $self->create_session($self->{user_id});
+	$self->{initial_login} = 1;
+	return 1;
 }
 
 # Returns 1 if authentication succeeded, returns 0 if required data was present but authentication failed,
