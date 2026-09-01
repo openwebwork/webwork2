@@ -130,16 +130,19 @@ sub displaySets ($c) {
 			my $set;
 			my $vNum = 0;
 
-			# For versioned tests we might be displaying the test date and test time.
+			# For versioned tests we might be displaying the test date and test time,
+			# and we need to know if the test is proctored or not.
 			my $dateOfTest = '';
 			my $testTime   = '';
 			my $timeLeft   = '';
+			my $proctored  = 0;
 
 			if ($setIsVersioned) {
 				($setName, $vNum) = ($setName =~ /(.+),v(\d+)$/);
 				# Information from the set is needed to set up the display below. So get the merged user set as well.
 				$set        = $db->getMergedSetVersion($studentRecord->user_id, $setName, $vNum);
 				$dateOfTest = localtime($set->version_creation_time());
+				$proctored  = $set->assignment_type =~ /proctored/;
 				if ($set->version_last_attempt_time) {
 					$testTime = ($set->version_last_attempt_time - $set->open_date) / 60;
 					my $timeLimit = $set->version_time_limit / 60;
@@ -173,6 +176,7 @@ sub displaySets ($c) {
 
 			my $version_data = {
 				version                    => $vNum,
+				proctored                  => $proctored,
 				score                      => $score,
 				total                      => $total,
 				date                       => $dateOfTest,
