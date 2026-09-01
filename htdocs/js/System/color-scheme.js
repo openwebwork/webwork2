@@ -19,6 +19,12 @@
 			if (themeValue === 'dark') document.head.append(flatpickrDarkTheme);
 			else flatpickrDarkTheme.remove();
 		}
+
+		for (const renderArea of document.querySelectorAll('.rpc_render_area,#pgedit-render-area')) {
+			for (const iframe of renderArea.getElementsByTagName('iframe')) {
+				iframe.contentDocument.documentElement.dataset.bsTheme = themeValue;
+			}
+		}
 	};
 
 	setTheme(getPreferredTheme());

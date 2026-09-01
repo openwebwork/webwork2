@@ -108,9 +108,8 @@ div.gwDivider {
 	margin: 0px 0px 10px 0px;
 }
 
-/* Override the pg style so that the problem-content is not offset in gateway quizzes and force a light color scheme. */
+/* Override the pg style so that the problem-content is not offset in gateway quizzes. */
 .problem-content {
-	color-scheme: light;
 	padding: unset;
 	background-color: unset;
 	border: unset;

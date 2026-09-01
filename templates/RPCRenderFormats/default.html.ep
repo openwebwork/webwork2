@@ -13,6 +13,13 @@
 			course: <%= $courseID %>
 		</title>
 		<link href="<%= "$ce->{webworkURLs}{htdocs}/images/favicon.ico" %>" rel="shortcut icon">
+		<script>
+			window.parent.postMessage('render-iframe-ready');
+			window.addEventListener('message', (event) => {
+				if (!event.data || !event.data.theme) return;
+				document.documentElement.dataset.bsTheme = event.data.theme;
+			});
+		</script>
 		% # Add third party css and javascript as well as css and javascript requested by the problem.
 		% for (@$third_party_css) {
 			%= stylesheet $_

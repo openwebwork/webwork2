@@ -977,14 +977,7 @@ sub output_problem_body ($c) {
 		}
 	}
 
-	return $c->tag(
-		'div',
-		id    => 'output_problem_body',
-		class => 'text-dark',
-		style => 'color-scheme: light',
-		data  => { bs_theme => 'light' },
-		$c->b($c->{pg}{body_text})
-	);
+	return $c->tag('div', id => 'output_problem_body', $c->b($c->{pg}{body_text}));
 }
 
 # Output messages about the problem
