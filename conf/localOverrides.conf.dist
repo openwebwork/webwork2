@@ -173,7 +173,7 @@ $mail{feedbackRecipients}    = [
 # If the OPL files are not stored in the standard locations, then uncomment
 # these lines and replace with the correct paths.
 # If you are setting $problemLibrary{root} or $contribLibrary{root} here,
-# you must also uncomment the subsequent lines to set $courseLinks{Library}
+# you must also uncomment the subsequent lines to update $courseLinks{Library}
 # and $courseLinks{Contrib}
 
 #$problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
