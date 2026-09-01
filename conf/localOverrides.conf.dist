@@ -170,12 +170,16 @@ $mail{feedbackRecipients}    = [
 # https://wiki.openwebwork.org/wiki/Open_Problem_Library
 # The directory containing the open problem library files. Set to "" if no problem
 # library is installed.
-# NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
 # If the OPL files are not stored in the standard locations, then uncomment
 # these lines and replace with the correct paths.
+# If you are setting $problemLibrary{root} or $contribLibrary{root} here,
+# you must also uncomment the subsequent lines to update $courseLinks{Library}
+# and $courseLinks{Contrib}
 
 #$problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 #$contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
+#$courseLinks{Library} = [ $problemLibrary{root}, "$courseDirs{templates}/Library" ];
+#$courseLinks{Contrib} = [ $contribLibrary{root}, "$courseDirs{templates}/Contrib" ];
 #$problemLibrary{version}    = "2.5";
 
 # These flags control if statistics on opl problems are shown in the library
@@ -197,8 +201,8 @@ $mail{feedbackRecipients}    = [
 # would add two buttons, one for the Rochester library and one for the ASU
 # library, provided templates/rochester and templates/asu exists either as
 # subdirectories or links to other directories. The "NPL Directory" button
-# activated below gives access to all the directories in the National
-# Problem Library.
+# activated below gives access to all the directories in the Open Problem
+# Library.
 
 #$courseFiles{problibs}    = {
 	#Library => "OPL Directory",
