@@ -188,10 +188,20 @@ sub checkSet ($self) {
 	my $node_name = $c->current_route;
 
 	# First check to see if we have to worried about set-level access restrictions.
-	return 0 unless grep {/^$node_name$/} (qw(problem_list problem_detail gateway_quiz proctored_gateway_quiz));
+	return 0
+		unless grep {/^$node_name$/}
+		(qw(
+			problem_list
+			problem_detail
+			gateway_quiz
+			gateway_quiz_version
+			proctored_gateway_quiz
+			proctored_gateway_quiz_version
+		));
 
 	# To check set restrictions we need a set and a user.
 	my $setName           = $c->stash('setID');
+	my $setVersion        = $c->stash('versionID') // 0;
 	my $userName          = $c->param('user');
 	my $effectiveUserName = $c->param('effectiveUser');
 
@@ -201,21 +211,19 @@ sub checkSet ($self) {
 	# Do we have a cached set that we can use?
 	my $set = $self->{merged_set};
 
-	if ($setName =~ /,v(\d+)$/) {
-		my $verNum = $1;
-		$setName =~ s/,v\d+$//;
-
-		if ($set && $set->set_id eq $setName && $set->user_id eq $effectiveUserName && $set->version_id eq $verNum) {
+	if ($setVersion) {
+		if ($set && $set->set_id eq $setName && $set->user_id eq $effectiveUserName && $set->version_id == $setVersion)
+		{
 			# If we have all of this, then we can just use this set and skip the rest.
 		} elsif ($setName eq 'Undefined_Set' && $self->hasPermissions($userName, 'access_instructor_tools')) {
 			# This is the case of previewing a problem from a 'try it' link.
 			return 0;
 		} else {
-			if ($db->existsSetVersion($effectiveUserName, $setName, $verNum)) {
-				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $verNum);
+			if ($db->existsSetVersion($effectiveUserName, $setName, $setVersion)) {
+				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $setVersion);
 			} else {
 				return $c->maketext('Requested version ([_1]) of set "[_2]" is not assigned to user [_3].',
-					$verNum, $setName, $effectiveUserName);
+					$setVersion, $setName, $effectiveUserName);
 			}
 		}
 		if (!$set) {
@@ -224,8 +232,8 @@ sub checkSet ($self) {
 		}
 		# Don't allow versioned sets to be viewed from the problem-list page.
 		if ($node_name eq 'problem_list') {
-			return $c->maketext('Requested version ([_1]) of set "[_2]" cannot be directly accessed.', $verNum,
-				$setName);
+			return $c->maketext('Requested version ([_1]) of set "[_2]" cannot be directly accessed.',
+				$setVersion, $setName);
 		}
 	} else {
 		if ($set && $set->set_id eq $setName && $set->user_id eq $effectiveUserName) {
@@ -352,12 +360,9 @@ sub invalidIPAddress ($self, $set) {
 	my $c  = $self->{c};
 	my $db = $c->db;
 
-	# Make sure that the non-versioned set name is used.
-	my $setName = $set->set_id =~ s/,v\d+$//r;
-
 	my $restrictType      = $set->restrict_ip;
 	my @restrictAddresses = map { $db->listLocationAddresses($_) }
-		map { $_->location_id } $db->getAllMergedSetLocations($c->param('effectiveUser'), $setName);
+		map { $_->location_id } $db->getAllMergedSetLocations($c->param('effectiveUser'), $set->set_id);
 
 	my $clientIP = Net::IP->new($c->tx->remote_address);
 
@@ -398,7 +403,7 @@ sub invalidIPAddress ($self, $set) {
 
 	if ($set->assignment_type =~ /gateway/) {
 		if ($relaxRestrict eq 'AfterAnswerDate') {
-			my $userset = $db->getMergedSet($set->user_id, $setName);
+			my $userset = $db->getMergedSet($set->user_id, $set->set_id);
 			return !$userset || before($userset->answer_date) ? $badIP : 0;
 		} else {
 			return before($set->answer_date) ? $badIP : 0;

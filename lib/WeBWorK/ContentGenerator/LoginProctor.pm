@@ -9,7 +9,6 @@ GatewayQuiz proctored tests.
 =cut
 
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::DB::Utils        qw(grok_vsetID);
 
 async sub initialize ($c) {
 	my $ce = $c->ce;
@@ -23,7 +22,7 @@ async sub initialize ($c) {
 	# The user set is needed to check for a set-restricted login proctor, and to show and possibly save the submission
 	# time.  To get the user set, the set name and version number are needed.  Attempt to obtain those from the url path
 	# setID.  Otherwise, use the highest version number.
-	($c->stash->{setID}, my $versionNum) = grok_vsetID($c->stash('setID'));
+	my $versionNum    = $c->stash->{versionID};
 	my $noSetVersions = 0;
 	if (!$versionNum) {
 		# Get a list of all available versions.

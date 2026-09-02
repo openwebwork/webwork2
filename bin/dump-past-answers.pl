@@ -159,7 +159,7 @@ sub write_past_answers_csv {
 					my $setID    = $_->set_id;
 					my @versions = $db->listSetVersions($userID, $setID);
 					for my $version (@versions) {
-						push(@sets, $db->getUserSet($userID, "$setID,v$version"));
+						push(@sets, $db->getSetVersion($userID, $setID, $version));
 					}
 				} else {
 					push(@sets, $_);

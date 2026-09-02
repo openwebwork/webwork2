@@ -80,7 +80,7 @@
 		</div>
 	% }
 	%
-	% my $setDetailPage = url_for(setID => $setID);
+	% my $setDetailPage = url_for('instructor_set_detail', setID => $setID);
 	%
 	% # Calculate links for the users being edited.
 	% my $userLinks = c;
@@ -117,13 +117,10 @@
 	<div class="border border-dark-subtle mb-2 rounded">
 		<div class="row p-2 align-items-center">
 			<div class="col-md-6">
+				% my $versionText = $editingSetVersion ? ' ' . maketext('(version [_1])', $editingSetVersion) : '';
 				<%== maketext(
 					'Editing problem set [_1] for these students: [_2]',
-					tag(
-						'strong',
-						dir => 'ltr',
-						format_set_name_display($setID . ($editingSetVersion ? ",v$editingSetVersion" : ''))
-					),
+					tag('strong', dir => 'ltr', format_set_name_display($setID) . $versionText),
 					c(tag('br'), tag('strong', $userLinks->join(tag('br'))))->join('')
 				) =%>
 			</div>
@@ -565,9 +562,9 @@
 													% get_test_problem_position($db, $problemToShow);
 												% $problemLink = $c->systemLink(
 													% url_for(
-														% 'gateway_quiz',
-														% setID => $problemToShow->set_id . ',v'
-															% . $problemToShow->version_id,
+														% 'gateway_quiz_version',
+														% setID     => $problemToShow->set_id,
+														% versionID => $problemToShow->version_id,
 														% problemID => $problemToShow->problem_id
 													% ),
 													% params => {

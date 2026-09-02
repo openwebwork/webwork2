@@ -376,7 +376,7 @@ sub display_form ($c) {
 			# here, which probably is not very robust, and certainly is aesthetically displeasing.  Yuck.
 			push(@setVersions,
 				map { $_->set_id($_->set_id . ",v" . $_->version_id); $_ }
-					$db->getSetVersionsWhere({ user_id => $eUserID, set_id => { like => $v->set_id . ',v%' } }));
+					$db->getSetVersionsWhere({ user_id => $eUserID, set_id => $v->set_id }));
 		}
 
 		# Filter out global gateway sets.  Only the versioned sets may be printed.
@@ -945,8 +945,11 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	if ($header eq 'defaultHeader') { $header = $ce->{webworkFiles}{hardcopySnippets}{setHeader}; }
 
 	# get list of problem IDs
-	my @problemIDs = map { $_->[2] }
-		$db->listUserProblemsWhere({ user_id => $MergedSet->user_id, set_id => $MergedSet->set_id }, 'problem_id');
+	my @problemIDs =
+		map { $_->[2] }
+		$db->listUserProblemsWhere(
+			{ user_id => $MergedSet->user_id, set_id => $MergedSet->set_id, version_id => $MergedSet->version_id },
+			'problem_id');
 
 	# for versioned sets (gateways), we might have problems in a random
 	# order; reset the order of the problemIDs if this is the case
@@ -1319,7 +1322,8 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 
 	if ($showComments) {
 		my $userPastAnswerID =
-			$db->latestProblemPastAnswer($MergedProblem->user_id, $versionName, $MergedProblem->problem_id);
+			$db->latestProblemPastAnswer($MergedProblem->user_id, $MergedSet->set_id, $MergedSet->version_id,
+				$MergedProblem->problem_id);
 
 		my $pastAnswer = $userPastAnswerID                          ? $db->getPastAnswer($userPastAnswerID) : 0;
 		my $comment    = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string           : "";

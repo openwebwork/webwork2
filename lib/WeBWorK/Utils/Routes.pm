@@ -47,9 +47,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  achievements_leaderboard            /$courseID/achievements/leaderboard
  feedback                            /$courseID/feedback
  gateway_quiz                        /$courseID/test_mode/$setID
+ gateway_quiz_version                /$courseID/test_mode/$setID/$versionID
 
  proctored_gateway_quiz              /$courseID/proctored_test_mode/$setID
- proctored_gateway_proctor_login     /$courseID/proctored_test_mode/$setID/proctor_login
+ proctored_gateway_quiz_version      /$courseID/proctored_test_mode/$setID/$versionID
 
  hardcopy                            /$courseID/hardcopy
  hardcopy_preselect_set              /$courseID/hardcopy/$setID
@@ -64,6 +65,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE ROUTES BELOW!!!
  instructor_set_list                 /$courseID/instructor/sets
 
  instructor_set_detail               /$courseID/instructor/sets/$setID
+ instructor_versioned_set_detail     /$courseID/instructor/sets/$setID/$versionID
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users
 
  instructor_problem_grader           /$courseID/instructor/grader/$setID/$problemID
@@ -349,22 +351,29 @@ my %routeParameters = (
 	},
 	gateway_quiz => {
 		title        => x('Test [_2]'),
+		children     => [qw(gateway_quiz_version)],
 		module       => 'GatewayQuiz',
 		path         => '/test_mode/#setID',
+		unrestricted => 1
+	},
+	gateway_quiz_version => {
+		title        => x('Test [_2]'),
+		module       => 'GatewayQuiz',
+		path         => '/<versionID:num>',
 		unrestricted => 1
 	},
 
 	proctored_gateway_quiz => {
 		title        => x('Proctored Test [_2]'),
-		children     => [qw(proctored_gateway_proctor_login)],
+		children     => [qw(proctored_gateway_quiz_version)],
 		module       => 'ProctoredGatewayQuiz',
 		path         => '/proctored_test_mode/#setID',
 		unrestricted => 1
 	},
-	proctored_gateway_proctor_login => {
-		title        => x('Proctored Test [_2] Proctor Login'),
-		module       => 'LoginProctor',
-		path         => '/proctor_login',
+	proctored_gateway_quiz_version => {
+		title        => x('Proctored Test [_2]'),
+		module       => 'ProctoredGatewayQuiz',
+		path         => '/<versionID:num>',
 		unrestricted => 1
 	},
 
@@ -425,9 +434,14 @@ my %routeParameters = (
 	},
 	instructor_set_detail => {
 		title    => x('Set Detail for set [_2]'),
-		children => [qw(instructor_users_assigned_to_set)],
+		children => [qw(instructor_users_assigned_to_set instructor_versioned_set_detail)],
 		module   => 'Instructor::ProblemSetDetail',
 		path     => '/#setID'
+	},
+	instructor_versioned_set_detail => {
+		title  => x('Set Detail for set [_2]'),
+		module => 'Instructor::ProblemSetDetail',
+		path   => '/<versionID:num>'
 	},
 	instructor_users_assigned_to_set => {
 		title  => x('Users Assigned to Set [_2]'),

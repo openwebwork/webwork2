@@ -12,7 +12,7 @@
 			% if ($eUserID ne $userID) {
 				% if ($prevTest) {
 					<%= link_to $c->systemLink(
-						url_for('gateway_quiz', setID => "$setID,v$prevTest->{setVersion}"),
+						url_for('gateway_quiz_version', setID => $setID, versionID => $prevTest->{setVersion}),
 						params => {
 							effectiveUser => $prevTest->user_id,
 							currentPage   => $pageNumber,
@@ -49,7 +49,7 @@
 						<li>
 							<%= link_to maketext('[_1] (version [_2])', $_->{displayName}, $_->{setVersion}) =>
 								$c->systemLink(
-									url_for('gateway_quiz', setID => "$setID,v$_->{setVersion}"),
+									url_for('gateway_quiz_version', setID => $setID, versionID => $_->{setVersion}),
 									params => {
 										effectiveUser => $_->user_id,
 										currentPage   => $pageNumber,
@@ -66,7 +66,7 @@
 			% if ($eUserID ne $userID) {
 				% if ($nextTest) {
 					<%= link_to $c->systemLink(
-						url_for('gateway_quiz', setID => "$setID,v$nextTest->{setVersion}"),
+						url_for('gateway_quiz_version', setID => $setID, versionID => $nextTest->{setVersion}),
 						params => {
 							effectiveUser => $nextTest->user_id,
 							currentPage   => $pageNumber,
@@ -98,7 +98,7 @@
 					% if ($filter) {
 						<li>
 							<%= link_to maketext('Show all tests') => $c->systemLink(
-								url_for('gateway_quiz', setID => "$setID,v$setVersion"),
+								url_for('gateway_quiz_version', setID => $setID, versionID => $setVersion),
 								params => { effectiveUser => param('effectiveUser'), currentPage => $pageNumber }
 								),
 								class => 'dropdown-item' =%>
@@ -107,7 +107,7 @@
 					% for (sort keys %$filters) {
 						<li>
 							<%= link_to $filters->{$_}[0] => $c->systemLink(
-								url_for('gateway_quiz', setID => "$setID,v$filters->{$_}[2]"),
+								url_for('gateway_quiz_version', setID => $setID, versionID => $filters->{$_}[2]),
 								params => {
 									effectiveUser    => $filters->{$_}[1],
 									currentPage      => $pageNumber,

@@ -81,6 +81,7 @@ async sub process_and_log_answer ($c) {
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->user_id($problem->user_id);
 			$pastAnswer->set_id($problem->set_id);
+			$pastAnswer->version_id($problem->version_id);
 			$pastAnswer->problem_id($problem->problem_id);
 			$pastAnswer->timestamp($timestamp);
 			$pastAnswer->scores($scores2);

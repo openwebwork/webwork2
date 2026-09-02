@@ -267,8 +267,7 @@ sub get_instructor_comment ($c, $problem) {
 
 	my $db = $c->db;
 	my $userPastAnswerID =
-		$db->latestProblemPastAnswer($problem->user_id, $problem->set_id . ',v' . $problem->version_id,
-			$problem->problem_id);
+		$db->latestProblemPastAnswer($problem->user_id, $problem->set_id, $problem->version_id, $problem->problem_id);
 
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
@@ -315,11 +314,9 @@ async sub pre_header_initialize ($c) {
 	die "permission level record for $userID does not exist (but the user does? odd...)"
 		unless defined $permissionLevel;
 
-	# The $setID could be the versioned or nonversioned set.  Extract the version if it is provided.
-	my $requestedVersion = ($setID =~ /,v(\d+)$/) ? $1 : 0;
-	$setID =~ s/,v\d+$//;
-	# Note that if a version was provided the version needs to be checked.  That is done after it has
-	# been validated that the user is assigned the set.
+	# Get the version if it is provided.  Note that if a version was provided the version needs to be checked.  That is
+	# done after it has been validated that the user is assigned the set.
+	my $requestedVersion = $c->stash('versionID') // 0;
 
 	# Gateway set and problem collection
 
@@ -727,8 +724,13 @@ async sub pre_header_initialize ($c) {
 	}
 
 	if ($c->stash->{actingConfirmation}) {
-		# Store session while waiting for confirmation for proctored tests.
-		$c->authen->session(acting_proctor => 1) if $c->{assignment_type} eq 'proctored_gateway';
+		# Store session while waiting for confirmation for proctored tests.  This is needed because after confirmation a
+		# new set version may be created, and its version id can't be known (and so can't be matched against a granted
+		# proctor session until it exists).  Only do this for a user with the proctor_quiz_login permission, since
+		# otherwise real proctor authorization is still required for this action once it is confirmed.
+		$c->authen->session(acting_proctor => 1)
+			if $c->{assignment_type} eq 'proctored_gateway'
+			&& $authz->hasPermissions($userID, 'proctor_quiz_login');
 		return;
 	}
 	delete $c->authen->session->{acting_proctor};
@@ -736,9 +738,9 @@ async sub pre_header_initialize ($c) {
 	# If the proctor session key does not have a set version id, then add it.  This occurs when a student
 	# initially enters a proctored test, since the version id is not determined until just above.
 	if ($c->authen->session('proctor_authorization_granted')
-		&& $c->authen->session('proctor_authorization_granted') !~ /,v\d+$/)
+		&& !defined $c->authen->session('proctor_authorization_version'))
 	{
-		if ($setVersionNumber) { $c->authen->session(proctor_authorization_granted => "$setID,v$setVersionNumber"); }
+		if ($setVersionNumber) { $c->authen->session(proctor_authorization_version => $setVersionNumber); }
 		else                   { delete $c->authen->session->{proctor_authorization_granted}; }
 	}
 
@@ -746,6 +748,7 @@ async sub pre_header_initialize ($c) {
 	if ($c->{invalidSet} || $c->{actingCreationError}) {
 		if (defined $c->{assignment_type} && $c->{assignment_type} eq 'proctored_gateway') {
 			delete $c->authen->session->{proctor_authorization_granted};
+			delete $c->authen->session->{proctor_authorization_version};
 		}
 		return;
 	}
@@ -955,7 +958,6 @@ async sub pre_header_initialize ($c) {
 	$c->stash->{probOrder}       = \@probOrder;
 
 	my $versionID = $set->version_id;
-	my $setVName  = "$setID,v$versionID";
 
 	# Report everything with the request submit time. Convert the floating point
 	# value from Time::HiRes to an integer for use below. Truncate toward 0.
@@ -975,11 +977,14 @@ async sub pre_header_initialize ($c) {
 
 		# Deal with answers being submitted for a proctored exam.  If there are no attempts left, then delete the
 		# proctor session key so that it isn't possible to start another proctored test without being reauthorized.
-		delete $c->authen->session->{proctor_authorization_granted}
-			if ($c->{submitAnswers}
-				&& $c->{assignment_type} eq 'proctored_gateway'
-				&& $set->attempts_per_version > 0
-				&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0);
+		if ($c->{submitAnswers}
+			&& $c->{assignment_type} eq 'proctored_gateway'
+			&& $set->attempts_per_version > 0
+			&& $set->attempts_per_version - 1 - $problem->num_correct - $problem->num_incorrect <= 0)
+		{
+			delete $c->authen->session->{proctor_authorization_granted};
+			delete $c->authen->session->{proctor_authorization_version};
+		}
 
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
 		for my $i (0 .. $#problems) {
@@ -1115,7 +1120,7 @@ async sub pre_header_initialize ($c) {
 					$c->ce,
 					'answer_log',
 					join('',
-						'|', $problem->user_id, '|', $setVName, '|', ($i + 1), '|', $scores,
+						'|', $problem->user_id, '|', "$setID,v$versionID", '|', ($i + 1), '|', $scores,
 						"\t$timeNowInt\t", "$past_answers_string"),
 					$timeNowInt
 				);
@@ -1123,7 +1128,8 @@ async sub pre_header_initialize ($c) {
 				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
 				$pastAnswer->user_id($problem->user_id);
-				$pastAnswer->set_id($setVName);
+				$pastAnswer->set_id($setID);
+				$pastAnswer->version_id($versionID);
 				$pastAnswer->problem_id($problem->problem_id);
 				$pastAnswer->timestamp($timeNowInt);
 				$pastAnswer->scores($scores);
@@ -1350,7 +1356,10 @@ sub path ($c, $args) {
 		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
 		$setID eq 'Undefined_Set'
 			|| $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
-		? ($setID =~ /^(.+),(v\d+)$/ ? ($1 => $c->url_for('problem_list', setID => $1), $2 => '') : ($setID => ''))
+		? (
+			defined $c->stash('versionID')
+			? ($setID => $c->url_for('problem_list', setID => $setID), 'v' . $c->stash('versionID') => '')
+			: ($setID => ''))
 		: (
 			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
 			'v' . $c->{set}->version_id => ''
@@ -1374,15 +1383,14 @@ sub nav ($c, $args) {
 		my $setVersion = $c->{set}->version_id;
 
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
-		my @userVersions =
-			$db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => { like => "$setID,v\%" } });
+		my @userVersions = $db->listSetVersionsWhere({ user_id => { '!=' => $userID }, set_id => $setID });
 
 		return '' unless @userVersions;
 
 		my %users = map { $_->[0] => 1 } @userVersions;
 		my %allUserRecords =
-			map  { $_->{user_id} => $_ }
-			grep { $users{ $_->{user_id} } }
+			map  { $_->user_id => $_ }
+			grep { $users{ $_->user_id } }
 			$c->db->getUsersWhere(
 				{ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } });
 

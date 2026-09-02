@@ -95,10 +95,8 @@
 				params => { effectiveUser => $effectiveUserID, user => $userID, submit_for_student_ok => 1 }
 				),
 				class => 'btn btn-primary' =%>
-			<%= link_to maketext('Cancel') => $c->systemLink(
-				url_for('problem_list', setID => $setID =~ s/,v\d+$//r),
-				params => { effectiveUser => $effectiveUserID, user => $userID }
-				),
+			<%= link_to maketext('Cancel') => $c->systemLink(url_for('problem_list', setID => $setID),
+				params => { effectiveUser => $effectiveUserID, user => $userID }),
 				class => 'btn btn-primary' =%>
 		</div>
 	</div>
@@ -384,16 +382,6 @@
 	% }
 % }
 %
-% my $action = url_for;
-%
-% # This is a hack to get a URL that will not require a proctor login if a proctored test has been submitted for the
-% # last time.  The assignment type has already been reset in this case, so use that to decide if we should give a path
-% # to an unproctored test.
-% $action =~ s/proctored_test_mode/test_mode/ if $c->{set}->assignment_type eq 'gateway';
-%
-% # Make sure that if this is a set, then the 'action' in the form points to the same set.
-% $action =~ s/(test_mode\/$setID)\/?$/$1,v$setVersionID\//;
-%
 % if (!$c->{can}{recordAnswersNextTime} && !$c->{can}{showWork}) {
 	% # Problems cannot be shown.
 	<div class="gwProblem">
@@ -420,6 +408,15 @@
 			</div>
 		</div>
 	% }
+	%
+	% # Make sure that the 'action' in the form points to the same set version. Using the assignment type (rather than
+	% # the current route) also gets a URL that will not require a proctor login if a proctored test has been submitted
+	% # for the last time, since the assignment type has already been reset to 'gateway' in that case.
+	% my $action = url_for(
+		% $c->{set}->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz_version' : 'gateway_quiz_version',
+		% setID     => $setID,
+		% versionID => $setVersionID
+	% );
 	%
 	<%= form_for $action, name => 'gwquiz', method => 'POST', class => 'problem-main-form mt-0', begin =%>
 		<%= $c->hidden_authen_fields =%>

@@ -168,9 +168,7 @@ sub set_stats ($c) {
 		my $noSkip = 0;
 		if ($c->{setRecord}->assignment_type =~ /gateway/) {
 			# Only use the quiz version with the best score.
-			my @setVersions =
-				$db->getMergedSetVersionsWhere(
-					{ user_id => $student, set_id => { like => $c->stash('setID') . ',v%' } });
+			my @setVersions = $db->getMergedSetVersionsWhere({ user_id => $student, set_id => $c->stash('setID') });
 			if (@setVersions) {
 				my $maxVersion = 1;
 				my $maxStatus  = 0;
@@ -362,10 +360,8 @@ sub problem_stats ($c) {
 		my $studentProblem;
 
 		if ($c->{setRecord}->assignment_type =~ /gateway/) {
-			my @problemRecords =
-				$db->getProblemVersionsWhere(
-					{ user_id => $student, problem_id => $problemID, set_id => { like => $c->stash('setID') . ',v%' } }
-				);
+			my @problemRecords = $db->getProblemVersionsWhere(
+				{ user_id => $student, problem_id => $problemID, set_id => $c->stash('setID') });
 			my $maxRecord = 0;
 			my $maxStatus = 0;
 			for (0 .. $#problemRecords) {
