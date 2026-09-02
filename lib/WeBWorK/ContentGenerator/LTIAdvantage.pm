@@ -3,7 +3,7 @@ use Mojo::Base 'WeBWorK::ContentGenerator', -signatures, -async_await;
 
 use Mojo::UserAgent;
 use Mojo::URL;
-use Mojo::JSON           qw(decode_json);
+use Mojo::JSON           qw(decode_json encode_json);
 use Crypt::JWT           qw(decode_jwt encode_jwt);
 use Math::Random::Secure qw(irand);
 use Digest::SHA          qw(sha256_hex);
@@ -475,16 +475,20 @@ sub keys ($c) {
 	return $c->render(data => 'Internal site configuration error', status => 500);
 }
 
-# Get the public keyset from the LMS and cache it in the database or just return what is already cached in the database.
-# FIXME: This really needs another non-native table, and all courses that use a given LTI 1.3 configuration should share
-# the public key that is retrieved here.
+# Get the public keyset from the LMS, or just return the cached key in the database. Only one key is ever actually
+# needed to verify a given JWT, but this has no way to know which one without decoding that JWT. So when a new keyset is
+# obtained from the LMS, it is returned without caching it and it is cached after the JWT is decoded and the correct key
+# identified. Returns ($keyset, $fetched), where $fetched is true if this call went to the LMS rather than returning the
+# cached value.
 sub get_lms_public_keyset ($c, $ce, $db, $renew = 0) {
-	my $keyset_str;
-
-	if (!$renew) {
-		$keyset_str = $db->getSettingValue('LTIAdvantageLMSPublicKey');
-		return decode_json($keyset_str) if $keyset_str;
+	unless ($renew) {
+		my $keyset_str = $db->getSettingValue('LTIAdvantageLMSPublicKey');
+		if ($keyset_str) {
+			debug('Using cached public key from database.');
+			return decode_json($keyset_str);
+		}
 	}
+	debug('Retrieving keyset from public keyset URL.');
 
 	# Get public keyset from the LMS.
 	my $response = eval { Mojo::UserAgent->new->get($ce->{LTI}{v1p3}{PublicKeysetURL})->result };
@@ -497,15 +501,13 @@ sub get_lms_public_keyset ($c, $ce, $db, $renew = 0) {
 		return;
 	}
 
-	$keyset_str = $response->body;
-	my $keyset = eval { decode_json($keyset_str) };
-	if ($@ || ref($keyset) ne 'HASH' || !defined $keyset->{keys}) {
+	my $keyset = eval { decode_json($response->body) };
+	if ($@ || ref($keyset) ne 'HASH' || ref($keyset->{keys}) ne 'ARRAY') {
 		$c->stash->{LTIAuthenError} = 'Received an invalid response from the LMS public keyset URL.';
 		return;
 	}
-	$db->setSettingValue('LTIAdvantageLMSPublicKey', $keyset_str);
 
-	return $keyset;
+	return ($keyset, 1);
 }
 
 sub extract_jwt_claims ($c) {
@@ -550,20 +552,28 @@ sub extract_jwt_claims ($c) {
 		verify_sub => sub ($value) { return $value =~ /\S/ }
 	);
 
-	$jwt_params{kid_keys} = $c->get_lms_public_keyset($ce, $db);
+	($jwt_params{kid_keys}, my $fetched) = $c->get_lms_public_keyset($ce, $db);
 	return unless $jwt_params{kid_keys};
 
-	my $claims = eval { decode_jwt(%jwt_params); };
+	my ($header, $claims) = eval { decode_jwt(%jwt_params, decode_header => 1) };
 
 	# If decoding of the JWT failed, then try to get a new LMS public keyset and try again.  It could be that the
 	# keyset that was previously saved in the database has expired.
 	unless ($claims) {
-		$jwt_params{kid_keys} = get_lms_public_keyset($c, $ce, $db, 1);
-		$claims = eval { $claims = decode_jwt(%jwt_params) };
+		debug('That key did not work. It is probably expired. Get a new one and try again.');
+		($jwt_params{kid_keys}, $fetched) = get_lms_public_keyset($c, $ce, $db, 1);
+		($header, $claims) = eval { decode_jwt(%jwt_params, decode_header => 1) };
 	}
 	if ($@) {
 		$c->stash->{LTIAuthenError} = "Failed to decode token received from LMS: $@";
 		return;
+	}
+
+	# Cache only the key that was used to verify this JWT in the database
+	# in the case that a fresh keyset was just obtained above.
+	if ($fetched && $header && defined $header->{kid}) {
+		my ($key) = grep { ($_->{kid} // '') eq $header->{kid} } @{ $jwt_params{kid_keys}{keys} };
+		$db->setSettingValue('LTIAdvantageLMSPublicKey', encode_json({ keys => [$key] })) if $key;
 	}
 
 	if ($ce->{debug_lti_parameters}) {
