@@ -1,0 +1,46 @@
+[files]
+extend-exclude = [
+    "lib/WeBWorK/Localize/*",
+    "courses.dist/modelCourse/html/achievements/*.png",
+]
+
+[default]
+extend-ignore-re = [
+    # Intentional "(mis)coded" wordplay in AccessibilityGuide.md.
+    '\(mis\)coded',
+    # Abbreviation for "full", paired with "scr" (score), in scoring file
+    # suffixes/labels.
+    'ful\.csv',
+    "'scr', 'ful'",
+    'e\.g\. ful',
+    # "Does Not Exist" notation in the MathJax AsciiMath symbol table.
+    'dne: \{',
+    'Dne: \{',
+    'DNE: \{',
+    "output: 'DNE'",
+]
+
+# Each entry below is scoped to one exact identifier/token (case-sensitive,
+# whole-match only) rather than a global word, so it won't suppress a
+# genuine future typo that merely happens to contain the same fragment.
+[default.extend-identifiers]
+# Password-hashing naming convention used throughout (cryptedPassword,
+# crypted_password, etc.), not a typo of "encrypted".
+crypted = "crypted"
+crypted_ = "crypted_"
+cryptedPassword = "cryptedPassword"
+crypted_password = "crypted_password"
+# Variable name for the paired select-all checkboxes.
+pairedSelectAlls = "pairedSelectAlls"
+# Function name (write JSON to file).
+writeJSONtoFile = "writeJSONtoFile"
+# From "ANDed" (logically AND-ed together).
+ANDed = "ANDed"
+# From "LANGuage", deliberately styled to highlight the LANG env var.
+LANGuage = "LANGuage"
+# Placeholder value in docker-config/env.dist.
+sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer = "sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer"
+# Historical spelling preserved verbatim in the Artistic License text.
+MERCHANTIBILITY = "MERCHANTIBILITY"
+# IMS Caliper Analytics spec class name; must match the external spec exactly.
+FillinBlankResponse = "FillinBlankResponse"
