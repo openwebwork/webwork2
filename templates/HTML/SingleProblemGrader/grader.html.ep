@@ -14,7 +14,7 @@
 		% my $rawCurrentScore = 0;
 		%
 		% # Subscores for each answer in the problem.
-		% if (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1) {
+		% if (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} // [] } > 1) {
 			% # Determine the scores and weights for each part of the problem.
 			% my $total = 0;
 			% my (@scores, @weights);
@@ -73,7 +73,7 @@
 				</div>
 			% }
 			% $currentScore = wwRound(0, $rawCurrentScore);
-		% } elsif (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} }) {
+		% } elsif (@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} // [] }) {
 			% $rawCurrentScore = $grader->{pg}{answers}{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER}[0] }{score} * 100;
 			% $currentScore = wwRound(0, $rawCurrentScore);
 			<%= hidden_field 'answer-part-score' => $currentScore, class => 'answer-part-score',
@@ -106,7 +106,7 @@
 								)
 								)
 								. (
-									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} // [] } > 1 ? tag(
 										'p',
 										class => 'mt-2 mb-0',
 										maketext(
@@ -175,7 +175,7 @@
 								maketext('The initial value is the currently saved score for this student.')
 								)
 								. (
-									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} } > 1 ? tag(
+									@{ $grader->{pg}{flags}{ANSWER_ENTRY_ORDER} // [] } > 1 ? tag(
 										'p',
 										class => 'mt-2 mb-0',
 										maketext(
