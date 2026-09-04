@@ -168,7 +168,7 @@
 								class="problem-answers"
 								data-source-file="<%= $_->{problem}->source_file || $problem->source_file %>"
 							>
-								% if (defined $_->{past_answer} ) {
+								% if (defined $_->{past_answer}) {
 									% my @scores  = split(//,   $_->{past_answer}->scores);
 									% my @answers = split(/\t/, $_->{past_answer}->answer_string);
 									%

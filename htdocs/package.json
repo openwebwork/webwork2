@@ -27,7 +27,7 @@
 		"sortablejs": "^1.15.7"
 	},
 	"devDependencies": {
-		"@openwebwork/prettier-plugin-mojolicious-html-template": "^0.0.1",
+		"@openwebwork/prettier-plugin-mojolicious-html-template": "^0.0.2",
 		"autoprefixer": "^10.5.4",
 		"chokidar": "^5.0.0",
 		"cssnano": "^8.0.2",

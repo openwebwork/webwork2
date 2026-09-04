@@ -159,9 +159,9 @@
 				<div class="col-md-8">
 					<div class="input-group input-group-sm mb-2">
 						<span class="input-group-text"><b><%= maketext('Hardcopy Theme:') %></b></span>
-						% if (@{ $hardcopyThemesAvailable } <= 3) {
+						% if (@{$hardcopyThemesAvailable} <= 3) {
 							<div class="input-group-text">
-								% for (@{ $hardcopyThemesAvailable }) {
+								% for (@{$hardcopyThemesAvailable}) {
 									<label class="form-check-label me-3">
 										<%= radio_button
 											hardcopy_theme => $_,
