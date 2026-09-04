@@ -280,8 +280,11 @@
 		</div>
 	% }
 	%
-	% if ($timeLeft < 60 && $timeLeft > 0 && !$c->{can}{gradeUnsubmittedTest}
-	% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student')) {
+	% if ($timeLeft < 60
+		% && $timeLeft > 0
+		% && !$c->{can}{gradeUnsubmittedTest}
+		% && !$authz->hasPermissions($userID, 'record_answers_when_acting_as_student'))
+	% {
 		<div class="alert alert-danger d-inline-block mb-2 p-1">
 			<strong><%= maketext('You have less than 1 minute to complete this test.') %></strong>
 		</div>
@@ -740,10 +743,9 @@
 			%
 			% # If the user can check answers and a problem_data form parameter for
 			% # this problem has been set then add a hidden input with that data.
-			% if (
-				% $c->{can}{checkAnswers}
-				% && defined $c->param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id})
-			% ) {
+			% if ($c->{can}{checkAnswers}
+				% && defined $c->param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}))
+			% {
 				<%= hidden_field 'problem_data_'
 					. $problems->[ $probOrder->[$i] ]{problem_id} =>
 					param('problem_data_' . $problems->[ $probOrder->[$i] ]{problem_id}) =%>
@@ -756,7 +758,8 @@
 		<div class="submit-buttons-container col-12 mb-2">
 			<%= submit_button maketext('Preview Test'), name => 'previewAnswers', class => 'btn btn-primary mb-1' =%>
 			% if ($c->{can}{checkAnswersNextTime}
-			% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader})) {
+				% && (!$c->{can}{recordAnswersNextTime} || $c->{can}{showProblemGrader}))
+			% {
 				<%= submit_button maketext('Check Test'), name => 'checkAnswers', class => 'btn btn-primary mb-1' =%>
 			% }
 			% if ($c->{can}{recordAnswersNextTime}) {

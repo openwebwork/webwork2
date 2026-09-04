@@ -179,12 +179,11 @@
 	<dt><%= maketext('Change the number of attempts allowed on a problem.') %></dt>
 	<dd><%= maketext('This is done from the "Sets Manager" page or the "Instructor tools" page.') %></dd>
 
-	% if (
-		% $ce->{LTIVersion}
+	% if ($ce->{LTIVersion}
 		% && $ce->{LTIVersion} eq 'v1p3'
 		% && $ce->{LTI}{v1p3}{preferred_source_of_username}
-		% && $db->getSettingValue('LTINamesRolesServiceURL')
-	% ) {
+		% && $db->getSettingValue('LTINamesRolesServiceURL'))
+	% {
 		<dt><%= maketext('Synchronize users with the associated course in the LMS.') %></dt>
 		<dd>
 			<%= maketext('Select the "Synchronize LMS Roster" tab and click "Synchronize LMS Roster". '

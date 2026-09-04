@@ -59,7 +59,7 @@
 							link_to($filename => 'sample_problem_viewer', { filePath => "$filePath.pg" })) =%>
 					</p>
 				</div>
-				% if (scalar(@{ $metadata->{$filename}{macros} }) > 0 ) {
+				% if (scalar(@{ $metadata->{$filename}{macros} }) > 0) {
 					<div class="col">
 						<h2><%= maketext('POD for Macro Files') %></h2>
 						<ul>
@@ -82,7 +82,7 @@
 					<div class="col">
 						<h2><%= maketext('See Also') %></h2>
 						<ul>
-							% for (@{$metadata->{$filename}{related}}) {
+							% for (@{ $metadata->{$filename}{related} }) {
 								<li>
 									<%= link_to $metadata->{$_}{name} => 'sample_problem_viewer',
 										{ filePath => "$metadata->{$_}{dir}/" . ($_ =~ s/.pg$//r) } =%>
