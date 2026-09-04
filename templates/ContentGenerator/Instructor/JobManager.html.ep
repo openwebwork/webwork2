@@ -237,7 +237,7 @@
 												<div class="modal-body">
 													% if (ref($jobs->{$jobID}{result}) eq 'ARRAY') {
 														<ul class="list-group list-group-flush">
-															% for (@{ $jobs->{$jobID}{result} } ) {
+															% for (@{ $jobs->{$jobID}{result} }) {
 																<li class="list-group-item py-1"><%= $_ %></li>
 															% }
 														</ul>

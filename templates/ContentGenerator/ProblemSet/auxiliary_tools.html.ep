@@ -109,12 +109,11 @@
 			</span>
 		% }
 	% }
-	% if (
-		% $authz->hasPermissions(param('user'), 'view_own_answers_early')
+	% if ($authz->hasPermissions(param('user'), 'view_own_answers_early')
 		% && $c->{set}->assignment_type !~ /gateway/
 		% && param('user') eq param('effectiveUser')
-		% && time < $c->{set}->answer_date
-	% ) {
+		% && time < $c->{set}->answer_date)
+	% {
 		<%= link_to maketext('Show Answers Now') => '#modal_view_answers_early',
 			role                                 => 'button',
 			class                                => 'btn btn-primary',
