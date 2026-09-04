@@ -617,12 +617,6 @@ sub head ($c) {
 	return '';
 }
 
-sub post_header_text ($c) {
-	return ''                           if ($c->{invalidSet});
-	return $c->{pg}->{post_header_text} if $c->{pg}->{post_header_text};
-	return '';
-}
-
 sub siblings ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
