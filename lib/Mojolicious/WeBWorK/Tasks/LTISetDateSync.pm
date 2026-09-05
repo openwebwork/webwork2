@@ -52,25 +52,37 @@ async sub synchronizeSetDates ($job, $setIDs, $syncToLMS) {
 
 	my $ua = Mojo::UserAgent->new;
 
-	my $lineitemsRequest =
-		await $ua->get_p($lineitemsURL, { Authorization => "$accessToken->{token_type} $accessToken->{access_token}" })
-		->catch(sub ($err) {
-			return $err;
-		});
+	my %lineitems;
+	while (1) {
+		my $lineitemsRequest =
+			await $ua->get_p($lineitemsURL,
+				{ Authorization => "$accessToken->{token_type} $accessToken->{access_token}" })->catch(sub ($err) {
+				return $err;
+				});
 
-	return $job->fail(
-		$job->maketext('There was an error communicating with the lineitems URL: [_1]', $lineitemsRequest))
-		unless ref $lineitemsRequest;
+		return $job->fail(
+			$job->maketext('There was an error communicating with the lineitems URL: [_1]', $lineitemsRequest))
+			unless ref $lineitemsRequest;
 
-	my $lineitemsResult = $lineitemsRequest->result;
+		my $lineitemsResult = $lineitemsRequest->result;
 
-	return $job->fail($job->maketext(
-		'There was an error obtaining the current lineitems from the LMS: [_1]',
-		$lineitemsResult->message
-	))
-		unless $lineitemsResult->is_success;
+		return $job->fail($job->maketext(
+			'There was an error obtaining the current lineitems from the LMS: [_1]',
+			$lineitemsResult->message
+		))
+			unless $lineitemsResult->is_success;
 
-	my %lineitems = map { $_->{resourceId} => $_ } grep { defined $_->{resourceId} } @{ $lineitemsResult->json };
+		for (@{ $lineitemsResult->json }) {
+			next unless defined $_->{resourceId};
+			$lineitems{ $_->{resourceId} } = $_;
+		}
+
+		if ($lineitemsResult->headers->link && $lineitemsResult->headers->link =~ /<([^>]*)>;\s*rel="next"/) {
+			$lineitemsURL = $1;
+		} else {
+			last;
+		}
+	}
 
 	my @messages;
 
