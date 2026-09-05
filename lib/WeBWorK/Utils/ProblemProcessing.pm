@@ -18,8 +18,6 @@ use WeBWorK::Utils::DateTime            qw(before after);
 use WeBWorK::Utils::JITAR               qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Utils::Logs                qw(writeLog writeCourseLog);
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
-use Caliper::Sensor;
-use Caliper::Entity;
 
 our @EXPORT_OK = qw(
 	process_and_log_answer
@@ -149,66 +147,7 @@ async sub process_and_log_answer ($c) {
 						. $pureProblem->num_correct . "\t"
 						. $pureProblem->num_incorrect);
 
-				if ($ce->{caliper}{enabled}
-					&& defined($answer_log)
-					&& !$authz->hasPermissions($effectiveUser, 'dont_log_past_answers'))
-				{
-					my $caliper_sensor = Caliper::Sensor->new($ce);
-					my $startTime      = $c->param('startTime');
-					my $endTime        = time();
-
-					my $completed_question_event = {
-						type    => 'AssessmentItemEvent',
-						action  => 'Completed',
-						profile => 'AssessmentProfile',
-						object  => Caliper::Entity::problem_user(
-							$ce,
-							$db,
-							$problem->set_id(),
-							0,    #version is 0 for non-gateway problems
-							$problem->problem_id(),
-							$problem->user_id(),
-							$pg
-						),
-						generated => Caliper::Entity::answer(
-							$ce,
-							$db,
-							$problem->set_id(),
-							0,    #version is 0 for non-gateway problems
-							$problem->problem_id(),
-							$problem->user_id(),
-							$pg,
-							$startTime,
-							$endTime
-						),
-					};
-					my $submitted_set_event = {
-						type      => 'AssessmentEvent',
-						action    => 'Submitted',
-						profile   => 'AssessmentProfile',
-						object    => Caliper::Entity::problem_set($ce, $db, $problem->set_id()),
-						generated => Caliper::Entity::problem_set_attempt(
-							$ce,
-							$db,
-							$problem->set_id(),
-							0,    #version is 0 for non-gateway problems
-							$problem->user_id(),
-							$startTime,
-							$endTime
-						),
-					};
-					my $tool_use_event = {
-						type    => 'ToolUseEvent',
-						action  => 'Used',
-						profile => 'ToolUseProfile',
-						object  => Caliper::Entity::webwork_app(),
-					};
-					$caliper_sensor->sendEvents($c,
-						[ $completed_question_event, $submitted_set_event, $tool_use_event ]);
-
-					# reset start time
-					$c->param('startTime', '');
-				}
+				$c->app->plugins->emit_hook(answer_submitted => $c);
 
 				# Send the score for this set to the LMS if enabled.
 				if ($ce->{LTIGradeMode}) {

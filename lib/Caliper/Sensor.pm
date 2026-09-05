@@ -1,107 +1,99 @@
 package Caliper::Sensor;
+use Mojo::Base -signatures, -async_await;
 
-##### Library Imports #####
-use strict;
-use warnings;
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
-use WeBWorK::Debug qw(debug);
-use Data::Dumper;
-use Mojo::JSON  qw(encode_json);
-use Time::HiRes qw/gettimeofday/;
+use Mojo::UserAgent;
+use Mojo::Promise;
+use Time::HiRes qw(gettimeofday);
 use Date::Format;
 
-use HTTP::Request::Common;
-use HTTP::Async;
-
+use WeBWorK::Debug qw(debug);
 use Caliper::Event;
 use Caliper::ResourceIri;
 
-# Constructor
-sub new {
-	my ($class, $ce) = @_;
+sub new ($class, $c) {
 	my $self = {
-		ce      => $ce,
-		enabled => $ce->{caliper}{enabled},
-		host    => $ce->{caliper}{host},
-		api_key => $ce->{caliper}{api_key}
+		c       => $c,
+		enabled => $c->ce->{caliper}{enabled},
+		host    => $c->ce->{caliper}{host},
+		api_key => $c->ce->{caliper}{api_key}
 	};
 	bless $self, $class;
 	return $self;
 }
 
-sub caliperEnabled {
-	my $self = shift;
+sub caliperEnabled ($self) {
 	return $self->{enabled} && exists $self->{host} && exists $self->{api_key};
 }
 
-sub sendEvent {
-	my ($self, $c, $event_hash) = @_;
-
-	return $self->sendEvents($c, [$event_hash]);
+async sub sendEvent ($self, $event_hash) {
+	return await $self->sendEvents([$event_hash]);
 }
 
-sub sendEvents {
-	my ($self, $c, $array_of_events) = @_;
-	return 0 unless $self->caliperEnabled();
+async sub sendEvents ($self, $array_of_events) {
+	return 0 unless $self->caliperEnabled;
 
+	my $c = $self->{c};
 	for my $event_hash (@$array_of_events) {
 		Caliper::Event::add_defaults($c, $event_hash);
 	}
 
-	my $ce           = $c->ce;
-	my $resource_iri = Caliper::ResourceIri->new($ce);
-	my $async        = HTTP::Async->new;
-	$async->timeout(5);
-	$async->max_request_time(10);
+	my $ce = $c->ce;
+	my $ua = Mojo::UserAgent->new;
+	$ua->inactivity_timeout(5);
+	$ua->request_timeout(10);
 
-	# chunk events to prevent size issues (send a maximum of 3 events at a time)
+	# Chunk events to prevent size issues (send a maximum of 3 events at a time).
 	my $event_chunks = [];
 	push(@$event_chunks, [ splice @$array_of_events, 0, 3 ]) while @$array_of_events;
 
+	my @promises;
+
 	for my $event_chunk (@$event_chunks) {
-		my $envelope = {
-			'sensor'      => $resource_iri->webwork(),
-			'sendTime'    => Caliper::Sensor::formatted_timestamp(time()),
-			'dataVersion' => 'http://purl.imsglobal.org/ctx/caliper/v1p2',
-			'data'        => $event_chunk,
-		};
-
-		my $json_payload = encode_json($envelope);
-		# debug("Caliper event json_payload: " . $json_payload);
-
-		my $HTTPRequest = HTTP::Request->new(
-			'POST',
-			$self->{host},
-			[
-				'Accept'        => '*/*',
-				'Authorization' => 'Bearer ' . $self->{api_key},
-				'Content-Type'  => 'application/json',
-			],
-			$json_payload
+		push(
+			@promises,
+			$ua->post_p(
+				$self->{host},
+				{
+					Accept         => '*/*',
+					Authorization  => 'Bearer ' . $self->{api_key},
+					'Content-Type' => 'application/json',
+				},
+				json => {
+					sensor      => Caliper::ResourceIri->new($ce)->webwork,
+					sendTime    => formatted_timestamp(time),
+					dataVersion => 'http://purl.imsglobal.org/ctx/caliper/v1p2',
+					data        => $event_chunk
+				}
+			)
 		);
-		$async->add($HTTPRequest);
 	}
 
-	while (my $response = $async->wait_for_next_response) {
-		if (!$response->is_success) {
-			debug("Caliper event post failed. Error Message: " . $response->message);
-			debug($response->content);
-			$self->log_error("Caliper event post failed. Error Message: "
-					. $response->message
+	my @responses = await Mojo::Promise->all(@promises)->catch(sub {
+		my $err = shift;
+		$self->log_error(ref $err ? $err->message : $err);
+		return;
+	});
+
+	for my $response (@responses) {
+		my $result = $response->[0]->result;
+		if (!$result->is_success) {
+			debug('Caliper event post failed. Error Message: ' . $result->message);
+			debug($result->body);
+			$self->log_error('Caliper event post failed. Error Message: '
+					. $result->message
 					. "\nResponse Content: "
-					. $response->content);
+					. $result->body);
 		} else {
-			debug("Caliper event post success. Success Message: " . $response->message);
-			debug($response->content);
+			debug('Caliper event post success. Success Message: ' . $result->message);
+			debug($result->body);
 		}
 	}
+
 	return;
 }
 
-sub log_error {
-	my ($self, $error_message) = @_;
-	my $ce      = $self->{ce};
+sub log_error ($self, $error_message) {
+	my $ce      = $self->{c}->ce;
 	my $logfile = $ce->{caliper}{errorlog};
 
 	my ($sec, $msec) = gettimeofday;
@@ -110,11 +102,11 @@ sub log_error {
 
 	# create if necessary
 	unless (-e $logfile) {
-		open my $fc, ">", $logfile;
+		open my $fc, '>', $logfile;
 		close $fc;
 	}
 	# append message
-	if (open my $f, ">>", $logfile) {
+	if (open my $f, '>>', $logfile) {
 		print $f $msg;
 		close $f;
 	} else {
@@ -123,28 +115,20 @@ sub log_error {
 	return;
 }
 
-sub formatted_timestamp {
-	my ($time_value) = @_;
-	# Note: webwork epoch timestamps do not include milliseconds
-	return POSIX::strftime("%Y-%m-%dT%H:%M:%S.000Z", gmtime($time_value));
+sub formatted_timestamp ($time_value) {
+	return POSIX::strftime('%Y-%m-%dT%H:%M:%S.000Z', gmtime($time_value));
 }
 
-sub formatted_duration {
-	my ($duration) = @_;
-
-	# generate the time portion of a ISO 8601 formatted duration
+sub formatted_duration ($duration) {
+	# Generate the time portion of a ISO 8601 formatted duration.
 	my $seconds = $duration % 60;
 	my $minutes = int($duration / 60) % 60;
 	my $hours   = int($duration / 3600);
 
-	my $output = "PT";
-	if ($hours > 0) {
-		$output .= $hours . "H";
-	}
-	if ($hours > 0 || $minutes > 0) {
-		$output .= $minutes . "M";
-	}
-	$output .= $seconds . "S";
+	my $output = 'PT';
+	$output .= $hours . 'H'   if $hours > 0;
+	$output .= $minutes . 'M' if $hours > 0 || $minutes > 0;
+	$output .= $seconds . 'S';
 
 	return $output;
 }

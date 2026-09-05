@@ -271,9 +271,6 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 			$ret->{render_fail} = 1;
 		}
 
-		# Save the problem source. This is used by Caliper::Entity. Why?
-		$ret->{problem_source_code} = $pg->{translator}{source} if ref $pg->{translator};
-
 		$pg->free;
 		return $ret;
 	})->catch(sub ($err) {

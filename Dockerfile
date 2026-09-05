@@ -109,7 +109,6 @@ RUN apt-get update \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
-	libhttp-async-perl \
 	libio-compress-perl \
 	libiterator-perl \
 	libiterator-util-perl \
@@ -133,7 +132,6 @@ RUN apt-get update \
 	libnet-ip-perl \
 	libnet-ldap-perl \
 	libnet-oauth-perl \
-	libossp-uuid-perl \
 	libpadwalker-perl \
 	libpandoc-wrapper-perl \
 	libpath-class-perl \
@@ -231,18 +229,18 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 	&& mkdir /run/webwork2 /etc/ssl/local \
 	&& cd $APP_ROOT/webwork2/ \
-		&& chown www-data DATA ../courses logs tmp /etc/ssl/local /run/webwork2 \
-		&& chmod -R u+w DATA ../courses logs tmp /run/webwork2 /etc/ssl/local \
+	&& chown www-data DATA ../courses logs tmp /etc/ssl/local /run/webwork2 \
+	&& chmod -R u+w DATA ../courses logs tmp /run/webwork2 /etc/ssl/local \
 	&& echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
-		&& /usr/sbin/locale-gen \
-		&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
-		&& debconf-set-selections /tmp/preseed.txt \
+	&& /usr/sbin/locale-gen \
+	&& echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
+	&& debconf-set-selections /tmp/preseed.txt \
 	&& rm -f /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
-		&& dpkg-reconfigure -f noninteractive tzdata \
+	&& dpkg-reconfigure -f noninteractive tzdata \
 	&& cd $WEBWORK_ROOT/htdocs \
-		&& npm install \
+	&& npm install \
 	&& cd $PG_ROOT/htdocs \
-		&& npm install
+	&& npm install
 
 # ==================================================================
 # Phase 7 - Final setup and prepare docker-entrypoint.sh

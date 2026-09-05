@@ -71,7 +71,6 @@ RUN apt-get update \
 	libgd-perl \
 	libhtml-scrubber-perl \
 	libhtml-template-perl \
-	libhttp-async-perl \
 	libio-compress-perl \
 	libiterator-perl \
 	libiterator-util-perl \
@@ -94,7 +93,6 @@ RUN apt-get update \
 	libnet-ip-perl \
 	libnet-ldap-perl \
 	libnet-oauth-perl \
-	libossp-uuid-perl \
 	libpadwalker-perl \
 	libpandoc-wrapper-perl \
 	libpath-class-perl \
