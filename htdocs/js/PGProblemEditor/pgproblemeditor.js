@@ -595,10 +595,14 @@
 
 	window.addEventListener('message', (event) => {
 		if (event.data !== 'render-iframe-ready' || iframe.contentWindow !== event.source) return;
+		const storedTheme = localStorage.getItem('WW.color-scheme');
 		iframe.contentWindow.postMessage({
 			theme:
-				localStorage.getItem('WW.color-scheme') ??
-				(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+				storedTheme && storedTheme !== 'auto'
+					? storedTheme
+					: window.matchMedia('(prefers-color-scheme: dark)').matches
+						? 'dark'
+						: 'light'
 		});
 	});
 

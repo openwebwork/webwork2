@@ -3,12 +3,16 @@
 
 	window.addEventListener('message', (event) => {
 		if (event.data !== 'render-iframe-ready') return;
+		const storedTheme = localStorage.getItem('WW.color-scheme');
 		renderedIframes
 			.find((i) => i.contentWindow === event.source)
 			?.contentWindow.postMessage({
 				theme:
-					localStorage.getItem('WW.color-scheme') ??
-					(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+					storedTheme && storedTheme !== 'auto'
+						? storedTheme
+						: window.matchMedia('(prefers-color-scheme: dark)').matches
+							? 'dark'
+							: 'light'
 			});
 	});
 
