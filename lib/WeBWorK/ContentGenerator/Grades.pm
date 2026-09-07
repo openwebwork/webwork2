@@ -196,17 +196,22 @@ sub displayStudentGrades ($c) {
 		# Determine if set is a test and if it is a test template or version.
 		my $setIsTest      = defined $set->assignment_type && $set->assignment_type =~ /gateway/;
 		my $setIsVersioned = $setIsTest                    && !defined $setVersionsCount{$setID};
+		my $setTemplateID  = $set->set_id;
 
 		# Initialize set item. Define link here. It will be adjusted for versioned tests later.
 		my $item = {
-			name              => format_set_name_display($setID),
+			name              => format_set_name_display($setTemplateID),
 			grade             => 0,
 			grade_total       => 0,
 			grade_total_right => 0,
 			is_test           => $setIsTest,
 			record            => $set,
 			link              => $c->systemLink(
-				$c->url_for('problem_list', setID => $setID),
+				$c->url_for(
+					$setIsVersioned ? 'gateway_quiz_version' : 'problem_list',
+					setID     => $setTemplateID,
+					versionID => $set->version_id
+				),
 				params => { effectiveUser => $effectiveUser }
 			)
 		};
@@ -248,30 +253,26 @@ sub displayStudentGrades ($c) {
 				next;
 			}
 
-			# Only add link if the problems can be seen.
-			$item->{link} =
-				($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date))
-				? $c->systemLink(
-					$c->url_for(
-						$set->assignment_type eq 'proctored_gateway'
-						? 'proctored_gateway_quiz_version'
-						: 'gateway_quiz_version',
-						setID     => $setID,
-						versionID => $set->version_id
-					),
-					params => { effectiveUser => $effectiveUser }
-				)
-				: '';
+			# Only show link if the problems can be seen, and it is not a proctored test
+			# since students cannot directly access them until after it is graded, at
+			# which time it reverts to a normal test.
+			$item->{link} = ''
+				if $set->assignment_type eq 'proctored_gateway'
+				|| (
+					defined $set->hide_work
+					&& ($set->hide_work eq 'Y'
+						|| $set->hide_work eq 'BeforeAnswerDate' && time < $set->answer_date)
+				);
 
 			# If the set has hide_score set, then nothing left to do.
-			if (defined $set->hide_score && $set->hide_score eq 'Y'
-				|| ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
-			{
-				next;
-			}
+			next
+				if defined $set->hide_score
+				&& ($set->hide_score eq 'Y'
+					|| $set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date);
+
 			# This is a test version, and the scores can be shown, so also show score of template set.
-			$allItems{$setID}{message}    = '' if $allItems{$setID}{hide_score};
-			$allItems{$setID}{hide_score} = 0;
+			$allItems{$setTemplateID}{message}    = '' if $allItems{$setTemplateID}{hide_score};
+			$allItems{$setTemplateID}{hide_score} = 0;
 		}
 
 		my ($total_right, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
@@ -288,13 +289,15 @@ sub displayStudentGrades ($c) {
 		if ($setIsTest && defined $set->hide_score_by_problem && $set->hide_score_by_problem eq 'Y') {
 			$item->{message} = $c->maketext('Display of problem scores for this test is not allowed.');
 		} else {
-			# Create a direct link to the problems unless the set is a test, or there is a set
-			# restriction preventing the student from accessing the set problems.
-			my $noProblemLink =
-				$setIsTest
-				|| restricted_set_message($c, $set, 'lti')
-				|| restricted_set_message($c, $set, 'conditional')
-				|| $authz->invalidIPAddress($set);
+			# Create a direct link to the problems unless there is a set/test restriction preventing the
+			# student from accessing the set problems.
+			my $noProblemLink = !$item->{link}
+				|| (
+					!$setIsTest
+					&& (restricted_set_message($c, $set, 'lti')
+						|| restricted_set_message($c, $set, 'conditional')
+						|| $authz->invalidIPAddress($set))
+				);
 
 			for my $i (0 .. $#$problem_scores) {
 				my $addProblem = 1;
@@ -315,10 +318,21 @@ sub displayStudentGrades ($c) {
 						id    => $problem_id,
 						score => $problem_scores->[$i] =~ /^\d+$/ ? $problem_scores->[$i] : 0,
 						value => $problem_records->[$i]{value},
-						link  => $noProblemLink ? '' : $c->systemLink(
-							$c->url_for('problem_detail', setID => $setID, problemID => $problem_id),
-							params => { effectiveUser => $effectiveUser }
-						),
+						link  => $noProblemLink ? '' : $setIsTest ? $c->systemLink(
+							$c->url_for(
+								'gateway_quiz_version',
+								setID     => $setTemplateID,
+								versionID => $set->version_id
+							),
+							params => {
+								effectiveUser => $effectiveUser,
+								currentPage   => int($i / ($set->problems_per_page || 1)) + 1
+							}
+							)
+							. "#prob$i" : $c->systemLink(
+								$c->url_for('problem_detail', setID => $setID, problemID => $problem_id),
+								params => { effectiveUser => $effectiveUser }
+							),
 						attempts => $setIsTest
 						? 0
 						: $problem_incorrect_attempts->[$i] + $problem_records->[$i]->num_correct
@@ -330,7 +344,7 @@ sub displayStudentGrades ($c) {
 		# If this is a test version, update template set to the best grade a student hand.
 		if ($setIsVersioned) {
 			# Compare the score to the template set and update as needed.
-			my $templateItem = $allItems{$setID};
+			my $templateItem = $allItems{$setTemplateID};
 			if ($templateItem->{grade} == 0 || $item->{grade} > $templateItem->{grade}) {
 				$templateItem->{version_id}   = $set->version_id;
 				$templateItem->{version_link} = $item->{link};
