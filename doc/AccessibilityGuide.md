@@ -110,14 +110,14 @@ labels in a diagram, etc).
   graph — such as "Graph of y equals x squared" (default is "Graph"). When
   displaying the graph, the `alt` text is converted to an `aria_description`
   which has no character limit. An optional `long_description` can be added
-  to give both a shorter `aria_descripition` and longer description.
+  to give both a shorter `aria_description` and longer description.
 
 - Descriptions of static images (`.png`, `.jpeg`, etc) are provided via the
   `alt` text. `alt` text should be short, under ~125 characters, since many
   screen readers may only read the first ~125 characters of the `alt` text.
   See the PGML help for syntax options to add `alt` text. For anything more
   complicated than a one-line description, provide both a short `alt` text
-  and a full `long_descripition` of the image.
+  and a full `long_description` of the image.
 
 - Graphs created using the `PGlatex.pl`, `PGtikz.pl`, or `PGgraphmacros.pl`
   macros generate static images and follow the same guidelines as static
@@ -125,7 +125,7 @@ labels in a diagram, etc).
   migrate to using `plots.pl`. Consider also migrating images created using
   `PGlatex.pl` or `PGtikz.pl` to `plots.pl` as well.
 
-- `long_descripition` can include more than a sentence or paragraph for
+- `long_description` can include more than a sentence or paragraph for
   the image. It can include data tables (for example, a table of (x, y)
   points a plotted curve passes through), and is included in both the HTML
   and hardcopy PDF output, and is visible for sighted users.
@@ -177,5 +177,5 @@ issue.
   [pg repository](https://github.com/openwebwork/pg/issues)
 - If the issue stems from how a specific problem was (mis)coded, please see
   section 3 of this guide. And if you improve the accessibility of the
-  problem, contact your WeBWorK administrator to ask how you could contirubute
+  problem, contact your WeBWorK administrator to ask how you could contribute
   the improvement upstream.
