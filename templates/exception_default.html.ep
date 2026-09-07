@@ -35,7 +35,7 @@
 				<p style="margin-left:2em;color:#dc2a2a"><code><%= $exception->message =%></code></p>
 				<h2>Context</h2>
 				<ul>
-					% for (@{$exception->lines_before}) {
+					% for (@{ $exception->lines_before }) {
 						<li>
 							<pre style="display:inline"><code><%= $_->[0] %>: <%= $_->[1] %></code></pre>
 						</li>

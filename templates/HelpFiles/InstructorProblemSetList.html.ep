@@ -77,12 +77,11 @@
 	<dt><%= maketext('Delete') %></dt>
 	<dd><%= maketext('Delete the sets checked below. Be careful, this cannot be undone.') %></dd>
 
-	% if (
-		% $ce->{LTIVersion}
+	% if ($ce->{LTIVersion}
 		% && $ce->{LTIVersion} eq 'v1p3'
 		% && $ce->{LTIGradeMode} eq 'homework'
-		% && $db->getSettingValue('LTILineitemsURL')
-	% ) {
+		% && $db->getSettingValue('LTILineitemsURL'))
+	% {
 		<dt><%= maketext('Synchronize Set Dates with LMS.') %></dt>
 		<dd>
 			<%= maketext('Synchronize the dates for a single set or multiple sets to or from the LMS. This task is '

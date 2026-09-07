@@ -14,7 +14,7 @@
 			% for (@{ $c->{ra_send_to} }) {
 				<li>
 					<%= $_ %>
-					% if ($c->{merge_file} && !$merge_data->{$student_ids->{$_}}) {
+					% if ($c->{merge_file} && !$merge_data->{ $student_ids->{$_} }) {
 						<span class="text-danger">(<%= maketext('No merge data found') %>)</span>
 					% }
 				</li>
