@@ -30,7 +30,12 @@ sub can ($c, $arg) {
 		my $text = DEFAULT_COURSE_INFO_TXT;
 		eval { $text = readFile($course_info_path) } if -f $course_info_path;
 
-		return $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')
+		# Note that the user parameter must be obtained in scalar context. In list context the param method
+		# returns the empty list when the parameter is not set, and that would silently remove the argument
+		# from the hasPermissions call below, making it croak about being given too few arguments.
+		my $user = $c->param('user');
+
+		return $c->authz->hasPermissions($user, 'access_instructor_tools')
 			|| $text ne DEFAULT_COURSE_INFO_TXT;
 	}
 
