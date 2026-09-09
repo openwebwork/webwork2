@@ -81,7 +81,6 @@ use Mojo::JSON     qw(encode_json decode_json);
 use WeBWorK::DB::Database;
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Layout qw(databaseLayout);
-use WeBWorK::DB::Utils  qw(grok_vsetID);
 use WeBWorK::Utils      qw(runtime_use);
 
 # How these exceptions should be used:
@@ -683,7 +682,7 @@ sub getKeys {
 }
 
 sub addKey {
-	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
+	my ($self, $Key) = shift->checkArgs(\@_, qw/REC:key/);
 
 	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addKey: user ' . $Key->user_id . ' not found')
 		unless $Key->key eq "nonce" || $self->{user}->exists($Key->user_id);
@@ -695,7 +694,7 @@ sub addKey {
 }
 
 sub putKey {
-	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
+	my ($self, $Key) = shift->checkArgs(\@_, qw/REC:key/);
 	my $keyCopy = $self->newKey($Key);
 	$keyCopy->session(encode_json($Key->session)) if ref($Key->session) eq 'HASH';
 	my $rows = $self->{key}->put($keyCopy);    # DBI returns 0E0 for 0.
@@ -1021,12 +1020,12 @@ BEGIN {
 sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 
 sub listProblemPastAnswers {
-	my ($self, $userID, $setID, $problemID);
+	my ($self, $userID, $setID, $versionID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
 
-	($userID, $setID, $problemID) = @_;
-	my $where = [ user_id_eq_set_id_eq_problem_id_eq => $userID, $setID, $problemID ];
+	($userID, $setID, $versionID, $problemID) = @_;
+	my $where = [ user_id_eq_set_id_eq_version_id_eq_problem_id_eq => $userID, $setID, $versionID, $problemID ];
 
 	my $order = ['answer_id'];
 
@@ -1038,12 +1037,12 @@ sub listProblemPastAnswers {
 }
 
 sub latestProblemPastAnswer {
-	my ($self, $userID, $setID, $problemID);
+	my ($self, $userID, $setID, $versionID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
 
-	($userID, $setID, $problemID) = @_;
-	my @answerIDs = $self->listProblemPastAnswers($userID, $setID, $problemID);
+	($userID, $setID, $versionID, $problemID) = @_;
+	my @answerIDs = $self->listProblemPastAnswers($userID, $setID, $versionID, $problemID);
 
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
 	return $answerIDs[-1];
@@ -1072,7 +1071,8 @@ sub addPastAnswer {
 			. $pastAnswer->set_id . ' '
 			. $pastAnswer->problem_id
 			. ' not found')
-		unless $self->{problem_user}->exists($pastAnswer->user_id, $pastAnswer->set_id, $pastAnswer->problem_id);
+		unless $self->{problem_user}
+		->exists($pastAnswer->user_id, $pastAnswer->set_id, $pastAnswer->version_id, $pastAnswer->problem_id);
 
 	return $self->{past_answer}->add($pastAnswer);
 }
@@ -1416,8 +1416,6 @@ sub getUserSets {
 	return $self->{set_user}->gets(@userSetIDs);
 }
 
-# the code from addUserSet() is duplicated in large part following in
-# addVersionedUserSet; changes here should accordingly be propagated down there
 sub addUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
 	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserSet: user ' . $UserSet->user_id . ' not found')
@@ -1427,8 +1425,6 @@ sub addUserSet {
 	return $self->{set_user}->add($UserSet);
 }
 
-# the code from putUserSet() is duplicated in large part in the following
-# putVersionedUserSet; c.f. that routine
 sub putUserSet {
 	my ($self, $UserSet) = shift->checkArgs(\@_, qw/REC:set_user/);
 	my $rows = $self->{set_user}->put($UserSet);    # DBI returns 0E0 for 0.
@@ -1476,7 +1472,7 @@ sub getMergedSets {
 }
 
 ################################################################################
-# set_version functions (NEW)
+# set_version functions
 ################################################################################
 
 BEGIN {
@@ -1719,7 +1715,7 @@ sub getAllUserSetLocations {
 
 sub addUserSetLocation {
 	# VERSIONING - accept versioned ID fields
-	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/VREC:set_locations_user/);
+	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations_user/);
 	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserSetLocation: user set '
 			. $UserSetLocation->set_id
 			. ' for user '
@@ -1730,10 +1726,8 @@ sub addUserSetLocation {
 }
 
 # FIXME: we won't ever use this because all fields are key fields
-# versioned_ok is an optional argument which lets us slip versioned setIDs through checkArgs.
 sub putUserSetLocation {
-	my $V = $_[2] ? "V" : "";
-	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "${V}REC:set_locations_user", "versioned_ok!?");
+	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "REC:set_locations_user", "!?");
 
 	my $rows = $self->{set_locations_user}->put($UserSetLocation);    # DBI returns 0E0 for 0.
 	WeBWorK::DB::Ex::RecordNotFound->throw(
@@ -1878,7 +1872,7 @@ sub listUserProblems {
 
 sub existsUserProblem {
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
-	return $self->{problem_user}->exists($userID, $setID, $problemID);
+	return $self->{problem_user}->exists_where({ user_id => $userID, set_id => $setID, problem_id => $problemID });
 }
 
 sub getUserProblem {
@@ -1886,9 +1880,14 @@ sub getUserProblem {
 	return ($self->getUserProblems([ $userID, $setID, $problemID ]))[0];
 }
 
+# Note that this cannot simply pass its list of keyparts on to the schema's generic "gets" method, since that maps
+# keyparts positionally onto the table's keyfields, and the version_id keyfield (which is not one of the keyparts
+# accepted here) sits between set_id and problem_id in that list.
 sub getUserProblems {
 	my ($self, @userProblemIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id problem_id/);
-	return $self->{problem_user}->gets(@userProblemIDs);
+	return map {
+		$self->{problem_user}->get_records_where({ user_id => $_->[0], set_id => $_->[1], problem_id => $_->[2] })
+	} @userProblemIDs;
 }
 
 sub getAllUserProblems {
@@ -1898,29 +1897,27 @@ sub getAllUserProblems {
 }
 
 sub addUserProblem {
-	# VERSIONING - accept versioned ID fields
-	my ($self, $UserProblem) = shift->checkArgs(\@_, qw/VREC:problem_user/);
+	my ($self, $UserProblem) = shift->checkArgs(\@_, qw/REC:problem_user/);
 
 	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserProblem: user set '
 			. $UserProblem->set_id
 			. ' for user '
 			. $UserProblem->user_id
 			. ' not found')
-		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
+		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->version_id);
 
-	my ($nv_set_id, $versionNum) = grok_vsetID($UserProblem->set_id);
-
-	WeBWorK::DB::Ex::DependencyNotFound->throw(
-		error => 'addUserProblem: problem ' . $UserProblem->problem_id . ' in set $nv_set_id not found')
-		unless $self->{problem}->exists($nv_set_id, $UserProblem->problem_id);
+	WeBWorK::DB::Ex::DependencyNotFound->throw(error => 'addUserProblem: problem '
+			. $UserProblem->problem_id
+			. ' in set '
+			. $UserProblem->set_id
+			. ' not found')
+		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
 
 	return $self->{problem_user}->add($UserProblem);
 }
 
-# versioned_ok is an optional argument which lets us slip versioned setIDs through checkArgs.
 sub putUserProblem {
-	my $V = $_[2] ? "V" : "";
-	my ($self, $UserProblem, undef) = shift->checkArgs(\@_, "${V}REC:problem_user", "versioned_ok!?");
+	my ($self, $UserProblem, undef) = shift->checkArgs(\@_, "REC:problem_user", "!?");
 
 	my $rows = $self->{problem_user}->put($UserProblem);    # DBI returns 0E0 for 0.
 	WeBWorK::DB::Ex::RecordNotFound->throw(
@@ -1933,7 +1930,11 @@ sub deleteUserProblem {
 	# userID, setID, and problemID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "problem_id$U");
-	return $self->{problem_user}->delete($userID, $setID, $problemID);
+	my %where;
+	$where{user_id}    = $userID    if defined $userID;
+	$where{set_id}     = $setID     if defined $setID;
+	$where{problem_id} = $problemID if defined $problemID;
+	return $self->{problem_user}->delete_where(\%where);
 }
 
 ################################################################################
@@ -1959,9 +1960,14 @@ sub getMergedProblem {
 	return ($self->getMergedProblems([ $userID, $setID, $problemID ]))[0];
 }
 
+# Note that unlike most of the "gets" methods, this cannot simply pass its list of keyparts on to the schema's
+# generic "gets" method, since that maps keyparts positionally onto the table's keyfields, and the version_id
+# keyfield (which is not one of the keyparts accepted here) sits between set_id and problem_id in that list.
 sub getMergedProblems {
 	my ($self, @userProblemIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id problem_id/);
-	return $self->{problem_merged}->gets(@userProblemIDs);
+	return map {
+		$self->{problem_merged}->get_records_where({ user_id => $_->[0], set_id => $_->[1], problem_id => $_->[2] })
+	} @userProblemIDs;
 }
 
 sub getAllMergedUserProblems {
@@ -2055,8 +2061,11 @@ sub addProblemVersion {
 			. ' of set '
 			. $ProblemVersion->set_id
 			. ' not found for user ')
-		unless $self->{problem_user}
-		->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
+		unless $self->{problem_user}->exists_where({
+			user_id    => $ProblemVersion->user_id,
+			set_id     => $ProblemVersion->set_id,
+			problem_id => $ProblemVersion->problem_id
+		});
 
 	return $self->{problem_version}->add($ProblemVersion);
 }
@@ -2130,11 +2139,8 @@ sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
 	}
 }
 
-# The (optional) second argument to checkKeyfields is to support versioned
-# (gateway) sets, which may include commas in certain fields (in particular,
-# set names (e.g., setDerivativeGateway,v1)).
 sub checkKeyfields {
-	my ($Record, $versioned) = @_;
+	my ($Record) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
 		my $value     = $Record->$keyfield;
 		my $fielddata = $Record->FIELD_DATA;
@@ -2145,15 +2151,14 @@ sub checkKeyfields {
 		croak "empty '$keyfield' field"
 			unless $value ne "";
 
-		validateKeyfieldValue($keyfield, $value, $versioned);
+		validateKeyfieldValue($keyfield, $value);
 	}
 
 	return;
 }
 
 sub validateKeyfieldValue {
-
-	my ($keyfield, $value, $versioned) = @_;
+	my ($keyfield, $value) = @_;
 
 	if ($keyfield eq "problem_id" || $keyfield eq 'problemID') {
 		croak "invalid characters in '"
@@ -2162,14 +2167,6 @@ sub validateKeyfieldValue {
 			. encode_entities($value)
 			. "' (valid characters are [0-9])"
 			unless $value =~ m/^[0-9]*$/;
-	} elsif ($versioned && ($keyfield eq "set_id" || $keyfield eq 'setID')) {
-		croak "invalid characters in '"
-			. encode_entities($keyfield)
-			. "' field: '"
-			. encode_entities($value)
-			. "' (valid characters are [-a-zA-Z0-9_.,])"
-			unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
-		# } elsif ($versioned and $keyfield eq "user_id") {
 	} elsif ($keyfield eq "user_id" || $keyfield eq 'userID') {
 		check_user_id($value);    #  (valid characters are [-a-zA-Z0-9_.,]) see above.
 	} elsif ($keyfield eq "ip_mask") {
@@ -2195,14 +2192,13 @@ sub validateKeyfieldValue {
 # is_list = "*"
 # item = item_name undef_ok? optional?
 # item_name = record_item | bare_item
-# record_item = is_versioned? "REC:" table
-# is_versioned = "V"
+# record_item = "REC:" table
 # table = \w+
 # bare_item = \w+
 # undef_ok = "!"
 # optional = "?"
 #
-# [[V]REC:]foo[!][?][*]
+# [REC:]foo[!][?][*]
 
 sub checkArgs {
 	my ($self, $args, @spec) = @_;
@@ -2213,9 +2209,7 @@ sub checkArgs {
 		$min_args = 0;
 	} else {
 		foreach my $i (0 .. $#spec) {
-			#print "$i - $spec[$i]\n";
 			if ($spec[$i] =~ s/\?$//) {
-				#print "$i - matched\n";
 				$min_args = $i unless defined $min_args;
 			}
 		}
@@ -2235,10 +2229,10 @@ sub checkArgs {
 		}
 	}
 
-	my ($name, $versioned, $table);
+	my ($name, $table);
 	if ($is_list) {
 		$name = $spec[0];
-		($versioned, $table) = $name =~ /^(V?)REC:(.*)/;
+		($table) = $name =~ /^REC:(.*)/;
 	}
 
 	foreach my $i (0 .. @$args - 1) {
@@ -2247,14 +2241,14 @@ sub checkArgs {
 
 		unless ($is_list) {
 			$name = $spec[$i];
-			($versioned, $table) = $name =~ /^(V?)REC:(.*)/;
+			($table) = $name =~ /^REC:(.*)/;
 		}
 
 		if (defined $table) {
 			my $class = $self->{$table}{record};
 			croak "argument $pos must be of type $class"
 				unless blessed $arg && $arg->isa($class);
-			eval { checkKeyfields($arg, $versioned) };
+			eval { checkKeyfields($arg) };
 			croak "argument $pos contains $@" if $@;
 		} else {
 			if ($name !~ /!$/) {

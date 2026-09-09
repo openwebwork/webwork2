@@ -14,7 +14,6 @@ use WeBWorK::Utils::DateTime  qw(after);
 use WeBWorK::Utils::Files     qw(path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display);
-use WeBWorK::DB::Utils        qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Localize;
 use WeBWorK::AchievementItems;
 use WeBWorK::HTML::StudentNav qw(studentNav);
@@ -91,12 +90,8 @@ async sub initialize ($c) {
 	# Import problem records for assignments or test version records for tests now. Then initialize all
 	# achievement item data to have access to the updated records if an achievement item was used.
 	if ($c->{set}->assignment_type =~ /gateway/) {
-		$c->{setVersions} = [
-			$db->getMergedSetVersionsWhere(
-				{ user_id => $eUserID, set_id => { like => $c->{set}->set_id . ',v%' } },
-				\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
-			)
-		];
+		$c->{setVersions} =
+			[ $db->getMergedSetVersionsWhere({ user_id => $eUserID, set_id => $c->{set}->set_id }, 'version_id') ];
 		$c->{achievementItems} = WeBWorK::AchievementItems::UserItems($c, $eUserID, $c->{set}, $c->{setVersions});
 	} else {
 		$c->{setProblems} =
@@ -187,10 +182,8 @@ sub siblings ($c) {
 	# Restrict navigation to other problem sets if not allowed.
 	return '' unless $authz->hasPermissions($user, 'navigation_allowed');
 
-	# Note that listUserSets does not list versioned sets, but listUserSetsWhere does.  On the other hand, listUserSets
-	# cannot sort in the database, while listUserSetsWhere can.
-	my @setIDs =
-		map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID, set_id => { not_like => '%,v%' } }, 'set_id');
+	# Note that listUserSets cannot sort in the database, while listUserSetsWhere can.
+	my @setIDs = map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID }, 'set_id');
 
 	# Do not show hidden siblings unless user is allowed to view hidden sets.
 	unless ($authz->hasPermissions($user, 'view_hidden_sets')) {

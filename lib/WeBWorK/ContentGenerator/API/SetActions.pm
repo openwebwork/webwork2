@@ -132,6 +132,7 @@ sub updateSetProperties ($c) {
 			my $userSet = $db->newUserSet;
 			$userSet->user_id($user);
 			$userSet->set_id($c->req->param('set_id'));
+			$userSet->version_id(0);
 			$db->addUserSet($userSet);
 		}
 	}
@@ -211,6 +212,7 @@ sub createNewSet ($c) {
 		my $userSet = $db->newUserSet;
 		$userSet->user_id($c->req->param('user'));
 		$userSet->set_id($newSetName);
+		$userSet->version_id(0);
 		$db->addUserSet($userSet);
 		$message .= ' Set was assigned to ' . $c->req->param('user') . '.';
 	}
@@ -313,6 +315,7 @@ sub updateUserSet ($c) {
 			my $newSet = $c->db->newUserSet;
 			$newSet->user_id($userID);
 			$newSet->set_id($c->req->param('set_id'));
+			$newSet->version_id(0);
 			$newSet->open_date($c->req->param('open_date'));
 			$newSet->due_date($c->req->param('due_date'));
 			$newSet->answer_date($c->req->param('answer_date'));

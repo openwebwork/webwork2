@@ -224,10 +224,9 @@ sub problem_user ($c, $set_id, $version_id, $problem_id, $user_id, $pg) {
 }
 
 sub answer ($c, $set_id, $version_id, $problem_id, $user_id, $pg, $start_time, $end_time) {
-	my $last_answer_id =
-		$c->db->latestProblemPastAnswer($user_id, ($version_id ? "$set_id,v$version_id" : $set_id), $problem_id);
-	my $last_answer = $c->db->getPastAnswer($last_answer_id);
-	my @answers     = split(/\t/, $last_answer->answer_string);
+	my $last_answer_id = $c->db->latestProblemPastAnswer($user_id, $set_id, $version_id // 0, $problem_id);
+	my $last_answer    = $c->db->getPastAnswer($last_answer_id);
+	my @answers        = split(/\t/, $last_answer->answer_string);
 
 	my $pg_answers_hash = {};
 	for my $key (keys %{ $pg->{answers} }) {
@@ -259,11 +258,10 @@ sub answer_attempt ($c, $set_id, $version_id, $problem_id, $user_id, $pg, $start
 		$version_id
 		? $c->db->getMergedProblemVersion($user_id, $set_id, $version_id, $problem_id)
 		: $c->db->getMergedProblem($user_id, $set_id, $problem_id);
-	my $last_answer_id =
-		$c->db->latestProblemPastAnswer($user_id, ($version_id ? "$set_id,v$version_id" : $set_id), $problem_id);
-	my $last_answer = $c->db->getPastAnswer($last_answer_id);
-	my $attempt     = $version_id ? $version_id : scalar $c->db->listProblemPastAnswers($user_id, $set_id, $problem_id);
-	my $score       = $problem_user->status || 0;
+	my $last_answer_id = $c->db->latestProblemPastAnswer($user_id, $set_id, $version_id // 0, $problem_id);
+	my $last_answer    = $c->db->getPastAnswer($last_answer_id);
+	my $attempt = $version_id ? $version_id : scalar $c->db->listProblemPastAnswers($user_id, $set_id, 0, $problem_id);
+	my $score   = $problem_user->status || 0;
 	$score = 0 if ($score > 1 || $score < 0);
 
 	my $answer_attempt = {
@@ -302,7 +300,7 @@ sub problem_set_attempt ($c, $set_id, $version_id, $user_id, $start_time, $end_t
 	} else {
 		my @problem_ids = $c->db->listGlobalProblems($set_id);
 		for my $problem_id (@problem_ids) {
-			$attempt += scalar $c->db->listProblemPastAnswers($user_id, $set_id, $problem_id);
+			$attempt += scalar $c->db->listProblemPastAnswers($user_id, $set_id, 0, $problem_id);
 		}
 	}
 

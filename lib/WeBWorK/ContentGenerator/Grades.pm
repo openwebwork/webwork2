@@ -151,8 +151,6 @@ sub displayStudentGrades ($c) {
 	}
 	my $effectiveUser = $studentRecord->user_id;
 
-	my $courseName = $ce->{courseName};
-
 	# First get all merged sets for this user ordered by set_id.
 	my @sets = $db->getMergedSetsWhere({ user_id => $studentID }, 'set_id');
 	# To be able to find the set objects later, make a handy hash of set ids to set objects.
@@ -173,8 +171,7 @@ sub displayStudentGrades ($c) {
 		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/) {
 			# We have to have the merged set versions to know what each of their assignment types are
 			# (because proctoring can change this).
-			my @setVersions =
-				$db->getMergedSetVersionsWhere({ user_id => $studentID, set_id => { like => "$setID,v\%" } });
+			my @setVersions = $db->getMergedSetVersionsWhere({ user_id => $studentID, set_id => $setID });
 
 			# Add the set versions to our list of sets.
 			$setsByID{ $_->set_id . ',v' . $_->version_id } = $_ for (@setVersions);
@@ -199,11 +196,10 @@ sub displayStudentGrades ($c) {
 		# Determine if set is a test and if it is a test template or version.
 		my $setIsTest      = defined $set->assignment_type && $set->assignment_type =~ /gateway/;
 		my $setIsVersioned = $setIsTest                    && !defined $setVersionsCount{$setID};
-		my $setTemplateID  = $setID =~ s/,v\d+$//r;
 
 		# Initialize set item. Define link here. It will be adjusted for versioned tests later.
 		my $item = {
-			name              => format_set_name_display($setTemplateID),
+			name              => format_set_name_display($setID),
 			grade             => 0,
 			grade_total       => 0,
 			grade_total_right => 0,
@@ -239,17 +235,8 @@ sub displayStudentGrades ($c) {
 		# Tests need their link updated. Along with template sets need to add a version list.
 		# Also determines if grade and test problems should be shown.
 		if ($setIsTest) {
-			my $act_as_student_test_url = '';
-			if ($set->assignment_type eq 'proctored_gateway') {
-				$act_as_student_test_url = $item->{link} =~ s/($courseName)\//$1\/proctored_test_mode\//r;
-			} else {
-				$act_as_student_test_url = $item->{link} =~ s/($courseName)\//$1\/test_mode\//r;
-			}
-
 			# If this is a template gateway set, determine if there are any versions, then move on.
 			unless ($setIsVersioned) {
-				# Remove version from set url
-				$item->{link} =~ s/,v\d+//;
 				$item->{version_count} = $setVersionsCount{$setID};
 				if ($item->{version_count}) {
 					# Hide score initially unless there is a version the score can be seen.
@@ -262,17 +249,19 @@ sub displayStudentGrades ($c) {
 			}
 
 			# Only add link if the problems can be seen.
-			if ($set->hide_work eq 'N'
-				|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date))
-			{
-				if ($set->assignment_type eq 'proctored_gateway') {
-					$item->{link} =~ s/($courseName)\//$1\/proctored_test_mode\//;
-				} else {
-					$item->{link} =~ s/($courseName)\//$1\/test_mode\//;
-				}
-			} else {
-				$item->{link} = '';
-			}
+			$item->{link} =
+				($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date))
+				? $c->systemLink(
+					$c->url_for(
+						$set->assignment_type eq 'proctored_gateway'
+						? 'proctored_gateway_quiz_version'
+						: 'gateway_quiz_version',
+						setID     => $setID,
+						versionID => $set->version_id
+					),
+					params => { effectiveUser => $effectiveUser }
+				)
+				: '';
 
 			# If the set has hide_score set, then nothing left to do.
 			if (defined $set->hide_score && $set->hide_score eq 'Y'
@@ -281,8 +270,8 @@ sub displayStudentGrades ($c) {
 				next;
 			}
 			# This is a test version, and the scores can be shown, so also show score of template set.
-			$allItems{$setTemplateID}{message}    = '' if $allItems{$setTemplateID}{hide_score};
-			$allItems{$setTemplateID}{hide_score} = 0;
+			$allItems{$setID}{message}    = '' if $allItems{$setID}{hide_score};
+			$allItems{$setID}{hide_score} = 0;
 		}
 
 		my ($total_right, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
@@ -341,7 +330,7 @@ sub displayStudentGrades ($c) {
 		# If this is a test version, update template set to the best grade a student hand.
 		if ($setIsVersioned) {
 			# Compare the score to the template set and update as needed.
-			my $templateItem = $allItems{$setTemplateID};
+			my $templateItem = $allItems{$setID};
 			if ($templateItem->{grade} == 0 || $item->{grade} > $templateItem->{grade}) {
 				$templateItem->{version_id}   = $set->version_id;
 				$templateItem->{version_link} = $item->{link};

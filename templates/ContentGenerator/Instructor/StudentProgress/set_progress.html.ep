@@ -251,14 +251,12 @@
 					<tr>
 						% # If total is -1, then this is a user that hasn't taken any tests.
 						% if ($rec->{total} != -1) {
-							% # Make a versioned set name format nicer and link to the test version.
+							% # Make a versioned set name format nicer and link to the test version. This is an
+							% # instructor-only link, so use the plain (non-proctored) route regardless of the test's
+							% # assignment type. GatewayQuiz.pm is responsible for checking permissions.
 							% my $versionLink = link_to "version $rec->{version}" => $c->systemLink(
-								% url_for(
-									% $rec->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
-									% setID => "$setID,v$rec->{version}",
-								% ),
-								% params => { effectiveUser => $rec->{record}{user_id} }
-							% );
+								% url_for('gateway_quiz_version', setID => $setID, versionID => $rec->{version}),
+								% params => { effectiveUser => $rec->{record}{user_id} });
 							%
 							<td>
 								% if ($rec->{record}{user_id} eq $prevUserID) {

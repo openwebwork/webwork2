@@ -25,7 +25,7 @@ sub where_DEFAULT {
 	return {};
 }
 
-# can be used for user,password,permission,key,set_user,problem_user,vset_user
+# can be used for user,password,permission,key,set_user,problem_user
 sub where_user_id_eq {
 	my ($self, $flags, $user_id) = @_;
 	return { user_id => $user_id };
@@ -46,6 +46,12 @@ sub where_answer_id_eq {
 sub where_user_id_eq_set_id_eq_problem_id_eq {
 	my ($self, $flags, $user_id, $set_id, $problem_id) = @_;
 	return { user_id => $user_id, set_id => $set_id, problem_id => $problem_id };
+}
+
+# can be used for past answers
+sub where_user_id_eq_set_id_eq_version_id_eq_problem_id_eq {
+	my ($self, $flags, $user_id, $set_id, $version_id, $problem_id) = @_;
+	return { user_id => $user_id, set_id => $set_id, version_id => $version_id, problem_id => $problem_id };
 }
 
 # can be used for user,password,permission,key,set_user,problem_user
