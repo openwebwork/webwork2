@@ -127,7 +127,8 @@
 							problem_id: saveData.problemId,
 							status: parseInt(scoreInput.value) / 100,
 							...(saveData.saveSubStatus === '1' ? { sub_status: parseInt(scoreInput.value) / 100 } : {}),
-							mark_graded: true
+							mark_graded: true,
+							csrf_token: webworkConfig.csrf_token
 						}),
 						signal: controller.signal
 					}
@@ -178,7 +179,8 @@
 										...authenParams,
 										courseID: saveData.courseId,
 										answer_id: saveData.pastAnswerId,
-										comment_string: comment
+										comment_string: comment,
+										csrf_token: webworkConfig.csrf_token
 									}),
 									signal: controller.signal
 								});
