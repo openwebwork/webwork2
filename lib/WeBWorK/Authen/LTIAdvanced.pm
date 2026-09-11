@@ -692,6 +692,12 @@ sub maybe_update_user {
 		}
 
 		if ($change_made) {
+			# These are not allowed to be modified here, so set them to the values of the original user.
+			$tempUser->displayMode($self->{user}->displayMode);
+			$tempUser->useMathQuill($self->{user}->useMathQuill);
+			$tempUser->useMathView($self->{user}->useMathView);
+			$tempUser->accommodation_time_factor($self->{user}->accommodation_time_factor);
+
 			$tempUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 			eval { $db->putUser($tempUser) };
 			if ($@) {
