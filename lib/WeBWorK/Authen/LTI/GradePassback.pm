@@ -133,7 +133,7 @@ sub setAttempted ($problems, $setVersions = undef) {
 
 sub earliestGatewayDate ($ce, $userSet, $setVersions) {
 	# If there are no versions, use the template's date.
-	return getLTISendScoresAfterDate($userSet, $ce) unless ref($setVersions) eq 'ARRAY';
+	return getLTISendScoresAfterDate($userSet, $ce) unless ref($setVersions) eq 'ARRAY' && @$setVersions;
 
 	# Otherwise, use the earliest date among versions.
 	my $earliest_date = -1;
