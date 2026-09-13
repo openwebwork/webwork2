@@ -1,10 +1,10 @@
+% use WeBWorK::Utils qw(getAchievementIconURL);
+%
 % last unless $achievement;
 %
 <div class="cheevobigbox mt-3">
 	<div class="d-flex align-items-center gap-3">
-		<%= image $achievement->{icon}
-			? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
-			: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png", alt => 'Level Icon' =%>
+		<%= image getAchievementIconURL($ce, $achievement->{icon}), alt => 'Level Icon' =%>
 		<div>
 			<h1><%= $achievement->name %></h1>
 			% if ($c->{globalData}->next_level_points) {
