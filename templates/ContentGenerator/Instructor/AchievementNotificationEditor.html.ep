@@ -1,9 +1,12 @@
-% use WeBWorK::Utils                  qw(not_blank getAssetURL);
+% use WeBWorK::Utils                  qw(getAssetURL);
 % use WeBWorK::HTML::CodeMirrorEditor qw(generate_codemirror_html output_codemirror_static_files);
 %
 % content_for js => begin
 	<%= output_codemirror_static_files($c) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
+	<%=
+		javascript getAssetURL($ce, 'js/AchievementNotificationEditor/achievementnotificationeditor.js'), defer => undef
+	=%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
@@ -12,7 +15,7 @@
 % }
 %
 <div class="mb-2">
-	<i><%= maketext('Editing achievement in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
+	<i><%= maketext('Editing achievement notification template in file "[_1]"', $c->shortPath($c->{sourceFile})) =%></i>
 </div>
 <%= form_for current_route,
 	method  => 'POST',
@@ -21,10 +24,6 @@
 	enctype => 'application/x-www-form-urlencoded',
 	begin =%>
 	<%= $c->hidden_authen_fields =%>
-	% if (not_blank($c->{sourceFilePath})) {
-		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
-	% }
-	%
 	<div class="mb-2">
 		<%= generate_codemirror_html($c, 'achievementNotification', $achievementNotification, 'mt-text') =%>
 	</div>

@@ -56,6 +56,13 @@ use constant FORM_TITLES => {
 	cancel_export => x('Cancel Export')
 };
 
+# These fields store the filename of an achievement asset, which cannot contain a slash.
+use constant FILENAME_FIELDS => {
+	test           => 'achievement evaluator',
+	icon           => 'icon',
+	email_template => 'email template'
+};
+
 sub initialize ($c) {
 	my $db            = $c->db;
 	my $ce            = $c->ce;
@@ -399,18 +406,29 @@ sub import_handler ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
-	my $fileName              = $c->param('action.import.source');
-	my $assign                = $c->param('action.import.assign');
-	my @users                 = $db->listUsers;
-	my %allAchievementIDs     = map { $_ => 1 } @{ $c->{allAchievementIDs} };
-	my %visibleAchievementIDs = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
-	my $filePath              = $ce->{courseDirs}{achievements} . '/' . $fileName;
+	my $fileName = $c->param('action.import.source') // '';
+
+	return (0, $c->maketext('File "[_1]" contains a slash and is invalid.', $fileName)) if $fileName =~ /\//;
+
+	my $filePath;
+	if (-f "$ce->{courseDirs}{achievements}/$fileName") {
+		$filePath = "$ce->{courseDirs}{achievements}/$fileName";
+	} elsif (-f "$ce->{webworkDirs}{achievementEvaluators}/$fileName") {
+		$filePath = "$ce->{webworkDirs}{achievementEvaluators}/$fileName";
+	} else {
+		return (0, $c->maketext('File "[_1]" does not exist.', $fileName));
+	}
 
 	my @userAchievementRecordsToAdd;
 
 	# Open file name
 	my $fh = Mojo::File->new($filePath)->open('<:encoding(UTF-8)')
-		or return (0, $c->maketext("Failed to open [_1]", $filePath));
+		or return (0, $c->maketext('Failed to open "[_1]".', $filePath));
+
+	my @users                 = $db->listUsers;
+	my $assign                = $c->param('action.import.assign');
+	my %allAchievementIDs     = map { $_ => 1 } @{ $c->{allAchievementIDs} };
+	my %visibleAchievementIDs = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };
 
 	# Read in lines from file
 	my $count = 0;
@@ -436,9 +454,9 @@ sub import_handler ($c) {
 		$achievement->description($$data[5]);
 		$achievement->points($$data[6]);
 		$achievement->max_counter($$data[7]);
-		$achievement->test($$data[8]);
-		$achievement->icon($$data[9]);
-		$achievement->email_template($$data[10] // '');
+		$achievement->test($$data[8]                           =~ /\// ? '' : $$data[8]);    # Don't allow / in paths.
+		$achievement->icon($$data[9]                           =~ /\// ? '' : $$data[9]);
+		$achievement->email_template(!$$data[10] || $$data[10] =~ /\// ? '' : $$data[10]);
 
 		$achievement->enabled($assign eq "all" ? 1 : 0);
 
@@ -566,21 +584,33 @@ sub save_edit_handler ($c) {
 
 	for my $achievementID (@selectedAchievementIDs) {
 		my $Achievement = $db->getAchievement($achievementID);
+		unless ($Achievement) {
+			$c->addbadmessage($c->maketext('No record for achievement "[_1]" found. Skipping.', $achievementID));
+			next;
+		}
 
-		# FIXME: we may not want to die on bad achievements, they're not as bad as bad users
-		die "record for achievement $achievementID not found" unless $Achievement;
-
-		# Update fields
+		# Update fields.
 		for my $field ($Achievement->NONKEYFIELDS()) {
 			my $param = "achievement.${achievementID}.${field}";
 
 			if ($field eq 'assignment_type') {
 				my @types = $c->param($param);
 				$Achievement->assignment_type(join(',', @types));
-			} else {
+			} elsif (defined $c->param($param)) {
+				my $value = $c->param($param);
 
-				if (defined $c->param($param)) {
-					$Achievement->$field($c->param($param));
+				# Filename fields test, icon, and email_template cannot contain a slash.
+				if (FILENAME_FIELDS->{$field} && $value =~ /\//) {
+					# Skip filename error message for previous saved values.
+					$c->addbadmessage($c->maketext(
+						'Filename "[_1]" for "[_2]" in achievement "[_3]" contains a slash, "/", and is invalid. '
+							. 'Not updating.',
+						$value, FILENAME_FIELDS->{$field},
+						$achievementID
+					))
+						unless $value eq $Achievement->$field;
+				} else {
+					$Achievement->$field($value);
 				}
 			}
 		}
@@ -595,7 +625,19 @@ sub save_edit_handler ($c) {
 
 # Get list of files that can be imported.
 sub getAxpList ($c) {
-	return @{ Mojo::File->new($c->ce->{courseDirs}{achievements})->list->grep(qr/.*\.axp/)->map('basename') };
+	my $ce = $c->ce;
+	my %fileList;
+
+	# Find all system .apx files.
+	for (@{ Mojo::File->new($ce->{webworkDirs}{achievementEvaluators})->list->grep(qr/.*\.axp/)->map('basename') }) {
+		$fileList{$_} = 1;
+	}
+	# Find all course .apx files, overriding any system files.
+	for (@{ Mojo::File->new($c->ce->{courseDirs}{achievements})->list->grep(qr/.*\.axp/)->map('basename') }) {
+		$fileList{$_} = 1;
+	}
+
+	return (sort keys %fileList);
 }
 
 1;

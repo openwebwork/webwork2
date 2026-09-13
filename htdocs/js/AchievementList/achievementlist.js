@@ -108,6 +108,38 @@
 				e.stopPropagation();
 				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
 			}
+		} else if (action === 'save_edit') {
+			const invalid_inputs = Array.from(
+				document.querySelectorAll('input[name$=".test"], input[name$=".icon"]')
+			).filter((input) => input.value.includes('/'));
+			if (invalid_inputs.length) {
+				e.preventDefault();
+				e.stopPropagation();
+				const err_msg = document.getElementById('save_edit_filename_err_msg');
+				err_msg?.classList.remove('d-none');
+				for (const input of invalid_inputs) {
+					input.classList.add('is-invalid');
+					if (!(input.id in event_listeners)) {
+						event_listeners[input.id] = () => {
+							// Only clear this field's own invalid marking, and only once it is valid.
+							if (input.value.includes('/')) return;
+							input.classList.remove('is-invalid');
+							input.removeEventListener('change', event_listeners[input.id]);
+							delete event_listeners[input.id];
+
+							// Hide the shared error message once no fields remain invalid.
+							if (
+								!document.querySelector(
+									'input[name$=".test"].is-invalid, input[name$=".icon"].is-invalid'
+								)
+							) {
+								err_msg?.classList.add('d-none');
+							}
+						};
+						input.addEventListener('change', event_listeners[input.id]);
+					}
+				}
+			}
 		}
 	});
 

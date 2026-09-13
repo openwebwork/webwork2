@@ -32,6 +32,8 @@ our @EXPORT_OK = qw(
 	generateURLs
 	formatEmailSubject
 	getAssetURL
+	getAchievementIconURL
+	isAchievementAssetOverridden
 	points_stepsize
 	round_nearest_stepsize
 	x
@@ -535,6 +537,28 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
+sub getAchievementIconURL ($ce, $icon) {
+	return "$ce->{webworkURLs}{achievementIcons}/defaulticon.png" if !$icon || $icon =~ /\//;
+
+	if (-f "$ce->{courseDirs}{achievements_html}/$icon") {
+		return "$ce->{courseURLs}{achievements}/$icon";
+	}
+	if (-f "$ce->{webworkDirs}{achievementIcons}/$icon") {
+		return "$ce->{webworkURLs}{achievementIcons}/$icon";
+	}
+	return "$ce->{webworkURLs}{achievementIcons}/defaulticon.png";
+}
+
+sub isAchievementAssetOverridden ($ce, $type, $asset) {
+	return 0 if !$asset || $asset =~ /\//;
+	return ($type eq 'icon'
+			&& -f "$ce->{courseDirs}{achievements_html}/$asset"
+			&& -f "$ce->{webworkDirs}{achievementIcons}/$asset")
+		|| ($type eq 'test'
+			&& -f "$ce->{courseDirs}{achievements}/$asset"
+			&& -f "$ce->{webworkDirs}{achievementEvaluators}/$asset");
+}
+
 sub points_stepsize ($points) {
 	my $stepsize;
 	if ($points == 1) {
@@ -786,6 +810,24 @@ Usage: C<getAssetURL($ce, $file, $isThemeFile)>
 Returns the URL for the asset specified in C<$file>.  If C<$isThemeFile> is
 true, then the asset will be assumed to be located in a theme directory.  The
 parameter C<$ce> must be a valid C<WeBWorK::CourseEnvironment> object.
+
+=head2 getAchievementIconURL
+
+Usage: C<getAchievementIconURL($ce, $icon)>
+
+Returns the URL path for an achievement icon for a given course environment.
+This checks if the icon provided is a valid icon file (defined and doesn't contain
+a slash), then checks if the icon file exists in the course templates directory,
+and finally if the icon file exists in the WeBWorK images directory. It returns the
+URL to the first valid file found, or the URL to the system default icon otherwise.
+
+=head2 isAchievementAssetOverridden
+
+Usage: C<isAchievementAssetOverridden($ce, $type, $asset)>
+
+This tests if an achievement icon, C<$type='icon'>, or an achievement evaluator,
+C<$type='test'>, file name C<$asset> is a system file being overridden by a course
+file of the same name in the given course environment.
 
 =head2 points_stepsize
 

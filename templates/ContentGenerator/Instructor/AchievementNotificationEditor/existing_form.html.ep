@@ -1,21 +1,19 @@
 % use Mojo::File qw(path);
 %
+% my $notifications =
+	% path($ce->{courseDirs}{achievement_notifications})->list->grep(qr/\.epl?$/)->map('basename')->to_array;
+% last unless @$notifications;
 <div class="row align-items-center mb-2">
 	<%= label_for
 		'action.existing.target_file_id' => maketext('Use existing template:'),
 		class                            => 'col-form-label col-auto' =%>
 	<div class="col-auto">
-		% my $relativeSourceFilePath = $c->getRelativeSourceFilePath($c->{sourceFilePath});
 		<%= select_field
 			'action.existing.target_file' => [
 				map { [
 					$_ =~ s/(\.html|\.txt)?\.epl?//r => $_,
-					$_ eq $relativeSourceFilePath ? (selected => undef) : ()
-				] } @{
-					path($ce->{courseDirs}{achievement_notifications})->list->grep(qr/\.epl?$/)
-					->map(sub { $c->getRelativeSourceFilePath($_) })
-					->to_array
-				}
+					$_ eq $c->{sourceFile} ? (selected => undef) : ()
+				] } @$notifications
 			],
 			id    => 'action.existing.target_file_id',
 			class => 'form-select form-select-sm d-inline w-auto',
