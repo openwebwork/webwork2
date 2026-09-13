@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAchievementIconURL);
+%
 <h2 class="my-3"><%= maketext('Badges') %></h2>
 %
 % if (@$achievements) {
@@ -16,9 +18,7 @@
 			%>"
 		>
 			<div>
-				<%= image $achievement->{icon}
-					? "$ce->{courseURLs}{achievements}/$achievement->{icon}"
-					: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+				<%= image getAchievementIconURL($ce, $achievement->{icon}),
 					width => 50,
 					alt   => $userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned' =%>
 			</div>

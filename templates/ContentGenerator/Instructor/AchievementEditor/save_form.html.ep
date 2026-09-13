@@ -1,3 +1,10 @@
-% if (-w $c->{sourceFilePath}) {
-	<%== maketext('Save [_1]', tag('b', $c->shortPath($c->{sourceFilePath}))) %>
+% if ($c->{sourceFileIsProtected} || -w $c->{sourceFilePath}) {
+	<div class="mb-2">
+		<%== maketext('Save [_1]', tag('b', $c->shortPath($c->{sourceFile}))) %>
+	</div>
+	% if ($c->{sourceFileIsProtected}) {
+		<div class="d-inline-block alert alert-warning mb-2 p-1">
+			<%= maketext('Saving this evaluator will create a course override.') =%>
+		</div>
+	% }
 % }

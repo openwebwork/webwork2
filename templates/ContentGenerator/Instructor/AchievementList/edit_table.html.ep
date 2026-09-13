@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAchievementIconURL);
+%
 % if (!@{ $c->{selectedAchievementIDs} }) {
 	<p><i><%= maketext('No achievements shown.  Select an achievement to edit!') =%></i></p>
 % } else {
@@ -42,8 +44,7 @@
 						<tr>
 							<td>
 								<%= hidden_field selected_achievements => $achievement_id =%>
-								<%= image $ce->{courseURLs}{achievements} . '/'
-									. ($achievement->icon // 'defaulticon.png'),
+								<%= image getAchievementIconURL($ce, $achievement->icon),
 									alt    => 'Achievement Icon',
 									height => 60,
 									class  => 'm-1' =%>
