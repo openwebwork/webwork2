@@ -4,14 +4,17 @@
 <div>
 	<div class="row align-items-center mb-2">
 		<%= label_for 'action.save_as.target_file_id' => maketext('Save as:'), class => 'col-form-label col-auto' =%>
-		<div class="col-auto">
-			<%= text_field
-				'action.save_as.target_file' => $c->getRelativeSourceFilePath($c->{sourceFilePath}),
-				id                           => 'action.save_as.target_file_id',
-				size                         => 40,
-				class                        => 'form-control form-control-sm' =%>
+		<div class="col-auto d-inline-flex" dir="ltr">
+			<div class="editor-save-path input-group input-group-sm">
+				<span class="input-group-text">[ACHEVDIR]/</span>
+				<%= text_field
+					'action.save_as.target_file' => $c->{sourceFile},
+					id                           => 'action.save_as.target_file_id',
+					size                         => 40,
+					class                        => 'form-control form-control-sm',
+					data                         => { original_name => $c->{sourceFile} } =%>
+			</div>
 		</div>
-		<%= hidden_field 'action.save_as.source_file' => $c->{sourceFilePath} =%>
 	</div>
 	<div class="form-check mb-2">
 		<%= radio_button
@@ -35,10 +38,11 @@
 		</div>
 		<%= text_field
 			'action.save_as.id' => '',
+			id                  => 'action.save_as.new_id',
 			'aria-labelledby'   => 'action.save_as.saveMode.use_in_new.label',
 			class               => 'form-control form-control-sm d-inline w-auto' =%>
 	</div>
-	<div class="form-check">
+	<div class="form-check mb-2">
 		<%= radio_button
 			'action.save_as.saveMode' => 'dont_use',
 			id                        => 'action.save_as.saveMode.dont_use',
@@ -46,5 +50,17 @@
 		<%= label_for
 			'action.save_as.saveMode.dont_use' => maketext(q{Don't use in an achievement}),
 			class                              => 'form-check-label' =%>
+	</div>
+	<div id="blank_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please enter a new achievement evaluator filename.') %>
+	</div>
+	<div id="change_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please choose a different filename for new evaluator.') %>
+	</div>
+	<div id="invalid_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Filenames cannot contain a slash, "/".') %>
+	</div>
+	<div id="blank_id_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
+		<%= maketext('Please enter a new achievement id.') %>
 	</div>
 </div>

@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAchievementIconURL);
+%
 % unless ($c->{leaderBoardRows}) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('Leaderboard is unavailable.') %>
@@ -34,9 +36,7 @@
 						% if ($level) {
 							<%= $level->{name} %>
 							<br>
-							<%= image $level->{icon}
-								? "$ce->{courseURLs}{achievements}/$level->{icon}"
-								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+							<%= image getAchievementIconURL($ce, $level->{icon}),
 								alt    => maketext('[_1] Icon', $level->{name}),
 								height => 75 %>
 						% }
@@ -58,9 +58,7 @@
 							data-bs-html="true"
 							data-bs-content="<strong><%= $badge->{name} %></strong><br><%= $badge->{description} %>"
 						>
-							<%= image $badge->{icon}
-								? "$ce->{courseURLs}{achievements}/$badge->{icon}"
-								: "$ce->{webworkURLs}{htdocs}/images/defaulticon.png",
+							<%= image getAchievementIconURL($ce, $badge->{icon}),
 								alt   => $c->maketext('[_1] Icon', $badge->{name}),
 								width => 50 %>
 						</button>
