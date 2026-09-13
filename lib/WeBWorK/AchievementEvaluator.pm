@@ -195,18 +195,31 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$counter    = $userAchievement->counter;
 		$maxCounter = $achievement->max_counter;
 
+		# Determine location of achievement evaluator.
+		my $sourceFilePath;
+		my $sourceFile = $achievement->test;
+		if (!$sourceFile) {
+			warn qq{No achievement evaluator provided for "$achievement_id".};
+			next;
+		} elsif ($sourceFile =~ /\//) {
+			warn qq{Achievement evaluator "$sourceFile" for "$achievement_id" contains a slash.};
+			next;
+		} elsif (-f "$ce->{courseDirs}{achievements}/$sourceFile") {
+			$sourceFilePath = "$ce->{courseDirs}{achievements}/$sourceFile";
+		} elsif (-f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
+			$sourceFilePath = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
+		} else {
+			warn qq{Could not find achievement evaluator file "$sourceFile" for "$achievement_id".};
+			next;
+		}
+
 		# Check the achievement using Safe.
-		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
-		if (-e $sourceFilePath) {
+		{
 			local $/ = undef;
 			open(my $SOURCE, '<', $sourceFilePath);
 			$source = <$SOURCE>;
 			close($SOURCE);
-		} else {
-			warn('Couldnt find achievement evaluator $sourceFilePath');
-			next;
 		}
-
 		my $earned = $compartment->reval($preamble . "\n" . $source);
 		warn "There were errors in achievement $achievement_id\n" . $@ if $@;
 

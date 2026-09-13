@@ -4,6 +4,7 @@
 % content_for js => begin
 	<%= output_codemirror_static_files($c) =%>
 	<%= javascript getAssetURL($ce, 'js/ActionTabs/actiontabs.js'), defer => undef =%>
+	<%= javascript getAssetURL($ce, 'js/AchievementEditor/achievementeditor.js'), defer => undef =%>
 % end
 %
 % unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
@@ -12,7 +13,13 @@
 % }
 %
 <div class="mb-2">
-	<i><%= maketext('Editing achievement in file "[_1]"', $c->shortPath($c->{sourceFilePath})) =%></i>
+	<i>
+		% if ($c->{sourceFileIsProtected}) {
+			<%= maketext('Editing system achievement evaluator "[_1]".', $c->{sourceFile}) =%>
+		% } else {
+			<%= maketext('Editing achievement evaluator in file "[_1]"', $c->shortPath($c->{sourceFile})) =%>
+		% }
+	</i>
 </div>
 <%= form_for current_route,
 	method  => 'POST',
@@ -21,10 +28,6 @@
 	enctype => 'application/x-www-form-urlencoded',
 	begin =%>
 	<%= $c->hidden_authen_fields =%>
-	% if (not_blank($c->{sourceFilePath})) {
-		<%= hidden_field sourceFilePath => $c->{sourceFilePath} =%>
-	% }
-	%
 	<div class="mb-2"><%= generate_codemirror_html($c, 'achievementContents', $achievementContents, 'perl') =%></div>
 	%
 	% # Output action forms

@@ -52,6 +52,10 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	die "User $mail_data->{recipient} does not have an email address -- skipping\n"
 		unless ($user_record->email_address =~ /\S/);
 
+	my $email_template = $mail_data->{achievement}{email_template};
+	die "Achievement notification template file \"$email_template\" contains a slash and cannot be used.\n"
+		if $email_template =~ /\//;
+
 	my $compartment = WeBWorK::WWSafe->new;
 	$compartment->share_from('main',
 		[qw(%Encode:: %Mojo::Base:: %Mojo::Exception:: %Mojo::Template:: %WeBWorK::SafeTemplate::)]);
@@ -74,9 +78,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		pointsEarned    => $mail_data->{pointsEarned}
 	};
 
-	our $template =
-		Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$mail_data->{achievement}{email_template}")
-		->slurp;
+	our $template = Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$email_template")->slurp;
 	$compartment->share(qw($template $template_vars));
 
 	my $body = $compartment->reval(
