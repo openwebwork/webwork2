@@ -1,10 +1,12 @@
+% use WeBWorK::Utils qw(isAchievementAssetOverridden);
+%
 % if ($fieldName =~ /\.enabled$/) {
 	% # If the "enabled" checkbox is checked it returns a 1, if it is unchecked it returns nothing
 	% # in which case the hidden field overrides the parameter with a 0.
 	<%= check_box
 		$fieldName        => 1,
 		'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
-		class             => 'form-check-input',
+		class             => 'form-check-input fs-5',
 		$value ? (checked => undef) : () =%>
 	<%= hidden_field $fieldName => 0 =%>
 % } elsif ($fieldName =~ /\.assignment_type$/) {
@@ -20,10 +22,35 @@
 	% }
 % } elsif ($fieldName =~ /\.achievement_id$/) {
 	<%= $value =%>
+% } elsif ($fieldName =~ /\.(test|icon)$/ && ($value =~ /\// || isAchievementAssetOverridden($ce, $1, $value))) {
+	% my $message =
+		% $value =~ /\//
+		% ? maketext('Filenames cannot contain a slash, "/".')
+		% : maketext('Course file overrides system default.');
+	<div class="input-group">
+		<a
+			class="set-id-tooltip px-1"
+			role="button"
+			tabindex="0"
+			data-bs-placement="top"
+			data-bs-toggle="tooltip"
+			data-bs-title="<%= $message %>"
+		>
+			<i class="icon fas fa-circle-info mt-2" aria-hidden="true"></i>
+			<span class="visually-hidden"><%= maketext('Achievement filename information.') %></span>
+		</a>
+		<%= text_field
+			$fieldName        => $value,
+			id                => $fieldName,
+			'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
+			size              => $size,
+			class             => 'form-control form-control-sm rounded-1' =%>
+	</div>
 % } else {
 	<%= text_field
 		$fieldName        => $value,
 		'aria-labelledby' => ($fieldName =~ s/^.*\.([^.]*)$/$1/r) . '_header',
 		size              => $size,
-		class             => 'form-control form-control-sm' =%>
+		class             => 'form-control form-control-sm',
+		$fieldName =~ /\.(test|icon)$/ ? (id => $fieldName) : () =%>
 % }
