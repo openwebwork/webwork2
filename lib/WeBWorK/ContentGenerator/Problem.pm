@@ -385,7 +385,7 @@ async sub pre_header_initialize ($c) {
 	my $redisplay = $c->param('redisplay');
 	$c->{submitAnswers} = $c->param('submitAnswers');
 	my $checkAnswers   = $c->param('checkAnswers');
-	my $previewAnswers = $c->param('previewAnswers');
+	my $previewAnswers = $c->param('previewAnswers') && $ce->{pg}{options}{showPreviewButton} ? 1 : 0;
 	my $requestNewSeed = $c->param('requestNewSeed') // 0;
 
 	my $formFields = $c->req->params->to_hash;

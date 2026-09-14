@@ -802,20 +802,35 @@ sub getConfigValues ($ce) {
 			},
 			{
 				var  => 'pg{options}{enterKey}',
-				doc  => x('Enter Key Behavior'),
+				doc  => x('Enter key behavior for problem inputs'),
 				doc2 => x(
-					'If this is set to "preview", hitting the enter key on a homework problem page activates the '
-						. '"Preview My Answers" button. If this is set to "submit", then the enter key activates '
-						. 'the "Submit Answers" button instead. Or if that button is not present, it will activate '
-						. 'the "Check Answers" button. Or if that button is also not present, it will activate '
-						. 'the "Preview My Answers" button. A third option is "conservative". In this case, the '
-						. 'enter key behaves like "preview" when the "Submit" button is available and there are '
-						. 'only finitely many attempts allowed. Otherwise the enter key behaves like "submit". '
-						. 'Note that this is only affects homework problem pages, not test/quiz pages, and not '
-						. 'instructor pages like the PG Editor and the Library Browser.'
+					'This affects the action when the enter key is pressed while an answer input is focused in a '
+						. 'homework problem. There are three possible action buttons, "Preview My Answers", '
+						. '"Submit Answers", and "Check Answers", that may be available. Each setting configures a '
+						. 'priority depending on button availability. If this is set to "preview" then the preview '
+						. 'button is used if it is available, otherwise the submit answers button is used if it is '
+						. 'available, otherwise the check answers button is used if it is available, otherwise '
+						. 'there is no action if none of the buttons are available. If this is set to "submit" then '
+						. 'the submit button is used if available, otherwise the check answer button, otherwise the '
+						. 'preview button, otherwise no action. If this is set to "conservative" it works the same '
+						. 'as "submit" if there are an infinite number of attempts, or the same as "preview" if '
+						. 'there are only a finite number of submits. Note that this only affects homework set '
+						. 'problems, and not tests/quizzes or instructor pages.'
 				),
 				type   => 'popuplist',
 				values => [ 'preview', 'submit', 'conservative' ]
+			},
+			{
+				var  => 'pg{options}{showPreviewButton}',
+				doc  => x('Show the "Preview My Answers" button'),
+				doc2 => x(
+					'Configures if the "Preview My Answers" button is available. The "Preview Answers" button can '
+						. 'show a student how their current answer will be formatted, and depending on the problem '
+						. 'may provided feedback about incorrect syntax, variables or operations being undefined, '
+						. 'and other messages. MathQuill already formats answers properly, so disabling this can '
+						. 'keep messages from being seen without submitting their answer.'
+				),
+				type => 'boolean'
 			},
 			{
 				var  => 'pg{options}{automaticAnswerFeedback}',
