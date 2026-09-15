@@ -242,6 +242,16 @@
 			for (const input of inputs.filter(
 				(i) => /Q\d{4}_/.test(i.name) && !/^MaThQuIlL_/.test(i.name) && !/^previous_/.test(i.name)
 			)) {
+				// The sub-answer blanks of a RadioMultiAnswer are only required to be
+				// answered if they belong to the currently selected radio button.
+				if (/RaDiOMuLtIaNsWeR_/.test(input.name)) {
+					const radioContent = input.closest('.radio-content');
+					const checkedRadio = radioContent?.dataset.radio
+						? Array.from(document.getElementsByName(radioContent.dataset.radio)).find((r) => r.checked)
+						: undefined;
+					if (!checkedRadio || checkedRadio.value !== radioContent.dataset.index) continue;
+				}
+
 				const answered =
 					input.type === 'radio' || input.type === 'checkbox' ? !!input.checked : /\S/.test(input.value);
 				const match = /Q(\d{4})_/.exec(input.name);
