@@ -1647,7 +1647,6 @@ sub initialize ($c) {
 
 				my @userProblemRecords;
 				if (!$editingSetVersion) {
-					my @userProblemIDs = map { [ $_, $setID, $problemID ] } @userIDs;
 					@userProblemRecords = $db->getUserProblemsWhere(
 						{ user_id => [@userIDs], set_id => $setID, problem_id => $problemID });
 				} else {
@@ -1783,15 +1782,16 @@ sub initialize ($c) {
 		# Mark the specified problems as correct for all users (not applicable when editing a set version, because this
 		# only shows up when editing for users or editing the global set/problem, not for one user)
 		for my $problemID ($c->param('markCorrect')) {
-			my @userProblemIDs =
-				$forUsers
-				? (map { [ $_, $setID, $problemID ] } @editForUser)
-				: $db->listUserProblemsWhere({ set_id => $setID, problem_id => $problemID });
 			# If the set is not a gateway set, this requires going through the user_problems and resetting their status.
 			# If it's a gateway set, then we have to go through every *version* of every user_problem.  It may be that
-			# there is an argument for being able to get() all problem versions for all users in one database call.  The
-			# current code may be slow for large classes.
+			# there is an argument for being able to get() all problem versions for all users in one database call.
+			# The current code may be slow for large classes.
 			if ($setRecord->assignment_type !~ /gateway/) {
+				my @userProblemIDs =
+					$forUsers
+					? (map { [ $_, $setID, $problemID ] } @editForUser)
+					: (map { [ $_->[0], $_->[1], $_->[3] ] }
+						$db->listUserProblemsWhere({ set_id => $setID, problem_id => $problemID }));
 				my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
 				foreach my $record (@userProblemRecords) {
 					if (defined $record && ($record->status eq "" || $record->status < 1)) {

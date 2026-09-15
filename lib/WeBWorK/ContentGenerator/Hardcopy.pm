@@ -946,7 +946,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 
 	# get list of problem IDs
 	my @problemIDs =
-		map { $_->[2] }
+		map { $_->[3] }
 		$db->listUserProblemsWhere(
 			{ user_id => $MergedSet->user_id, set_id => $MergedSet->set_id, version_id => $MergedSet->version_id },
 			'problem_id');
