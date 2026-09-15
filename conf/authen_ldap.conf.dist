@@ -7,17 +7,10 @@
 # include("conf/authen_ldap.conf")
 ########################################################################################
 
-# Set LDAP as the authentication module to use.
-$authen{user_module} = 'WeBWorK::Authen::LDAP';
-
-# List of authentication modules that may be used to enter the admin course.
-# This is used instead of $authen{user_module} when logging into the admin course.
-# Since the admin course provides overall power to add/delete courses, access
-# to this course should be protected by the best possible authentication you
-# have available to you.
-$authen{admin_module} = [
-	'WeBWorK::Authen::LDAP'
-];
+# After customizing this file for your LDAP server, make sure to uncomment 
+# "WeBWorK::Authen::LDAP"
+# in the $authen{user_module} and/or $authen{admin_module} arrays in localOverrides.conf
+# in order to enable LDAP authentication.
 
 $authen{ldap_options} = {
 	# hosts to attempt to connect to, in order. For example:
