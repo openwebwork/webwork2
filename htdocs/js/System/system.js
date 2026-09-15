@@ -93,6 +93,19 @@
 		});
 	}
 
+	// Account for the height of the sticky nav (if present) in scroll-margin-top, so
+	// that utilizing a URL fragment doesn't obscure anchors behind the sticky nav.
+	const stickyNav = document.querySelector('.sticky-nav');
+	if (stickyNav) {
+		const updateStickyNavHeight = () =>
+			document.documentElement.style.setProperty(
+				'--sticky-nav-height',
+				`calc(${stickyNav.offsetHeight}px + 1rem)`
+			);
+		new ResizeObserver(updateStickyNavHeight).observe(stickyNav);
+		updateStickyNavHeight();
+	}
+
 	// Make elements with role="button" (that have been given the class below) activate upon use of the spacebar.
 	for (const btn of document.querySelectorAll('.spacebar-activatable')) {
 		btn.addEventListener('keydown', (e) => {
