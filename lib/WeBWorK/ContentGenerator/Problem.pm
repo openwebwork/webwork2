@@ -770,7 +770,7 @@ sub nav ($c, $args) {
 	# Find the next or previous problem, and determine if it is actually open for a jitar set.
 	if (!$c->{invalidProblem}) {
 		my @problemIDs =
-			map { $_->[2] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
+			map { $_->[3] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
 		if ($isJitarSet) {
 			my @processedProblemIDs;
@@ -1081,7 +1081,7 @@ sub output_score_summary ($c) {
 	# Print jitar specific information for students (and notify instructor if necessary).
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 		my @problemIDs =
-			map { $_->[2] }
+			map { $_->[3] }
 			$db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
 
 		my @problemSeqs;
@@ -1327,7 +1327,7 @@ sub output_summary ($c) {
 		my $hasChildren = 0;
 
 		my @problemIDs =
-			map { $_->[2] }
+			map { $_->[3] }
 			$db->listUserProblemsWhere({ user_id => $c->param('effectiveUser'), set_id => $c->{set}->set_id },
 				'problem_id');
 
