@@ -385,9 +385,8 @@
 		pageChangeLink.addEventListener('click', (evt) => {
 			// Prevent the link from being followed.
 			evt.preventDefault();
-			document.gwquiz.pageChangeHack.value = 1;
 			document.gwquiz.newPage.value = pageChangeLink.dataset.pageNumber;
-			document.gwquiz.previewAnswers.click();
+			document.gwquiz.submit();
 		});
 	});
 

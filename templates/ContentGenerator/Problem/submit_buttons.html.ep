@@ -15,9 +15,14 @@
 		formtarget => '_self',
 		class      => 'btn btn-primary mb-1' =%>
 % } else {
-	% my $enter_key_name  = 'previewAnswers';
-	% my $enter_key_value = maketext('Preview My Answers');
-	% if ($c->ce->{pg}{options}{enterKey} eq 'submit'
+	% my $enter_key_name  = '';
+	% my $enter_key_value = '';
+	% if ($c->ce->{pg}{options}{showPreviewButton}) {
+		% $enter_key_name  = 'previewAnswers';
+		% $enter_key_value = maketext('Preview My Answers');
+	% }
+	% if (!$c->ce->{pg}{options}{showPreviewButton}
+		% || $c->ce->{pg}{options}{enterKey} eq 'submit'
 		% || ($c->ce->{pg}{options}{enterKey} eq 'conservative' && $c->{problem}{max_attempts} < 0))
 	% {
 		% if ($can{getSubmitButton}) {
@@ -31,16 +36,20 @@
 			% $enter_key_value = maketext('Check Answers');
 		% }
 	% }
-	<%= submit_button $enter_key_value,
-		id         => 'enter_key_submit',
-		formtarget => '_self',
-		name       => $enter_key_name,
-		class      => 'visually-hidden-unfocusable' =%>
-	<%= submit_button maketext('Preview My Answers'),
-		id         => 'previewAnswers_id',
-		formtarget => '_self',
-		name       => 'previewAnswers',
-		class      => 'btn btn-primary mb-1' =%>
+	% if ($enter_key_name) {
+		<%= submit_button $enter_key_value,
+			id         => 'enter_key_submit',
+			formtarget => '_self',
+			name       => $enter_key_name,
+			class      => 'visually-hidden-unfocusable' =%>
+	% }
+	% if ($c->ce->{pg}{options}{showPreviewButton}) {
+		<%= submit_button maketext('Preview My Answers'),
+			id         => 'previewAnswers_id',
+			formtarget => '_self',
+			name       => 'previewAnswers',
+			class      => 'btn btn-primary mb-1' =%>
+	% }
 	%
 	% if ($can{checkAnswers}) {
 		<%= submit_button maketext('Check Answers'),
