@@ -2,13 +2,13 @@
 	// Check or uncheck assignment checkboxes for versioned sets and their template to make it clear to the user what
 	// the backend will do with their selections.
 	document.querySelectorAll('input[type="checkbox"][name^="set."][name$=".assignment"]').forEach((checkbox) => {
-		const setID = checkbox.name.replace(/^set\.(.*).assignment$/, '$1');
-		if (/,v\d*$/.test(setID)) {
+		const setID = checkbox.dataset.setId;
+		if (checkbox.dataset.versioned !== undefined) {
 			// This is a versioned set.  If this is checked, make sure that the template set is also checked.
 			checkbox.addEventListener('change', () => {
 				if (checkbox.checked)
 					document.querySelector(
-						`input[type="checkbox"][name="set.${setID.replace(/,v\d*$/, '')}.assignment"]`
+						`input[type="checkbox"][data-set-id="${setID}"]:not([data-versioned])`
 					).checked = true;
 			});
 		} else {
@@ -17,7 +17,7 @@
 			checkbox.addEventListener('change', () => {
 				if (!checkbox.checked) {
 					document
-						.querySelectorAll(`input[type="checkbox"][name^="set.${setID},v"][name$=".assignment"]`)
+						.querySelectorAll(`input[type="checkbox"][data-set-id="${setID}"][data-versioned]`)
 						.forEach((versionCheckbox) => (versionCheckbox.checked = false));
 				}
 			});

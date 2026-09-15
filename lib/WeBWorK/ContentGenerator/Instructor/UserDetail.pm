@@ -7,7 +7,6 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 
 =cut
 
-use WeBWorK::DB::Utils         qw(grok_versionID_from_vsetID_sql);
 use WeBWorK::Utils             qw(x);
 use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Debug             qw(debug);
@@ -88,29 +87,28 @@ sub initialize ($c) {
 				# If the set is a gateway set, also check to see if we're resetting the dates for any of the assigned
 				# set versions, or if a version is to be deleted.
 				if ($setRecord->assignment_type =~ /gateway/) {
-					my @setVer =
-						$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } });
+					my @setVer = $db->getSetVersionsWhere({ user_id => $editForUserID, set_id => $setID });
 					for my $setVersionRecord (@setVer) {
 						my $ver    = $setVersionRecord->version_id;
-						my $action = $c->param("set.$setID,v$ver.assignment");
+						my $action = $c->param("set.$setID.$ver.assignment");
 						if (defined $action) {
 							if ($action eq 'assigned') {
 								# This version is not to be deleted.
 								# Check to see if the dates have been changed for this version.
 								# Note that dates are never reset (set to NULL) for a set version.
-								my $rh_dates = $c->checkDates($setVersionRecord, "$setID,v$ver");
+								my $rh_dates = $c->checkDates($setVersionRecord, $setID, $ver);
 								unless ($rh_dates->{error}) {
 									for my $field (@{ DATE_FIELDS_ORDER() }) {
 										$setVersionRecord->$field($rh_dates->{$field})
-											if ($c->param("set.$setID,v$ver.$field")
-												&& $c->param("set.$setID,v$ver.$field") ne '');
+											if ($c->param("set.$setID.$ver.$field")
+												&& $c->param("set.$setID.$ver.$field") ne '');
 									}
 									$db->putSetVersion($setVersionRecord);
 								}
 								# Reset the date inputs to the date in the database if they were empty.
 								for my $field (@{ DATE_FIELDS_ORDER() }) {
-									$c->param("set.$setID,v$ver.$field", $setVersionRecord->$field)
-										unless $c->param("set.$setID,v$ver.$field");
+									$c->param("set.$setID.$ver.$field", $setVersionRecord->$field)
+										unless $c->param("set.$setID.$ver.$field");
 								}
 							} elsif ($action eq 'delete') {
 								# Delete this version.
@@ -131,9 +129,7 @@ sub initialize ($c) {
 	# This must be done after saving so that the updated data is obtained.
 
 	# Create a hash of set ids to set records, and a hash of set ids to merged set records for this user.
-	$c->{userSetRecords} =
-		{ map { $_->set_id => $_ }
-			$db->getUserSetsWhere({ user_id => $editForUserID, set_id => { not_like => '%,v%' } }) };
+	$c->{userSetRecords}   = { map { $_->set_id => $_ } $db->getUserSetsWhere({ user_id => $editForUserID }) };
 	$c->{mergedSetRecords} = { map { $_->set_id => $_ } $db->getMergedSetsWhere({ user_id => $editForUserID }) };
 
 	# Get all versions and merged versions for gateway sets.
@@ -141,32 +137,27 @@ sub initialize ($c) {
 		next unless $set->assignment_type =~ /gateway/;
 		my $setID = $set->set_id;
 
-		$c->{setVersions}{$setID} = [
-			$db->getSetVersionsWhere(
-				{ user_id => $editForUserID, set_id => { like => "$setID,v\%" } }, 'version_id'
-			)
-		];
-		$c->{mergedVersions}{$setID} = [
-			$db->getMergedSetVersionsWhere(
-				{ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
-				\grok_versionID_from_vsetID_sql($db->{set_version_merged}->sql->_quote('set_id'))
-			)
-		];
+		$c->{setVersions}{$setID} =
+			[ $db->getSetVersionsWhere({ user_id => $editForUserID, set_id => $setID }, 'version_id') ];
+		$c->{mergedVersions}{$setID} =
+			[ $db->getMergedSetVersionsWhere({ user_id => $editForUserID, set_id => $setID }, 'version_id') ];
 	}
 
 	return;
 }
 
-sub checkDates ($c, $setRecord, $setID) {
+sub checkDates ($c, $setRecord, $setID, $setVersion = 0) {
+	my $fullSetID = $setVersion ? "$setID.$setVersion" : $setID;
+
 	# For each of the dates, use the override date if set.  Otherwise use the value from the global set.
 	# Except in the case that this is a set version. In that case use 0 which will result in an error below.
 	# This will prevent the dates for the set version from being changed to invalid values in that case.
 	my %dates;
 	for my $field (@{ DATE_FIELDS_ORDER() }) {
 		$dates{$field} =
-			($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '')
-			? $c->param("set.$setID.$field")
-			: ($setID =~ /,v\d+$/ ? 0 : $setRecord->$field);
+			($c->param("set.$fullSetID.$field") && $c->param("set.$fullSetID.$field") ne '')
+			? $c->param("set.$fullSetID.$field")
+			: ($setVersion ? 0 : $setRecord->$field);
 	}
 
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };

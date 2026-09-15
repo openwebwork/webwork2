@@ -45,7 +45,7 @@ async sub initialize ($c) {
 				user_id => [
 					map { $_->[0] } (
 						$c->stash->{set}->assignment_type =~ /gateway/
-						? $db->listSetVersionsWhere({ set_id => { like => "$setID,v\%" } })
+						? $db->listSetVersionsWhere({ set_id => $setID })
 						: $db->listUserSetsWhere({ set_id => $setID })
 					)
 				],
@@ -74,7 +74,7 @@ async sub initialize ($c) {
 		if ($c->stash->{set}->assignment_type =~ /gateway/) {
 			$user->{data} = [
 				map { { problem => $_ } } $db->getProblemVersionsWhere(
-					{ user_id => $user->user_id, problem_id => $problemID, set_id => { like => "$setID,v\%" } }
+					{ user_id => $user->user_id, problem_id => $problemID, set_id => $setID }
 				)
 			];
 		} else {
@@ -84,9 +84,8 @@ async sub initialize ($c) {
 
 		for (@{ $user->{data} }) {
 			next unless defined $_->{problem};
-			my $versionID = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
-			my $userPastAnswerID =
-				$db->latestProblemPastAnswer($user->user_id, $setID . ($versionID ? ",v$versionID" : ''), $problemID);
+			my $versionID        = ref($_->{problem}) =~ /::ProblemVersion/ ? $_->{problem}->version_id : 0;
+			my $userPastAnswerID = $db->latestProblemPastAnswer($user->user_id, $setID, $versionID, $problemID);
 			$_->{past_answer} = $db->getPastAnswer($userPastAnswerID) if ($userPastAnswerID);
 			($_->{problemNumber}, $_->{pageNumber}) = get_test_problem_position($db, $_->{problem}) if $versionID;
 
@@ -103,7 +102,7 @@ async sub initialize ($c) {
 		my %mergedSets;
 		if ($c->stash->{set}->assignment_type =~ /gateway/) {
 			$mergedSets{ $_->user_id }{ $_->version_id } = $_
-				for $db->getMergedSetVersionsWhere({ set_id => { like => "$setID,v\%" } });
+				for $db->getMergedSetVersionsWhere({ set_id => $setID });
 		} else {
 			%mergedSets = map { $_->user_id => { 0 => $_ } } $db->getMergedSetsWhere({ set_id => $setID });
 		}

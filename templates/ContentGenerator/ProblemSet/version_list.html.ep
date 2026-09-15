@@ -74,8 +74,8 @@
 	% }
 	%
 	<div class="mb-3">
-		<%= link_to maketext('Continue Open Test') =>
-			$c->systemLink(url_for($routeName, setID => $set->set_id . ',v' . $continueVersion->version_id)),
+		<%= link_to maketext('Continue Open Test') => $c->systemLink(
+			url_for("${routeName}_version", setID => $set->set_id, versionID => $continueVersion->version_id)),
 			class => 'btn btn-primary' =%>
 	</div>
 % } elsif (($timeNow >= $set->open_date || $authz->hasPermissions($user, 'view_hidden_sets'))
@@ -182,8 +182,9 @@
 						% if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
 							<% $interactive = link_to
 								$interactive => $c->systemLink(url_for(
-									$ver->{proctored} ? 'proctored_gateway_quiz' : 'gateway_quiz',
-									setID => $ver->{id}
+									$ver->{proctored} ? 'proctored_gateway_quiz_version' : 'gateway_quiz_version',
+									setID     => $set->set_id,
+									versionID => $ver->{version}
 								)),
 								class => 'set-id-tooltip text-nowrap',
 								data  => {
@@ -204,10 +205,8 @@
 							% $interactive = label_for $ver->{id} => $interactive;
 						% } elsif ($ver->{show_download}) {
 							% # Only display download option if answers are available.
-							<% $control = link_to $c->systemLink(
-								url_for('hardcopy_preselect_set', setID => $ver->{id}),
-								params => { selected_sets => $ver->{id} }
-								),
+							<% $control =
+								link_to $c->systemLink(url_for('hardcopy_preselect_set', setID => $ver->{id})),
 								class => 'hardcopy-link',
 								begin =%>
 								<i

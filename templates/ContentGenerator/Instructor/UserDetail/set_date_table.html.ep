@@ -1,9 +1,8 @@
 % my $setID = $globalRecord->set_id;
 %
-% # Modify set id to include the version if this is a versioned set.
 % my $isGateway   = $globalRecord->assignment_type =~ /gateway/;
-% my $isVersioned = $isGateway && defined $mergedRecord && $mergedRecord->can('version_id');
-% $setID .= ',v' . $mergedRecord->version_id if $isVersioned;
+% my $isVersioned = $isGateway && defined $mergedRecord && $mergedRecord->version_id;
+% my $fullSetID   = $isVersioned ? "$setID." . $mergedRecord->version_id : $setID;
 %
 <table>
 	<tr>
@@ -41,21 +40,21 @@
 		%
 		<tr>
 			<td class="px-1 text-nowrap">
-				<%= label_for "set.$setID.$field"
+				<%= label_for "set.$fullSetID.$field"
 					. (defined $userRecord ? '_id' : '.class_value') => maketext($fieldLabels->{$field}),
 					class                                            => 'form-label mb-0' =%>
 			</td>
 			% unless ($isVersioned) {
 				<td class="px-1 text-nowrap">
 					<%= text_field
-						"set.$setID.$field.class_value" =>
+						"set.$fullSetID.$field.class_value" =>
 						$c->formatDateTime($globalRecord->$field, 'datetime_format_short'),
-						id       => "set.$setID.$field.class_value",
+						id       => "set.$fullSetID.$field.class_value",
 						readonly => undef,
 						dir      => 'ltr',
 						class    => 'form-control-plaintext form-control-sm w-auto',
 						size     => 16,
-						defined $userRecord ? ('aria-labelledby' => "set.$setID.${field}_id") : (),
+						defined $userRecord ? ('aria-labelledby' => "set.$fullSetID.${field}_id") : (),
 						data => { class_value => $globalRecord->$field } =%>
 				</td>
 			% }
@@ -63,8 +62,8 @@
 				<td class="px-1 text-nowrap">
 					<div class="input-group input-group-sm flex-nowrap flatpickr">
 						<%= text_field
-							"set.$setID.$field" => $userRecord->$field,
-							id                  => "set.$setID.${field}_id",
+							"set.$fullSetID.$field" => $userRecord->$field,
+							id                      => "set.$fullSetID.${field}_id",
 							class => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
 							placeholder => $isGateway
 							? ($isVersioned && $field ne 'reduced_scoring_date'

@@ -17,11 +17,6 @@ our @EXPORT_OK = qw(
 	fake_set
 	fake_set_version
 	fake_problem
-	make_vsetID
-	make_vsetID_sql
-	grok_vsetID
-	grok_setID_from_vsetID_sql
-	grok_versionID_from_vsetID_sql
 	parse_dsn
 );
 
@@ -51,6 +46,7 @@ sub user2global {
 sub initializeUserProblem {
 	my ($userProblem, $seed) = @_;
 	$seed = int rand 5000 unless defined $seed;
+	$userProblem->version_id(0) unless defined $userProblem->version_id;
 	$userProblem->status(0.0);
 	$userProblem->attempted(0);
 	$userProblem->num_correct(0);
@@ -112,6 +108,7 @@ sub fake_problem {
 	my $problem = $db->newGlobalProblem();
 	$problem = global2user($db->{problem_user}{record}, $problem);
 	$problem->set_id(fakeSetName);
+	$problem->version_id(0);
 	$problem->value('');
 	$problem->max_attempts(-1);
 	$problem->showMeAnother(-1);
@@ -127,43 +124,6 @@ sub fake_problem {
 	$problem->prCount(-10);       # Negative to detect fake problems and disable problem randomization.
 
 	return ($problem);
-}
-
-################################################################################
-# versioning utilities
-################################################################################
-
-sub make_vsetID {
-	my ($setID, $versionID) = @_;
-	return "$setID,v$versionID";
-}
-
-# does not quote $setID and $versionID, because they could be strings, qualified
-# or unqualified field names, or complex expression
-sub make_vsetID_sql {
-	my ($setID, $versionID) = @_;
-	return "CONCAT($setID,',v',$versionID)";
-}
-
-sub grok_vsetID {
-	my ($vsetID) = @_;
-	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,v(.*))?/;
-	return $setID, $versionID;
-}
-
-# does not quote $field, because it could be a string, a qualified or
-# unqualified field name, or a complex expression
-sub grok_setID_from_vsetID_sql {
-	my ($field) = @_;
-	return "SUBSTRING($field,1,INSTR($field,',v')-1)";
-}
-
-# does not quote $field, because it could be a string, a qualified or
-# unqualified field name, or a complex expression
-sub grok_versionID_from_vsetID_sql {
-	my ($field) = @_;
-	# the "+0" casts the resulting value as a number
-	return "(SUBSTRING($field,INSTR($field,',v')+2)+0)";
 }
 
 sub parse_dsn {

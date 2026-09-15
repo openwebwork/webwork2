@@ -35,6 +35,9 @@ async sub initialize ($c) {
 	my $selectedSets     = [ $c->param('selected_sets') ]     // [];
 	my $selectedProblems = [ $c->param('selected_problems') ] // [];
 
+	# Parse each selected_sets entry into a (setID, versionID) pair.
+	my @selectedSetPairs = map { [ $_ =~ /^([^,]+)(?:,v(\d+))?$/ ] } @$selectedSets;
+
 	my $instructor = $c->authz->hasPermissions($user, 'access_instructor_tools');
 
 	# If not instructor then force table to use current user-id
@@ -49,22 +52,11 @@ async sub initialize ($c) {
 	for my $studentUser (@$selectedUsers) {
 		my @sets;
 
-		# search for selected sets assigned to students
-		my @allSets = $db->listUserSets($studentUser);
-		for my $setName (@allSets) {
-			my $set = $db->getMergedSet($studentUser, $setName);
-			if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
-				my @versions = $db->listSetVersions($studentUser, $setName);
-				for my $version (@versions) {
-					if (grep {/^$setName,v$version$/} @$selectedSets) {
-						$set = $db->getUserSet($studentUser, "$setName,v$version");
-						push(@sets, $set);
-					}
-				}
-			} elsif (grep {/^$setName$/} @$selectedSets) {
-				push(@sets, $set);
-			}
-
+		# Get the merged set record for each selected (setID, versionID) pair.
+		for (@selectedSetPairs) {
+			my $set =
+				$_->[1] ? $db->getSetVersion($studentUser, $_->[0], $_->[1]) : $db->getMergedSet($studentUser, $_->[0]);
+			push(@sets, $set) if $set;
 		}
 
 		next unless @sets;
@@ -72,6 +64,9 @@ async sub initialize ($c) {
 		for my $setRecord (@sets) {
 			my @problemNumbers;
 			my $setName    = $setRecord->set_id;
+			my $setVersion = $setRecord->version_id;
+			# Distinguish set versions from each other for hash keys and display.
+			my $displaySetName = $setVersion ? "$setName,v$setVersion" : $setName;
 			my $isJitarSet = (defined($setRecord->assignment_type) && $setRecord->assignment_type eq 'jitar') ? 1 : 0;
 
 			# search for matching problems
@@ -82,7 +77,7 @@ async sub initialize ($c) {
 				if ($isJitarSet) {
 					$prettyProblemNumber = join('.', jitar_id_to_seq($problemNumber));
 				}
-				$prettyProblemNumbers{$setName}{$problemNumber} = $prettyProblemNumber;
+				$prettyProblemNumbers{$displaySetName}{$problemNumber} = $prettyProblemNumber;
 
 				if (grep {/^$prettyProblemNumber$/} @$selectedProblems) {
 					push(@problemNumbers, $problemNumber);
@@ -93,15 +88,20 @@ async sub initialize ($c) {
 
 			for my $problemNumber (@problemNumbers) {
 				my @pastAnswers = $db->getPastAnswersWhere(
-					{ user_id => $studentUser, set_id => $setName, problem_id => $problemNumber }, 'answer_id');
+					{
+						user_id    => $studentUser,
+						set_id     => $setName,
+						version_id => $setVersion,
+						problem_id => $problemNumber
+					},
+					'answer_id'
+				);
 				next unless @pastAnswers;
 
 				# Get answer types from the user problem.
 				my $problem;
 				if ($setRecord->assignment_type =~ /gateway/) {
-					my ($unversionedSetID, $versionID) = $setName =~ /^([^,]*),v(\d*)$/;
-					$problem =
-						$db->getMergedProblemVersion($studentUser, $unversionedSetID, $versionID, $problemNumber);
+					$problem = $db->getMergedProblemVersion($studentUser, $setName, $setVersion, $problemNumber);
 				} else {
 					$problem = $db->getMergedProblem($studentUser, $setName, $problemNumber);
 				}
@@ -117,14 +117,11 @@ async sub initialize ($c) {
 				# figure out what type the answers are.  This is usually only the case for the old type of flags value,
 				# which means this is a course restored from a course archive from a previous version of webwork2.
 				if (!@answerTypes) {
-					if (!defined $fallbackAnswerTypes{$setName}{$problemNumber}) {
-						my $set;
-						if ($setName =~ /,v[0-9]*$/) {
-							my ($unversionedSetID, $versionID) = $setName =~ /^([^,]*),v(\d*)$/;
-							$set = $db->getMergedSetVersion($studentUser, $unversionedSetID, $versionID);
-						} else {
-							$set = $db->getMergedSet($studentUser, $setName);
-						}
+					if (!defined $fallbackAnswerTypes{$displaySetName}{$problemNumber}) {
+						my $set =
+							$setVersion
+							? $db->getMergedSetVersion($studentUser, $setName, $setVersion)
+							: $db->getMergedSet($studentUser, $setName);
 						my $userRecord = $db->getUser($studentUser);
 
 						next unless defined $set && defined $userRecord;
@@ -147,17 +144,17 @@ async sub initialize ($c) {
 
 						for (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
 							push(
-								@{ $fallbackAnswerTypes{$setName}{$problemNumber} },
+								@{ $fallbackAnswerTypes{$displaySetName}{$problemNumber} },
 								$pg->{PG_ANSWERS_HASH}{$_}{rh_ans}{type} // 'undefined'
 							);
 						}
 					}
-					@answerTypes = @{ $fallbackAnswerTypes{$setName}{$problemNumber} }
-						if defined $fallbackAnswerTypes{$setName}{$problemNumber};
+					@answerTypes = @{ $fallbackAnswerTypes{$displaySetName}{$problemNumber} }
+						if defined $fallbackAnswerTypes{$displaySetName}{$problemNumber};
 				}
 
 				for my $pastAnswer (@pastAnswers) {
-					$records{$studentUser}{$setName}{$problemNumber}{ $pastAnswer->answer_id } = {
+					$records{$studentUser}{$displaySetName}{$problemNumber}{ $pastAnswer->answer_id } = {
 						time        => $pastAnswer->timestamp,
 						seed        => $pastAnswer->problem_seed,
 						answers     => [ split(/\t/, $pastAnswer->answer_string) ],

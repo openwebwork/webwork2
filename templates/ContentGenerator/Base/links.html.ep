@@ -20,24 +20,24 @@
 			<li class="list-group-item nav-item">
 				<ul class="nav flex-column">
 					% # Set link. The set record is needed to determine the assignment type.
-					% my $setRecord = $db->getGlobalSet($setID =~ s/,v\d+$//r);
+					% my $setRecord = $db->getGlobalSet($setID);
 					% if ($setRecord->assignment_type eq 'jitar' && defined $problemID) {
 						% $prettyProblemID = join('.', jitar_id_to_seq($problemID));
 					% }
 					%
 					<li class="list-group-item nav-item">
-						% if ($setRecord->assignment_type =~ /proctor/ && $setID =~ /,v(\d)+$/) {
+						% if ($setRecord->assignment_type =~ /proctor/ && $versionID) {
 							<%= $makelink->(
-								'proctored_gateway_quiz',
-								text       => $prettySetID,
-								captures   => { setID => $setID },
+								'proctored_gateway_quiz_version',
+								text       => "$prettySetID,v$versionID",
+								captures   => { setID => $setID, versionID => $versionID },
 								link_attrs => { dir   => 'ltr' }
 							) %>
-						% } elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
+						% } elsif ($setRecord->assignment_type =~ /gateway/ && $versionID) {
 							<%= $makelink->(
-								'gateway_quiz',
-								text       => $prettySetID,
-								captures   => { setID => $setID },
+								'gateway_quiz_version',
+								text       => "$prettySetID,v$versionID",
+								captures   => { setID => $setID, versionID => $versionID },
 								link_attrs => { dir   => 'ltr' }
 							) %>
 						% } else {
@@ -124,8 +124,8 @@
 			% }
 			% # Sets Manager
 			<li class="list-group-item nav-item"><%= $makelink->('instructor_set_list') %></li>
-			% # Editor link.  Only shown for non-versioned sets
-			% if (defined $globalSetID || defined $setID && $setID !~ /,v\d+$/) {
+			% # Editor link.
+			% if (defined $globalSetID || defined $setID) {
 				<li class="list-group-item nav-item">
 					<ul class="nav flex-column">
 						<li class="nav-item">
@@ -229,9 +229,8 @@
 						<li class="nav-item" dir="ltr">
 							<%= $makelink->(
 								'instructor_set_statistics',
-								# Make sure a versioned set id is not used for the statistics link.
-								text     => $prettySetID =~ s/,v\d+$//r,
-								captures => { setID => $globalSetID // $setID =~ s/,v\d+$//r }
+								text     => $prettySetID,
+								captures => { setID => $globalSetID // $setID }
 							) %>
 						</li>
 						% if (defined $problemID) {
@@ -242,7 +241,7 @@
 											'instructor_problem_statistics',
 											text     => maketext('Problem [_1]', $prettyProblemID),
 											captures => {
-												setID     => $globalSetID // $setID =~ s/,v\d+$//r,
+												setID     => $globalSetID // $setID,
 												problemID => $problemID
 											}
 										) =%>
@@ -283,9 +282,8 @@
 							<li class="nav-item" dir="ltr">
 								<%= $makelink->(
 									'instructor_set_progress',
-									# Make sure a versioned set id is not used for the progress link.
-									text     => $prettySetID =~ s/,v\d+$//r,
-									captures => { setID => $globalSetID // $setID =~ s/,v\d+$//r },
+									text     => $prettySetID,
+									captures => { setID => $globalSetID // $setID },
 								) %>
 							</li>
 						% }

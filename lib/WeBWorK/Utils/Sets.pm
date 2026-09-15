@@ -16,7 +16,6 @@ our @EXPORT_OK = qw(
 	grade_all_sets
 	is_restricted
 	get_test_problem_position
-	list_set_versions
 	restricted_set_message
 );
 
@@ -110,7 +109,7 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 sub grade_gateway ($db, $setName, $studentName) {
 	my $bestSetData = [ 0, 0, [] ];
 
-	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,v\%" } });
+	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => $setName });
 	for (@setVersions) {
 		my @setData = grade_set($db, $_, $studentName, 1);
 		$bestSetData = \@setData if $setData[0] > $bestSetData->[0];
@@ -177,8 +176,7 @@ sub is_restricted ($db, $set, $studentName) {
 			my $restrictor_set = $db->getGlobalSet($restrictor);
 
 			if ($restrictor_set->assignment_type =~ /gateway/) {
-				my @versions =
-					$db->getSetVersionsWhere({ user_id => $studentName, set_id => { like => $restrictor . ',v%' } });
+				my @versions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => $restrictor });
 				for (@versions) {
 					my $v_score = grade_set($db, $_, $studentName, 1);
 
@@ -234,26 +232,6 @@ sub get_test_problem_position ($db, $problem) {
 	}
 
 	return ($problemNumber, $pageNumber);
-}
-
-sub list_set_versions ($db, $studentName, $setName, $setIsVersioned = 0) {
-	croak 'list_set_versions requires a database reference as the first element' unless ref($db) =~ /DB/;
-
-	my @allSetNames;
-	my $notAssignedSet = 0;
-
-	if ($setIsVersioned) {
-		my @setVersions = $db->listSetVersions($studentName, $setName);
-		@allSetNames = map {"$setName,v$_"} @setVersions;
-		# If there are not any set versions, it may be because the user is not assigned the set,
-		# or because the user hasn't completed any versions.
-		$notAssignedSet = 1 if !@setVersions && !$db->existsUserSet($studentName, $setName);
-	} else {
-		@allSetNames    = ($setName);
-		$notAssignedSet = 1 if !$db->existsUserSet($studentName, $setName);
-	}
-
-	return (\@allSetNames, $notAssignedSet);
 }
 
 sub restricted_set_message($c, $set, $status) {
@@ -391,16 +369,6 @@ Usage: C<get_test_problem_position($db, $problem)>
 Given C<$problem> which should be a problem version, get_test_problem_position
 returns the 0 based problem number for the problem on the test, and the 1 based
 page number for the page on the test that the problem is on.
-
-=head2 list_set_versions
-
-Usage: C<list_set_versions($db, $studentName, $setName, $setIsVersioned)>
-
-Construct a list of versioned sets for this student user.  This returns a
-reference to an array of names of set versions and whether or not the user is
-assigned to the set.  The list of names will be a list of set versions if the
-set is versioned (i.e., if C<setIsVersioned> is true), and a list containing
-only the original set id otherwise.
 
 =head2 restricted_set_message
 

@@ -1323,9 +1323,7 @@ sub upgrade_course_confirm ($c) {
 
 		# Report on database status
 		my ($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
-			$incorrect_type_database_fields, $db_report)
-			= $c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
+		my $dbReport = $c->formatReportOnDatabaseTables($dbStatus, $upgrade_courseID);
 
 		my $course_output = $c->c;
 
@@ -1351,9 +1349,9 @@ sub upgrade_course_confirm ($c) {
 		);
 		push(@$course_output, $c->tag('h2',  $c->maketext('Report for course [_1]:', $upgrade_courseID)));
 		push(@$course_output, $c->tag('div', class => 'mb-2', $c->maketext('Database:')));
-		push(@$course_output, $db_report);
+		push(@$course_output, $dbReport->{summary});
 
-		if ($extra_database_tables) {
+		if ($dbReport->{extra_database_tables}) {
 			$extra_database_tables_exist = 1;
 			push(
 				@$course_output,
@@ -1367,7 +1365,7 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
-		if ($extra_database_fields) {
+		if ($dbReport->{extra_database_fields}) {
 			$extra_database_fields_exist = 1;
 			push(
 				@$course_output,
@@ -1383,7 +1381,7 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
-		if ($rebuild_table_indexes) {
+		if ($dbReport->{rebuild_table_indexes}) {
 			push(
 				@$course_output,
 				$c->tag(
@@ -1398,7 +1396,7 @@ sub upgrade_course_confirm ($c) {
 			);
 		}
 
-		if ($incorrect_type_database_fields) {
+		if ($dbReport->{incorrect_type_database_fields}) {
 			$incorrect_type_database_fields_exist = 1;
 			push(
 				@$course_output,
@@ -1530,15 +1528,13 @@ sub do_upgrade_course ($c) {
 		# Analyze database status and prepare status report
 		($tables_ok, $dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 
-		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
-			$incorrect_type_database_fields, $db_report)
-			= $c->formatReportOnDatabaseTables($dbStatus);
+		my $dbReport = $c->formatReportOnDatabaseTables($dbStatus);
 
 		# Prepend course name
-		$db_report = $c->c($c->tag('div', class => 'mb-2', $c->maketext('Database:')), $db_report);
+		my $db_report = $c->c($c->tag('div', class => 'mb-2', $c->maketext('Database:')), $dbReport->{summary});
 
 		# Report on databases and report summary
-		if ($extra_database_tables) {
+		if ($dbReport->{extra_database_tables}) {
 			push(
 				@$db_report,
 				$c->tag(
@@ -1548,7 +1544,7 @@ sub do_upgrade_course ($c) {
 				)
 			);
 		}
-		if ($extra_database_fields) {
+		if ($dbReport->{extra_database_fields}) {
 			push(
 				@$db_report,
 				$c->tag(
@@ -1560,7 +1556,7 @@ sub do_upgrade_course ($c) {
 			);
 		}
 
-		if ($incorrect_type_database_fields) {
+		if ($dbReport->{incorrect_type_database_fields}) {
 			push(
 				@$db_report,
 				$c->tag(
@@ -2768,13 +2764,14 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 		)
 	);
 
-	my $all_tables_ok                  = 1;
-	my $extra_database_tables          = 0;
-	my $extra_database_fields          = 0;
-	my $rebuild_table_indexes          = 0;
-	my $incorrect_type_database_fields = 0;
-
-	my $db_report = $c->c;
+	my $dbReport = {
+		all_tables_ok                  => 1,
+		extra_database_tables          => 0,
+		extra_database_fields          => 0,
+		rebuild_table_indexes          => 0,
+		incorrect_type_database_fields => 0,
+		summary                        => $c->c
+	};
 
 	for my $table (sort keys %$dbStatus) {
 		my $table_report = $c->c;
@@ -2783,9 +2780,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 		push(@$table_report, $table . ': ', $table_status_message{$table_status});
 
 		if ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
-			$all_tables_ok = 0;
+			$dbReport->{all_tables_ok} = 0;
 		} elsif ($table_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
-			$extra_database_tables = 1;
+			$dbReport->{extra_database_tables} = 1;
 			push(
 				@$table_report,
 				$c->tag(
@@ -2809,9 +2806,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 
 				if ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_B) {
 					if ($fieldInfo{$key}[1]) {
-						$rebuild_table_indexes = 1;
+						$dbReport->{rebuild_table_indexes} = 1;
 					} else {
-						$extra_database_fields = 1;
+						$dbReport->{extra_database_fields} = 1;
 					}
 					if (defined $courseID) {
 						if ($fieldInfo{$key}[1]) {
@@ -2838,9 +2835,9 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 						}
 					}
 				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::ONLY_IN_A) {
-					$all_tables_ok = 0;
+					$dbReport->{all_tables_ok} = 0;
 				} elsif ($field_status == WeBWorK::Utils::CourseDBIntegrityCheck::DIFFER_IN_A_AND_B) {
-					$incorrect_type_database_fields = 1;
+					$dbReport->{incorrect_type_database_fields} = 1;
 					if (defined $courseID) {
 						push(
 							@$field_report,
@@ -2870,18 +2867,17 @@ sub formatReportOnDatabaseTables ($c, $dbStatus, $courseID = undef) {
 			}
 			push(@$table_report, $c->tag('ul', $fields_report->join('')));
 		}
-		push(@$db_report, $c->tag('li', $table_report->join('')));
+		push(@{ $dbReport->{summary} }, $c->tag('li', $table_report->join('')));
 	}
 
-	$db_report = $c->c($c->tag('ul', $db_report->join('')));
+	$dbReport->{summary} = $c->c($c->tag('ul', $dbReport->{summary}->join('')));
 
-	push(@$db_report, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok'))) if $all_tables_ok;
+	push(@{ $dbReport->{summary} }, $c->tag('p', class => 'text-success', $c->maketext('Database tables are ok')))
+		if $dbReport->{all_tables_ok};
 
-	return (
-		$all_tables_ok, $extra_database_tables, $extra_database_fields, $rebuild_table_indexes,
-		$incorrect_type_database_fields,
-		$db_report->join('')
-	);
+	$dbReport->{summary} = $dbReport->{summary}->join('');
+
+	return $dbReport;
 }
 
 1;

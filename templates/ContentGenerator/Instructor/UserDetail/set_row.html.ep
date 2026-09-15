@@ -11,10 +11,14 @@
 					<i class="icon fa-solid fa-list-check" title="<%= maketext('Test/Quiz') %>"></i>
 					<span class="visually-hidden"><%= maketext('Test/Quiz') %></span>
 				% }
-				<%= link_to format_set_name_display($version ? "$setID (version $version)" : $setID) =>
-					$c->systemLink(
-						url_for('instructor_set_detail', setID => $setID . ($version ? ",v$version" : '')),
-						params => { editForUser => $userID }) =%>
+				<%= link_to format_set_name_display($version ? "$setID (version $version)" : $setID) => $c->systemLink(
+					url_for(
+						$version ? 'instructor_versioned_set_detail' : 'instructor_set_detail',
+						setID     => $setID,
+						versionID => $version
+					),
+					params => { editForUser => $userID }
+				) =%>
 			</span>
 		% } else {
 			<span dir="ltr">
@@ -28,11 +32,12 @@
 	</th>
 	<td class="text-center">
 		<label class="form-check-label">
-			<%= check_box $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment" => 'assigned',
-				class                                                                            => 'form-check-input',
+			<%= check_box $version ? "set.$setID.$version.assignment" : "set.$setID.assignment" => 'assigned',
+				class                                                                           => 'form-check-input',
+				data => { set_id => $setID, $version ? (versioned => undef) : () },
 				defined $mergedSet ? (checked => undef) : () =%>
 			% if (defined $mergedSet && $version) {
-				<%= hidden_field "set.$setID,v$version.assignment" => 'delete' =%>
+				<%= hidden_field "set.$setID.$version.assignment" => 'delete' =%>
 			% }
 		</label>
 	</td>
