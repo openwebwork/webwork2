@@ -22,6 +22,17 @@ sub writeLog ($ce, $facility, $message, $time = time, $logType = 'webwork') {
 		return;
 	}
 
+	# Do not attempt to write the log if the root directory that the log file lives under does not exist.
+	# surePathToFile takes the mode for the directories it creates from that root, so a missing root makes it die
+	# inside its own eval and emit three unrelated warnings before the open below fails anyway. For course logs
+	# that root is the course directory, so this is reachable whenever a course log is written for a course that
+	# does not exist, such as a login attempt against a course that is not installed.
+	unless (-d $ce->{$dirType}{root}) {
+		warn "Not writing to the $facility $logType log: "
+			. "the log root directory $ce->{$dirType}{root} does not exist.\n";
+		return;
+	}
+
 	surePathToFile($ce->{$dirType}{root}, $ce->{$fileType}{logs}{$facility});
 
 	if (open my $LOG, '>>:encoding(UTF-8)', $ce->{$fileType}{logs}{$facility}) {
@@ -61,6 +72,11 @@ valid C<WeBWorK::CourseEnvironment> object must be specified by C<$ce>. The
 format of the message written to the log file is
 
     [formatted date & time] $message
+
+Nothing is written and a warning is issued if the root directory that the log
+file lives under does not exist. For course logs that root is the course
+directory, so writing a log will never create a directory for a course that is
+not installed.
 
 =head2 writeCourseLog
 
