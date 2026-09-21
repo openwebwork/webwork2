@@ -35,26 +35,12 @@ $debug_lti_grade_passback = 0;
 # Authentication settings
 ################################################################################################
 
-# This section enables LTI authentication.  If a course uses LTI 1.1 (see $LTIVersion below),
-# then the LTIAdvanced module will be used.  If a course uses LTI 1.3 (see $LTIVersion below),
-# the LTIAdvantage will be used.  If you know a site will not use one or the other, it can be
-# commented out. Failover to Basic_TheLastOption is necessary to authenticate with cookie keys.
-$authen{user_module} = [
-	'WeBWorK::Authen::LTIAdvantage',          # first try LTI 1.3
-	'WeBWorK::Authen::LTIAdvanced',           # next try LTI 1.1
-	'WeBWorK::Authen::Basic_TheLastOption'    # fallback authorization method
-];
-
-# List of authentication modules that may be used to enter the admin course.
-# This is used instead of $authen{user_module} when logging into the admin course.
-# Since the admin course provides overall power to add/delete courses, access
-# to this course should be protected by the best possible authentication you
-# have available to you.
-$authen{admin_module} = [
-	#'WeBWorK::Authen::LTIAdvantage',
-	#'WeBWorK::Authen::LTIAdvanced',
-	'WeBWorK::Authen::Basic_TheLastOption'
-];
+# After customizing this file for your LTI configuration, make sure to uncomment 
+# 'WeBWorK::Authen::LTIAdvantage' # for LTI 1.3
+# and/or
+# 'WeBWorK::Authen::LTIAdvanced' # for LTI 1.1
+# in the $authen{user_module} and/or $authen{admin_module} arrays in localOverrides.conf
+# in order to enable LTI authentication.
 
 # Include configurations.  You must uncomment at least one of the following. You may uncomment
 # both if the site may be using both LTI 1.1 and 1.3 in different courses. After uncommenting
