@@ -526,10 +526,6 @@ $mail{feedbackRecipients}    = [
 #	'WeBWorK::Authen::Basic_TheLastOption'    # WeBWorK internal authentication
 #];
 
-# Select the authentication module to use for proctor logins.
-# A string or a hash is accepted, as above.
-#$authen{proctor_module} = "WeBWorK::Authen::Proctor";
-
 # List of authentication modules that may be used to enter the admin course.
 # This is used instead of $authen{user_module} when logging into the admin course.
 # Since the admin course provides overall power to add/delete courses, access
