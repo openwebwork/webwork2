@@ -523,7 +523,7 @@ $mail{feedbackRecipients}    = [
 #	'WeBWorK::Authen::Saml2',
 #	'WeBWorK::Authen::Shibboleth',
 #	'WeBWorK::Authen::LDAP',
-#	'WeBWorK::Authen::Basic_TheLastOption'.   # WeBWorK internal authentication
+#	'WeBWorK::Authen::Basic_TheLastOption'    # WeBWorK internal authentication
 #];
 
 # Select the authentication module to use for proctor logins.
@@ -550,7 +550,7 @@ $mail{feedbackRecipients}    = [
 #	'WeBWorK::Authen::Saml2',
 #	'WeBWorK::Authen::Shibboleth',
 #	'WeBWorK::Authen::LDAP',
-#	'WeBWorK::Authen::Basic_TheLastOption'.   # WeBWorK internal authentication
+#	'WeBWorK::Authen::Basic_TheLastOption'    # WeBWorK internal authentication
 #];
 
 ################################################################################
