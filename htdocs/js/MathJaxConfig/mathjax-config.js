@@ -161,8 +161,8 @@ if (!window.MathJax) {
 		loaderOverlay.classList.add('problem-content');
 		const bodyRectangle = problemContent.getBoundingClientRect();
 		loaderOverlay.style.position = 'absolute';
-		loaderOverlay.style.top = `${bodyRectangle.y}px`;
-		loaderOverlay.style.left = `${bodyRectangle.x}px`;
+		loaderOverlay.style.top = `${bodyRectangle.top + window.scrollY}px`;
+		loaderOverlay.style.left = `${bodyRectangle.left + window.scrollX}px`;
 		loaderOverlay.style.width = `${bodyRectangle.width}px`;
 		loaderOverlay.style.height = `${bodyRectangle.height}px`;
 		loaderOverlay.style.overflow = 'clip';
@@ -177,8 +177,8 @@ if (!window.MathJax) {
 		problemContent.after(loaderOverlay);
 		const resizeObserver = new ResizeObserver(() => {
 			const bodyRectangle = problemContent.getBoundingClientRect();
-			loaderOverlay.style.top = `${bodyRectangle.top}px`;
-			loaderOverlay.style.left = `${bodyRectangle.left}px`;
+			loaderOverlay.style.top = `${bodyRectangle.top + window.scrollY}px`;
+			loaderOverlay.style.left = `${bodyRectangle.left + window.scrollX}px`;
 			loaderOverlay.style.width = `${bodyRectangle.width}px`;
 			loaderOverlay.style.height = `${bodyRectangle.height}px`;
 		});
