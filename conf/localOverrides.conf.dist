@@ -523,12 +523,8 @@ $mail{feedbackRecipients}    = [
 #	'WeBWorK::Authen::Saml2',
 #	'WeBWorK::Authen::Shibboleth',
 #	'WeBWorK::Authen::LDAP',
-#	'WeBWorK::Authen::Basic_TheLastOption'.   # WeBWorK internal authentication
+#	'WeBWorK::Authen::Basic_TheLastOption'    # WeBWorK internal authentication
 #];
-
-# Select the authentication module to use for proctor logins.
-# A string or a hash is accepted, as above.
-#$authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
 # List of authentication modules that may be used to enter the admin course.
 # This is used instead of $authen{user_module} when logging into the admin course.
@@ -550,7 +546,7 @@ $mail{feedbackRecipients}    = [
 #	'WeBWorK::Authen::Saml2',
 #	'WeBWorK::Authen::Shibboleth',
 #	'WeBWorK::Authen::LDAP',
-#	'WeBWorK::Authen::Basic_TheLastOption'.   # WeBWorK internal authentication
+#	'WeBWorK::Authen::Basic_TheLastOption'    # WeBWorK internal authentication
 #];
 
 ################################################################################
