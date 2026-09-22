@@ -11,6 +11,7 @@ fields.
 
 use Encode;
 use Mojo::JSON qw(encode_json);
+use Mojo::URL;
 
 use WeBWorK::Localize;
 
@@ -154,6 +155,39 @@ sub submitTime ($c, $new = undef) {
 sub language_handle ($c, $new = undef) {
 	$c->stash->{language_handle} = $c->{language_handle} = $new if defined $new;
 	return $c->stash->{language_handle};
+}
+
+=item $c->requestIsSameOrigin
+
+Determine if the current request is from the same origin as the server.  The
+'Sec-Fetch-Site' request header is used if provided by the browser.  Fall back
+to the 'Origin' and then the 'Referer' headers for browsers that do not yet send
+the 'Sec-Fetch-Site' header.  If none of those headers are available, then the
+request cannot be verified to be same-origin. That will only occur for very old
+browsers that are not supported anyway.
+
+=cut
+
+sub requestIsSameOrigin ($c) {
+	my $secFetchSite = $c->req->headers->header('Sec-Fetch-Site');
+	return $secFetchSite eq 'same-origin' if $secFetchSite;
+	return $c->isSameOrigin($c->req->headers->header('Origin'))
+		|| $c->isSameOrigin($c->req->headers->header('Referer'));
+}
+
+=item $c->isSameOrigin($url)
+
+Determine if the given 'Origin' or 'Referer' header value is the same origin as
+the current request.
+
+=cut
+
+sub isSameOrigin ($c, $url) {
+	return 0 unless $url;
+	my $origin = Mojo::URL->new($url);
+	my $base   = $c->req->url->base;
+	return 0 unless $origin->scheme && $origin->host;
+	return lc($origin->scheme) eq lc($base->scheme // '') && lc($origin->host_port) eq lc($base->host_port // '');
 }
 
 =head1 ERROR OUTPUT FUNCTIONS
