@@ -49,7 +49,7 @@ sub pre_header_initialize ($c) {
 		# Note that it is important that the tempDir is a property on the controller so that it stays in scope as long
 		# as the controller does, i.e., until the request is rendered.  Otherwise the temporary directory will be
 		# automatically removed before the archive file is rendered, and an empty file will be offered for download.
-		$c->{tempDir} = eval { tempdir('archive.XXXX', DIR => "$ce->{webworkDirs}{courses}/$courseID") };
+		$c->{tempDir} = eval { tempdir('archive.XXXX', DIR => $ce->{webworkDirs}{tmp}) };
 		if ($@) {
 			$c->addbadmessage($c->maketext('Unable to created temporary directory for course archive: [_1]', $@));
 		} else {
