@@ -240,9 +240,8 @@
 								% my $thisStepSize = $useUserValue ? points_stepsize($problemValue) : $stepSize;
 								<td class="restricted-width-col">
 									% if ($ce->{problemGraderScore} eq 'Point') {
-										% param("$userID.$versionID.score", wwRound(0, $_->{problem}->status * 100));
 										<%= hidden_field
-											"$userID.$versionID.score" => 0,
+											"$userID.$versionID.score" => wwRound(0, $_->{problem}->status * 100),
 											id                         => "$userID.$versionID.score" %>
 									% }
 									% param("$userID.$versionID.points", undef);
