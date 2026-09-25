@@ -363,7 +363,7 @@ async sub submit_grade ($self, $LMSuserID, $lineitem, $scoreGiven, $scoreMaximum
 		return 1;
 	}
 
-	$self->warning(join("\n", 'Failed to send grade:', $response->message));
+	$self->warning(join("\n", 'Failed to send grade:', $response->body));
 	return 0;
 }
 
