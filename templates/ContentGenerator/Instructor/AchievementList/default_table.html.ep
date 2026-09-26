@@ -77,9 +77,7 @@
 					</td>
 					<td class="text-nowrap">
 						<%= link_to maketext('Edit Evaluator') => $c->systemLink(
-							url_for('instructor_achievement_editor', achievementID => $achievement_id),
-							params => { sourceFilePath => $ce->{courseDirs}{achievements} . '/' . $_->test }
-						) =%>
+							url_for('instructor_achievement_editor', achievementID => $achievement_id)) =%>
 					</td>
 				</tr>
 			% }
