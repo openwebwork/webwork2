@@ -200,6 +200,18 @@
 			</div>
 		</div>
 	</div>
+	% unless (@editForUser) {
+		% # Warning div to let user to know to save set to update problems after changing to/from a jitar set.
+		<div
+			id="jitar-change-warning"
+			class="alert alert-danger py-1 mb-3 d-none"
+			data-current="<%= $setRecord->assignment_type %>"
+		>
+			<%= maketext(
+				'You must "Save Changes" after changing to/from a "Just In Time" assignment to update the problems. '
+					. 'Any changes to problem ordering will be lost.') %>
+		</div>
+	% }
 	%
 	% # Set description
 	<div class="mb-2">
