@@ -184,7 +184,6 @@ sub sort_handler ($c) {
 
 sub delete_handler ($c) {
 	my $num = 0;
-	return $c->maketext('Deleted [quant,_1,job].', $num) if $c->param('action.delete.scope') eq 'none';
 
 	for my $jobID (keys %{ $c->stash->{selectedJobs} }) {
 		# If a job was inactive (not yet started) when the page was previously loaded, then it may be selected to be

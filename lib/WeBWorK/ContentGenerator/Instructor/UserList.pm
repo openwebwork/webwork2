@@ -387,12 +387,9 @@ sub edit_handler ($c) {
 }
 
 sub delete_handler ($c) {
-	my $db      = $c->db;
-	my $user    = $c->param('user');
-	my $confirm = $c->param('action.delete.confirm');
-	my $num     = 0;
-
-	return (1, $c->maketext('Deleted [_1] [plural,_1,user].', $num)) unless $confirm eq 'yes';
+	my $db   = $c->db;
+	my $user = $c->param('user');
+	my $num  = 0;
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsToDelete = keys %{ $c->{selectedUserIDs} };
@@ -508,12 +505,7 @@ sub export_handler ($c) {
 sub reset_2fa_handler ($c) {
 	my $db   = $c->db;
 	my $user = $c->param('user');
-
-	my $confirm = $c->param('action.reset_2fa.confirm');
-	my $num     = 0;
-
-	return (1, $c->maketext('Reset two factor authentication for [_1] [plural,_1,user].', $num))
-		unless $confirm eq 'yes';
+	my $num  = 0;
 
 	# grep on userIsEditable would still enforce permissions, but no UI feedback
 	my @userIDsForReset = keys %{ $c->{selectedUserIDs} };

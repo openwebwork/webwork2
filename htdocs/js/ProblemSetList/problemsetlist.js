@@ -64,6 +64,15 @@
 		return false;
 	};
 
+	let delete_confirmed = false;
+	const delete_confirm_dialog = document.getElementById('delete_confirm_dialog');
+	const delete_confirm_modal = delete_confirm_dialog ? new bootstrap.Modal(delete_confirm_dialog) : null;
+	document.getElementById('delete_confirm_proceed')?.addEventListener('click', () => {
+		delete_confirmed = true;
+		delete_confirm_modal?.hide();
+		document.getElementById('take_action')?.click();
+	});
+
 	document.getElementById('problemsetlist')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
@@ -110,15 +119,22 @@
 				e.stopPropagation();
 				show_errors(['select_set_err_msg'], [create_select]);
 			}
-		} else if (action === 'delete') {
-			const delete_confirm = document.getElementById('delete_select');
-			if (!is_set_selected()) {
-				e.preventDefault();
-				e.stopPropagation();
-			} else if (delete_confirm.value != 'yes') {
-				e.preventDefault();
-				e.stopPropagation();
-				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
+		} else if (action === 'delete' && delete_confirm_modal) {
+			if (delete_confirmed) {
+				delete_confirmed = false;
+				return;
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			if (is_set_selected()) {
+				document.getElementById('delete_confirm_set_list')?.replaceChildren(
+					...Array.from(document.querySelectorAll('input[name="selected_sets"]:checked')).map((set) => {
+						const item = document.createElement('li');
+						item.textContent = set.dataset.setName ?? set.value;
+						return item;
+					})
+				);
+				delete_confirm_modal.show();
 			}
 		}
 	});

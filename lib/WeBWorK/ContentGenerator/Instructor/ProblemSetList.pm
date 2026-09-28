@@ -402,10 +402,7 @@ sub score_handler ($c) {
 }
 
 sub delete_handler ($c) {
-	my $db      = $c->db;
-	my $confirm = $c->param('action.delete.confirm');
-
-	return (1, $c->maketext('Deleted [_1] sets.', 0)) unless ($confirm eq 'yes');
+	my $db = $c->db;
 
 	my @setIDsToDelete = @{ $c->{selectedSetIDs} };
 	my %allSetIDs      = map { $_ => 1 } @{ $c->{allSetIDs} };

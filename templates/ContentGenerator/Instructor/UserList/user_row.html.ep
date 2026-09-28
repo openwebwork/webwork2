@@ -9,6 +9,7 @@
 					selected_users => $user->user_id,
 					id             => $user->user_id . '_checkbox',
 					class          => 'form-check-input',
+					data           => { full_name => $user->full_name },
 					$userSelected ? (checked => undef) : () =%>
 			% }
 		</td>

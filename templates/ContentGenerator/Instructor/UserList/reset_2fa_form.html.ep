@@ -1,4 +1,5 @@
 <div>
+	<div class="mb-2"><%= maketext('Reset two factor authentication for selected users.') %></div>
 	<div class="d-inline-block alert alert-danger p-1 mb-2">
 		<em>
 			<%= maketext('Warning: This will make users need to setup two factor authentication again! Only do this '
@@ -6,19 +7,52 @@
 			) =%>
 		</em>
 	</div>
-	<div class="row mb-2">
-		<%= label_for
-			reset_2fa_select => maketext('Reset two factor authentication for selected users?'),
-			class            => 'col-form-label col-form-label-sm col-auto' =%>
-		<div class="col-auto">
-			<%= select_field
-				'action.reset_2fa.confirm' =>
-				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ] ],
-				id    => 'reset_2fa_select',
-				class => 'form-select form-select-sm' =%>
+	<div
+		class="modal fade"
+		id="reset_2fa_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="reset_2fa_confirm_dialog_title"
+		aria-hidden="true"
+		data-current-user="<%= param('user') %>"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="reset_2fa_confirm_dialog_title">
+						<%= maketext('Reset Two Factor Authentication') =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Warning: This will make users need to setup two factor authentication again! Only '
+								. 'do this for users that can no longer access the course due the account being lost in the '
+								. 'authenticator app.') =%>
+					</div>
+					<p class="mb-1">
+						<%= maketext('Two factor authentication will be reset for the following users:') =%>
+					</p>
+					<ul id="reset_2fa_confirm_user_list" class="mb-0"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="reset_2fa_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Reset') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div id="reset_2fa_confirm_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
-		<%= maketext('Please confirm it is okay to reset two factor authentication for selected users.') %>
+	<div id="reset_2fa_self_err_msg" class="d-none">
+		<div role="alert" class="alert alert-danger p-1 d-inline-flex">
+			<%= maketext('You cannot reset two factor authentication for yourself!') %>
+		</div>
 	</div>
 </div>
