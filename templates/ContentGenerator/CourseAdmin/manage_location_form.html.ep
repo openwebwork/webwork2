@@ -1,6 +1,12 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/CourseAdmin/manage_locations.js'), defer => undef =%>
+% end
+%
 <h2><%= maketext('Manage Locations') %> <%= $c->helpMacro('AdminManageLocations') %></h2>
 <p><strong><%= maketext('Currently defined locations are listed below.') %></strong></p>
-<%= form_for current_route, method => 'POST', begin =%>
+<%= form_for current_route, method => 'POST', id => 'manage-locations-form', begin =%>
 	% my @locationIDs = map { $_->location_id } @$locations;
 	%
 	<%= $c->hidden_authen_fields =%>
@@ -15,12 +21,18 @@
 					<label class="form-check-label">
 						<%= radio_button
 							manage_location_action => 'edit_location_form',
-							class                  => 'form-check-input' %>
+							class                  => 'form-check-input',
+							@locationIDs ? () : (disabled => undef) %>
 						<%= maketext('Edit Location:') %>
 					</label>
 				</div>
 			</div>
-			<div class="col-sm-8"><%= select_field edit_location => [@locationIDs], class => 'form-select' =%></div>
+			<div class="col-sm-8">
+				<%= select_field
+					edit_location => [@locationIDs],
+					class         => 'form-select',
+					@locationIDs ? () : (disabled => undef) =%>
+			</div>
 		</div>
 		% # Create action
 		<div class="row align-items-center mb-2">
@@ -29,6 +41,7 @@
 					<label class="form-check-label">
 						<%= radio_button
 							manage_location_action => 'add_location_handler',
+							id                     => 'add_location_action',
 							class                  => 'form-check-input' %>
 						<%= maketext('Create Location:') %>
 					</label>
@@ -68,6 +81,13 @@
 					class                  => 'form-control' =%>
 			</div>
 		</div>
+		<div class="row ms-sm-3 mb-2 d-none" id="create_location_err_msg">
+			<div class="col">
+				<div role="alert" class="alert alert-danger p-1 mb-0 d-inline-block">
+					<%= maketext('Please provide a location name, description, and at least one address.') %>
+				</div>
+			</div>
+		</div>
 		% # Delete action
 		<div class="row mb-2">
 			<div class="text-danger">
@@ -82,37 +102,69 @@
 					<label class="form-check-label">
 						<%= radio_button
 							manage_location_action => 'delete_location_handler',
+							id                     => 'delete_location_action',
 							class                  => 'form-check-input' %>
 						<%= maketext('Delete location:') %>
 					</label>
 				</div>
 			</div>
 			<div class="col-sm-8">
-				<div class="row mb-1">
-					<div class="col-auto">
-						<%= select_field
-							delete_location => [
-								[ maketext('no location') => '' ],
-								[ maketext('locations selected below') => 'selected_locations' ], @locationIDs
-							],
-							class => 'form-select' =%>
-					</div>
+				<%= select_field
+					delete_location =>
+					[ [ maketext('locations selected below') => 'selected_locations' ], @locationIDs ],
+					id    => 'delete_location_select',
+					class => 'form-select' =%>
+				<div id="select_location_err_msg" role="alert" class="alert alert-danger p-1 mt-2 mb-0 d-none">
+					<%= maketext('Please select at least one location to delete.') %>
 				</div>
-				<div class="row">
-					<div class="col-auto">
-						<div class="form-check">
-							<label class="form-check-label">
-								<%= check_box delete_confirm => 'true', class => 'form-check-input' %>
-								<%= maketext('Confirm') %>
-							</label>
-						</div>
+			</div>
+		</div>
+	</div>
+	<div
+		class="modal fade"
+		id="delete_location_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="delete_location_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="delete_location_confirm_dialog_title">
+						<%= maketext('Delete Locations') =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%=
+							maketext('Deletion deletes all location data and related addresses, and is not undoable!')
+						=%>
 					</div>
+					<p class="mb-1"><%= maketext('The following locations will be permanently deleted:') =%></p>
+					<ul id="delete_location_confirm_list" class="mb-0"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="delete_location_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Delete') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
 				</div>
 			</div>
 		</div>
 	</div>
 	%
 	<div><%= submit_button maketext('Take Action!'), name => 'manage_locations', class => 'btn btn-primary' =%></div>
+	<div id="select_action_err_msg" role="alert" class="alert alert-danger p-1 mt-2 mb-0 d-inline-block d-none">
+		<%= maketext('Please select an action to perform.') %>
+	</div>
 	%
 	% # Existing location table
 	% if (@$locations) {
