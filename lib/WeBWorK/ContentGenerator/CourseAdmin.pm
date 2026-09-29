@@ -1853,9 +1853,6 @@ sub delete_location_handler ($c) {
 		$locationID   = @delLocations;
 	}
 
-	# Has the confirmation been checked?
-	my $confirm = $c->param('delete_confirm');
-
 	my $output = $c->c;
 
 	my $badID;
@@ -1879,15 +1876,6 @@ sub delete_location_handler ($c) {
 			)
 		);
 
-	} elsif (!$confirm || $confirm ne 'true') {
-		push(
-			@$output,
-			$c->tag(
-				'div',
-				class => 'alert alert-danger p-1 mb-2',
-				$c->maketext('Location deletion requires confirmation.')
-			)
-		);
 	} else {
 		for (@delLocations) {
 			$db->deleteLocation($_);
@@ -1920,7 +1908,7 @@ sub edit_location_form ($c) {
 	my $db = $c->db;
 
 	my $locationID = $c->param('edit_location');
-	if ($db->existsLocation($locationID)) {
+	if (defined $locationID && $db->existsLocation($locationID)) {
 		my $location = $db->getLocation($locationID);
 		# This doesn't give that nice a sort for IP addresses, because there is the problem with 192.168.1.168 sorting
 		# ahead of 192.168.1.2.  we could do better if we either invoked Net::IP in the sort routine, or if we insisted
@@ -1938,10 +1926,13 @@ sub edit_location_form ($c) {
 			$c->tag(
 				'div',
 				class => 'alert alert-danger p-1 mb-2',
-				$c->maketext(
+				defined $locationID
+				? $c->maketext(
 					'Location [_1] does not exist in the WeBWorK database.  Please check your input '
-						. '(perhaps you need to reload the location management page?).',
-					$locationID
+						. '(perhaps you need to reload the location management page?).', $locationID
+					)
+				: $c->maketext(
+					'Please select a location to edit. If no locations exist, then create one first.', $locationID
 				)
 			),
 			$c->manage_location_form
