@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 % title maketext('Sample Problem Home');
 %
 <!DOCTYPE html>
@@ -6,18 +8,9 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= title %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
-		<%= stylesheet $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
-		}) =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/minisearch/dist/umd/index.js'
-			}),
-			defer => undef =%>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
+		<%= stylesheet getAssetURL($ce, 'node_modules/@fortawesome/fontawesome-free/css/all.min.css') =%>
+		<%= javascript getAssetURL($ce, 'node_modules/minisearch/dist/umd/index.js'), defer => undef =%>
 		<script>
 			const webworkConfig = <%== $c->webwork_js_config %>;
 			window.pgDocConfig = {
@@ -26,17 +19,8 @@
 				searchDataURL: '<%= $c->url_for('sample_problem_search_data') %>'
 			};
 		</script>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'js/SampleProblemViewer/documentation-search.js'
-			}),
-			defer => undef =%>
-		<link
-			rel="icon"
-			type="x-image/icon"
-			href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>"
-		>
+		<%= javascript getAssetURL($ce, 'js/SampleProblemViewer/documentation-search.js'), defer => undef =%>
+		<link rel="icon" type="x-image/icon" href="<%= getAssetURL($ce, 'images/favicon.ico') %>">
 	</head>
 
 	<body>

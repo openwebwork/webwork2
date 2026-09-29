@@ -8,7 +8,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= maketext('Available Content') %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
 		<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 	</head>
 	%

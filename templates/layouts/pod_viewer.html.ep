@@ -1,24 +1,16 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= title %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PODViewer/podviewer.css' }) =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
-			}),
-			defer => undef =%>
-		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/PODViewer/podviewer.js' }),
-			defer => undef =%>
-		<link
-			rel="icon"
-			type="x-image/icon"
-			href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>"
-		>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
+		<%= stylesheet getAssetURL($ce, 'js/PODViewer/podviewer.css') =%>
+		<%= javascript getAssetURL($ce, 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/PODViewer/podviewer.js'), defer => undef =%>
+		<link rel="icon" type="x-image/icon" href="<%= getAssetURL($ce, 'images/favicon.ico') %>">
 	</head>
 	%
 	<body>

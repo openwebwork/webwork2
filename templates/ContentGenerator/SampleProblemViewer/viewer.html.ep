@@ -1,27 +1,15 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= maketext('PG Sample Problems') %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
-		<%= stylesheet $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'js/SampleProblemViewer/viewer.css'
-		}) =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
-			}),
-			defer => undef =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'js/SampleProblemViewer/viewer.js'
-			}),
-			defer => undef =%>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
+		<%= stylesheet getAssetURL($ce, 'js/SampleProblemViewer/viewer.css') =%>
+		<%= javascript getAssetURL($ce, 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/SampleProblemViewer/viewer.js'), defer => undef =%>
 	</head>
 
 	<body>

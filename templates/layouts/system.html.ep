@@ -1,26 +1,20 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 <!DOCTYPE html>
 <html <%== $c->output_course_lang_and_dir %>>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		%
-		<link
-			rel="icon"
-			type="x-image/icon"
-			href="<%= $c->url({ type => 'webwork', name => 'htdocs', file => 'images/favicon.ico' }) %>"
-		>
+		<link rel="icon" type="x-image/icon" href="<%= getAssetURL($ce, 'images/favicon.ico') %>">
 		%
 		% # CSS Loads
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
-		<%= stylesheet $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
-		}) =%>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/system.css' }) =%>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
+		<%= stylesheet getAssetURL($ce, 'node_modules/@fortawesome/fontawesome-free/css/all.min.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/System/system.css') =%>
 		<%= content 'css' =%>
 		% if ($c->exists_theme_file('math4-overrides.css')) {
-			<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.css' }) =%>
+			<%= stylesheet getAssetURL($ce, 'math4-overrides.css', 1) =%>
 		% }
 		%
 		% # Webwork configuration for javascript
@@ -31,27 +25,15 @@
 		% # JS Loads
 		% # The color scheme JavaScript must be loaded early and not deferred
 		% # to prevent flickering as the color scheme is set.
-		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/color-scheme.js' }) =%>
-		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/MathJaxConfig/mathjax-config.js' }),
-			defer => undef =%>
-		<%= javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'node_modules/mathjax/tex-svg.js' }),
-			defer => undef =%>
-		<%= javascript $c->url(
-			{ type => 'webwork', name => 'htdocs', file => 'node_modules/jquery/dist/jquery.min.js' }) %>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'
-			}),
-			defer => undef =%>
-		<%=
-			javascript $c->url({ type => 'webwork', name => 'htdocs', file => 'js/System/system.js' }), defer => undef
-		=%>
+		<%= javascript getAssetURL($ce, 'js/System/color-scheme.js') =%>
+		<%= javascript getAssetURL($ce, 'js/MathJaxConfig/mathjax-config.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'node_modules/mathjax/tex-svg.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'node_modules/jquery/dist/jquery.min.js') %>
+		<%= javascript getAssetURL($ce, 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'), defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/System/system.js'), defer => undef =%>
 		<%= content 'js' =%>
 		% if ($c->exists_theme_file('math4-overrides.js')) {
-			<%=
-				javascript $c->url({ type => 'webwork', name => 'theme', file => 'math4-overrides.js' }), defer => undef
-			=%>
+			<%= javascript getAssetURL($ce, 'math4-overrides.js', 1), defer => undef =%>
 		% }
 		%
 		% if ($c->can('head')) {
