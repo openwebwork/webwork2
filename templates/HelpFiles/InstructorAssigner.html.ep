@@ -10,7 +10,13 @@
 			. 'list will be the union of all results lists from the multiple filters.'
 			. 'The displayed user and set lists will only be updated upon clicking "Refresh List".') =%>
 </p>
-<p class="mb-0">
+<p>
 	<%= maketext('Multiple users or sets may be selected by holding down the shift key or the ctrl key while '
 			. 'selecting from the list.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('When you unassign a set from students, you destroy all of the data for the set for those '
+			. 'students. If the set is re-assigned to these students, then they will receive new '
+			. 'versions of problems in the set.  Make sure this is what you want to do before '
+			. 'unassigning sets from students.') =%>
 </p>

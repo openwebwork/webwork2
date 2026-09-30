@@ -1,3 +1,4 @@
+% use WeBWorK::Utils                     qw/getAssetURL/;
 % use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
@@ -10,6 +11,9 @@
 	% last;
 % }
 %
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/Assigner/assigner.js'), defer => undef =%>
+% end
 <p>
 	<%= maketext('Select one or more sets and one or more users below to assign/unassign '
 			. 'each selected set to/from all selected users.') =%>
@@ -17,8 +21,9 @@
 %
 % $c->stash->{footerWidthClass} = 'col-xl-10 col-md-12';
 %
-<%= form_for current_route, method => 'post', begin =%>
+<%= form_for current_route, method => 'post', id => 'assign_form', begin =%>
 	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field 'confirm_unassign' => '' =%>
 	%
 	<div>
 		<div class="row gx-3">
@@ -53,39 +58,67 @@
 				) =%>
 			</div>
 		</div>
-		<div class="row">
-			<div class="col-xl-10 col-md-12">
-				<%= submit_button maketext('Assign selected sets to selected users'),
-					name  => 'assign',
-					class => 'btn btn-primary mb-2' =%>
-				<div class="alert alert-danger p-1 mb-2">
-					<div class="mb-1">
-						<%= maketext('Do not unassign students unless you know what you are doing.') =%>
+		<div class="mb-2">
+			<%= submit_button maketext('Assign selected sets to selected users'),
+				name  => 'assign',
+				class => 'btn btn-primary' =%>
+			<%= submit_button maketext('Unassign selected sets from selected users'),
+				name  => 'unassign',
+				id    => 'unassign_button',
+				class => 'btn btn-primary' =%>
+		</div>
+		<div id="select_users_err_msg" class="d-none">
+			<div role="alert" class="alert alert-danger p-1 mb-2 d-inline-flex">
+				<%= maketext('Select at least one user to assign/unassign.') %>
+			</div>
+		</div>
+		<div id="select_sets_err_msg" class="d-none">
+			<div role="alert" class="alert alert-danger p-1 mb-2 d-inline-flex">
+				<%= maketext('Select at least one set to assign/unassign.') %>
+			</div>
+		</div>
+		<div
+			class="modal fade"
+			id="unassign_confirm_dialog"
+			tabindex="-1"
+			aria-labelledby="unassign_confirm_dialog_title"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5" id="unassign_confirm_dialog_title">
+							<%= maketext('Unassign selected sets from selected users') =%>
+						</h1>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="<%= maketext('close') %>"
+						></button>
 					</div>
-					<div><%= maketext('There is NO undo for unassigning students.') =%></div>
-				</div>
-				<div class="d-flex align-items-center">
-					<%= submit_button maketext('Unassign selected sets from selected users'),
-						name  => 'unassign',
-						class => 'btn btn-primary me-2' =%>
-					<label class="form-check-label">
-						<%= maketext('Read only') =%>
-						<%= radio_button
-							unassignFromAllSafety => 0,
-							checked               => undef,
-							class                 => 'form-check-input mx-1' =%>
-					</label>
-					<label class="form-check-label">
-						<%= maketext('Allow unassign') =%>
-						<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
-					</label>
-				</div>
-				<div class="mt-2">
-					<%= maketext(
-						'When you unassign a set from students, you destroy all of the data for the set for those '
-							. 'students. If the set is re-assigned to these students, then they will receive new '
-							. 'versions of problems in the set.  Make sure this is what you want to do before '
-							. 'unassigning sets from students.') =%>
+					<div class="modal-body">
+						<div class="alert alert-danger p-1 mb-2">
+							<%= maketext('Warning: Unassigning sets from users will destroy all user data for that set '
+									. 'and cannot be undone!') =%>
+						</div>
+						<p class="mb-1">
+							<%= maketext('Unassign the following sets:') =%>
+						</p>
+						<ul id="unassign_confirm_set_list" class="mb-2"></ul>
+						<p class="mb-1">
+							<%= maketext('From the following users:') =%>
+						</p>
+						<ul id="unassign_confirm_user_list" class="mb-0"></ul>
+					</div>
+					<div class="modal-footer">
+						<button type="button" id="unassign_confirm_proceed" class="btn btn-primary">
+							<%= maketext('Unassign') =%>
+						</button>
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+							<%= maketext('Cancel') =%>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
