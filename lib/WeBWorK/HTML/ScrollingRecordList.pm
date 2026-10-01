@@ -10,7 +10,7 @@ records.
 
 use Carp;
 
-use WeBWorK::Utils::FormatRecords qw(getFormatsForClass formatRecords);
+use WeBWorK::Utils::FormatRecords qw(getFormatsForClass formatRecords getClassRecordData);
 use WeBWorK::Utils::SortRecords   qw(getSortsForClass sortRecords);
 use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
 
@@ -34,7 +34,7 @@ sub scrollingRecordList ($options, @records) {
 	croak 'name not found in options'       unless defined $name;
 	croak 'controller not found in options' unless defined $c;
 
-	my ($sorts, $formats, $filters, $formattedRecords) = ([], [], [], []);
+	my ($sorts, $formats, $filters, $formattedRecords, $allRecords) = ([], [], [], [], []);
 
 	if (@records) {
 		my $class = (ref $records[0]) =~ s/Version$//r;
@@ -67,6 +67,21 @@ sub scrollingRecordList ($options, @records) {
 				filterRecords($c, $c->param("$name!filter_combine") // 0, \@selected_filters, @records)
 			)
 		);
+
+		# Create a template select_field using all records storing filterable/sortable fields as data.
+		if (ref $records[0] eq 'WeBWorK::DB::Record::User' || ref $records[0] eq 'WeBWorK::DB::Record::Set') {
+			my $idField = ref $records[0] eq 'WeBWorK::DB::Record::User' ? 'user_id' : 'set_id';
+			my %fields  = map { $_->[1] => 1 } @$sorts;
+			for my $filter (@$filters) {
+				my $fieldName = $filter->[1] =~ s/:.*$//r;
+				$fields{$fieldName} = 1 unless $fieldName eq 'all';
+			}
+
+			for my $record (@records) {
+				push(@$allRecords,
+					[ '' => $record->$idField, data => getClassRecordData($c, $class, $record, [ keys %fields ]) ]);
+			}
+		}
 	}
 
 	return $c->include(
@@ -76,7 +91,8 @@ sub scrollingRecordList ($options, @records) {
 		sorts            => $sorts,
 		formats          => $formats,
 		filters          => $filters,
-		formattedRecords => $formattedRecords
+		formattedRecords => $formattedRecords,
+		allRecords       => $allRecords
 	);
 }
 

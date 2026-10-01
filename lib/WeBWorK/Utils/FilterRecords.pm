@@ -90,8 +90,12 @@ sub getFiltersForClass {
 
 		if (!%includes || $includes{permission}) {
 			my %permissionName = reverse %{ $c->ce->{userRoles} };
-			++$permissions{ $permissionName{$_} }
-				for map { $_->permission } $c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+			my @permissionLevels =
+				$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+			++$permissions{ $permissionName{$_} } for map { $_->permission } @permissionLevels;
+			# Stash permissions for later use.
+			$c->{permissions}    = { map { $_->user_id => $_->permission } @permissionLevels };
+			$c->{permissionName} = \%permissionName;
 		}
 
 		if (keys %sections > 1 && (!%includes || $includes{section})) {
@@ -168,21 +172,25 @@ sub filterRecords {
 	my @filtersToUse = @{ $filters // ['all'] };
 
 	if (grep { $_ eq 'all' } @filtersToUse) {
-		return @records;
+		# Only return if this is not an intersection.
+		return @records unless $intersect;
 	}
 
-	my %permissionName = reverse %{ $c->ce->{userRoles} };
+	my %permissionName = $c->{permissionName} ? %{ $c->{permissionName} } : reverse %{ $c->ce->{userRoles} };
 
 	# Only query the database for permission levels if a permission level filter is in use.
 	my %permissionLevels =
 		(grep {/^permission:/} @filtersToUse)
-		? (map { $_->user_id => $_->permission }
-			$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
+		? $c->{permissions}
+			? %{ $c->{permissions} }
+			: (map { $_->user_id => $_->permission }
+				$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } }))
 		: ();
 
 	my @filteredRecords = $intersect ? @records : ();
 	if ($intersect) {
 		for my $filter (@filtersToUse) {
+			next if $filter eq 'all';
 			my ($name, $value) = split(/:/, $filter, 2);
 			# permission level is handled differently
 			if ($name eq 'permission') {

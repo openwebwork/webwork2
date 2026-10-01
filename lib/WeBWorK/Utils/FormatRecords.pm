@@ -46,7 +46,32 @@ use WeBWorK::ContentGenerator::Instructor::ProblemSetDetail qw/FIELD_PROPERTIES/
 our @EXPORT_OK = qw(
 	getFormatsForClass
 	formatRecords
+	getClassRecordData
 );
+
+use constant FIELD_FORMATS => {
+	'WeBWorK::DB::Record::User' => {
+		'lnfn' => {
+			no_field        => 1,
+			format_function => sub { $_[1]->last_name . ', ' . $_[1]->first_name }
+		},
+		'permission' => {
+			no_field        => 1,
+			format_function => sub { $_[0]->{permissionName}{ $_[0]->{permissions}{ $_[1]->user_id } } }
+		}
+	},
+	'WeBWorK::DB::Record::Set' => {
+		'set_id' => {
+			format_function => sub { format_set_name_display($_[1]->set_id) }
+		},
+		'due_date' => {
+			format_function => sub { $_[0]->formatDateTime($_[1]->due_date) }
+		},
+		'assignment_type' => {
+			format_function => sub { FIELD_PROPERTIES()->{assignment_type}{labels}{ $_[1]->assignment_type } }
+		}
+	}
+};
 
 use constant PRESET_FORMATS => {
 	'WeBWorK::DB::Record::User' => [
@@ -98,6 +123,7 @@ use constant PRESET_FORMATS => {
 			'type_sid_due' => {
 				name            => 'assignment_type: set_id, due_date',
 				field_order     => [qw/assignment_type set_id due_date/],
+				format_string   => '%s: %s, %s',
 				format_function => sub {
 					join('',
 						FIELD_PROPERTIES()->{assignment_type}{labels}{ $_[1] },
@@ -110,6 +136,7 @@ use constant PRESET_FORMATS => {
 			'due_sid' => {
 				name            => 'due_date: set_id',
 				field_order     => [qw/due_date set_id/],
+				format_string   => '%s: %s',
 				format_function => sub {
 					join('', $_[0]->formatDateTime($_[1]), ': ', format_set_name_display($_[2]));
 				}
@@ -119,6 +146,7 @@ use constant PRESET_FORMATS => {
 			'sid' => {
 				name            => 'set_id',
 				field_order     => [qw/set_id/],
+				format_string   => '%s',
 				format_function => sub {
 					return format_set_name_display($_[1]);
 				}
@@ -140,6 +168,8 @@ The return value is a reference to a list of two element lists. The first
 element in each list is a string description of a format name and the second
 element is the format name.  The return value is suitable for passing as the
 second value argument to the Mojolicious select_field tag helper method.
+After the two element list a data attribute is provided to pass the format
+string and field order to JavaScript.
 
 If the C<$default_format> is provided then that format will be marked as the
 default selected format.  Otherwise the first format will be marked as the
@@ -155,7 +185,11 @@ sub getFormatsForClass {
 	$default_format ||= $class_presets[0][0];
 
 	my @presets =
-		map { [ $_->[1]{name} => $_->[0], $_->[0] eq $default_format ? (selected => undef) : () ] } @class_presets;
+		map { [
+			$_->[1]{name} => $_->[0],
+			data => { format_string => $_->[1]{format_string}, field_order => join('!', @{ $_->[1]{field_order} }) },
+			$_->[0] eq $default_format ? (selected => undef) : ()
+		] } @class_presets;
 
 	return \@presets;
 }
@@ -171,8 +205,6 @@ exclamation marks.
 The arguments C<$c> and C<$preset_format> must be provided. C<$c> must be a
 C<WeBWorK::Controller> object, and C<$preset_format> must either be one of the
 presets defined above, or the name of a field in the database record class.
-
-=back
 
 =cut
 
@@ -246,6 +278,48 @@ sub formatRecords {
 	}
 
 	return \@formattedRecords;
+}
+
+=item getClassRecordData($c, $class, $record, $fields)
+
+Generates a data hash of the form C<< $field => $record->$field >> to pass to
+Mojolicious to create data parameters for the given C<$record>'s HTML element.
+The C<$class> is used to identify special fields and add any specific formatting
+to the field. In some cases an additional C<formatted_$field> key is provided
+along side the C<$field> key.
+
+The arguments C<$c>, C<$record>, and C<$fields> must be provided. C<$c> must be a
+C<WeBWorK::Controller> object, C<$record> a C<WeBWorK::DB::Record> object, and
+C<$fields> an array reference of valid or special fields for the database record.
+
+=back
+
+=cut
+
+sub getClassRecordData {
+	my ($c, $class, $record, $fields) = @_;
+	my %data;
+
+	if (FIELD_FORMATS->{$class}) {
+		my $formats = FIELD_FORMATS->{$class};
+		for my $field (@$fields) {
+			if ($formats->{$field}) {
+				$data{$field} = $record->$field unless $formats->{$field}{no_field};
+
+				my $format_function = $formats->{$field}{format_function};
+				if ($format_function) {
+					croak 'format_function is not a coderef' unless ref $format_function eq 'CODE';
+					my $key = $formats->{$field}{no_field} ? $field : "formatted_$field";
+					$data{$key} = $format_function->($c, $record);
+				}
+			} else {
+				$data{$field} = $record->$field;
+			}
+		}
+	} else {
+		%data = map { $record->$_ } @$fields;
+	}
+	return \%data;
 }
 
 1;
