@@ -315,6 +315,8 @@ sub score_handler ($c) {
 sub delete_handler ($c) {
 	my $db = $c->db;
 
+	return (1, $c->maketext('Deleted [quant,_1,achievement].', 0)) unless $c->param('action.delete.confirm');
+
 	my @achievementIDsToDelete = @{ $c->{selectedAchievementIDs} };
 	my %allAchievementIDs      = map { $_ => 1 } @{ $c->{allAchievementIDs} };
 	my %visibleAchievementIDs  = map { $_ => 1 } @{ $c->{visibleAchievementIDs} };

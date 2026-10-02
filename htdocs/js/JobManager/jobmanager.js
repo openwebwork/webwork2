@@ -25,6 +25,8 @@
 	document.getElementById('delete_confirm_proceed')?.addEventListener('click', () => {
 		delete_confirmed = true;
 		delete_confirm_modal?.hide();
+		const confirmInput = document.getElementsByName('action.delete.confirm')[0];
+		if (confirmInput) confirmInput.value = 1;
 		document.getElementById('take_action')?.click();
 	});
 

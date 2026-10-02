@@ -92,6 +92,8 @@
 		document.getElementById(`${action}_confirm_proceed`)?.addEventListener('click', () => {
 			confirm_dialogs[action].confirmed = true;
 			confirm_dialogs[action].modal.hide();
+			const confirmInput = document.getElementsByName(`action.${action}.confirm`)[0];
+			if (confirmInput) confirmInput.value = 1;
 			document.getElementById('take_action')?.click();
 		});
 	}

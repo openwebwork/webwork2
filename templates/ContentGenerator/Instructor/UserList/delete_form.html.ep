@@ -3,6 +3,7 @@
 	<div class="d-inline-block alert alert-danger p-1 mb-2">
 		<em><%= maketext('Warning: Deletion destroys all user-related data and is not undoable!') =%></em>
 	</div>
+	<%= hidden_field 'action.delete.confirm' => '' =%>
 	<div
 		class="modal fade"
 		id="delete_confirm_dialog"
