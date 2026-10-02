@@ -114,6 +114,7 @@
 					[ [ maketext('locations selected below') => 'selected_locations' ], @locationIDs ],
 					id    => 'delete_location_select',
 					class => 'form-select' =%>
+				<%= hidden_field delete_location_confirm => '' =%>
 				<div id="select_location_err_msg" role="alert" class="alert alert-danger p-1 mt-2 mb-0 d-none">
 					<%= maketext('Please select at least one location to delete.') %>
 				</div>

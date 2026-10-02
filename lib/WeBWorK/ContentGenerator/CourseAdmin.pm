@@ -1841,6 +1841,8 @@ sub add_location_handler ($c) {
 }
 
 sub delete_location_handler ($c) {
+	return $c->manage_location_form unless $c->param('delete_location_confirm');
+
 	my $db = $c->db;
 
 	# Determine which location was requested to be deleted.
