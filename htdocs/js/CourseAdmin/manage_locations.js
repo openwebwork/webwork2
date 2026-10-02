@@ -40,6 +40,8 @@
 	document.getElementById('delete_location_confirm_proceed')?.addEventListener('click', () => {
 		confirmed = true;
 		modal.hide();
+		const confirmInput = document.getElementsByName('delete_location_confirm')[0];
+		if (confirmInput) confirmInput.value = 1;
 		form.requestSubmit(submitter);
 	});
 
