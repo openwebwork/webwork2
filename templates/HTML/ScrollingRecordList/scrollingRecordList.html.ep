@@ -1,10 +1,23 @@
-<div class="card p-2">
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% unless ($c->stash->{scrollingRecordListJSLoaded}) {
+	% $c->stash->{scrollingRecordListJSLoaded} = 1;
+	% content_for js => begin
+		<%= javascript getAssetURL($ce, 'js/ScrollingRecordList/scrollingrecordlist.js'), defer => undef =%>
+	% end
+% }
+%
+<div class="card p-2 scrolling-record-list" data-name="<%= $name %>">
 	<div class="row mb-2">
 		<%= label_for
 			"$name!sort" => maketext('Sort By:'),
 			class        => 'col-form-label col-form-label-sm col-2 col-lg-2 col-md-12 pe-1 text-nowrap' =%>
 		<div class="col-10 col-lg-10 col-md-12">
-			<%= select_field "$name!sort" => $sorts, id => "$name!sort", class => 'form-select form-select-sm' =%>
+			<%= select_field
+				"$name!sort" => [],
+				id           => "$name!sort",
+				class        => 'form-select form-select-sm',
+				data         => { initial => $listData->{sort} } =%>
 		</div>
 	</div>
 	<div class="row mb-2">
@@ -12,7 +25,11 @@
 			"$name!format" => maketext('Format:'),
 			class          => 'col-form-label col-form-label-sm col-2 col-lg-2 col-md-12 pe-1 text-nowrap' =%>
 		<div class="col-10 col-lg-10 col-md-12">
-			<%= select_field "$name!format" => $formats, id => "$name!format", class => 'form-select form-select-sm' =%>
+			<%= select_field
+				"$name!format" => [],
+				id             => "$name!format",
+				class          => 'form-select form-select-sm',
+				data           => { initial => $listData->{format} } =%>
 		</div>
 	</div>
 	<div class="row mb-2">
@@ -47,14 +64,10 @@
 			</div>
 		</div>
 	</div>
-	<div>
-		<%= submit_button $options->{refresh_button_name} // maketext('Refresh List'),
-			name  => "$name!refresh",
-			class => 'btn btn-secondary btn-sm mb-2' =%>
-	</div>
 	<%= select_field
-		$name => $formattedRecords,
+		$name => [],
 		id    => $name,
 		class => 'form-select form-select-sm',
+		data  => { type => $listData->{type}, records => $listData->{records}, selected => $listData->{selected} },
 		%{ $options->{attrs} // {} } =%>
 </div>

@@ -10,9 +10,9 @@ homework set (including sv graphs).
 
 use SVG;
 
-use WeBWorK::Utils::FilterRecords qw(getFiltersForClass filterRecords);
-use WeBWorK::Utils::JITAR         qw(jitar_id_to_seq jitar_problem_adjusted_status);
-use WeBWorK::Utils::Sets          qw(grade_set format_set_name_display);
+use WeBWorK::Utils        qw(getSectionRecitationFilters filterBySectionRecitation);
+use WeBWorK::Utils::JITAR qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Sets  qw(grade_set format_set_name_display);
 
 sub initialize ($c) {
 	my $db   = $c->db;
@@ -89,16 +89,10 @@ sub siblings ($c) {
 # list of students and a reference to the array of section/recitation filters.
 sub filter_students ($c) {
 	my $ce       = $c->ce;
-	my $filter   = $c->param('filter') || 'all';
 	my @students = grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
+	my $filters  = getSectionRecitationFilters($c, @students);
 
-	# Change visible name of the first 'all' filter.
-	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @students);
-	$filters->[0][0] = $c->maketext('All students');
-
-	@students = filterRecords($c, 0, [$filter], @students) unless $filter eq 'all';
-
-	return (\@students, $filters);
+	return ([ filterBySectionRecitation($c->param('filter'), @students) ], $filters);
 }
 
 sub set_stats ($c) {

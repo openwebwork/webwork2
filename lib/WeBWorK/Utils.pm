@@ -24,6 +24,8 @@ our @EXPORT_OK = qw(
 	undefstr
 	sortByName
 	sortAchievements
+	getSectionRecitationFilters
+	filterBySectionRecitation
 	not_blank
 	role_and_above
 	fetchEmailRecipients
@@ -204,6 +206,34 @@ sub sortByName ($field, @items) {
 	} (keys %itemsByIndex);
 
 	return map { $itemsByIndex{$_} } @sKeys;
+}
+
+sub getSectionRecitationFilters ($c, @users) {
+	my $blankName = "\x{27E8}" . $c->maketext('blank') . "\x{27E9}";
+
+	my (%sections, %recitations);
+	for (@users) {
+		++$sections{ $_->section };
+		++$recitations{ $_->recitation };
+	}
+
+	return [
+		[ $c->maketext('All students') => 'all' ],
+		keys %sections > 1
+		? (map { [ $c->maketext('Section: [_1]', $_ ne '' ? $_ : $blankName) => "section:$_" ] }
+				sortByName(undef, keys %sections))
+		: (),
+		keys %recitations > 1
+		? (map { [ $c->maketext('Recitation: [_1]', $_ ne '' ? $_ : $blankName) => "recitation:$_" ] }
+				sortByName(undef, keys %recitations))
+		: ()
+	];
+}
+
+sub filterBySectionRecitation ($filter, @users) {
+	my ($field, $value) = split(/:/, $filter // 'all', 2);
+	return @users unless $field eq 'section' || $field eq 'recitation';
+	return grep { $_->$field eq $value } @users;
 }
 
 sub sortAchievements (@achievements) {
@@ -694,6 +724,26 @@ then by second, etc.
 
 A natural sort algorithm is used for sorting, i.e., numeric parts are sorted
 numerically, and alphabetic parts sorted lexicographically.
+
+=head2 getSectionRecitationFilters
+
+Usage: C<getSectionRecitationFilters($c, @users)>
+
+Returns a reference to an array of label/value pairs for filtering the given
+user records by section or recitation, suitable for passing as the second
+argument to the Mojolicious C<select_field> tag helper method. The first pair
+has the value "all". Section filters are of the form "section:$section" and are
+only included if the users are in more than one section. Recitation filters are
+of the form "recitation:$recitation" and are only included if the users are in
+more than one recitation.
+
+=head2 filterBySectionRecitation
+
+Usage: C<filterBySectionRecitation($filter, @users)>
+
+Returns the users in C<@users> that match C<$filter>, which should be one of the
+values returned by C<getSectionRecitationFilters>. All users are returned if
+C<$filter> is undefined or "all".
 
 =head2 sortAchievements
 
