@@ -38,57 +38,60 @@ sub initialize ($c) {
 	# Get the list of sets and the global set records and cache them for later use.  This list is sorted by set_id.
 	$c->{setRecords} = [ $db->getGlobalSetsWhere({}, 'set_id') ];
 
-	# Check to see if a save form has been submitted
+	# Check to see if a save form has been submitted.
 	if ($c->param('save_button') || $c->param('assignAll')) {
 		# Check each set to see if it is still assigned.
 		my @assignedSets;
 		for my $set (@{ $c->{setRecords} }) {
-			# Add sets to the assigned list if the parameter is checked or the assign all button is pushed.  (Already
-			# assigned sets will be skipped later.)
+			# Add sets to the assigned list if the parameter is checked or the assign all button is pushed.
+			# Already assigned sets will be skipped later.
 			my $setID = $set->set_id;
 			push @assignedSets, $setID if defined $c->param("set.$setID.assignment");
 		}
 
-		# note: assignedSets are those sets that are assigned in the submitted form
+		# Note: assignedSets are those sets that are assigned in the submitted form.
 		debug('assignedSets', join(' ', @assignedSets));
 
 		my %selectedSets = map { $_ => 1 } @assignedSets;
 
-		# Perform the desired assignments or deletions
+		# Perform the desired assignments or deletions.
 		my %userSets = map { $_ => 1 } $db->listUserSets($editForUserID);
 
-		# Go through each possible set
 		debug(' parameters ', join(' ', $c->param()));
 		for my $setRecord (@{ $c->{setRecords} }) {
 			my $setID = $setRecord->set_id;
 			# Does the user want this set to be assigned to the selected user?
 			if (exists $selectedSets{$setID}) {
 				# Assign the set if it isn't assigned already.
-				assignSetToUser($db, $editForUserID, $setRecord) if (!$userSets{$setID});
+				assignSetToUser($db, $editForUserID, $setRecord) if !$userSets{$setID};
 
-				# Override dates
-				my $userSetRecord = $db->getUserSet($editForUserID, $setID);
-
-				# Check to see if new dates meet criteria
+				# Check to see if new dates are ordered properly.
 				my $rh_dates = $c->checkDates($setRecord, $setID);
 				unless ($rh_dates->{error}) {
-					# If no error update database
+					# If no error update database if the dates changed.
+					my $userSetRecord = $db->getUserSet($editForUserID, $setID);
+					my $changed       = 0;
 					for my $field (@{ DATE_FIELDS_ORDER() }) {
-						if ($c->param("set.$setID.$field") && $c->param("set.$setID.$field") ne '') {
-							$userSetRecord->$field($rh_dates->{$field});
-						} else {
-							# Stop override
+						my $userField = $userSetRecord->$field || 0;
+						if ($c->param("set.$setID.$field")) {
+							if ($userField != $rh_dates->{$field}) {
+								$userSetRecord->$field($rh_dates->{$field});
+								$changed = 1;
+							}
+						} elsif ($userField) {
+							# Stop override.
 							$userSetRecord->$field(undef);
+							$changed = 1;
 						}
 					}
-					$db->putUserSet($userSetRecord);
+					$db->putUserSet($userSetRecord) if $changed;
 				}
 
 				# If the set is a gateway set, also check to see if we're resetting the dates for any of the assigned
 				# set versions, or if a version is to be deleted.
 				if ($setRecord->assignment_type =~ /gateway/) {
-					my @setVer = $db->getSetVersionsWhere({ user_id => $editForUserID, set_id => $setID });
-					for my $setVersionRecord (@setVer) {
+					for my $setVersionRecord ($db->getSetVersionsWhere({ user_id => $editForUserID, set_id => $setID }))
+					{
 						my $ver    = $setVersionRecord->version_id;
 						my $action = $c->param("set.$setID.$ver.assignment");
 						if (defined $action) {
@@ -98,29 +101,33 @@ sub initialize ($c) {
 								# Note that dates are never reset (set to NULL) for a set version.
 								my $rh_dates = $c->checkDates($setVersionRecord, $setID, $ver);
 								unless ($rh_dates->{error}) {
+									my $changed = 0;
 									for my $field (@{ DATE_FIELDS_ORDER() }) {
-										$setVersionRecord->$field($rh_dates->{$field})
-											if ($c->param("set.$setID.$ver.$field")
-												&& $c->param("set.$setID.$ver.$field") ne '');
+										if ($c->param("set.$setID.$ver.$field")
+											&& ($setVersionRecord->$field || 0) != $rh_dates->{$field})
+										{
+											$setVersionRecord->$field($rh_dates->{$field});
+											$changed = 1;
+										}
 									}
-									$db->putSetVersion($setVersionRecord);
+									$db->putSetVersion($setVersionRecord) if $changed;
 								}
 								# Reset the date inputs to the date in the database if they were empty.
 								for my $field (@{ DATE_FIELDS_ORDER() }) {
 									$c->param("set.$setID.$ver.$field", $setVersionRecord->$field)
 										unless $c->param("set.$setID.$ver.$field");
 								}
-							} elsif ($action eq 'delete') {
+							} elsif ($action eq 'delete' && $c->param('allow_unassign')) {
 								# Delete this version.
 								$db->deleteSetVersion($editForUserID, $setID, $ver);
 							}
 						}
 					}
 				}
-			} else {
+			} elsif ($c->param('allow_unassign')) {
 				# The user asked to NOT have the set assigned to the selected user.
 				# Delete the set if set was previously assigned.
-				$db->deleteUserSet($editForUserID, $setID) if ($userSets{$setID});
+				$db->deleteUserSet($editForUserID, $setID) if $userSets{$setID};
 			}
 		}
 	}
@@ -154,10 +161,10 @@ sub checkDates ($c, $setRecord, $setID, $setVersion = 0) {
 	# This will prevent the dates for the set version from being changed to invalid values in that case.
 	my %dates;
 	for my $field (@{ DATE_FIELDS_ORDER() }) {
-		$dates{$field} =
-			($c->param("set.$fullSetID.$field") && $c->param("set.$fullSetID.$field") ne '')
-			? $c->param("set.$fullSetID.$field")
-			: ($setVersion ? 0 : $setRecord->$field);
+		$dates{$field} = defined $c->param("set.$fullSetID.$field")
+			&& $c->param("set.$fullSetID.$field") ne '' ? $c->param("set.$fullSetID.$field")
+			: $setVersion                               ? 0
+			:                                             $setRecord->$field;
 	}
 
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{ DATE_FIELDS_ORDER() };

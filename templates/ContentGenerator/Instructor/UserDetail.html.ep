@@ -45,41 +45,46 @@
 % my $userName = $c->{userRecord}->first_name . ' ' . $c->{userRecord}->last_name;
 %
 % # Display a message about how many sets have been assigned to this user.
-<div class="text-center my-3">
-	<h2 class="fs-6">
-		% my $link = link_to(
-			% maketext('class list data') => $c->systemLink(
-				% url_for('instructor_user_list'), params => { visible_users => $userID, editMode => 1 }
-			% )
-		% );
-		<%== maketext('Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
-			$link, $userName, $userID, scalar(keys %{ $c->{userSetRecords} })) =%>
-	</h2>
+% my $numberSets         = scalar(@{ $c->{setRecords} });
+% my $numberAssignedSets = scalar(keys %{ $c->{userSetRecords} });
+<div class="my-2">
+	<p class="fw-bold">
+		<%= maketext('[_1] ([_2]) is assigned to [_3] out of [_4] total sets.',
+			$userName, $userID, $numberAssignedSets, $numberSets) =%>
+	</p>
+	<%= link_to(
+		maketext(q/Edit [_1]'s user information/, $userName) => $c->systemLink(
+			url_for('instructor_user_list'), params => { visible_users => $userID, editMode => 1 }
+		),
+		class => 'btn btn-primary'
+	) =%>
 </div>
 %
 <%= form_for current_route, method => 'post', name => 'UserDetail', id => 'UserDetail', begin =%>
 	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field 'allow_unassign' => '' =%>
 	%
-	<div class="mb-2">
-		<%= submit_button maketext('Assign All Sets to Current User'),
-			name  => 'assignAll',
-			class => 'btn btn-primary' =%>
-	</div>
-	% # Print warning
-	<div class="alert alert-danger p-1 mb-2">
-		<div class="mb-1"><%= maketext('Do not uncheck a set unless you know what you are doing.') %></div>
-		<div><%= maketext('There is NO undo for unassigning a set.') %></div>
-	</div>
-	<div class="alert alert-danger p-1 fs-6 mb-2">
-		<%= maketext(
-			'When you uncheck a homework set (and save the changes), you destroy all of the data for that set for '
-				. 'this student.   If you reassign the set, the student will receive a new version of each problem. '
-				. 'Make sure this is what you want to do before unchecking sets.') =%>
-	</div>
-	<div class="fs-6 mb-2">
+	% if ($numberSets != $numberAssignedSets) {
+		% # Add a hidden submit button so hitting "Enter" will "Save changes" instead of assigning all sets.
+		<%= submit_button maketext('Save changes'),
+			name          => 'save_button',
+			class         => 'visually-hidden',
+			tabindex      => -1,
+			'aria-hidden' => 'true' =%>
+		<div class="mb-2">
+			<%= submit_button maketext('Assign all sets to [_1]', $userName),
+				name  => 'assignAll',
+				class => 'btn btn-primary' =%>
+		</div>
+	% }
+	<p class="mb-2">
 		<%= maketext(
 			'To change status (scores or grades) for this student for one set, click on the individual set link.') =%>
-	</div>
+	</p>
+	<p class="mb-2">
+		<%= maketext('Unchecking the "Assigned" checkbox will unassign the set from this student, and destroy '
+				. 'all user data for that set. This cannot be undone.') =%>
+	</p>
 	%
 	<div class="mb-2">
 		<%= submit_button maketext('Save changes'), name => 'save_button', class => 'btn btn-primary' =%>
@@ -88,7 +93,7 @@
 	<div class="table-responsive">
 		<table class="table table-bordered table-sm font-sm align-middle w-auto caption-top">
 			<caption>
-				<%= maketext("Sets assigned to [_1] ([_2])", $userName, $userID) =%>
+				<%= maketext('Available Sets') =%>
 			</caption>
 			<tr>
 				<th class="text-center"><%= maketext('Assignment') %></th>
@@ -115,14 +120,47 @@
 			% }
 		</table>
 	</div>
+	<div
+		class="modal fade"
+		id="unassign_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="unassign_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="unassign_confirm_dialog_title">
+						<%= maketext('Unassign sets from [_1]', $userName) =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Warning: Unassigning sets will destroy all user data for that set '
+								. 'and cannot be undone!') =%>
+					</div>
+					<p class="mb-1">
+						<%= maketext('Unassign the following sets from [_1]:', $userName) =%>
+					</p>
+					<ul id="unassign_confirm_set_list" class="mb-2"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="unassign_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Unassign') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 	%
 	<%= submit_button maketext('Save changes'), name => 'save_button', class => 'btn btn-primary' =%>
 <% end =%>
-%
-% # Print warning
-<div class="alert alert-danger p-1 mt-3">
-	<%= maketext(
-		'There is NO undo for unassigning sets. Do not do so unless you know what you are doing!  When you unassign '
-			. 'sets by unchecking set names and clicking save, you destroy all of the data for those sets for '
-			. 'this student.') =%>
-</div>
