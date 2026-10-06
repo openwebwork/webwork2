@@ -15,5 +15,5 @@
 </p>
 <p class="mb-0">
 	<%= maketext('Locations are edited by adding new ip addresses to the location, or deleting existing address.  '
-			. 'You must select the confirm checkbox when deleting a location, and this cannot be undone.') =%>
+			. 'You will be asked to confirm when deleting locations, and this cannot be undone.') =%>
 </p>
