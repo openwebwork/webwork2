@@ -7,9 +7,8 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 =cut
 
-use WeBWorK::Utils                    qw(wwRound);
+use WeBWorK::Utils                    qw(wwRound getSectionRecitationFilters filterBySectionRecitation);
 use WeBWorK::Utils::DateTime          qw(after);
-use WeBWorK::Utils::FilterRecords     qw(getFiltersForClass filterRecords);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
 use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
@@ -107,12 +106,9 @@ sub displaySets ($c) {
 	my @student_records =
 		grep { $ce->status_abbrev_has_behavior($_->status, 'include_in_stats') } @{ $c->{student_records} };
 
-	# Change visible name of the first 'all' filter.
 	my $filter  = $c->param('filter') || 'all';
-	my $filters = getFiltersForClass($c, [ 'section', 'recitation' ], @student_records);
-	$filters->[0][0] = $c->maketext('All students');
-
-	@student_records = filterRecords($c, 0, [$filter], @student_records) unless $filter eq 'all';
+	my $filters = getSectionRecitationFilters($c, @student_records);
+	@student_records = filterBySectionRecitation($filter, @student_records);
 
 	my @score_list;
 	my @user_set_list;
