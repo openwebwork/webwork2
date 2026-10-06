@@ -107,12 +107,21 @@ sub grade_set ($db, $set, $studentName, $setIsVersioned = 0, $wantProblemDetails
 }
 
 sub grade_gateway ($db, $setName, $studentName) {
-	my $bestSetData = [ 0, 0, [] ];
+	my $bestSetData;
 
 	my @setVersions = $db->getSetVersionsWhere({ user_id => $studentName, set_id => $setName });
 	for (@setVersions) {
 		my @setData = grade_set($db, $_, $studentName, 1);
-		$bestSetData = \@setData if $setData[0] > $bestSetData->[0];
+		$bestSetData = \@setData if !$bestSetData || $setData[0] > $bestSetData->[0];
+	}
+
+	# If the student has not started the test, then the total is still needed for a score of zero out of that total.
+	unless ($bestSetData) {
+		my $total = 0;
+		for ($db->getAllMergedUserProblems($studentName, $setName)) {
+			$total += defined $_->value && $_->value ne '' ? $_->value : 1;
+		}
+		$bestSetData = [ 0, $total, [] ];
 	}
 
 	return wantarray ? (@$bestSetData, \@setVersions) : ($bestSetData->[1] ? $bestSetData->[0] / $bestSetData->[1] : 0);
@@ -327,7 +336,9 @@ In list context this returns a list of the total number of correct problems for
 the highest scoring version of this test, the total number of problems in that
 version, a reference to an array of merged user problem records from that
 version, and a reference to an array of merged user set versions for this user
-and set.
+and set.  If the user has no versions of the test, then the total is computed
+from the problems assigned to the user for the test, and the array of problem
+records is empty.
 
 In scalar context this returns the percentage correct for the highest scoring
 version of this test.
