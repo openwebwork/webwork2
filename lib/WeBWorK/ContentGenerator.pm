@@ -731,47 +731,6 @@ sub help ($c, $args) {
 	return $c->helpMacro((ref($c) =~ s/WeBWorK::ContentGenerator:://r) =~ s/://gr, $args);
 }
 
-=item url($args)
-
-Defined in this package.
-
-Returns the specified URL from either %webworkURLs or %courseURLs in the course
-environment. $args is a reference to a hash containing the following fields:
-
- type => type of URL: webwork|course (defaults to webwork)
- name => name of URL type (must be 'theme' or undefined)
- file => the local file name
-
-=cut
-
-sub url ($c, $args) {
-	my $ce   = $c->ce;
-	my $type = $args->{type} // 'webwork';
-	my $name = $args->{name} // '';
-	my $file = $args->{file};
-
-	if ($type eq "webwork") {
-		# We have to build this here (and not in say defaults.conf) because
-		# defaultTheme will change as late as simple.conf.
-
-		# If $file is defined, then try to look it up in the assets list.
-		return getAssetURL($ce, $file, $name eq 'theme') if defined $file;
-
-		# Fallback to the old method if $file was not defined.
-		# This assumes the rest of the file path is appended after this.
-		if ($name eq "theme") {
-			return "$ce->{webworkURLs}{themes}/$ce->{defaultTheme}";
-		} else {
-			return $ce->{webworkURLs}{$name};
-		}
-	} elsif ($type eq "course") {
-		return $ce->{courseURLs}{$name};
-	} else {
-		warn __PACKAGE__ . "::url: unrecognized type '$type'.\n";
-		return;
-	}
-}
-
 =back
 
 =cut

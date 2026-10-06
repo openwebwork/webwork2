@@ -1,10 +1,12 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 <!DOCTYPE html>
 <html <%== $c->output_course_lang_and_dir %>>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= maketext('Available Content') %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
 	</head>
 	%
 	<body class="m-3">

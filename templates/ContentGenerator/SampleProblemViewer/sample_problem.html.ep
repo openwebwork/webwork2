@@ -1,3 +1,5 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
 % title $name;
 %
 <!DOCTYPE html>
@@ -6,29 +8,12 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><%= title %></title>
-		<%= stylesheet $c->url({ type => 'webwork', name => 'theme', file => 'bootstrap.css' }) =%>
-		<%= stylesheet $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
-		}) =%>
-		<%= stylesheet $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'js/SampleProblemViewer/sample-problem.css'
-		}) =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js'
-			}),
+		<%= stylesheet getAssetURL($ce, 'bootstrap.css', 1) =%>
+		<%= stylesheet getAssetURL($ce, 'node_modules/@fortawesome/fontawesome-free/css/all.min.css') =%>
+		<%= stylesheet getAssetURL($ce, 'js/SampleProblemViewer/sample-problem.css') =%>
+		<%= javascript getAssetURL($ce, 'node_modules/@openwebwork/pg-codemirror-editor/dist/pg-codemirror-editor.js'),
 			defer => undef =%>
-		<%= javascript $c->url({
-			type => 'webwork',
-			name => 'htdocs',
-			file => 'js/SampleProblemViewer/sample-problem.js'
-			}),
-			defer => undef =%>
+		<%= javascript getAssetURL($ce, 'js/SampleProblemViewer/sample-problem.js'), defer => undef =%>
 	</head>
 	%
 	% # Default explanations
