@@ -16,7 +16,7 @@
 	% last;
 % }
 %
-<%= form_for current_route, method => 'POST', name => 'joblist', begin =%>
+<%= form_for current_route, method => 'POST', name => 'joblist', id => 'job-list-form', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	%
 	% if (keys %$visibleJobs) {
@@ -159,6 +159,10 @@
 			</thead>
 			<tbody class="table-group-divider">
 				% for my $jobID (@$sortedJobs) {
+					% my $taskName =
+						% $taskNames->{ $jobs->{$jobID}{task} }
+						% ? maketext($taskNames->{ $jobs->{$jobID}{task} })
+						% : $jobs->{$jobID}{task};
 					<tr>
 						% if ($jobs->{$jobID}{state} eq 'active') {
 							% # Active jobs cannot be deleted, and so a checkbox is not provided to select them.
@@ -170,6 +174,7 @@
 									selected_jobs => $jobID,
 									id            => "job_${jobID}_checkbox",
 									class         => 'form-check-input',
+									data          => { task => $taskName },
 									$selectedJobs->{$jobID} ? (checked => undef) : () =%>
 							</td>
 							<td><%= label_for "job_${jobID}_checkbox" => $jobID =%></td>
@@ -177,11 +182,7 @@
 						% if ($courseID eq $ce->{admin_course_id}) {
 							<td class="text-nowrap"><%= $jobs->{$jobID}{courseID} =~ s/_/ /gr =%></td>
 						% }
-						<td class="text-nowrap">
-							<%= $taskNames->{ $jobs->{$jobID}{task} }
-								? maketext($taskNames->{ $jobs->{$jobID}{task} })
-								: $jobs->{$jobID}{task} =%>
-						</td>
+						<td class="text-nowrap"><%= $taskName =%></td>
 						<td class="text-nowrap">
 							<%= $c->formatDateTime($jobs->{$jobID}{created},
 								'datetime_format_medium', '', $ce->{language}) =%>

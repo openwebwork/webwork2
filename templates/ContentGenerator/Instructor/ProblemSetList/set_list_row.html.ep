@@ -25,7 +25,11 @@
 	% } else {
 		<td>
 			% param(selected_sets => [ param('selected_sets'), $set_id ]) if $setSelected;
-			<%= check_box selected_sets => $set_id, id => "${set_id}_id", class => 'form-check-input' =%>
+			<%= check_box
+				selected_sets => $set_id,
+				id            => "${set_id}_id",
+				class         => 'form-check-input',
+				data          => { set_name => $prettySetID } =%>
 		</td>
 		<td>
 			<div class="d-flex justify-content-between gap-1" dir="ltr">

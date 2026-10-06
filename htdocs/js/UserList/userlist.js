@@ -83,6 +83,43 @@
 		return false;
 	};
 
+	// Actions that require confirmation via a dialog listing the selected users that will be affected.
+	const confirm_dialogs = {};
+	for (const action of ['delete', 'reset_2fa']) {
+		const dialog = document.getElementById(`${action}_confirm_dialog`);
+		if (!dialog) continue;
+		confirm_dialogs[action] = { dialog, modal: new bootstrap.Modal(dialog), confirmed: false };
+		document.getElementById(`${action}_confirm_proceed`)?.addEventListener('click', () => {
+			confirm_dialogs[action].confirmed = true;
+			confirm_dialogs[action].modal.hide();
+			const confirmInput = document.getElementsByName(`action.${action}.confirm`)[0];
+			if (confirmInput) confirmInput.value = 1;
+			document.getElementById('take_action')?.click();
+		});
+	}
+
+	const show_confirm_dialog = (action) => {
+		const { dialog, modal } = confirm_dialogs[action];
+		const current_user = dialog.dataset.currentUser;
+		const current_user_checkbox = document.getElementById(`${current_user}_checkbox`);
+		const affected_users = Array.from(document.querySelectorAll('input[name="selected_users"]:checked')).filter(
+			(user) => user.value !== current_user
+		);
+		if (!affected_users.length) {
+			show_errors([`${action}_self_err_msg`], [current_user_checkbox]);
+			return;
+		}
+		hide_errors([`${action}_self_err_msg`], [current_user_checkbox])();
+		document.getElementById(`${action}_confirm_user_list`)?.replaceChildren(
+			...affected_users.map((user) => {
+				const item = document.createElement('li');
+				item.textContent = user.dataset.fullName ? `${user.value} (${user.dataset.fullName})` : user.value;
+				return item;
+			})
+		);
+		modal.show();
+	};
+
 	document.getElementById('user-list-form')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'filter') {
@@ -121,16 +158,14 @@
 				e.stopPropagation();
 				show_errors(['export_file_err_msg'], [export_filename, export_select_target]);
 			}
-		} else if (action === 'delete' || action === 'reset_2fa') {
-			const action_confirm = document.getElementById(`${action}_select`);
-			if (!is_user_selected()) {
-				e.preventDefault();
-				e.stopPropagation();
-			} else if (action_confirm.value != 'yes') {
-				e.preventDefault();
-				e.stopPropagation();
-				show_errors([`${action}_confirm_err_msg`], [action_confirm]);
+		} else if (action in confirm_dialogs) {
+			if (confirm_dialogs[action].confirmed) {
+				confirm_dialogs[action].confirmed = false;
+				return;
 			}
+			e.preventDefault();
+			e.stopPropagation();
+			if (is_user_selected()) show_confirm_dialog(action);
 		}
 	});
 

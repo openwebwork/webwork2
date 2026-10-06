@@ -1,20 +1,45 @@
 <div>
+	<div class="mb-2"><%= maketext('Delete selected sets.') %></div>
 	<div class="d-inline-block alert alert-danger p-1 mb-2">
 		<em><%= maketext('Warning: Deletion destroys all set-related data and is not undoable!') =%></em>
 	</div>
-	<div class="row mb-2">
-		<%= label_for
-			delete_select => maketext('Delete selected sets?'),
-			class         => 'col-form-label col-form-label-sm col-auto' =%>
-		<div class="col-auto">
-			<%= select_field
-				'action.delete.confirm' =>
-				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ] ],
-				id    => 'delete_select',
-				class => 'form-select form-select-sm' =%>
+	<%= hidden_field 'action.delete.confirm' => '' =%>
+	<div
+		class="modal fade"
+		id="delete_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="delete_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="delete_confirm_dialog_title">
+						<%= maketext('Delete Selected Sets') =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Warning: Deletion destroys all set-related data and is not undoable!') =%>
+					</div>
+					<p class="mb-1"><%= maketext('The following sets will be permanently deleted:') =%></p>
+					<ul id="delete_confirm_set_list" class="mb-0" dir="ltr"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="delete_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Delete') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
 		</div>
-	</div>
-	<div id="delete_confirm_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
-		<%= maketext('Please confirm it is okay to delete selected sets permanently.') %>
 	</div>
 </div>
