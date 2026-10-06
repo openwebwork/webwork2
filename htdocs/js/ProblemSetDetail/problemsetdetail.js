@@ -669,4 +669,36 @@
 		select.addEventListener('change', setNumericState);
 		setNumericState();
 	}
+
+	// Add listener to change visible table rows based on set type.
+	const hideShowRows = (rowClass, showRow) => {
+		document.querySelectorAll(`.${rowClass}-row`).forEach((row) => {
+			if (showRow) row.classList.remove('d-none');
+			else row.classList.add('d-none');
+		});
+	};
+
+	const assignmentTypeElement = document.getElementById(
+		`set.${document.getElementById('hidden_set_id')?.value}.assignment_type_id`
+	);
+	const jitarChangeWarning = document.getElementById('jitar-change-warning');
+	assignmentTypeElement?.addEventListener('change', () => {
+		const assignmentType = assignmentTypeElement.value;
+		if (jitarChangeWarning) {
+			const currentSetType = jitarChangeWarning.dataset.current;
+			if (
+				(currentSetType === 'jitar' && assignmentType != 'jitar') ||
+				(currentSetType != 'jitar' && assignmentType === 'jitar')
+			) {
+				jitarChangeWarning.classList.remove('d-none');
+			} else {
+				jitarChangeWarning.classList.add('d-none');
+			}
+		}
+		hideShowRows('default-problem', assignmentType === 'default' || assignmentType === 'jitar');
+		hideShowRows('gw-test', assignmentType.includes('gateway'));
+		hideShowRows('gw-proctor', assignmentType === 'proctored_gateway');
+		hideShowRows('jitar', assignmentType === 'jitar');
+		if (assignmentType === 'jitar') disableFields();
+	});
 })();
