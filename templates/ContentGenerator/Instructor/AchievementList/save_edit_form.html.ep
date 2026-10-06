@@ -1,1 +1,4 @@
-<span><%= maketext('Save changes') =%></span>
+<div class="mb-2"><%= maketext('Save changes') =%></div>
+<div id="save_edit_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
+	<%= maketext('Filenames cannot contain a slash, "/".') %>
+</div>

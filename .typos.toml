@@ -1,7 +1,7 @@
 [files]
 extend-exclude = [
     "lib/WeBWorK/Localize/*",
-    "courses.dist/modelCourse/html/achievements/*.png",
+    "htdocs/images/achievements/*.png",
 ]
 
 [default]
