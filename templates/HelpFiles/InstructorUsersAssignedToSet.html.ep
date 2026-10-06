@@ -1,8 +1,20 @@
 % layout 'help_macro';
 % title maketext('Users Assigned to Set Help');
 %
+<p>
+	<%= maketext('A student needs to be assigned a set in order for them to work it. Use the "Assigned" checkboxes '
+			. 'to assign/unassign this set to/from the associated student. Once a student is unassigned from a set, '
+			. 'all the data for them is lost and there is no way to undo it. Reassigning a set to a student will '
+			. 'create new versions of all the problems for them.') =%>
+</p>
+<p>
+	<%= maketext('Assigning sets to a large number of users can take a long time.') =%>
+</p>
+<p>
+	<%= maketext('The "Reduced Scoring Date" and "Close Date" are only displayed for students whose date has been '
+			. 'overridden from the main set. Further, the "Reduced Scoring Date" column is only shown if reduced '
+			. 'scoring is enabled for the course and the main set.') =%>
+</p>
 <p class="mb-0">
-	<%= maketext('A student needs to be assigned a set in order for them to work it. Once a student is unassigned a '
-			. 'set, all the data for them is lost and there is no way to undo it. When unassigning be sure to change '
-			. 'the option to "Allow unassign".') =%>
+	<%= maketext(q/Use the "Edit data for student id" links to edit that student's set data/) =%>
 </p>

@@ -280,11 +280,16 @@ thrown.
 sub assignSetToGivenUsers {
 	my ($db, $ce, $setID, $alwaysInclude, @userRecords) = @_;
 
+	my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
 	my @userSetsToAdd;
 	for my $User (@userRecords) {
-		next unless $alwaysInclude || $ce->status_abbrev_has_behavior($User->status, 'include_in_assignment');
+		next
+			unless $User && ($alwaysInclude || $ce->status_abbrev_has_behavior($User->status, 'include_in_assignment'));
 		my $userID = $User->user_id;
-		next if $db->existsUserSet($userID, $setID);
+		next if $setUsers{$userID};
+
+		# Block against possible duplicate records.
+		$setUsers{$userID} = 1;
 
 		my $userSet = $db->newUserSet;
 		$userSet->user_id($userID);
