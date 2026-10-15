@@ -411,9 +411,7 @@
 		</div>
 	% }
 	%
-	% # Make sure that the 'action' in the form points to the same set version. Using the assignment type (rather than
-	% # the current route) also gets a URL that will not require a proctor login if a proctored test has been submitted
-	% # for the last time, since the assignment type has already been reset to 'gateway' in that case.
+	% # Make sure that the 'action' in the form points to the same set version.
 	% my $action = url_for(
 		% $c->{set}->assignment_type =~ /proctored/ ? 'proctored_gateway_quiz_version' : 'gateway_quiz_version',
 		% setID     => $setID,
