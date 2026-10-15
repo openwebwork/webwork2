@@ -12,7 +12,7 @@ use Email::Stuffer;
 use Try::Tiny;
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients formatEmailSubject);
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients formatEmailSubject isValidEmailAddress);
 
 # request parameters used
 #
@@ -91,7 +91,7 @@ sub initialize ($c) {
 			$c->stash->{send_error} = $c->maketext('No Sender specified.');
 			return;
 		}
-		unless ($from =~ /^[a-zA-Z0-9.!#$%&\'*+\/=?^_`~\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9.\-]+$/) {
+		unless (isValidEmailAddress($from)) {
 			$c->stash->{send_error} = $c->maketext('Sender is not a valid email address.');
 			return;
 		}
