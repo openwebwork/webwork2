@@ -7,6 +7,8 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 
 =cut
 
+use Mojo::Util qw(xml_escape);
+
 use WeBWorK::Utils                    qw(wwRound);
 use WeBWorK::Utils::DateTime          qw(before);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
@@ -75,41 +77,28 @@ sub scoring_info ($c) {
 	my $status_name = $ce->status_abbrev_to_name($user->status);
 	$status_name = $user->status unless defined $status_name;
 
-	my $SID        = $user->student_id;
-	my $FN         = $user->first_name;
-	my $LN         = $user->last_name;
-	my $SECTION    = $user->section;
-	my $RECITATION = $user->recitation;
-	my $STATUS     = $status_name;
-	my $EMAIL      = $user->email_address;
-	my $LOGIN      = $user->user_id;
-	my @COL        = ref $rh_merge_data->{$SID} eq 'ARRAY' ? @{ $rh_merge_data->{$SID} } : ();
+	my %vars = (
+		SID        => $user->student_id,
+		FN         => $user->first_name,
+		LN         => $user->last_name,
+		SECTION    => $user->section,
+		RECITATION => $user->recitation,
+		STATUS     => $status_name,
+		EMAIL      => $user->email_address,
+		LOGIN      => $user->user_id,
+	);
+
+	my @COL = ref $rh_merge_data->{ $user->student_id } eq 'ARRAY' ? @{ $rh_merge_data->{ $vars{SID} } } : ();
 	unshift(@COL, '');    # This makes COL[1] the first column
 
-	my $endCol = @COL;
-	# For safety, only evaluate special variables.
-	my $msg = $text;
-	$msg =~ s/(\$PAR)/<p>/g;
-	$msg =~ s/(\$BR)/<br>/g;
-
-	$msg =~ s/\$SID/$SID/g;
-	$msg =~ s/\$LN/$LN/g;
-	$msg =~ s/\$FN/$FN/g;
-	$msg =~ s/\$STATUS/$STATUS/g;
-	$msg =~ s/\$SECTION/$SECTION/g;
-	$msg =~ s/\$RECITATION/$RECITATION/g;
-	$msg =~ s/\$EMAIL/$EMAIL/g;
-	$msg =~ s/\$LOGIN/$LOGIN/g;
-
-	if (defined $COL[1]) {
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g;
-	} else {
-		# Prevents extraneous $COL's in email message
-		$msg =~ s/\$COL\[(\-?\d+)\]//g;
-	}
-
-	$msg =~ s/\r//g;
+	my $msg = $text =~ s/\r//gr;
 	$msg =~ s/\n/<br>/g;
+
+	# For safety, only evaluate special variables. All variables are replaced in a single pass so that a substituted
+	# value is never itself scanned for variables. Substituted values are HTML escaped.
+	$msg =~ s{\$(?:(PAR)|(BR)|(SID|LN|FN|STATUS|SECTION|RECITATION|EMAIL|LOGIN)|COL\[(-?\d+)\])}{
+		$1 ? '<p>' : $2 ? '<br>' : xml_escape((defined $3 ? $vars{$3} : $COL[$4]) // '')
+	}ge;
 
 	my $output = $c->c($c->tag(
 		'div',
