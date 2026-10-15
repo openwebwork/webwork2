@@ -10,7 +10,8 @@ WeBWorK::Authen::Proctor - Authenticate gateway test proctors.
 use strict;
 use warnings;
 
-use WeBWorK::Utils qw(x);
+use WeBWorK::Utils       qw(x);
+use WeBWorK::Utils::Sets qw(test_version_is_complete);
 
 use constant GENERIC_ERROR_MESSAGE => x('Invalid user ID or password.');
 
@@ -39,6 +40,29 @@ sub verify {
 		# A user with the proctor_quiz_login permission does not need separate proctor authorization to enter
 		# (or view) a proctored test. They can simply use their own login.
 		return 1 if $c->authz->hasPermissions($c->param('user'), 'proctor_quiz_login');
+
+		# Proctor authorization is not needed to view a version that is not a proctored test or that is complete.  For
+		# the proctored routes this method is called twice in a request, once during authentication and again by
+		# Authz::checkSet, so the result is saved for the second call.  The set version is also saved in the Authz
+		# merged set cache so that Authz::checkSet does not need to obtain it again from the database.
+		if (defined $c->stash('versionID')) {
+			$c->{proctorNotRequired} //= do {
+				my $setVersion = $c->authz->{merged_set};
+				unless ($setVersion
+					&& $setVersion->set_id eq $c->stash('setID')
+					&& $setVersion->user_id eq $c->param('effectiveUser')
+					&& ($setVersion->version_id // 0) == $c->stash('versionID'))
+				{
+					$setVersion = $c->db->getMergedSetVersion($c->param('effectiveUser'),
+						$c->stash('setID'), $c->stash('versionID'));
+					$c->authz->{merged_set} = $setVersion if $setVersion;
+				}
+				$setVersion
+					&& ($setVersion->assignment_type ne 'proctored_gateway'
+						|| test_version_is_complete($c, $setVersion)) ? 1 : 0;
+			};
+			return 1 if $c->{proctorNotRequired};
+		}
 	}
 
 	return $self->SUPER::verify(@_);
