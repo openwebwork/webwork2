@@ -113,9 +113,10 @@ sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 	return $c->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
 }
 
-# Allow for a version_last_attempt_time which is the time the set was submitted. If that is present we use that instead
-# of the current time to decide if answers can be recorded.  This deals with the time between the submission time and
-# the proctor authorization.
+# When answers are being submitted for a proctored test, allow for a version_last_attempt_time which is the time the set
+# was submitted. If that is present we use that instead of the current time to decide if answers can be recorded.  This
+# deals with the time between the submission time and the proctor authorization.  Otherwise the current time must be
+# used, since a proctored test version is never converted to an unproctored test.
 # IMPORTANT: This method is called directly by the LoginProctor.pm package without a proper GatewayQuiz object, and so
 # it can not call any of the object methods in the GatewayQuiz package or use anything that is not set for a generic
 # ContentGenerator object. Also make sure that the conditions for recording an unsubmitted test are kept in sync with
@@ -142,7 +143,7 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 	}
 
 	my $submitTime =
-		($set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
+		($c->param('submitAnswers') && $set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
 		? $set->version_last_attempt_time
 		: $c->submitTime;
 
@@ -170,9 +171,9 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 	return 0;
 }
 
-# Allow for a version_last_attempt_time which is the time the set was submitted.  If that is present, then use that
-# instead of the current time to decide if answers can be checked.  This deals with the time between the submission time
-# and the proctor authorization.
+# When answers are being submitted for a proctored test, allow for a version_last_attempt_time which is the time the set
+# was submitted.  If that is present, then use that instead of the current time to decide if answers can be checked.
+# This deals with the time between the submission time and the proctor authorization.
 sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0) {
 	my $authz = $c->authz;
 
@@ -181,7 +182,7 @@ sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $proble
 		&& !$authz->hasPermissions($user->user_id, 'can_check_and_submit_answers');
 
 	my $submitTime =
-		($set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
+		($c->param('submitAnswers') && $set->assignment_type eq 'proctored_gateway' && $set->version_last_attempt_time)
 		? $set->version_last_attempt_time
 		: $c->submitTime;
 
@@ -1141,62 +1142,18 @@ async sub pre_header_initialize ($c) {
 	$c->{scoreRecordedMessage}    = \@scoreRecordedMessage;
 	$c->{ltiGradePassbackMessage} = $ltiGradePassbackMessage;
 
-	# Additional set-level database manipulation: We want to save the time that a set was submitted, and for proctored
-	# tests we want to reset the assignment type after a set is submitted for the last time so that it's possible to
-	# look at it later without getting proctor authorization.
+	# Additional set-level database manipulation: Save the time that a set was submitted if the answers are being
+	# recorded, or if the first submission occurs after the due date.
 	if (
-		(
-			$c->{submitAnswers}
-			&& (
-				$will{recordAnswers}
-				|| (!$set->version_last_attempt_time
-					&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
-			)
-		)
-		|| (
-			$set->assignment_type eq 'proctored_gateway'
-			&& (
-				($userID eq $effectiveUserID && !$can{recordAnswersNextTime})
-				|| (
-					$userID ne $effectiveUserID
-					&& $authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
-					&& $set->attempts_per_version > 0
-					&& ($problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0) >=
-						$set->attempts_per_version)
-				)
-			)
-		)
+		$c->{submitAnswers}
+		&& ($will{recordAnswers}
+			|| (!$set->version_last_attempt_time && $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod}))
 		)
 	{
-		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
-		$set->version_last_attempt_time($timeNowInt)
-			if (
-				$c->{submitAnswers}
-				&& (
-					$will{recordAnswers}
-					|| (!$set->version_last_attempt_time
-						&& $c->submitTime > $set->due_date + $ce->{gatewayGracePeriod})
-				)
-			);
-
-		$set->assignment_type('gateway')
-			if (
-				$set->assignment_type eq 'proctored_gateway'
-				&& (
-					($userID eq $effectiveUserID && !$can{recordAnswersNextTime})
-					|| (
-						$userID ne $effectiveUserID
-						&& $can{recordAnswers}
-						&& $set->attempts_per_version > 0
-						&& ($problem->num_correct + $problem->num_incorrect + ($c->{submitAnswers} ? 1 : 0) >=
-							$set->attempts_per_version)
-					)
-				)
-			);
+		$set->version_last_attempt_time($timeNowInt);
 
 		# Save only parameters that determine access to the set version.
 		my $cleanSet = $db->getSetVersion($effectiveUserID, $set->set_id, $versionID);
-		$cleanSet->assignment_type($set->assignment_type);
 		$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
 		$db->putSetVersion($cleanSet);
 	}
