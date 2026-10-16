@@ -52,11 +52,14 @@
 	<li>
 		<code>$localData</code>:
 		<%= maketext('A hash reference which saves data for this user and this achievement. This hash is persistent '
-				. 'between evaluations and changes to this variable will be saved in the database.') =%>
+				. 'between evaluations and changes to this variable will be saved in the database. The data is saved '
+				. 'as JSON, so only numbers, strings, and array or hash references containing those can be stored. '
+				. 'Other values such as objects or code references will not be saved.') =%>
 	</li>
 	<li>
 		<code>$globalData</code>:
 		<%= maketext('A hash reference which saves global data for this user. This hash is persistent between '
-				. 'evaluations and changes to this variable will be saved in the database.') =%>
+				. 'evaluations and changes to this variable will be saved in the database. Like $localData, only '
+				. 'numbers, strings, and array or hash references containing those can be stored.') =%>
 	</li>
 </ul>
