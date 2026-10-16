@@ -34,14 +34,40 @@ sub get_value ($self, $ce) {
 	return $value;
 }
 
+# The submitted value of this setting.  This is the html form element value unless an input_name was given, in which
+# case that request parameter is used instead.  In list context all values of the parameter are returned.
+sub new_value ($self) {
+	return $self->{c}->param($self->{input_name} // $self->{name});
+}
+
 # If use_current is true then return the current course environment value for this setting.
-# Otherwise use the value of the html form element.
+# Otherwise use the submitted value.
 sub convert_newval_source ($self, $use_current) {
 	if ($use_current) {
 		return $self->comparison_value($self->get_value($self->{c}->ce));
 	} else {
-		return $self->{c}->param($self->{name}) // '';
+		return scalar($self->new_value) // '';
 	}
+}
+
+sub quote ($self, $value) {
+	return "'" . ($value =~ s/([\\'])/\\$1/gr) . "'";
+}
+
+sub add_error ($self, $message) {
+	push(@{ $self->{errors} }, $message);
+	return;
+}
+
+sub errors ($self) {
+	return @{ $self->{errors} // [] };
+}
+
+# Record that the submitted value is invalid, and save the current course environment value instead.
+sub reject ($self, $oldval, $use_current, $message) {
+	return '' if $use_current;
+	$self->add_error($message);
+	return $self->save_string($oldval, 1);
 }
 
 # Bit of text to put in the configuration file.  The result should be an assignment which is executable by perl.  oldval
@@ -50,8 +76,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval || ($self->{secret} && $newval eq SECRET_STRING);
 
-	$newval =~ s/['"`]//g;
-	return "\$$self->{var} = '$newval';\n";
+	return "\$$self->{var} = " . $self->quote($newval) . ";\n";
 }
 
 # A widget to interact with the user

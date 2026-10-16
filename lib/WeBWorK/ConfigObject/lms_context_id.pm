@@ -13,12 +13,13 @@ sub get_value ($self, $ce) {
 sub save_string ($self, $oldval, $use_current = 0) {
 	return '' if $use_current;
 
-	my $c  = $self->{c};
-	my $ce = $c->ce;
+	my $c      = $self->{c};
+	my $ce     = $c->ce;
+	my $newval = scalar $self->new_value;
 
 	# Unlike all other configuration settings, this one needs to be validated. It must be ensured that this course does
 	# not have the same context id as any other course on the server that has the same LTI configuration.
-	if (defined $c->param($self->{name}) && $c->param($self->{name}) ne '') {
+	if (defined $newval && $newval ne '') {
 		my @courseMaps = $c->db->getLTICourseMapsWhere;
 
 		# If a context id is going to be set and the course is configured for LTI 1.3, then make sure it has all of the
@@ -27,7 +28,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 		if ($ce->{LTIVersion} eq 'v1p3'
 			&& !($ce->{LTI}{v1p3}{PlatformID} && $ce->{LTI}{v1p3}{ClientID} && $ce->{LTI}{v1p3}{DeploymentID}))
 		{
-			$c->addbadmessage($c->maketext(
+			$self->add_error($c->maketext(
 				'An LMS context id is requested to be assigned to this course which is set to use LTI 1.3, but '
 					. 'this course is missing LTI 1.3 authentication parameters. This is not allowed, and so this '
 					. 'setting was not saved.'
@@ -38,7 +39,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 		for my $courseMap (@courseMaps) {
 			next
 				if $courseMap->course_id eq $c->ce->{courseName}
-				|| $c->param($self->{name}) ne $courseMap->lms_context_id;
+				|| $newval ne $courseMap->lms_context_id;
 
 			my $other_ce = eval { WeBWorK::CourseEnvironment->new({ courseName => $courseMap->course_id }) };
 
@@ -50,7 +51,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 						|| $ce->{LTI}{v1p1}{ConsumerKey} eq $other_ce->{LTI}{v1p1}{ConsumerKey})
 					)
 				{
-					$c->addbadmessage($c->maketext(
+					$self->add_error($c->maketext(
 						'The requested LMS Context ID is the same as that of another course that is also configured '
 							. 'to use LTI 1.1, but the consumer keys for both this course and that course are either '
 							. 'both not set or are the same. This is not allowed, and so this setting was not saved.',
@@ -64,7 +65,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 					&& $ce->{LTI}{v1p3}{ClientID} eq $other_ce->{LTI}{v1p3}{ClientID}
 					&& $ce->{LTI}{v1p3}{DeploymentID} eq $other_ce->{LTI}{v1p3}{DeploymentID})
 				{
-					$c->addbadmessage($c->maketext(
+					$self->add_error($c->maketext(
 						'The requested LMS Context ID is the same as that of another course that is also configured '
 							. 'to use LTI 1.3, but this course and that course have the same LTI 1.3 authentication '
 							. 'parameters. This is not allowed, and so this setting was not saved.'
@@ -74,11 +75,11 @@ sub save_string ($self, $oldval, $use_current = 0) {
 			}
 		}
 
-		eval { $c->db->setLTICourseMap($c->ce->{courseName}, $c->param($self->{name})) };
-		$c->addbadmessage($c->maketext('An error occurred saving the lms_context_id: [_1]', $@)) if $@;
+		eval { $c->db->setLTICourseMap($c->ce->{courseName}, $newval) };
+		$self->add_error($c->maketext('An error occurred saving the lms_context_id: [_1]', $@)) if $@;
 	} else {
 		eval { $c->db->deleteLTICourseMapWhere({ course_id => $c->ce->{courseName} }) };
-		$c->addbadmessage($c->maketext('An error occurred deletinglms_context_id: [_1]', $@)) if $@;
+		$self->add_error($c->maketext('An error occurred deletinglms_context_id: [_1]', $@)) if $@;
 	}
 
 	return '';
