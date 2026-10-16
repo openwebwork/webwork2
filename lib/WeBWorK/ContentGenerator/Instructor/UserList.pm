@@ -48,7 +48,7 @@ Export users:
 use Mojo::File;
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
-use WeBWorK::Utils           qw(cryptPassword x);
+use WeBWorK::Utils           qw(cryptPassword isValidEmailAddress x);
 
 use constant HIDE_USERS_THRESHOLD => 200;
 use constant EDIT_FORMS           => [qw(save_edit cancel_edit)];
@@ -106,11 +106,21 @@ use constant FIELDS => [
 # a subroutine that takes the parameter value as its only argument, and returns a translatable error string if the
 # parameter value is not valid for the field, and 0 otherwise.
 use constant FIELD_PROPERTIES => {
-	user_id                   => { name => x('Login Name') },
-	first_name                => { name => x('First Name'),        type => 'text', attributes => { size => 10 } },
-	last_name                 => { name => x('Last Name'),         type => 'text', attributes => { size => 10 } },
-	email_address             => { name => x('Email Address'),     type => 'text', attributes => { size => 20 } },
-	student_id                => { name => x('Student ID'),        type => 'text', attributes => { size => 11 } },
+	user_id       => { name => x('Login Name') },
+	first_name    => { name => x('First Name'), type => 'text', attributes => { size => 10 } },
+	last_name     => { name => x('Last Name'),  type => 'text', attributes => { size => 10 } },
+	email_address => {
+		name         => x('Email Address'),
+		type         => 'text',
+		attributes   => { size => 20 },
+		perlValidate => sub {
+			my $value = shift;
+			return $value =~ /\S/ && !isValidEmailAddress($value)
+				? (x('Email address for [_1] unchanged. The value given is not a valid email address.'))[0]
+				: 0;
+		}
+	},
+	student_id                => { name => x('Student ID'), type => 'text', attributes => { size => 11 } },
 	status                    => { name => x('Enrollment Status'), type => 'status' },
 	accommodation_time_factor => {
 		name       => x('Accommodation Time Factor'),
@@ -709,7 +719,7 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 	my $default_permission_level = $ce->{default_permission_level};
 
 	my (@usersToInsert, @passwordsToInsert, @permissionsToInsert,
-		@usersToUpdate, @passwordsToUpdate, @permissionsToUpdate, @skipped);
+		@usersToUpdate, @passwordsToUpdate, @permissionsToUpdate, @skipped, @invalidEmailUsers);
 
 	# get list of hashrefs representing lines in classlist file
 	my @classlist = parse_classlist("$ce->{courseDirs}{templates}/$fileName");
@@ -737,6 +747,14 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 		if (exists $allUserIDs{$user_id} && !exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
 			next;
+		}
+
+		if (defined $record{email_address}
+			&& $record{email_address} ne ''
+			&& !isValidEmailAddress($record{email_address}))
+		{
+			push @invalidEmailUsers, $user_id;
+			$record{email_address} = '';
 		}
 
 		# set default status is status field is "empty"
@@ -788,6 +806,14 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 			$User->{passwordExists} = 1 if $Password;
 		}
 	}
+
+	$c->addbadmessage($c->maketext(
+		'The email [plural,_1,address was,addresses were] not valid for the following [plural,_1,user,users] '
+			. 'and [plural,_1,was,were] not set: [_2]',
+		scalar(@invalidEmailUsers),
+		join(', ', @invalidEmailUsers)
+	))
+		if @invalidEmailUsers;
 
 	$db->User->insert_records(\@usersToInsert)                  if @usersToInsert;
 	$db->User->update_records(\@usersToUpdate)                  if @usersToUpdate;
