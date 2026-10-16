@@ -10,7 +10,10 @@ sub display_value ($self, $val) {
 
 sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
-	return '' if $self->comparison_value($oldval) eq $newval;
+	return $self->reject($oldval, $use_current,
+		$self->{c}->maketext('Invalid boolean value "[_1]" for variable $[_2].', $newval, $self->{var}))
+		unless $newval =~ /^[01]\z/;
+	return '' if $self->comparison_value($oldval) == $newval;
 	return "\$$self->{var} = $newval;\n";
 }
 
