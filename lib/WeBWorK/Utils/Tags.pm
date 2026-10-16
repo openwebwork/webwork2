@@ -413,7 +413,7 @@ sub dumptags {
 }
 
 # Write the file
-sub write_to_file {
+sub write {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my $self = shift;
 
 	# First read it into an array
