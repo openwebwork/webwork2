@@ -10,8 +10,11 @@ sub display_value ($self, $val) {
 
 sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
+	return $self->reject($oldval, $use_current,
+		$self->{c}->maketext('Invalid value "[_1]" for variable $[_2].', $newval, $self->{var}))
+		unless $use_current || grep { $_ eq $newval } @{ $self->{values} };
 	return '' if $self->comparison_value($oldval) eq $newval;
-	return ("\$$self->{var} = '$newval';\n");
+	return "\$$self->{var} = " . $self->quote($newval) . ";\n";
 }
 
 sub entry_widget ($self, $default, $is_secret = 0) {

@@ -7,10 +7,9 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 
-	if ($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
-		$self->{c}->addbadmessage(qq{String "$newval" is not a valid time.  Reverting to the system default value.});
-		return '';
-	}
+	my ($hour, $ampm) = $newval =~ /^\s*(\d{1,2})\s*:\s*[0-5]\d\s*(am|pm|AM|PM)?\s*\z/;
+	return $self->reject($oldval, $use_current, $self->{c}->maketext('String "[_1]" is not a valid time.', $newval))
+		unless defined $hour && ($ampm ? $hour >= 1 && $hour <= 12 : $hour <= 23);
 
 	return "\$$self->{var} = '$newval';\n";
 }
