@@ -10,19 +10,23 @@ sub convert_newval_source ($self, $use_current) {
 	if ($use_current) {
 		return @{ $self->get_value($self->{c}->ce) };
 	} else {
-		return $self->{c}->param($self->{name});
+		return $self->new_value;
 	}
 }
 
 sub save_string ($self, $oldval, $use_current = 0) {
 	my @newvals = $self->convert_newval_source($use_current);
-	if ($self->{min} && scalar(@newvals) < $self->{min}) {
-		$self->{c}->addbadmessage(qq!You need to select at least $self->{min} option for "$self->{doc}".!);
-		return '' if $use_current;
-		return $self->save_string($oldval, 1);
-	}
+	return $self->reject($oldval, $use_current,
+		$self->{c}->maketext('You need to select at least [_1] option for "[_2]".', $self->{min}, $self->{doc}))
+		if $self->{min} && @newvals < $self->{min};
+
+	my %allowed = map { $_ => 1 } @{ $self->{values} };
+	return $self->reject($oldval, $use_current,
+		$self->{c}->maketext('Invalid value "[_1]" for variable $[_2].', join(', ', @newvals), $self->{var}))
+		if !$use_current && grep { !$allowed{$_} } @newvals;
+
 	return '' if $self->comparison_value($oldval) eq $self->comparison_value(\@newvals);
-	return "\$$self->{var} = [" . join(',', map {"'$_'"} @newvals) . "];\n";
+	return "\$$self->{var} = [" . join(',', map { $self->quote($_) } @newvals) . "];\n";
 }
 
 sub comparison_value ($self, $val) {
