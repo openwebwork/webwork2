@@ -1,12 +1,15 @@
 package WeBWorK::Utils::Achievements;
 use Mojo::Base 'Exporter', -signatures;
 
-use Storable   qw(nfreeze thaw);
-use Mojo::Util qw(b64_encode b64_decode);
+use Mojo::JSON qw(from_json to_json);
+use Mojo::Util qw(b64_decode decode);
+use Storable   qw(thaw);
+
+use WeBWorK::Utils qw(encode_utf8_base64);
 
 our @EXPORT_OK = qw(
-	nfreeze_base64
-	thaw_base64
+	encodeAchievementData
+	decodeAchievementData
 	sortAchievements
 	isAchievementAssetSafe
 	getAchievementAssetPaths
@@ -14,20 +17,23 @@ our @EXPORT_OK = qw(
 	getAchievementIconURL
 );
 
-sub nfreeze_base64 ($in) {
-	return b64_encode(nfreeze($in));
+sub encodeAchievementData ($data) {
+	return encode_utf8_base64(to_json($data));
 }
 
-sub thaw_base64 ($string) {
-	my $result;
+sub decodeAchievementData ($serialized) {
+	return {} unless $serialized;
 
-	eval { $result = thaw(b64_decode($string)); };
+	my $bytes = b64_decode($serialized);
+	# Data stored by older versions of WeBWorK was encoded with Storable::nfreeze.
+	my $data = eval { $bytes =~ /^\{/ ? from_json(decode('UTF-8', $bytes)) : thaw($bytes) };
 
-	if ($@) {
+	if ($@ || ref($data) ne 'HASH') {
 		warn('Deleting corrupted achievement data.');
 		return {};
 	}
-	return $result;
+
+	return $data;
 }
 
 sub sortAchievements (@achievements) {
@@ -98,19 +104,26 @@ sub getAchievementIconURL ($ce, $icon) {
 
 WeBWorK::Utils::Achievements - contains utility subroutines for achievements.
 
-=head2 nfreeze_base64
+=head2 encodeAchievementData
 
-Usage: C<nfreeze_base64($in)>
+Usage: C<encodeAchievementData($data)>
 
-This C<Storable::nfreeze> encodes and then base 64 encodes C<$in> and returns
-the result.
+JSON encodes the achievement data hash reference C<$data>, and then UTF-8 and
+base 64 encodes the result.  The base 64 encoding keeps the stored value ASCII,
+which avoids database driver differences in the handling of UTF-8 data in the
+binary C<frozen_hash> column.
 
-=head2 thaw_base64
+=head2 decodeAchievementData
 
-Usage: C<thaw_base64($in)>
+Usage: C<decodeAchievementData($serialized)>
 
-This base 64 decodes and then C<Storable::thaw> decodes C<$in> and returns
-result.
+Returns the achievement data hash reference decoded from C<$serialized>.
+
+This method detects if C<$serialized> is a JSON encoded hash (encoded with
+C<encodeAchievementData>), or is a L<Storable::nfreeze> encoded hash (the old
+method), and decodes using the appropriate method.  An empty hash reference is
+returned if C<$serialized> is empty, cannot be decoded, or does not decode to a
+hash reference.
 
 =head2 sortAchievements
 
