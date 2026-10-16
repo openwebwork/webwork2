@@ -1,7 +1,7 @@
 package WeBWorK::AchievementItems;
 use Mojo::Base -signatures;
 
-use WeBWorK::Utils qw(nfreeze_base64 thaw_base64);
+use WeBWorK::Utils qw(encodeAchievementData decodeAchievementData);
 
 # List of available achievement items.  Make sure to add any new items to this list. Furthermore, the elements in this
 # list have to match the class name of the achievement item classes loaded below.
@@ -63,7 +63,7 @@ sub UserItems ($c, $userName, $set, $records) {
 	my $globalUserAchievement = $c->{globalData} // $db->getGlobalUserAchievement($userName);
 	return unless $globalUserAchievement && $globalUserAchievement->frozen_hash;
 
-	my $globalData  = thaw_base64($globalUserAchievement->frozen_hash);
+	my $globalData  = decodeAchievementData($globalUserAchievement->frozen_hash);
 	my $use_item_id = $c->param('use_achievement_item_id') // '';
 	my @items;
 
@@ -88,7 +88,7 @@ sub UserItems ($c, $userName, $set, $records) {
 			if ($message) {
 				$globalData->{$item}--;
 				$achievementItem->{count}--;
-				$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
+				$globalUserAchievement->frozen_hash(encodeAchievementData($globalData));
 				$db->putGlobalUserAchievement($globalUserAchievement);
 				$c->addgoodmessage($c->maketext('[_1] successfully used. [_2]', $achievementItem->name, $message));
 			}
