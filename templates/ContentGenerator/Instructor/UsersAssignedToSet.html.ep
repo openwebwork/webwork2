@@ -1,3 +1,4 @@
+% use WeBWorK::Utils       qw(getAssetURL);
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 %
 % unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
@@ -10,52 +11,87 @@
 	% last;
 % }
 %
-<%= form_for current_route, method => 'post', begin =%>
-	<div class="my-2">
-		<%= submit_button maketext('Assign to All Current Users'),
-			name  => 'assignToAll',
-			class => 'btn btn-primary' =%>
-		<i><%= maketext('This action can take a long time if there are many students.') %></i>
+% unless ($set_record) {
+	<div class="alert alert-danger p-1">
+		<%= maketext('Error: Unable to load global set record for [_1].', $setID) =%>
 	</div>
-	<div class="alert alert-danger p-1 mb-2">
-		<p class="mb-1"><%= maketext('Do not uncheck students, unless you know what you are doing.') %></p>
-		<p class="mb-0"><%= maketext('There is NO undo for unassigning students.') %></p>
+	% last;
+% }
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/UsersAssignedToSet/usersassignedtoset.js'), defer => undef =%>
+% end
+%
+% my $formattedSetName      = tag('span', dir => 'ltr', format_set_name_display($setID));
+% my $reducedScoringEnabled = $set_record->enable_reduced_scoring && $ce->{pg}{ansEvalDefaults}{enableReducedScoring};
+%
+<%= include 'ContentGenerator/Base/set_status', set => $set_record, includeCloseDate => 1 =%>
+<p class="fw-bold mb-2">
+	<%== maketext('Set [_1] is assigned to [_2] out of [_3] current users.',
+		$formattedSetName, $numberAssignedCurrentUsers, $numberCurrentUsers) =%>
+</p>
+<%= form_for current_route, method => 'post', id => 'assignForm', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field 'allow_unassign' => '' =%>
+	% # Add a hidden submit button so hitting "Enter" will "Save changes" instead of assigning to all users.
+	<%= submit_button maketext('Save'),
+		name          => 'assignToSelected',
+		class         => 'visually-hidden',
+		tabindex      => -1,
+		'aria-hidden' => 'true' =%>
+	<div class="mt-2">
+		% if ($numberAssignedCurrentUsers < $numberCurrentUsers) {
+			<%= submit_button maketext('Assign to All Current Users'),
+				name  => 'assignToAll',
+				class => 'btn btn-primary mb-2' =%>
+		% }
+		% if ($numberAssignedUsers) {
+			<%= submit_button maketext('Unassign from All Users'),
+				name  => 'unassignFromAll',
+				class => 'btn btn-primary mb-2' =%>
+		% }
 	</div>
+	<p class="mb-2">
+		<%= maketext('Use the "Assigned" checkboxes to assign/unassign this set. Unassigning the set will '
+				. 'delete all of the data for the associated user and cannot be undone.') =%>
+	</p>
 	<div class="mb-2">
-		<%== maketext(
-			"When you unassign by unchecking a student's name, you destroy all of the data for assignment [_1] "
-				. 'for this student. You will then need to reassign the set to these students and they will receive '
-				. 'new versions of the problems. Make sure this is what you want to do before unchecking students.',
-			tag('b', dir => 'ltr', format_set_name_display($setID))
-		) =%>
+		<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
 	</div>
 	<div class="table-responsive">
 		<table class="table table-bordered table-sm font-sm text-nowrap w-auto">
 			<thead>
 				<tr>
 					<th class="text-center"><%= maketext('Assigned') %></th>
-					<th><%= maketext('Login Name') %></th>
-					<th><%= maketext('Student Name') %></th>
+					<th><%= maketext('Username') %></th>
+					<th><%= maketext('Full Name') %></th>
 					<th class="text-center"><%= maketext('Section') %></th>
+					% if ($reducedScoringEnabled) {
+						<th><%= maketext('Reduced Scoring Date') %></th>
+					% }
 					<th><%= maketext('Close Date') %></th>
 					<th><%= maketext('Edit Data') %></th>
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
+				% param('selected', []);
 				% for my $user (@$user_records) {
-					% my $userID  = $user->user_id;
-					% my $userSet = $set_records->{$userID};
+					% my $userID   = $user->user_id;
+					% my $userSet  = $set_records->{$userID};
+					% my $username = $user->last_name . ', ' . $user->first_name;
 					%
 					<tr>
 						<td class="text-center">
-							<input
-								type="checkbox"
-								name="selected"
-								id="selected_<%= $userID %>"
-								value="<%= $userID %>"
-								class="form-check-input"
-								<%= defined $userSet ? 'checked' : '' %>
-							>
+							<%= check_box
+								'selected' => $userID,
+								id         => "selected_$userID",
+								class      => 'form-check-input',
+								data       => {
+									username => "$username ($userID)",
+									defined $userSet          ? (is_assigned => 1) : (),
+									$current_users->{$userID} ? (is_current  => 1) : ()
+								},
+								defined $userSet ? (checked => undef) : () =%>
 						</td>
 						<td>
 							<div class="<%= $ce->status_abbrev_to_name($user->status) || '' %>">
@@ -63,10 +99,19 @@
 							</div>
 						</td>
 						<td>
-							<%= $user->last_name . ', ' . $user->first_name =%>
+							<%= $username =%>
 						</td>
 						<td class="text-center"><%= $user->section %></td>
 						% if (defined $userSet) {
+							% if ($reducedScoringEnabled) {
+								<td>
+									% if ($userSet->reduced_scoring_date) {
+										<%=
+											$c->formatDateTime($userSet->reduced_scoring_date, 'datetime_format_short')
+										=%>
+									% }
+								</td>
+							% }
 							<td>
 								% if ($userSet->due_date) {
 									<%= $c->formatDateTime($userSet->due_date, 'datetime_format_short') =%>
@@ -78,6 +123,9 @@
 										params => { editForUser => $userID }) =%>
 							</td>
 						% } else {
+							% if ($reducedScoringEnabled) {
+								<td></td>
+							% }
 							<td></td>
 							<td></td>
 						% }
@@ -86,31 +134,46 @@
 			</tbody>
 		</table>
 	</div>
-	<%= $c->hidden_authen_fields =%>
 	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
-	<hr>
-	<div>
-		<div class="alert alert-danger p-1 mb-3">
-			<%== maketext(
-				'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
-					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-					. 'of the data for assignment [_1] for this student.',
-				tag('span', dir => 'ltr', format_set_name_display($setID))
-			) =%>
-		</div>
-		<div class="d-flex flex-wrap align-items-center">
-			<%= submit_button maketext('Unassign from All Users'),
-				name  => 'unassignFromAll',
-				class => 'btn btn-primary' =%>
-			<label class="form-check-label text-nowrap">
-				<%= radio_button unassignFromAllSafety => 0, checked => undef, class => 'form-check-input mx-1' =%>
-				<%= maketext('Read only') =%>
-			</label>
-			<label class="form-check-label text-nowrap">
-				<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
-				<%= maketext('Allow unassign') =%>
-			</label>
+	<div
+		class="modal fade"
+		id="unassign_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="unassign_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="unassign_confirm_dialog_title">
+						<%== maketext('Unassign users from [_1]', $formattedSetName) =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Warning: Unassigning users will destroy all user data for this set '
+								. 'and cannot be undone!') =%>
+					</div>
+					<p class="mb-1">
+						<%== maketext('Unassign the following users from [_1]:', $formattedSetName) =%>
+					</p>
+					<ul id="unassign_confirm_user_list" class="mb-2"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="unassign_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Unassign') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
-	<hr>
 <% end =%>
