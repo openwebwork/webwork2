@@ -35,6 +35,18 @@
 		};
 	};
 
+	// Confirmation before deleting a course override.
+	let revert_confirmed = false;
+	const revert_confirm_dialog = document.getElementById('revert_confirm_dialog');
+	const revert_confirm_modal = revert_confirm_dialog ? new bootstrap.Modal(revert_confirm_dialog) : null;
+	document.getElementById('revert_confirm_proceed')?.addEventListener('click', () => {
+		revert_confirmed = true;
+		revert_confirm_modal?.hide();
+		const confirmInput = document.getElementsByName('action.revert.confirm')[0];
+		if (confirmInput) confirmInput.value = 1;
+		document.getElementById('take_action')?.click();
+	});
+
 	document.getElementById('editor')?.addEventListener('submit', (e) => {
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'save_as') {
@@ -71,13 +83,14 @@
 					}
 				}
 			}
-		} else if (action === 'revert') {
-			const delete_confirm = document.getElementById('delete_select');
-			if (delete_confirm.value != 'yes') {
-				e.preventDefault();
-				e.stopPropagation();
-				show_errors(['delete_confirm_err_msg'], [delete_confirm]);
+		} else if (action === 'revert' && revert_confirm_modal) {
+			if (revert_confirmed) {
+				revert_confirmed = false;
+				return;
 			}
+			e.preventDefault();
+			e.stopPropagation();
+			revert_confirm_modal.show();
 		}
 	});
 
