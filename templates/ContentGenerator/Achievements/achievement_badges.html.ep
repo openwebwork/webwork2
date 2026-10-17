@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(getAchievementIconURL);
+% use WeBWorK::Utils::Achievements qw(getAchievementIconURL);
 %
 <h2 class="my-3"><%= maketext('Badges') %></h2>
 %

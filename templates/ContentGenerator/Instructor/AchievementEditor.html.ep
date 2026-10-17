@@ -17,7 +17,7 @@
 		% if ($c->{sourceFileIsProtected}) {
 			<%= maketext('Editing system achievement evaluator "[_1]".', $c->{sourceFile}) =%>
 		% } else {
-			<%= maketext('Editing achievement evaluator in file "[_1]"', $c->shortPath($c->{sourceFile})) =%>
+			<%= maketext('Editing achievement evaluator in file "[_1]"', $c->addBasePath($c->{sourceFile})) =%>
 		% }
 	</i>
 </div>
