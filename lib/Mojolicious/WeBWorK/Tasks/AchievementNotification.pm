@@ -13,6 +13,7 @@ use WeBWorK::Localize;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
 use WeBWorK::WWSafe;
 use WeBWorK::SafeTemplate;
+use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
@@ -53,8 +54,8 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		unless ($user_record->email_address =~ /\S/);
 
 	my $email_template = $mail_data->{achievement}{email_template};
-	die "Achievement notification template file \"$email_template\" contains a slash and cannot be used.\n"
-		if $email_template =~ /\//;
+	die "Achievement notification filename \"$email_template\" is unsafe and cannot be used.\n"
+		unless isAchievementAssetSafe($email_template);
 
 	my $compartment = WeBWorK::WWSafe->new;
 	$compartment->share_from('main',

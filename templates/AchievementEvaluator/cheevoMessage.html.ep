@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(getAchievementIconURL);
+% use WeBWorK::Utils::Achievements qw(getAchievementIconURL);
 %
 <div class="cheevo-toast toast hide" role="alert" aria-live="polite" aria-atomic="true">
 	<div class="toast-body d-flex align-items-center">

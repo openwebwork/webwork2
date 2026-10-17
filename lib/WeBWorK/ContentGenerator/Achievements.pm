@@ -9,7 +9,7 @@ This produces a list of earned achievements for each student.
 
 =cut
 
-use WeBWorK::Utils qw(sortAchievements thaw_base64);
+use WeBWorK::Utils::Achievements qw(sortAchievements thaw_base64);
 use WeBWorK::AchievementItems;
 
 sub initialize ($c) {

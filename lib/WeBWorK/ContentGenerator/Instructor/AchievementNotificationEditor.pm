@@ -7,8 +7,9 @@ WeBWorK::ContentGenerator::Instructor::AchievementNotificationEditor - edit the 
 
 =cut
 
-use WeBWorK::Utils        qw(fix_newlines not_blank x);
-use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils               qw(fix_newlines x);
+use WeBWorK::Utils::Files        qw(surePathToFile readFile);
+use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
 
 use constant ACTION_FORMS => [qw(save save_as existing disable)];
 use constant ACTION_FORM_TITLES => {
@@ -33,10 +34,9 @@ sub initialize ($c) {
 	}
 
 	my $sourceFile = $achievement->email_template || 'default.txt.epl';
-	if ($sourceFile =~ /\//) {
+	unless (isAchievementAssetSafe($sourceFile)) {
 		$c->addbadmessage($c->maketext(
-			'Achievement notification template "[_1]" filename contains a slash, "/", and cannot be edited.',
-			$sourceFile
+			'Achievement notification template path "[_1]" is unsafe and cannot be edited.', $sourceFile
 		));
 		return;
 	}
@@ -59,34 +59,34 @@ sub initialize ($c) {
 	unless (-f $c->{sourceFilePath}) {
 		$c->addbadmessage($c->maketext(
 			'The achievement notification template file "[_1]" cannot be found.',
-			$c->shortPath($c->{sourceFile})
+			$c->addBasePath($c->{sourceFile})
 		));
 		return;
 	}
 
-	unless (not_blank($c->stash->{achievementNotification})) {
-		eval { $c->stash->{achievementNotification} = readFile($c->{sourceFilePath}); };
+	unless ($c->stash->{achievementNotification} =~ /\S/) {
+		eval { $c->stash->{achievementNotification} = readFile($c->{sourceFilePath}) };
 		$c->stash->{achievementNotification} = $@ if $@;
 	}
 
 	return;
 }
 
-# Append [ACHEVNOTIFYDIR] to filename.
-sub shortPath ($c, $file) {
+# Prepend [ACHEVNOTIFYDIR] to filename.
+sub addBasePath ($c, $file) {
 	return "[ACHEVNOTIFYDIR]/$file";
 }
 
-# saveFileChanges does the work of saving the file for both the save_handler
-# and the save_as_handler. Be sure that $outputFile is validated before calling
-# this method (defined, not blank, and does not contain a slash).
+# saveFileChanges does the work of saving the file for both the save_handler and the save_as_handler.
+# Validate $outputFile before calling this method to produce error messages.
 sub saveFileChanges ($c, $outputFile) {
 	my $ce = $c->ce;
 
-	# This shouldn't be needed, but one last check for safety.
-	return 0 if !$outputFile || $outputFile =~ /\//;
+	# One last validation check for safety.
+	return 0 unless $outputFile && isAchievementAssetSafe($outputFile);
 
 	my $outputFilePath = "$ce->{courseDirs}{achievement_notifications}/$outputFile";
+	surePathToFile($ce->{courseDirs}{achievement_notifications}, $outputFilePath);
 	eval {
 		open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
 		print $OUTPUTFILE $c->stash->{achievementNotification};
@@ -106,22 +106,21 @@ sub saveFileChanges ($c, $outputFile) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled for "[_1]".  '
 					. 'Changes must be saved to another file for viewing.',
-				$c->shortPath($outputFile)
+				$c->addBasePath($outputFile)
 			);
 		} else {
 			$errorMessage =
-				$c->maketext('Unable to write to "[_1]": [_2]', $c->shortPath($outputFile), $writeFileErrors);
+				$c->maketext('Unable to write to "[_1]": [_2]', $c->addBasePath($outputFile), $writeFileErrors);
 		}
 		$c->addbadmessage($errorMessage);
 	} else {
-		$c->addgoodmessage($c->maketext('Saved to file "[_1]".', $c->shortPath($outputFile)));
+		$c->addgoodmessage($c->maketext('Saved to file "[_1]".', $c->addBasePath($outputFile)));
 	}
 
 	return $writeFileErrors ? 0 : 1;
 }
 
-# This is only called after $c->{sourceFile} has been validated and no additional
-# validation is needed.
+# This is only called after $c->{sourceFile} has been validated and no additional validation is needed.
 sub save_handler ($c) {
 	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
 	$c->saveFileChanges($c->{sourceFile});
@@ -136,13 +135,15 @@ sub save_as_handler ($c) {
 
 	$c->stash->{achievementNotification} = fix_newlines($c->param('achievementNotification'));
 
-	$new_file_name =~ s/^\s*//;    # Remove initial and final white space.
+	# Trim white space and validate filename.
+	$new_file_name =~ s/^\s*//;
 	$new_file_name =~ s/\s*$//;
 	if ($new_file_name !~ /\S/) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 		return;
-	} elsif ($new_file_name =~ /\//) {
-		$c->addbadmessage($c->maketext('Achievement notification template filenames cannot contain a slash, "/".'));
+	}
+	unless (isAchievementAssetSafe($new_file_name)) {
+		$c->addbadmessage($c->maketext('Achievement notification template not saved because filename is unsafe.'));
 		return;
 	}
 
@@ -153,7 +154,7 @@ sub save_as_handler ($c) {
 	if (-e $outputFilePath) {
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists.  File not saved.  No changes have been made.',
-			$c->shortPath($new_file_name)
+			$c->addBasePath($new_file_name)
 		));
 		return;
 	}
@@ -167,7 +168,7 @@ sub save_as_handler ($c) {
 	if ($c->db->putAchievement($c->{achievement})) {
 		$c->addgoodmessage($c->maketext(
 			'The achievement notification template for "[_1]" has been renamed to "[_2]".', $achievementName,
-			$c->shortPath($new_file_name)
+			$c->addBasePath($new_file_name)
 		));
 	} else {
 		$c->addbadmessage($c->maketext(
@@ -185,8 +186,8 @@ sub existing_handler ($c) {
 	my $achievementID = $c->stash('achievementID');
 	my $sourceFile    = $c->param('action.existing.target_file') || '';
 
-	if ($sourceFile =~ /\//) {
-		$c->addbadmessage($c->maketext('Achievement notification template filenames cannot contain a slash, "/".'));
+	unless ($sourceFile && isAchievementAssetSafe($sourceFile)) {
+		$c->addbadmessage($c->maketext('Achievement notification template filename "[_1]" is unsafe.', $sourceFile));
 		return;
 	}
 
@@ -206,7 +207,7 @@ sub existing_handler ($c) {
 				'Unable to change the notification for "[_1]". Unknown error.', $achievementID));
 		}
 	} else {
-		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $c->shortPath($sourceFile)));
+		$c->addbadmessage($c->maketext('The file "[_1]" cannot be found.', $c->addBasePath($sourceFile)));
 	}
 
 	return;
