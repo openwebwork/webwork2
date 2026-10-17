@@ -3,6 +3,13 @@
 	// Store event listeners so they can be removed.
 	const event_listeners = {};
 
+	const is_invalid_filename = (filename) =>
+		filename.startsWith('/') ||
+		filename.startsWith('..') ||
+		filename.includes('../') ||
+		filename.includes('/..') ||
+		filename.endsWith('/');
+
 	const show_errors = (ids, elements) => {
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
@@ -133,7 +140,7 @@
 		} else if (action === 'save_edit') {
 			const invalid_inputs = Array.from(
 				document.querySelectorAll('input[name$=".test"], input[name$=".icon"]')
-			).filter((input) => input.value.includes('/'));
+			).filter((input) => is_invalid_filename(input.value.trim()));
 			if (invalid_inputs.length) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -144,7 +151,7 @@
 					if (!(input.id in event_listeners)) {
 						event_listeners[input.id] = () => {
 							// Only clear this field's own invalid marking, and only once it is valid.
-							if (input.value.includes('/')) return;
+							if (is_invalid_filename(input.value.trim())) return;
 							input.classList.remove('is-invalid');
 							input.removeEventListener('change', event_listeners[input.id]);
 							delete event_listeners[input.id];

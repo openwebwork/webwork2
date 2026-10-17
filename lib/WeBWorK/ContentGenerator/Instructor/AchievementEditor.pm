@@ -10,8 +10,9 @@ WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achievement e
 use HTML::Entities;
 use File::Copy;
 
-use WeBWorK::Utils        qw(fix_newlines not_blank x);
-use WeBWorK::Utils::Files qw(readFile);
+use WeBWorK::Utils               qw(fix_newlines not_blank x);
+use WeBWorK::Utils::Files        qw(surePathToFile readFile);
+use WeBWorK::Utils::Achievements qw(getAchievementAssetPaths isAchievementAssetSafe);
 
 use constant ACTION_FORMS => [qw(save save_as revert)];
 use constant ACTION_FORM_TITLES => {
@@ -41,17 +42,11 @@ sub pre_header_initialize ($c) {
 	}
 
 	my $sourceFile = $Achievement->test;
-	if ($sourceFile =~ /\//) {
-		$c->addbadmessage($c->maketext(
-			'Achievement evaluator "[_1]" file contains a invalid character "/", and cannot be edited.',
-			$sourceFile
-		));
-		return;
-	}
-	if (-f "$ce->{courseDirs}{achievements}/$sourceFile") {
-		$c->{sourceFilePath} = "$ce->{courseDirs}{achievements}/$sourceFile";
-	} elsif (-f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
-		$c->{sourceFilePath}        = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
+	my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($ce, 'test', $sourceFile);
+	if ($courseFilePath) {
+		$c->{sourceFilePath} = $courseFilePath;
+	} elsif ($systemFilePath) {
+		$c->{sourceFilePath}        = $systemFilePath;
 		$c->{sourceFileIsProtected} = 1;
 	} else {
 		$c->addbadmessage($c->maketext('The achievement evaluator "[_1]" cannot be found.', $sourceFile));
@@ -90,21 +85,21 @@ sub initialize ($c) {
 	return;
 }
 
-# Append [ACHEVDIR] to filename.
-sub shortPath ($c, $file) {
+# Prepend [ACHEVDIR] to filename.
+sub addBasePath ($c, $file) {
 	return "[ACHEVDIR]/$file";
 }
 
-# saveFileChanges does the work of saving the file for both the save_handler
-# and the save_as_handler. Be sure that $outputFile is validated before calling
-# this method (defined, not blank, and does not contain a slash).
+# saveFileChanges does the work of saving the file for both the save_handler and the save_as_handler.
+# Validate $outputFile before calling this method to produce error messages.
 sub saveFileChanges ($c, $outputFile) {
 	my $ce = $c->ce;
 
-	# This shouldn't be needed, but one last check for safety.
-	return 0 if !$outputFile || $outputFile =~ /\//;
+	# One last validation check for safety.
+	return 0 unless $outputFile && isAchievementAssetSafe($outputFile);
 
 	my $outputFilePath = "$ce->{courseDirs}{achievements}/$outputFile";
+	surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
 	eval {
 		open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
 		print $OUTPUTFILE $c->stash->{achievementContents};
@@ -124,22 +119,21 @@ sub saveFileChanges ($c, $outputFile) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled for "[_1]".  '
 					. 'Changes must be saved to another file for viewing.',
-				$c->shortPath($outputFile)
+				$c->addBasePath($outputFile)
 			);
 		} else {
 			$errorMessage =
-				$c->maketext('Unable to write to "[_1]": [_2]', $c->shortPath($outputFile), $writeFileErrors);
+				$c->maketext('Unable to write to "[_1]": [_2]', $c->addBasePath($outputFile), $writeFileErrors);
 		}
 		$c->addbadmessage($errorMessage);
 	} else {
-		$c->addgoodmessage($c->maketext('Saved to file "[_1]".', $c->shortPath($outputFile)));
+		$c->addgoodmessage($c->maketext('Saved to file "[_1]".', $c->addBasePath($outputFile)));
 	}
 
 	return $writeFileErrors ? 0 : 1;
 }
 
-# This is only called after $c->{sourceFile} has been validated and no additional
-# validation is needed.
+# This is only called after $c->{sourceFile} has been validated and no additional validation is needed.
 sub save_handler ($c) {
 	my $ce = $c->ce;
 
@@ -171,20 +165,23 @@ sub save_as_handler ($c) {
 	if ($new_file_name !~ /\S/) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 		return;
-	} elsif ($new_file_name =~ /\//) {
-		$c->addbadmessage($c->maketext('Achievement files names cannot contain a slash.'));
-		return;
 	}
 
 	# Rescue the user in case they forgot to end the file name with .at.
-	$new_file_name =~ s/\.at$//;
-	$new_file_name .= '.at';
+	$new_file_name .= '.at' unless $new_file_name =~ /\.at$/;
+
+	# Reject filenames that end in a slash (previous rescue means they now end in "/.at") or unsafe paths.
+	if ($new_file_name =~ /\/\.at$/ || !isAchievementAssetSafe($new_file_name)) {
+		$c->addbadmessage(
+			$c->maketext('Achievement evaluator "[_1]" not saved because filename is unsafe.', $new_file_name));
+		return;
+	}
 
 	my $outputFilePath = "$ce->{courseDirs}{achievements}/$new_file_name";
 	if (-f $outputFilePath) {
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists.  File not saved.  No changes have been made.',
-			$c->shortPath($new_file_name)
+			$c->addBasePath($new_file_name)
 		));
 		return;
 	} elsif ($saveMode eq 'use_in_new' && !$targetAchievementID) {
@@ -207,7 +204,7 @@ sub save_as_handler ($c) {
 		if ($c->db->putAchievement($achievement)) {
 			$c->addgoodmessage($c->maketext(
 				'The evaluator for [_1] has been renamed to "[_2]".', $achievementName,
-				$c->shortPath($new_file_name)
+				$c->addBasePath($new_file_name)
 			));
 		} else {
 			$c->addbadmessage(
@@ -222,14 +219,14 @@ sub save_as_handler ($c) {
 		$c->db->addAchievement($achievement);
 		$c->addgoodmessage($c->maketext(
 			'Achievement [_1] created with evaluator "[_2]".', $targetAchievementID,
-			$c->shortPath($new_file_name)
+			$c->addBasePath($new_file_name)
 		));
 		$c->{achievement} = $achievement;
 	} elsif ($saveMode eq 'dont_use') {
 		# Don't change any achievements - just report.
 		$c->addgoodmessage($c->maketext(
 			'A new file has been created at "[_1]". Editing original achievement evaluator "[_2]".',
-			$c->shortPath($new_file_name),
+			$c->addBasePath($new_file_name),
 			$c->{sourceFile}
 		));
 		# FIXME: Currently editor cannot edit a file not associated with an achievement.
@@ -256,7 +253,7 @@ sub revert_handler ($c) {
 		$c->addbadmessage($c->maketext('Missing delete confirmation of course override. Not deleting.'));
 		return;
 	}
-	unless (-f $systemPath) {
+	unless ($sourceFile !~ /\// && -f $systemPath) {
 		$c->addbadmessage(
 			$c->maketext('Achievement evaluator "[_1]" is not a course override. Not deleting.', $sourceFile));
 		return;
@@ -264,7 +261,7 @@ sub revert_handler ($c) {
 	unless (-f $deletePath) {
 		$c->addbadmessage($c->maketext(
 			'Achievement evaluator course override "[_1]" does not exist. Not deleting.',
-			$c->shortPath($sourceFile)
+			$c->addBasePath($sourceFile)
 		));
 		return;
 	}
@@ -272,7 +269,7 @@ sub revert_handler ($c) {
 	unlink($deletePath);
 	$c->addgoodmessage($c->maketext(
 		'Course override "[_1]" deleted. Reverted to using system achievement.',
-		$c->shortPath($sourceFile)
+		$c->addBasePath($sourceFile)
 	));
 	$c->{sourceFilePath}             = $systemPath;
 	$c->{sourceFileIsProtected}      = 1;

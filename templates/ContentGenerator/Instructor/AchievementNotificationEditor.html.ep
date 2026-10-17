@@ -15,7 +15,9 @@
 % }
 %
 <div class="mb-2">
-	<i><%= maketext('Editing achievement notification template in file "[_1]"', $c->shortPath($c->{sourceFile})) =%></i>
+	<i>
+		<%= maketext('Editing achievement notification template in file "[_1]"', $c->addBasePath($c->{sourceFile})) =%>
+	</i>
 </div>
 <%= form_for current_route,
 	method  => 'POST',

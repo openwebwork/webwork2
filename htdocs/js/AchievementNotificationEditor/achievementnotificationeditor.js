@@ -39,8 +39,8 @@
 		const action = document.getElementById('current_action')?.value || '';
 		if (action === 'save_as') {
 			const target_file_input = document.getElementById('action.save_as.target_file_id');
-			const filename = target_file_input?.value || '';
-			if (filename.trim() === '') {
+			const filename = target_file_input?.value.trim() || '';
+			if (filename === '') {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['blank_filename_err_msg'], [target_file_input]);
@@ -48,7 +48,13 @@
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['change_filename_err_msg'], [target_file_input]);
-			} else if (filename.includes('/')) {
+			} else if (
+				filename.startsWith('/') ||
+				filename.startsWith('..') ||
+				filename.includes('/..') ||
+				filename.includes('../') ||
+				filename.endsWith('/')
+			) {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['invalid_filename_err_msg'], [target_file_input]);
