@@ -32,6 +32,9 @@ use constant PROBLEM_FIELDS =>
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status)];
 
 # These constants determine what order those fields should be displayed in.
+# Currently the code assumes the ordered set of gateway problem fields is a
+# subset of the default problem fields, is a subset of the jitar problem
+# fields. If this relationship changes, update the logic in fieldTable too.
 use constant HEADER_ORDER        => [qw(set_header hardcopy_header)];
 use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother showHintsAfter prPeriod)];
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value)];
@@ -78,7 +81,7 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 # Note that if "type" is "[min, max, step]" and "labels" is defined, then a select will be shown before the numeric
 # input with the labels as options.  The label values must not overlap with the numeric values (i.e., min must be
 # greater than all defined label values), and must be numeric. The labels must also include a "numeric" label.  This
-# label will be shown when the number input value is used. It is impomrtant that the choices should not include the
+# label will be shown when the number input value is used. It is important that the choices should not include the
 # special "numeric" value, and that all other choices have numeric values.
 
 # FIXME: The override "none" case needs to be revisited if it is ever used again.  It is definitely not implemented
@@ -90,7 +93,7 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 
 use constant BLANKPROBLEM => 'newProblem.pg';
 
-# Use the x function to mark strings for localizaton.
+# Use the x function to mark strings for localization.
 use constant FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
@@ -624,7 +627,8 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	my $isJitarSet  = defined $setType && $setType =~ /jitar/;
 
 	# Needed for gateway/jitar output
-	my $extraFields = '';
+	my $testFields  = '';
+	my $jitarFields = '';
 
 	# Are we editing a set version?
 	my $setVersion = defined($userRecord) && $userRecord->version_id;
@@ -634,21 +638,21 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	my $numLocations = 0;
 
 	# Needed for set-level proctor
-	my $procFields = '';
+	my $proctorFields = '';
 
 	my @fieldOrder;
+	my %gwProblemFields;
+	my %defaultProblemFields;
 	if (defined $problemID) {
-		if ($isJitarSet) {
-			@fieldOrder = @{ JITAR_PROBLEM_FIELD_ORDER() };
-		} elsif ($isGWset) {
-			@fieldOrder = @{ GATEWAY_PROBLEM_FIELD_ORDER() };
-		} else {
-			@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
-		}
+		%gwProblemFields      = map { $_ => 1 } @{ GATEWAY_PROBLEM_FIELD_ORDER() };
+		%defaultProblemFields = map { $_ => 1 } @{ PROBLEM_FIELD_ORDER() };
+		# Only show the additional jitar problem fields for jitar sets.
+		# The default problem fields also includes the gateway problem fields.
+		@fieldOrder = @{ $isJitarSet ? JITAR_PROBLEM_FIELD_ORDER() : PROBLEM_FIELD_ORDER() };
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
-		($extraFields, $ipFields, $numLocations, $procFields) =
+		($testFields, $jitarFields, $ipFields, $numLocations, $proctorFields) =
 			$c->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
@@ -691,6 +695,24 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	}
 
 	for my $field (@fieldOrder) {
+		my $extraClass = '';
+
+		if (defined $problemID) {
+			# Skip any problem fields that are not shown when editing a user's test.
+			next if $forUsers && $isGWset && !$gwProblemFields{$field};
+
+			# Determine what class to apply to the table row. Note that gateway problem
+			# fields are always shown, which is a subset of default problem fields which
+			# is a subset of jitar problem fields. Jitar only fields are ignored because
+			# they are only included for jitar sets and there is separate JavaScript logic
+			# to show/hide them based on problem nesting.
+			if ($forUsers || $gwProblemFields{$field}) {
+				# These are always shown or we are editing a user set.
+			} elsif ($defaultProblemFields{$field}) {
+				$extraClass = 'default-problem-row' . ($isGWset ? ' d-none' : '');
+			}
+		}
+
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 
 		# Don't show fields if that option isn't enabled.
@@ -740,13 +762,20 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 
 		unless ($properties{type} eq 'hidden') {
 			my @row = $c->fieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field);
-			push(@$rows, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @row)->join(''))) if @row > 1;
+			push(
+				@$rows,
+				$c->tag(
+					'tr',
+					$extraClass ? (class => $extraClass) : (),
+					$c->c(map { $c->tag('td', $_) } @row)->join('')
+				)
+			) if @row > 1;
 		}
 
 		# Finally, put in extra fields that are exceptions to the usual display mechanism.
 		push(@$rows, $ipFields) if $field eq 'restrict_ip' && $ipFields;
 
-		push(@$rows, $extraFields, $procFields) if $field eq 'assignment_type';
+		push(@$rows, $jitarFields, $testFields, $proctorFields) if $field eq 'assignment_type';
 	}
 
 	if (defined $problemID && $forOneUser) {
@@ -828,6 +857,9 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 
 	$globalValue //= '';
 	$userValue   //= $blankField;
+	if ($globalValue eq '' && defined $properties{default}) {
+		$globalValue = $properties{default};
+	}
 
 	if ($properties{convertby}) {
 		$globalValue = $globalValue / $properties{convertby} if $globalValue;
@@ -1051,13 +1083,13 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 
 # Return weird fields that are non-native or which are displayed for only some sets.
 sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) {
-	my $db = $c->{db};
-
-	my $extraFields = '';
+	my $db          = $c->db;
 	my $num_columns = 0;
 
-	if ($globalRecord->assignment_type() =~ /gateway/) {
-		# If this is a gateway set, set up a table of gateway fields.
+	# Create gateway set fields.
+	my $testFields = '';
+	if ($globalRecord->assignment_type =~ /gateway/ || !$forUsers) {
+		my $testClass = 'gw-test-row' . ($globalRecord->assignment_type =~ /gateway/ ? '' : ' d-none');
 		my @gwFields;
 
 		for my $gwfield (@{ GATEWAY_SET_FIELD_ORDER() }) {
@@ -1069,15 +1101,16 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $gwfield);
 			if (@fieldData && defined($fieldData[0]) && $fieldData[0] ne '') {
 				$num_columns = @fieldData if @fieldData > $num_columns;
-				push(@gwFields, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
+				push(@gwFields,
+					$c->tag('tr', class => $testClass, $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
 			}
 		}
 
-		$extraFields = $c->c(
+		$testFields = $c->c(
 			$num_columns
 			? $c->tag(
 				'tr',
-				class => 'table-primary',
+				class => "table-primary $testClass",
 				$c->tag(
 					'th',
 					class   => 'p-2',
@@ -1089,22 +1122,27 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			: '',
 			@gwFields
 		)->join('');
-	} elsif ($globalRecord->assignment_type eq 'jitar') {
-		# If this is a jitar set, set up a table of jitar fields.
-		my $jthdr = '';
+	}
+
+	# Create jitar set fields.
+	my $jitarFields = '';
+	if ($globalRecord->assignment_type eq 'jitar' || !$forUsers) {
+		my $jitarClass = 'jitar-row' . ($globalRecord->assignment_type eq 'jitar' ? '' : ' d-none');
+		my $jthdr      = '';
 		my @jtFields;
 		for my $jtfield (@{ JITAR_SET_FIELD_ORDER() }) {
 			my @fieldData = $c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, $jtfield);
 			if (@fieldData && defined($fieldData[0]) && $fieldData[0] ne '') {
 				$num_columns = @fieldData if (@fieldData > $num_columns);
-				push(@jtFields, $c->tag('tr', $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
+				push(@jtFields,
+					$c->tag('tr', class => $jitarClass, $c->c(map { $c->tag('td', $_) } @fieldData)->join('')));
 			}
 		}
-		$extraFields = $c->c(
+		$jitarFields = $c->c(
 			$num_columns
 			? $c->tag(
 				'tr',
-				class => 'table-primary',
+				class => "table-primary $jitarClass",
 				$c->tag(
 					'th',
 					class   => 'p-2',
@@ -1118,15 +1156,14 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 		)->join('');
 	}
 
-	my $procFields = '';
-
-	# If this is a proctored test, then add a dropdown menu to configure using a grade proctor
-	# and a proctored set password input.
-	if ($globalRecord->assignment_type eq 'proctored_gateway') {
-		$procFields = $c->c(
+	# Create proctor test fields.
+	my $proctorFields = '';
+	if ($globalRecord->assignment_type eq 'proctored_gateway' || !$forUsers) {
+		my $proctorClass = "gw-proctor-row" . ($globalRecord->assignment_type eq 'proctored_gateway' ? '' : ' d-none');
+		$proctorFields = $c->c(
 			$c->tag(
 				'tr',
-				class => 'table-primary',
+				class => "table-primary $proctorClass",
 				$c->tag(
 					'th',
 					class   => 'p-2',
@@ -1138,6 +1175,7 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			# Dropdown menu to configure using a grade proctor.
 			$c->tag(
 				'tr',
+				class => $proctorClass,
 				$c->c(
 					map { $c->tag('td', $_) }
 						$c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_auth_proctor')
@@ -1145,7 +1183,8 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			),
 			$forUsers ? '' : $c->include(
 				'ContentGenerator/Instructor/ProblemSetDetail/restricted_login_proctor_password_row',
-				globalRecord => $globalRecord
+				globalRecord => $globalRecord,
+				proctorClass => $proctorClass
 			)
 		)->join('');
 	}
@@ -1183,7 +1222,7 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 			globalLocations  => \@globalLocations
 		);
 	}
-	return ($extraFields, $ipFields, $numLocations, $procFields);
+	return ($testFields, $jitarFields, $ipFields, $numLocations, $proctorFields);
 }
 
 # This is a recursive function which displays the tree structure of jitar sets.
