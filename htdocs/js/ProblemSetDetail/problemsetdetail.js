@@ -396,7 +396,8 @@
 		)
 		.forEach((el) => new bootstrap.Tooltip(el));
 
-	// If editing for user(s), then disable drag and drop re-ordering of problems.
+	// If editing for user(s) or other users have begun working a test,
+	// then disable drag and drop re-ordering of problems.
 	if (document.getElementById('psd_list')?.classList.contains('disable_renumber')) {
 		Sortable.get(container)?.option('disabled', true);
 		container.querySelectorAll('.sortable-branch').forEach((list) => Sortable.get(list)?.option('disabled', true));

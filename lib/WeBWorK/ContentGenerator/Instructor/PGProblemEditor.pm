@@ -866,6 +866,14 @@ sub add_problem_handler ($c) {
 
 		my $set = $db->getGlobalSet($targetSetName);
 
+		if ($db->existsSetVersionWhere({ set_id => $targetSetName, user_id => { '!=' => $c->param('user') } })) {
+			$c->addbadmessage($c->maketext(
+				'Problems cannot be added to set [_1] because students have begun working the test.',
+				$targetSetName
+			));
+			return;
+		}
+
 		if ($set->assignment_type eq 'jitar') {
 			# For jitar sets new problems are put as top level problems at the end.
 			my @problemIDs =
@@ -1202,7 +1210,18 @@ sub save_as_handler ($c) {
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
 			my $setID = $c->param('action.save_as.targetSet');
-			if (defined $setID && $setID =~ /\S/) {
+			if (defined $setID
+				&& $setID =~ /\S/
+				&& $db->existsSetVersionWhere({ set_id => $setID, user_id => { '!=' => $c->param('user') } }))
+			{
+				$c->addbadmessage($c->maketext(
+					'A new file has been created at "[_1]" with the contents below. However, the problem has not '
+						. 'been added to set [_2] because students have begun working the test.',
+					$c->shortPath($outputFilePath),
+					$setID
+				));
+				$saveMode = 'new_independent_file';
+			} elsif (defined $setID && $setID =~ /\S/) {
 				$c->{setID} = $c->param('action.save_as.targetSet');
 				my $set = $db->getGlobalSet($c->{setID});
 

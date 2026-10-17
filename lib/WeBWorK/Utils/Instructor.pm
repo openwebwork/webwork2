@@ -425,7 +425,7 @@ sub unassignSetsFromUsers {
     assignProblemToAllSetUsers($GlobalProblem)
 
 Assigns the problem specified to all users to whom the problem's set is
-assigned. If any assignments fail, a list of failure messages is returned.
+assigned. The problem is also added to all existing versions of the set.
 
 =cut
 
@@ -434,6 +434,13 @@ sub assignProblemToAllSetUsers {
 
 	for my $userID ($db->listSetUsers($GlobalProblem->set_id)) {
 		assignProblemToUser($db, $userID, $GlobalProblem);
+	}
+
+	# A copy of the global problem is passed since assignProblemToUserSetVersion
+	# changes the source file of a problem that draws from a grouping problem.
+	for my $setVersion ($db->getSetVersionsWhere({ set_id => $GlobalProblem->set_id })) {
+		assignProblemToUserSetVersion($db, $setVersion->user_id, $setVersion, $db->newGlobalProblem($GlobalProblem),
+			{});
 	}
 
 	return;

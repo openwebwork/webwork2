@@ -112,6 +112,27 @@
 				. 'problem correct for all students.') =%>
 	</dd>
 
+	<dt><%= maketext('Editing Tests') %></dt>
+	<dd>
+		<p>
+			<%= maketext('Once students have begun working a test, problems can no longer be added to the test, '
+					. 'deleted from the test, or reordered. Doing so would change the results of tests students have '
+					. 'already taken. For the same reason, the assignment type cannot be changed to "Just in Time '
+					. 'Assessment and Review", since that renumbers the problems. Other changes, such as changing the '
+					. 'problem values or the source file of a problem, can still be made.') =%>
+		</p>
+		<p class="mb-0">
+			<%= maketext('If you are the only one who has taken the test (for example, while creating and checking '
+					. 'the test), then problems can still be added, deleted, and reordered, and the versions of the '
+					. 'test you have taken are updated with those changes. However, if the number of a problem '
+					. 'changes (by reordering problems or by deleting a problem and renumbering the remaining '
+					. 'problems), then the answers you previously entered for that problem in those versions will no '
+					. 'longer be shown with the problem. Problems added to versions of the test that have already been '
+					. 'completed cannot be worked and receive a score of zero in those versions. Starting a new '
+					. 'version of the test after making these changes avoids these issues.') =%>
+		</p>
+	</dd>
+
 	<dt><%= maketext('Rendering Problems') %></dt>
 	<dd>
 		<%= maketext('You can render a problem by clicking the "Render Problem" icon to the right of the problem '

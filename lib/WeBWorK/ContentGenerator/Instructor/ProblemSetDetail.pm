@@ -1017,7 +1017,14 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				"$recordType.$recordID.$field",
 				[
 					$forUsers && $userRecord ? [ $c->maketext('Set Default') => '' ] : (),
-					map { [ $labels{$_} => $_, $_ eq $value ? (selected => undef) : () ] } @{ $properties{choices} }
+					map { [
+						$labels{$_} => $_,
+						$_ eq $value ? (selected => undef) : (),
+						$field eq 'assignment_type'
+							&& $c->stash->{problemsLocked}
+							&& $_ ne $value
+							&& ($_ eq 'jitar' || $value eq 'jitar') ? (disabled => undef) : ()
+					] } @{ $properties{choices} }
 				],
 				id    => "$recordType.$recordID.${field}_id",
 				class => 'form-select form-select-sm'
@@ -1287,6 +1294,12 @@ sub handle_problem_numbers ($c, $newProblemNumbers, $db, $setID) {
 	my %problemHash;
 	my @setUsers = $db->listSetUsers($setID);
 	my %userProblemHash;
+	my %problemVersionHash;
+	for my $problemVersion ($db->getProblemVersionsWhere({ set_id => $setID })) {
+		my $j = $problemVersion->problem_id;
+		push(@{ $problemVersionHash{$j} }, $problemVersion)
+			if defined $newProblemNumbers->{$j} && $newProblemNumbers->{$j} != $j;
+	}
 
 	for my $j (keys %$newProblemNumbers) {
 		next if $newProblemNumbers->{$j} == $j;
@@ -1329,6 +1342,15 @@ sub handle_problem_numbers ($c, $newProblemNumbers, $db, $setID) {
 
 		}
 
+		for my $problemVersion (@{ $problemVersionHash{$j} // [] }) {
+			$problemVersion->problem_id($newProblemNumbers->{$j});
+			if ($db->existsProblemVersion(map { $problemVersion->$_ } qw(user_id set_id version_id problem_id))) {
+				$db->putProblemVersion($problemVersion);
+			} else {
+				$db->addProblemVersion($problemVersion);
+			}
+		}
+
 		# now we need to delete "orphan" problems that were not overwritten by something else
 		my $delete = 1;
 		foreach my $k (keys %$newProblemNumbers) {
@@ -1362,6 +1384,7 @@ sub initialize ($c) {
 	$c->stash->{globalProblems}      = {};
 	$c->stash->{userProblems}        = {};
 	$c->stash->{userProblemVersions} = {};
+	$c->stash->{problemsLocked}      = 0;
 
 	return unless ($authz->hasPermissions($user, 'access_instructor_tools'));
 	return unless ($authz->hasPermissions($user, 'modify_problem_sets'));
@@ -1375,6 +1398,12 @@ sub initialize ($c) {
 	my $setRecord = $db->getGlobalSet($setID);
 	$c->stash->{setRecord} = $setRecord;
 	return unless $setRecord;
+
+	# Problems cannot be added, deleted, or reordered for a test once other users have test versions, since that
+	# would change the results of those versions.  Such changes are allowed if the only versions are those of the
+	# current user (an instructor working on the test), and those versions are updated with the changes.
+	my $problemsLocked = $db->existsSetVersionWhere({ set_id => $setID, user_id => { '!=' => $user } });
+	$c->stash->{problemsLocked} = $problemsLocked;
 
 	my @editForUser = $c->param('editForUser');
 
@@ -1440,6 +1469,14 @@ sub initialize ($c) {
 
 	if ($c->param('submit_changes') && !$error) {
 		my $oldAssignmentType = $setRecord->assignment_type();
+
+		my $lockedChangeRejected = 0;
+		if ($problemsLocked
+			&& ($c->param('deleteProblem') || $c->param('force_renumber') || $c->param('add_blank_problem')))
+		{
+			$lockedChangeRejected = 1;
+			$c->param($_, undef) for ('deleteProblem', 'force_renumber', 'add_blank_problem');
+		}
 
 		# Save general set information (including headers)
 
@@ -1563,6 +1600,19 @@ sub initialize ($c) {
 					$setRecord->$field($param);
 				}
 			}
+
+			# Changing to or from a jitar set renumbers the problems.
+			if ($problemsLocked
+				&& $oldAssignmentType ne $setRecord->assignment_type
+				&& ($oldAssignmentType eq 'jitar' || $setRecord->assignment_type eq 'jitar'))
+			{
+				$setRecord->assignment_type($oldAssignmentType);
+				$c->addbadmessage($c->maketext(
+					'The assignment type cannot be changed to or from "Just in Time Assessment and Review" '
+						. 'once students have begun working the test.'
+				));
+			}
+
 			$db->putGlobalSet($setRecord);
 
 			if ($ce->{LTIVersion}
@@ -1931,7 +1981,19 @@ sub initialize ($c) {
 			}
 		}
 
-		$c->handle_problem_numbers(\%newProblemNumbers, $db, $setID) unless defined $c->param('undo_changes');
+		if ($problemsLocked) {
+			$lockedChangeRejected = 1
+				if grep { defined $newProblemNumbers{$_} && $newProblemNumbers{$_} != $_ } keys %newProblemNumbers;
+		} elsif (!defined $c->param('undo_changes')) {
+			$c->handle_problem_numbers(\%newProblemNumbers, $db, $setID);
+		}
+
+		if ($lockedChangeRejected) {
+			$c->addbadmessage($c->maketext(
+				'Students have begun working this test, so problems can no longer be added, deleted, '
+					. 'or reordered. Those changes were not saved.'
+			));
+		}
 
 		# Make problem numbers consecutive if required
 		if ($c->param('force_renumber')) {
