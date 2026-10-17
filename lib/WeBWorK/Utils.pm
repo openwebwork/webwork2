@@ -2,9 +2,10 @@ package WeBWorK::Utils;
 use Mojo::Base 'Exporter', -signatures;
 
 use Email::Sender::Transport::SMTP;
-use Mojo::JSON qw(from_json to_json);
-use Mojo::Util qw(b64_encode b64_decode encode decode);
-use Storable   qw(nfreeze thaw);
+use Mojo::JSON            qw(from_json to_json);
+use Mojo::Util            qw(b64_encode b64_decode encode decode);
+use WeBWorK::Utils::Files qw(path_is_subdir);
+use Storable              qw(nfreeze thaw);
 
 our @EXPORT_OK = qw(
 	runtime_use
@@ -34,6 +35,9 @@ our @EXPORT_OK = qw(
 	generateURLs
 	formatEmailSubject
 	getAssetURL
+	doesAchievementAssetExist
+	isAchievementAssetOverridden
+	getAchievementIconURL
 	points_stepsize
 	round_nearest_stepsize
 	x
@@ -565,6 +569,35 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	return "$ce->{webworkURLs}{htdocs}/$file";
 }
 
+sub doesAchievementAssetExist ($ce, $type, $asset) {
+	return 0 unless $asset;
+	my $bitstring = 0;
+	if ($type eq 'icon') {
+		return 0 unless path_is_subdir($asset, $ce->{courseDirs}{achievements_html}, 2);
+		$bitstring = 1  if $asset !~ /\// && -f "$ce->{webworkDirs}{achievementIcons}/$asset";
+		$bitstring += 2 if -f "$ce->{courseDirs}{achievements_html}/$asset";
+	} elsif ($type eq 'test') {
+		return 0 unless path_is_subdir($asset, $ce->{courseDirs}{achievements}, 2);
+		$bitstring = 1  if $asset !~ /\// && -f "$ce->{webworkDirs}{achievementEvaluators}/$asset";
+		$bitstring += 2 if -f "$ce->{courseDirs}{achievements}/$asset";
+	}
+	return $bitstring;
+}
+
+sub isAchievementAssetOverridden ($ce, $type, $asset) {
+	return doesAchievementAssetExist($ce, $type, $asset) == 3;
+}
+
+sub getAchievementIconURL ($ce, $icon) {
+	my $bitstring = doesAchievementAssetExist($ce, 'icon', $icon);
+	if ($bitstring > 1) {
+		return "$ce->{courseURLs}{achievements}/$icon";
+	} elsif ($bitstring) {
+		return "$ce->{webworkURLs}{achievementIcons}/$icon";
+	}
+	return "$ce->{webworkURLs}{achievementIcons}/defaulticon.png";
+}
+
 sub points_stepsize ($points) {
 	my $stepsize;
 	if ($points == 1) {
@@ -836,6 +869,38 @@ Usage: C<getAssetURL($ce, $file, $isThemeFile)>
 Returns the URL for the asset specified in C<$file>.  If C<$isThemeFile> is
 true, then the asset will be assumed to be located in a theme directory.  The
 parameter C<$ce> must be a valid C<WeBWorK::CourseEnvironment> object.
+
+=head2 doesAchievementAssetExist
+
+Usage: C<doesAchievementAssetExist($ce, $type, $asset)>
+
+This tests if an achievement icon, C<$type='icon'>, or an achievement evaluator,
+C<$type='test'>, file name C<$asset> exists in the WeBWorK system directory or
+in the course directory for the given course environment C<$ce>. It returns an
+integer (used as a bitstring) stating where the file exists.
+
+    0 = asset is an invalid name or doesn't exist.
+    1 = asset only exists in the WeBWorK system directory.
+    2 = asset only exists in the course directory.
+    3 = asset exists in both the WeBWorK system directory and course directory.
+
+=head2 isAchievementAssetOverridden
+
+Usage: C<isAchievementAssetOverridden($ce, $type, $asset)>
+
+This tests if an achievement icon, C<$type='icon'>, or an achievement evaluator,
+C<$type='test'>, file name C<$asset> is a system file being overridden by a course
+file of the same name in the given course environment C<$ce>.
+
+=head2 getAchievementIconURL
+
+Usage: C<getAchievementIconURL($ce, $icon)>
+
+Tests if an achievement C<$icon> file is a valid file name (or path to a
+subdirectory) for the given course environment C<$ce>. If the file is valid,
+it returns a URL to the course's achievement icon if it exists, otherwise
+it returns a URL to the WeBWorK system's achievement icon if it exists,
+otherwise it returns a URL to the system's default icon.
 
 =head2 points_stepsize
 

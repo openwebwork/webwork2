@@ -12,6 +12,7 @@ use DateTime;
 use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
+use WeBWorK::Utils::Files qw(path_is_subdir);
 use WeBWorK::WWSafe;
 
 our @EXPORT_OK = qw(checkForAchievements);
@@ -195,18 +196,31 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$counter    = $userAchievement->counter;
 		$maxCounter = $achievement->max_counter;
 
+		# Determine location of achievement evaluator.
+		my $sourceFilePath;
+		my $sourceFile = $achievement->test;
+		if (!$sourceFile) {
+			warn qq{No achievement evaluator provided for "$achievement_id".};
+			next;
+		} elsif (!path_is_subdir($sourceFile, $ce->{courseDirs}{achievements}, 2)) {
+			warn qq{Achievement evaluator filename "$sourceFile" for "$achievement_id" is unsafe.};
+			next;
+		} elsif (-f "$ce->{courseDirs}{achievements}/$sourceFile") {
+			$sourceFilePath = "$ce->{courseDirs}{achievements}/$sourceFile";
+		} elsif ($sourceFile !~ /\// && -f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
+			$sourceFilePath = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
+		} else {
+			warn qq{Could not find achievement evaluator file "$sourceFile" for "$achievement_id".};
+			next;
+		}
+
 		# Check the achievement using Safe.
-		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
-		if (-e $sourceFilePath) {
+		{
 			local $/ = undef;
 			open(my $SOURCE, '<', $sourceFilePath);
 			$source = <$SOURCE>;
 			close($SOURCE);
-		} else {
-			warn('Couldnt find achievement evaluator $sourceFilePath');
-			next;
 		}
-
 		my $earned = $compartment->reval($preamble . "\n" . $source);
 		warn "There were errors in achievement $achievement_id\n" . $@ if $@;
 
