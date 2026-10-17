@@ -258,6 +258,9 @@ sub reorderProblems ($c) {
 	my @problemList  = split(/,/, $c->req->param('probList'));
 	my $templatesDir = $c->ce->{courseDirs}{templates};
 
+	return $c->renderError("Problems in set $setID cannot be reordered because students have begun working the test.")
+		if $db->existsSetVersionWhere({ set_id => $setID });
+
 	for my $problem ($db->getAllGlobalProblems($setID)) {
 		my $recordFound = 0;
 		for (my $i = 0; $i < @problemList; ++$i) {
@@ -375,6 +378,9 @@ sub addProblem ($c) {
 	my $set       = $db->getGlobalSet($setID);
 	return $c->renderError("Set $setID not found.") unless $set;
 
+	return $c->renderError("Problems cannot be added to set $setID because students have begun working the test.")
+		if $db->existsSetVersionWhere({ set_id => $setID, user_id => { '!=' => $c->authen->{user_id} } });
+
 	if (!defined $problemID || $problemID eq '') {
 		if ($set->assignment_type eq 'jitar') {
 			# For jitar sets the next problem id is the next top level problem.
@@ -417,6 +423,9 @@ sub deleteProblem ($c) {
 
 	my $setID = $c->req->param('set_id');
 	my $path  = $c->req->param('problemPath');
+
+	return $c->renderError("Problems cannot be deleted from set $setID because students have begun working the test.")
+		if $c->db->existsSetVersionWhere({ set_id => $setID, user_id => { '!=' => $c->authen->{user_id} } });
 
 	my @problem = $c->db->getGlobalProblemsWhere({ set_id => $setID, source_file => $path });
 	return $c->renderError("Unable to find the problem in the set $setID with path $path.")

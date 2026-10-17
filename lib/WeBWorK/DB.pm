@@ -1934,6 +1934,7 @@ sub deleteUserProblem {
 	$where{user_id}    = $userID    if defined $userID;
 	$where{set_id}     = $setID     if defined $setID;
 	$where{problem_id} = $problemID if defined $problemID;
+	$self->{problem_version}->delete_where({%where});
 	return $self->{problem_user}->delete_where(\%where);
 }
 
