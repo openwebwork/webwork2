@@ -1,4 +1,17 @@
-% use WeBWorK::Utils qw(isAchievementAssetOverridden);
+% use WeBWorK::Utils qw(doesAchievementAssetExist);
+%
+% # Message for evaluator and icon filenames.
+% my $message = '';
+% if ($fieldName =~ /\.(test|icon)$/) {
+	% my $type      = $1;
+	% my $bitstring = doesAchievementAssetExist($ce, $type, $value);
+	% # Don't give a warning for an empty icon, since the default icon is used in that case.
+	% if ($bitstring == 0 && ($type ne 'icon' || $value)) {
+		% $message = maketext('Filename does not exist or is unsafe.');
+	% } elsif ($bitstring == 3) {
+		% $message = maketext('Course file overrides system default.');
+	% }
+% }
 %
 % if ($fieldName =~ /\.enabled$/) {
 	% # If the "enabled" checkbox is checked it returns a 1, if it is unchecked it returns nothing
@@ -22,11 +35,7 @@
 	% }
 % } elsif ($fieldName =~ /\.achievement_id$/) {
 	<%= $value =%>
-% } elsif ($fieldName =~ /\.(test|icon)$/ && ($value =~ /\// || isAchievementAssetOverridden($ce, $1, $value))) {
-	% my $message =
-		% $value =~ /\//
-		% ? maketext('Filenames cannot contain a slash, "/".')
-		% : maketext('Course file overrides system default.');
+% } elsif ($message) {
 	<div class="input-group">
 		<a
 			class="set-id-tooltip px-1"

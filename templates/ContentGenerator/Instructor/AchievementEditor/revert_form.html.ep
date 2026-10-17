@@ -3,7 +3,7 @@
 % if (isAchievementAssetOverridden($ce, 'test', $c->{sourceFile})) {
 	<div class="mb-2">
 		<%== maketext('Delete course override file [_1], and revert to using system achievement evaluator.',
-			tag('b', $c->shortPath($c->{sourceFile}))) %>
+			tag('b', $c->addBasePath($c->{sourceFile}))) %>
 	</div>
 	<div class="d-inline-block alert alert-danger p-1 mb-2">
 		<em><%= maketext('Deletion destroys course evaluator and is not undoable!') =%></em>

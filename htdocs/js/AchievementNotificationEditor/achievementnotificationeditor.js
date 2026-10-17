@@ -48,7 +48,7 @@
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['change_filename_err_msg'], [target_file_input]);
-			} else if (filename.includes('/')) {
+			} else if (filename.startsWith('/') || filename.includes('..') || filename.endsWith('/')) {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['invalid_filename_err_msg'], [target_file_input]);

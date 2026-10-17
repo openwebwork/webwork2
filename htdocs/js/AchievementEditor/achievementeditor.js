@@ -40,7 +40,7 @@
 		if (action === 'save_as') {
 			const target_file_input = document.getElementById('action.save_as.target_file_id');
 			const filename = (target_file_input?.value || '') + (target_file_input?.value.endsWith('.at') ? '' : '.at');
-			if (filename.trim() === '' || filename.trim() == '.at') {
+			if (filename.trim() === '.at') {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['blank_filename_err_msg'], [target_file_input]);
@@ -48,7 +48,7 @@
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['change_filename_err_msg'], [target_file_input]);
-			} else if (filename.includes('/')) {
+			} else if (filename.startsWith('/') || filename.includes('..') || filename.endsWith('/.at')) {
 				e.preventDefault();
 				e.stopPropagation();
 				show_errors(['invalid_filename_err_msg'], [target_file_input]);

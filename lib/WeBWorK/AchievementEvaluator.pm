@@ -12,6 +12,7 @@ use DateTime;
 use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
+use WeBWorK::Utils::Files qw(path_is_subdir);
 use WeBWorK::WWSafe;
 
 our @EXPORT_OK = qw(checkForAchievements);
@@ -201,12 +202,12 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		if (!$sourceFile) {
 			warn qq{No achievement evaluator provided for "$achievement_id".};
 			next;
-		} elsif ($sourceFile =~ /\//) {
-			warn qq{Achievement evaluator "$sourceFile" for "$achievement_id" contains a slash.};
+		} elsif (!path_is_subdir($sourceFile, $ce->{courseDirs}{achievements}, 2)) {
+			warn qq{Achievement evaluator filename "$sourceFile" for "$achievement_id" is unsafe.};
 			next;
 		} elsif (-f "$ce->{courseDirs}{achievements}/$sourceFile") {
 			$sourceFilePath = "$ce->{courseDirs}{achievements}/$sourceFile";
-		} elsif (-f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
+		} elsif ($sourceFile !~ /\// && -f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
 			$sourceFilePath = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
 		} else {
 			warn qq{Could not find achievement evaluator file "$sourceFile" for "$achievement_id".};

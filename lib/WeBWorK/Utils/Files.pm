@@ -15,7 +15,7 @@ our @EXPORT_OK = qw(
 
 sub surePathToFile ($start_directory, $path) {
 	# If the path starts with $start_directory (which is permitted but optional) remove this initial segment.
-	$path =~ s|^$start_directory/?|| if $path =~ m|^$start_directory|;
+	$path =~ s|^\Q$start_directory\E/?|| if $path =~ m|^\Q$start_directory\E|;
 
 	my $parent = path($start_directory);
 	my $child  = $parent->child($path);
@@ -46,7 +46,7 @@ sub listFilesRecursive ($dir, $match_qr, $prune_qr = '', $match_full = 0, $prune
 	find(
 		{
 			wanted => sub {
-				my $relFile = $File::Find::name =~ s|^$dir/?||r;
+				my $relFile = $File::Find::name =~ s|^\Q$dir\E/?||r;
 
 				if (-d $File::Find::name) {
 					# Skip unreadable directories (and broken symlinks, incidentally).
@@ -75,7 +75,9 @@ sub listFilesRecursive ($dir, $match_qr, $prune_qr = '', $match_full = 0, $prune
 }
 
 sub path_is_subdir ($path, $dir, $allow_relative = 0) {
-	unless ($path =~ /^\//) {
+	if ($path =~ /^\//) {
+		return 0 if $allow_relative == 2;
+	} else {
 		if ($allow_relative) {
 			$path = "$dir/$path";
 		} else {
@@ -85,11 +87,12 @@ sub path_is_subdir ($path, $dir, $allow_relative = 0) {
 
 	$path = canonpath($path);
 	$path .= '/' unless $path =~ m|/$|;
-	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
-
 	$dir = canonpath($dir);
 	$dir .= '/' unless $dir =~ m|/$|;
-	return 0 unless $path =~ m|^$dir|;
+
+	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
+	return 0 if $allow_relative == 2 && $path eq $dir;
+	return 0 unless $path =~ m|^\Q$dir\E|;
 
 	return 1;
 }
@@ -150,13 +153,15 @@ The method returns a list of paths relative to C<$dir>.
 
 Ensures that C<$path> refers to a location "inside" C<$dir>. If
 C<$allow_relative> is true and C<$path> is not absolute, it is assumed to be
-relative to C<$dir>.
+relative to C<$dir>. If C<$allow_relative = 2>, then the relative path is forced.
 
 The method of checking is rather rudimentary at the moment. First, upreferences
 ("..") are disallowed in C<$path>, then it is checked to make sure that some
-prefix of it matches C<$dir>.
+prefix of it matches C<$dir>. If C<$allow_relative = 2>, this also disallows
+C<$path> from starting with a slash, and rejects values that would make
+C<$dir/$path> equivalent to C<$dir> (such as ".").
 
-If either of these checks fails, a false value is returned. Otherwise, a true
+If any of these checks fails, a false value is returned. Otherwise, a true
 value is returned.
 
 =head2 getHumanReadableFileSize
