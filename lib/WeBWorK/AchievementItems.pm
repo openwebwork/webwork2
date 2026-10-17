@@ -1,7 +1,7 @@
 package WeBWorK::AchievementItems;
 use Mojo::Base -signatures;
 
-use WeBWorK::Utils qw(nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::Achievements qw(nfreeze_base64 thaw_base64);
 
 # List of available achievement items.  Make sure to add any new items to this list. Furthermore, the elements in this
 # list have to match the class name of the achievement item classes loaded below.

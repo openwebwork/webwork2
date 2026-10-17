@@ -32,8 +32,9 @@ links to edit the evaluator and the individual user data.
 use Mojo::File;
 use Text::CSV;
 
-use WeBWorK::Utils        qw(sortAchievements x);
-use WeBWorK::Utils::Files qw(surePathToFile);
+use WeBWorK::Utils               qw(x);
+use WeBWorK::Utils::Files        qw(surePathToFile);
+use WeBWorK::Utils::Achievements qw(sortAchievements isAchievementAssetSafe);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
@@ -56,11 +57,10 @@ use constant FORM_TITLES => {
 	cancel_export => x('Cancel Export')
 };
 
-# These fields store the filename of an achievement asset, which cannot contain a slash.
+# These fields store the filename of an achievement asset.
 use constant FILENAME_FIELDS => {
-	test           => 'achievement evaluator',
-	icon           => 'icon',
-	email_template => 'email template'
+	test => x('achievement evaluator'),
+	icon => x('icon'),
 };
 
 sub initialize ($c) {
@@ -453,11 +453,10 @@ sub import_handler ($c) {
 		$achievement->description($$data[5]);
 		$achievement->points($$data[6]);
 		$achievement->max_counter($$data[7]);
-		$achievement->test($$data[8]                           =~ /\// ? '' : $$data[8]);    # Don't allow / in paths.
-		$achievement->icon($$data[9]                           =~ /\// ? '' : $$data[9]);
-		$achievement->email_template(!$$data[10] || $$data[10] =~ /\// ? '' : $$data[10]);
-
-		$achievement->enabled($assign eq "all" ? 1 : 0);
+		$achievement->test($$data[8] && isAchievementAssetSafe($$data[8])             ? $$data[8]  : '');
+		$achievement->icon($$data[9] && isAchievementAssetSafe($$data[9])             ? $$data[9]  : '');
+		$achievement->email_template($$data[10] && isAchievementAssetSafe($$data[10]) ? $$data[10] : '');
+		$achievement->enabled($assign eq "all"                                        ? 1          : 0);
 
 		# Add achievement
 		$db->addAchievement($achievement);
@@ -578,6 +577,7 @@ sub cancel_edit_handler ($c) {
 # Handler for saving edits.
 sub save_edit_handler ($c) {
 	my $db = $c->db;
+	my $ce = $c->ce;
 
 	my @selectedAchievementIDs = @{ $c->{selectedAchievementIDs} };
 
@@ -590,6 +590,9 @@ sub save_edit_handler ($c) {
 
 		# Update fields.
 		for my $field ($Achievement->NONKEYFIELDS()) {
+			# email_template is not editable in this form. Skip.
+			next if $field eq 'email_template';
+
 			my $param = "achievement.${achievementID}.${field}";
 
 			if ($field eq 'assignment_type') {
@@ -598,16 +601,31 @@ sub save_edit_handler ($c) {
 			} elsif (defined $c->param($param)) {
 				my $value = $c->param($param);
 
-				# Filename fields test, icon, and email_template cannot contain a slash.
-				if (FILENAME_FIELDS->{$field} && $value =~ /\//) {
+				# Trim any initial/final white space.
+				$value =~ s/^\s*//;
+				$value =~ s/\s*$//;
+
+				# Filename fields test and icon must be safe paths, and test cannot be empty.
+				# Note this doesn't test the existence of any file.
+				if (FILENAME_FIELDS->{$field}
+					&& (!$value ? $field eq 'test' : ($value =~ /\/$/ || !isAchievementAssetSafe($value))))
+				{
 					# Skip filename error message for previous saved values.
-					$c->addbadmessage($c->maketext(
-						'Filename "[_1]" for "[_2]" in achievement "[_3]" contains a slash, "/", and is invalid. '
-							. 'Not updating.',
-						$value, FILENAME_FIELDS->{$field},
-						$achievementID
-					))
-						unless $value eq $Achievement->$field;
+					unless ($value eq $Achievement->$field) {
+						if ($value) {
+							$c->addbadmessage($c->maketext(
+								'Filename "[_1]" for "[_2]" in achievement "[_3]" is unsafe. Not updating.',
+								$value, FILENAME_FIELDS->{$field},
+								$achievementID
+							));
+						} else {
+							$c->addbadmessage($c->maketext(
+								'Empty filename for "[_1]" in achievement "[_2]" is not allowed. Not updating.',
+								FILENAME_FIELDS->{$field},
+								$achievementID
+							));
+						}
+					}
 				} else {
 					$Achievement->$field($value);
 				}

@@ -1,8 +1,7 @@
-% use Mojo::File qw(path);
+% use WeBWorK::Utils::Files qw(listFilesRecursive);
 %
-% my $notifications =
-	% path($ce->{courseDirs}{achievement_notifications})->list->grep(qr/\.epl?$/)->map('basename')->to_array;
-% last unless @$notifications;
+% my @notifications = sort(listFilesRecursive($ce->{courseDirs}{achievement_notifications}, qr/\.epl?$/));
+% last unless @notifications;
 <div class="row align-items-center mb-2">
 	<%= label_for
 		'action.existing.target_file_id' => maketext('Use existing template:'),
@@ -13,7 +12,7 @@
 				map { [
 					$_ =~ s/(\.html|\.txt)?\.epl?//r => $_,
 					$_ eq $c->{sourceFile} ? (selected => undef) : ()
-				] } @$notifications
+				] } @notifications
 			],
 			id    => 'action.existing.target_file_id',
 			class => 'form-select form-select-sm d-inline w-auto',
