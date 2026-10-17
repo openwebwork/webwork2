@@ -19,7 +19,7 @@
 <p class="mb-0">
 	<%= maketext('Click on the homework set links to edit the grades for this individual student on the homework set. '
 			. '(The grade of each problem is called the "status".) You can also change the number of allowed attempts '
-			. q{and further modify the individual student's homework set.) You will also be able to change a student's }
+			. q{and further modify the individual student's homework set. You will also be able to change a student's }
 			. q{seed which determines the individual values used in the individual version of the student's problem }
 			. 'and the weight (how much a problem counts toward the grade.)') =%>
 </p>
