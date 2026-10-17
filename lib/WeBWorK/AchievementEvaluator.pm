@@ -9,7 +9,7 @@ use Mojo::Base 'Exporter', -signatures;
 
 use DateTime;
 
-use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::Achievements      qw(getAchievementAssetPaths sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
 use WeBWorK::WWSafe;
@@ -196,20 +196,10 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$maxCounter = $achievement->max_counter;
 
 		# Determine location of achievement evaluator.
-		my $sourceFilePath;
-		my $sourceFile = $achievement->test;
-		if (!$sourceFile) {
-			warn qq{No achievement evaluator provided for "$achievement_id".};
-			next;
-		} elsif ($sourceFile =~ /\//) {
-			warn qq{Achievement evaluator "$sourceFile" for "$achievement_id" contains a slash.};
-			next;
-		} elsif (-f "$ce->{courseDirs}{achievements}/$sourceFile") {
-			$sourceFilePath = "$ce->{courseDirs}{achievements}/$sourceFile";
-		} elsif (-f "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile") {
-			$sourceFilePath = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
-		} else {
-			warn qq{Could not find achievement evaluator file "$sourceFile" for "$achievement_id".};
+		my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($ce, 'test', $achievement->test);
+		my $sourceFilePath = $courseFilePath // $systemFilePath;
+		unless ($sourceFilePath) {
+			warn 'Invalid achievement evaluator file "' . $achievement->test . qq{" for "$achievement_id".};
 			next;
 		}
 

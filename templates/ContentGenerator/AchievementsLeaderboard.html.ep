@@ -1,4 +1,4 @@
-% use WeBWorK::Utils qw(getAchievementIconURL);
+% use WeBWorK::Utils::Achievements qw(getAchievementIconURL);
 %
 % unless ($c->{leaderBoardRows}) {
 	<div class="alert alert-danger p-1 mb-0">
