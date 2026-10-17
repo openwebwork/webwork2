@@ -1,25 +1,53 @@
+% use WeBWorK::Utils qw(getAssetURL);
+%
+% content_for js => begin
+	<%= javascript getAssetURL($ce, 'js/AchievementUserEditor/achievementusereditor.js'), defer => undef =%>
+% end
+%
 % unless ($authz->hasPermissions($authen->{user_id}, 'edit_achievements')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to edit achievements.') %></div>
 	% last;
 % }
 %
+% my $numberAssignedUsers = scalar(keys %$userAchievementRecords);
+% my $numberUsers         = scalar(@$userRecords);
+%
+<p class="fw-bold">
+	<%= maketext('Achievement [_1] assigned to [_2] out of [_3] users.',
+		$achievementID, $numberAssignedUsers, $numberUsers) =%>
+</p>
 <%= form_for current_route, method => 'post', name => 'user-achievement-form', id => 'user-achievement-form', begin =%>
-	% # Assign to everyone message
+	<%= $c->hidden_authen_fields =%>
+	<%= hidden_field 'allow_unassign' => '' =%>
+	%
+	% # Add a hidden submit button so hitting "Enter" will "Save" instead of assigning to all users.
+	<%= submit_button maketext('Save'),
+		name          => 'assignToSelected',
+		class         => 'visually-hidden',
+		tabindex      => -1,
+		'aria-hidden' => 'true' =%>
+	%
 	<div class="my-2">
-		<%= submit_button maketext('Assign to All Current Users'), name => 'assignToAll', class => 'btn btn-primary' =%>
-		<i><%= maketext('This action will not overwrite existing users.') %></i>
+		% if ($numberAssignedUsers < $numberUsers) {
+			<%= submit_button maketext('Assign to All Users'),
+				name  => 'assignToAll',
+				class => 'btn btn-primary' =%>
+		% }
+		% if ($numberAssignedUsers > 0) {
+			<%= submit_button maketext('Unassign from All Users'),
+				name  => 'unassignFromAll',
+				class => 'btn btn-primary' =%>
+		% }
 	</div>
-	<div class="alert alert-danger p-1 mb-2">
-		<div class="mb-1"><%= maketext('Do not uncheck students, unless you know what you are doing.') =%></div>
-		<div><%= maketext('There is NO undo for unassigning students.') %></div>
-	</div>
-	<p>
-		<%== maketext(
-			q{When you unassign by unchecking a student's name, you destroy all of the data for achievement [_1] }
-				. 'for this student. Make sure this is what you want to do.',
-			tag('b', $achievementID)
-		) =%>
+	<p class="mb-2">
+		<%= maketext(
+			'Use the "Assigned" checkboxes to assign/unassign this achievement. Unassigning the achievement will '
+				. 'delete all of the data for the associated user and cannot be undone.') =%>
 	</p>
+	<div class="mb-2 submit-buttons-container">
+		<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+		<button name="reset-button" type="button" class="btn btn-primary"><%= maketext('Reset') %></button>
+	</div>
 	%
 	% # Output table
 	<div class="table-responsive">
@@ -35,47 +63,60 @@
 				</tr>
 			</thead>
 			<tbody class="table-group-divider">
-				% # Output row for user
+				% # Output row for user.
 				% for my $userRecord (@$userRecords) {
-					% my $user            = $userRecord->user_id;
-					% my $userAchievement = $userAchievementRecords->{$user};
-					% my $prettyName      = $userRecord->sortable_name || $user;
+					% my $userID          = $userRecord->user_id;
+					% my $userAchievement = $userAchievementRecords->{$userID};
+					% my $username        = $userRecord->sortable_name;
+					% param("$userID.achievement", undef);
 					%
 					<tr>
 						<td class="text-center">
-							<input
-								type="checkbox"
-								name="selected"
-								id="<%= $user %>.assigned"
-								value="<%= $user %>"
-								class="form-check-input"
-								<%= $userAchievement ? 'checked' : '' %>
-							>
+							<%= check_box
+								"$userID.achievement" => 'assigned',
+								id                    => "$userID.achievement",
+								class                 => 'form-check-input',
+								data                  => {
+									username => join(' ', $username || (), "($userID)"),
+									defined $userAchievement ? (is_assigned => 1) : (),
+								},
+								defined $userAchievement ? (checked => undef) : () =%>
+							% if (defined $userAchievement) {
+								<%= hidden_field "$userID.achievement" => 'delete' =%>
+							% }
 						</td>
-						<td><%= label_for "$user.assigned" => $user %></td>
-						<td><%= $prettyName %></td>
+						<td>
+							<div class="<%= $ce->status_abbrev_to_name($userRecord->status) || '' %>">
+								<%= label_for "$userID.achievement" => $userID =%>
+							</div>
+						</td>
+						<td><%= $username || $userID =%></td>
 						<td class="text-center"><%= $userRecord->section %></td>
 						% if ($userAchievement) {
 							<td class="text-center">
 								<input
 									type="checkbox"
-									name="<%= $user %>.earned"
+									name="<%= $userID %>.earned"
 									value="1"
 									aria-labelledby="earned_header"
 									class="form-check-input"
+									data-is-earned="<%= $userAchievement->earned ? 1 : 0 %>"
 									<%= $userAchievement->earned ? 'checked' : '' %>
 								>
+								<%= hidden_field "$userID.earned_check" => $userAchievement->earned ? 1 : 0 =%>
 							</td>
 							<td class="text-center">
 								<input
-									name="<%= $user %>.counter"
+									name="<%= $userID %>.counter"
 									value="<%= $userAchievement->counter %>"
 									type="number"
 									min="0"
 									aria-labelledby="counter_header"
 									size="6"
 									class="form-control form-control-sm"
+									data-initial-count="<%= $userAchievement->counter %>"
 								>
+								<%= hidden_field "$userID.counter_check" => $userAchievement->counter =%>
 							</td>
 						% } else {
 							<td></td>
@@ -86,34 +127,49 @@
 			</tbody>
 		</table>
 	</div>
-	%
-	<%= $c->hidden_authen_fields =%>
-	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
-	%
-	% # Output unassign from all button.
-	<hr>
-	<div>
-		<div class="alert alert-danger p-1 mb-3">
-			<%= maketext(
-				'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
-					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-					. 'of the data for achievement [_1] for this student.',
-				$achievementID
-			) =%>
-		</div>
-		<div class="d-flex align-items-center">
-			<%= submit_button maketext('Unassign from All Users'),
-				name  => 'unassignFromAll',
-				class => 'btn btn-primary' =%>
-			<label class="form-check-label">
-				<%= radio_button unassignFromAllSafety => 0, checked => undef, class => 'form-check-input mx-1' =%>
-				<%= maketext('Read only') =%>
-			</label>
-			<label class="form-check-label">
-				<%= radio_button unassignFromAllSafety => 1, class => 'form-check-input mx-1' =%>
-				<%= maketext('Allow unassign') =%>
-			</label>
+	<div class="mb-2 submit-buttons-container">
+		<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+		<button name="reset-button" type="button" class="btn btn-primary"><%= maketext('Reset') %></button>
+	</div>
+	<div
+		class="modal fade"
+		id="unassign_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="unassign_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="unassign_confirm_dialog_title">
+						<%= maketext('Unassign achievement [_1]', $achievementID) =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Warning: Unassigning an achievement will destroy all user data for that '
+								. 'achievement and cannot be undone!') =%>
+					</div>
+					<p class="mb-1">
+						<%= maketext('Unassign achievement [_1] from the following users:', $achievementID) =%>
+					</p>
+					<ul id="unassign_confirm_user_list" class="mb-0"></ul>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="unassign_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Unassign') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
-	<hr>
 <% end =%>

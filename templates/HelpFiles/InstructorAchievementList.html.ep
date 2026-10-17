@@ -101,9 +101,9 @@
 
 	<dt><%= maketext('Assign achievements') %></dt>
 	<dd>
-		<%= maketext('You can assign selected achievements to all users by using the "Assign" action action and '
-				. 'selecting which achievements to assign.  You can select which users to assign/unassign to an '
-				. 'achievement by clicking on the link in the "Edit Users" column.') =%>
+		<%= maketext('You can assign selected achievements to all users by using the "Assign" action and selecting '
+				. 'which achievements to assign.  You can select which users to assign/unassign to an achievement '
+				. 'by clicking on the link in the "Edit Users" column.') =%>
 	</dd>
 
 	<dt><%= maketext('Export achievement data') %></dt>
