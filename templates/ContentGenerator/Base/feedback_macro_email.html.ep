@@ -1,4 +1,5 @@
-% my $includeScreenshot = $ce->{mail}{feedbackScreenshot} && $params->{problem};
+% my $includeScreenshot =
+	% $ce->{mail}{feedbackScreenshot} && $params->{problem} && !defined $params->{problemError};
 <%= form_for 'feedback',
 	method => 'POST',
 	$includeScreenshot ? (data => { screenshot_max_size => $ce->{mail}{maxAttachmentSize} * 1000000 }) : (),

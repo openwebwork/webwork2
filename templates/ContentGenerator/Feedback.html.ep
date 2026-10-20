@@ -25,7 +25,8 @@
 % } else {
 	<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data', begin =%>
 		<%= $c->hidden_authen_fields =%>
-		<%= $c->hidden_fields(qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions)) =%>
+		<%= $c->hidden_fields(
+			qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions problemError)) =%>
 		%
 		<div class="mb-3">
 			<%= maketext(

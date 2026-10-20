@@ -23,6 +23,12 @@
 <%== $feedback %>
 
 % }
+% if ($problemError) {
+<%= maketext('The problem failed to render with the following error:') %>
+
+<%== $problemError %>
+
+% }
 % if ($screenshotCID) {
 <%= maketext('A screenshot of the problem is attached.') %>
 
