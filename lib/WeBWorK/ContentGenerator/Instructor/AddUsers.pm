@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding user
 
 =cut
 
-use WeBWorK::Utils             qw/cryptPassword trim_spaces/;
+use WeBWorK::Utils             qw/cryptPassword trim_spaces isValidEmailAddress/;
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers);
 
 sub initialize ($c) {
@@ -48,7 +48,11 @@ sub initialize ($c) {
 			$newUser->comment(trim_spaces($c->param("comment_$i")));
 			$newUser->status($c->param("status_$i"));
 
-			eval { $db->addUser($newUser) };
+			eval {
+				die $c->maketext('Invalid email address.') . "\n"
+					if $newUser->email_address ne '' && !isValidEmailAddress($newUser->email_address);
+				$db->addUser($newUser);
+			};
 			if ($@) {
 				push(
 					@{ $c->{studentEntryReport} },
