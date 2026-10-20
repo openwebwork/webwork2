@@ -25,7 +25,7 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	return '' if $newval eq $oldval;
 
 	# This is a new value.  Turn it back into a string and return it.
-	return "\$$self->{var} = [" . join(',', map {"'$_'"} map { $_ =~ s/['"`]//gr } split(',', $newval)) . "];\n";
+	return "\$$self->{var} = [" . join(',', map { $self->quote($_) } split(',', $newval)) . "];\n";
 }
 
 sub entry_widget ($self, $default, $is_secret = 0) {
