@@ -27,6 +27,7 @@ use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients format
 # showCorrectAnswers (if from Problem)
 # showHints (if from Problem)
 # showSolutions (if from Problem)
+# problemError (if from Problem and the problem failed to render)
 # screenshot (if from Problem and $ce->{mail}{feedbackScreenshot} is set)
 # includeScreenshot
 
@@ -158,6 +159,7 @@ sub initialize ($c) {
 			set           => $set,
 			verbosity     => $verbosity,
 			screenshotCID => $screenshotCID,
+			problemError  => $problem ? substr($c->param('problemError') // '', 0, 5000) : '',
 			remote_host   => $c->tx->remote_address || 'UNKNOWN',
 			remote_port   => $c->tx->remote_port    || 'UNKNOWN'
 		);
