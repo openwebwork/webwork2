@@ -10,9 +10,14 @@ WeBWorK::ContentGenerator::Grades - Display statistics by user.
 use WeBWorK::Utils                    qw(wwRound);
 use WeBWorK::Utils::DateTime          qw(before);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
-use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display restricted_set_message);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::HTML::StudentNav         qw(studentNav);
+use WeBWorK::Utils::Sets              qw(
+	grade_set
+	format_set_name_display
+	restricted_set_message
+	test_version_is_complete
+);
 use WeBWorK::Localize;
 
 sub initialize ($c) {
@@ -253,22 +258,22 @@ sub displayStudentGrades ($c) {
 				next;
 			}
 
-			# Only show link if the problems can be seen, and it is not a proctored test
-			# since students cannot directly access them until after it is graded, at
-			# which time it reverts to a normal test.
+			my $hideScore = defined $set->hide_score
+				&& ($set->hide_score eq 'Y' || $set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date);
+
+			# Only show link if the problems can be seen, and it is not an incomplete proctored test version, since
+			# students cannot access those without proctor authorization.  If the score is shown, then the problems
+			# for the version are obtained below and are used to determine if the version is complete.
 			$item->{link} = ''
-				if $set->assignment_type eq 'proctored_gateway'
-				|| (
+				if (
 					defined $set->hide_work
 					&& ($set->hide_work eq 'Y'
 						|| $set->hide_work eq 'BeforeAnswerDate' && time < $set->answer_date)
-				);
+				)
+				|| ($hideScore && $set->assignment_type eq 'proctored_gateway' && !test_version_is_complete($c, $set));
 
 			# If the set has hide_score set, then nothing left to do.
-			next
-				if defined $set->hide_score
-				&& ($set->hide_score eq 'Y'
-					|| $set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date);
+			next if $hideScore;
 
 			# This is a test version, and the scores can be shown, so also show score of template set.
 			$allItems{$setTemplateID}{message}    = '' if $allItems{$setTemplateID}{hide_score};
@@ -278,6 +283,11 @@ sub displayStudentGrades ($c) {
 		my ($total_right, $total, $problem_scores, $problem_incorrect_attempts, $problem_records) =
 			grade_set($db, $set, $studentID, $setIsVersioned, 1);
 		$total_right = wwRound(2, $total_right);
+
+		$item->{link} = ''
+			if $setIsVersioned
+			&& $set->assignment_type eq 'proctored_gateway'
+			&& !test_version_is_complete($c, $set, $problem_records->[0]);
 
 		# Save set grades.
 		$item->{grade_total}       = $total;
