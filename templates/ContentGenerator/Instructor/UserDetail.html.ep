@@ -1,3 +1,4 @@
+% use Mojo::Util     qw(xml_escape);
 % use WeBWorK::Utils qw(getAssetURL);
 %
 % content_for css => begin
@@ -53,7 +54,7 @@
 			% )
 		% );
 		<%== maketext('Edit [_1] for [_2] ([_3]) who has been assigned [_4] sets.',
-			$link, $userName, $userID, scalar(keys %{ $c->{userSetRecords} })) =%>
+			$link, xml_escape($userName), $userID, scalar(keys %{ $c->{userSetRecords} })) =%>
 	</h2>
 </div>
 %
