@@ -23,6 +23,10 @@
 <%== $feedback %>
 
 % }
+% if ($screenshotCID) {
+<%= maketext('A screenshot of the problem is attached.') %>
+
+% }
 % if ($problem && $verbosity >= 1) {
 
 ***** <%= maketext('Data about the problem:') %> *****
