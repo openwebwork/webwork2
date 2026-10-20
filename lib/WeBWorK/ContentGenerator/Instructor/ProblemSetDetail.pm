@@ -1023,7 +1023,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 						$field eq 'assignment_type'
 							&& $c->stash->{problemsLocked}
 							&& $_ ne $value
-							&& ($_ eq 'jitar' || $value eq 'jitar') ? (disabled => undef) : ()
+							&& $_ !~ /gateway/ ? (disabled => undef) : ()
 					] } @{ $properties{choices} }
 				],
 				id    => "$recordType.$recordID.${field}_id",
@@ -1601,15 +1601,15 @@ sub initialize ($c) {
 				}
 			}
 
-			# Changing to or from a jitar set renumbers the problems.
+			# Changing a test that students have started to work into a jitar or homework set is not allowed.
 			if ($problemsLocked
 				&& $oldAssignmentType ne $setRecord->assignment_type
-				&& ($oldAssignmentType eq 'jitar' || $setRecord->assignment_type eq 'jitar'))
+				&& $setRecord->assignment_type !~ /gateway/)
 			{
 				$setRecord->assignment_type($oldAssignmentType);
 				$c->addbadmessage($c->maketext(
-					'The assignment type cannot be changed to or from "Just in Time Assessment and Review" '
-						. 'once students have begun working the test.'
+					'Once students have begun working a test, the assignment type can only be changed to "Test" or '
+						. '"Proctored Test".'
 				));
 			}
 
