@@ -60,7 +60,7 @@
 			<%= text_area
 				feedback    => '',
 				id          => 'feedback',
-				rows        => '20',
+				rows        => '10',
 				class       => 'form-control',
 				placeholder => maketext('Compose Email Message'),
 				required    => undef =%>
@@ -77,6 +77,27 @@
 					accept => 'image/*,application/pdf,application/zip,text/plain,text/csv' =%>
 			</div>
 		</div>
+		% # Screenshot
+		% if (my $screenshot = stash 'screenshot') {
+			<div class="mb-3">
+				<%= hidden_field screenshot => $screenshot =%>
+				<div class="form-check mb-2">
+					<%= check_box
+						includeScreenshot => 1,
+						id                => 'includeScreenshot',
+						class             => 'form-check-input' =%>
+					<%= label_for
+						includeScreenshot => maketext(
+							'Include this screenshot of the problem (only if it would help explain your message)'),
+						class => 'form-check-label' =%>
+				</div>
+				<img
+					src="<%= $screenshot %>"
+					class="img-fluid border rounded"
+					alt="<%= maketext('Screenshot of the problem') %>"
+				>
+			</div>
+		% }
 		<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary mb-1' =%>
 	<% end =%>
 	% if ($returnURL) {

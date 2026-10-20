@@ -9,6 +9,8 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 
 use Data::Dumper;
 use Email::Stuffer;
+use GD;
+use MIME::Base64 qw(decode_base64 encode_base64);
 use Try::Tiny;
 
 use WeBWorK::Upload;
@@ -25,6 +27,8 @@ use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients format
 # showCorrectAnswers (if from Problem)
 # showHints (if from Problem)
 # showSolutions (if from Problem)
+# screenshot (if from Problem and $ce->{mail}{feedbackScreenshot} is set)
+# includeScreenshot
 
 # state data sent
 #
@@ -76,6 +80,32 @@ sub initialize ($c) {
 
 	return unless $c->stash->{numRecipients};
 
+	# Get the screenshot of the problem if one was sent.
+	my $screenshot;
+	if ($ce->{mail}{feedbackScreenshot}
+		&& $problem
+		&& ($c->param('screenshot') // '') =~ m{^data:image/png;base64,([A-Za-z0-9+/]+={0,2})$})
+	{
+		$screenshot = decode_base64($1);
+		if (substr($screenshot, 0, 8) eq "\x89PNG\r\n\x1a\n"
+			&& length($screenshot) <= $ce->{mail}{maxAttachmentSize} * 1000000)
+		{
+			# Reduce the size of the screenshot when it is first received from the problem page.
+			if (!defined $c->param('sendFeedback')) {
+				my $image = eval { GD::Image->newFromPngData($screenshot, 1) };
+				if ($image) {
+					$image->saveAlpha(1);
+					$image->trueColorToPalette(0, 256);
+					my $png = $image->png(9);
+					$screenshot = $png if length($png) < length($screenshot);
+				}
+			}
+			$c->stash->{screenshot} = 'data:image/png;base64,' . encode_base64($screenshot, '');
+		} else {
+			$screenshot = undef;
+		}
+	}
+
 	if (defined $c->param('sendFeedback')) {
 		# Get verbosity level.
 		my $verbosity = $ce->{mail}{feedbackVerbosity};
@@ -117,15 +147,19 @@ sub initialize ($c) {
 			$user    ? $user->recitation    : ''
 		);
 
+		$screenshot = undef unless $c->param('includeScreenshot');
+		my $screenshotCID = $screenshot ? sprintf('screenshot.%d.%X@webwork', time, int rand 2**32) : undef;
+
 		my %data = (
-			user         => $user,
-			emailableURL => $emailableURL,
-			feedback     => $feedback,
-			problem      => $problem,
-			set          => $set,
-			verbosity    => $verbosity,
-			remote_host  => $c->tx->remote_address || 'UNKNOWN',
-			remote_port  => $c->tx->remote_port    || 'UNKNOWN'
+			user          => $user,
+			emailableURL  => $emailableURL,
+			feedback      => $feedback,
+			problem       => $problem,
+			set           => $set,
+			verbosity     => $verbosity,
+			screenshotCID => $screenshotCID,
+			remote_host   => $c->tx->remote_address || 'UNKNOWN',
+			remote_port   => $c->tx->remote_port    || 'UNKNOWN'
 		);
 
 		my $email =
@@ -151,6 +185,52 @@ sub initialize ($c) {
 		}
 		$email->header('X-WeBWorK-Set',     $set->set_id)         if $set;
 		$email->header('X-WeBWorK-Problem', $problem->problem_id) if $problem;
+
+		# Embed the screenshot in the html body, and attach it to the text body.
+		if ($screenshot) {
+			my $filename = 'screenshot-' . ($set ? $set->set_id . '-' . $problem->problem_id : 'problem') . '.png';
+			$filename =~ s/[^\w.-]/_/g;
+			$email->{parts} = [
+				Email::MIME->create(
+					attributes => { content_type => 'multipart/alternative' },
+					parts      => [
+						Email::MIME->create(
+							attributes => { content_type => 'multipart/mixed' },
+							parts      => [
+								$email->{parts}[0],
+								Email::MIME->create(
+									attributes => {
+										content_type => 'image/png',
+										encoding     => 'base64',
+										disposition  => 'attachment',
+										filename     => $filename,
+										name         => $filename
+									},
+									body => $screenshot
+								)
+							]
+						),
+						Email::MIME->create(
+							attributes => { content_type => 'multipart/related' },
+							parts      => [
+								$email->{parts}[1],
+								Email::MIME->create(
+									attributes => {
+										content_type => 'image/png',
+										encoding     => 'base64',
+										disposition  => 'inline',
+										filename     => $filename,
+										name         => $filename
+									},
+									header_str => [ 'Content-ID' => "<$screenshotCID>" ],
+									body       => $screenshot
+								)
+							]
+						)
+					]
+				)
+			];
+		}
 
 		# Add the attachment if one was provided.
 		my $fileIDhash = $c->param('attachment');
@@ -190,13 +270,14 @@ sub initialize ($c) {
 			# html are shown in most email clients.  The text and html body should be parts of a separate part that has
 			# content type 'multipart/alternative'.  So the email has two parts, and the first part has two parts which
 			# are the text and html body.  The second part is the attachment. So before attaching the file move the text
-			# and html body into their own part.
+			# and html body into their own part (unless that was already done above for the screenshot).
 			$email->{parts} = [
 				Email::MIME->create(
 					attributes => { content_type => 'multipart/alternative' },
 					parts      => $email->{parts}
 				)
-			];
+				]
+				unless $screenshot;
 
 			# Attach the file.
 			$email->attach($contents, filename => $filename);
