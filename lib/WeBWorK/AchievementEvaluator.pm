@@ -9,7 +9,7 @@ use Mojo::Base 'Exporter', -signatures;
 
 use DateTime;
 
-use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils                    qw(sortAchievements encodeAchievementData decodeAchievementData);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
 use WeBWorK::WWSafe;
@@ -84,10 +84,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	# Methods allowed in the safe container.
 	$compartment->permit(qw(time localtime));
 
-	# Thaw_Base64 globalData hash.
-	if ($globalUserAchievement->frozen_hash) {
-		$globalData = thaw_base64($globalUserAchievement->frozen_hash);
-	}
+	$globalData = decodeAchievementData($globalUserAchievement->frozen_hash);
 
 	# Generate hash of user achievements:
 	foreach my $achievement (@achievements) {
@@ -186,10 +183,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		my $setType = $set->assignment_type;
 		next unless $achievement->assignment_type =~ /$setType/;
 
-		# Thaw_base64 localData hash.
-		if ($userAchievement->frozen_hash) {
-			$localData = thaw_base64($userAchievement->frozen_hash);
-		}
+		$localData = decodeAchievementData($userAchievement->frozen_hash);
 
 		# Recover counter information (for progress bar achievements).
 		$counter    = $userAchievement->counter;
@@ -203,7 +197,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 			$source = <$SOURCE>;
 			close($SOURCE);
 		} else {
-			warn('Couldnt find achievement evaluator $sourceFilePath');
+			warn "Could not find achievement evaluator $sourceFilePath";
 			next;
 		}
 
@@ -250,15 +244,15 @@ sub checkForAchievements ($problem_in, $c, %options) {
 			) if ($ce->{mail}{achievementEmailFrom} && $achievement->email_template);
 		}
 
-		# Update counter, nfreeze_base64 localData and store.
+		# Update counter, encode localData and store.
 		$userAchievement->counter($counter);
-		$userAchievement->frozen_hash(nfreeze_base64($localData));
+		$userAchievement->frozen_hash(encodeAchievementData($localData));
 		$db->putUserAchievement($userAchievement);
 
 	}    # End for loop.
 
-	# nfreeze_base64 globalData and store.
-	$globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
+	# Encode globalData and store.
+	$globalUserAchievement->frozen_hash(encodeAchievementData($globalData));
 	$db->putGlobalUserAchievement($globalUserAchievement);
 
 	if (@$cheevoMessage) {
