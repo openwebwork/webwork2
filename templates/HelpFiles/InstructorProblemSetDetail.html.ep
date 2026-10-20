@@ -117,9 +117,11 @@
 		<p>
 			<%= maketext('Once students have begun working a test, problems can no longer be added to the test, '
 					. 'deleted from the test, or reordered. Doing so would change the results of tests students have '
-					. 'already taken. For the same reason, the assignment type cannot be changed to "Just in Time '
-					. 'Assessment and Review", since that renumbers the problems. Other changes, such as changing the '
-					. 'problem values or the source file of a problem, can still be made.') =%>
+					. 'already taken. In addition, the assignment type can only be changed between "Test" and '
+					. '"Proctored Test". Changing a test to "Just in Time Assessment and Review" would renumber the '
+					. 'problems, and changing a test to "Homework" would prevent students from accessing the tests '
+					. 'they have taken and potentially replace test scores with homework scores. Other changes, '
+					. 'such as changing the problem values or the source file of a problem, can still be made.') =%>
 		</p>
 		<p class="mb-0">
 			<%= maketext('If you are the only one who has taken the test (for example, while creating and checking '
