@@ -13,6 +13,7 @@ use WeBWorK::Localize;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
 use WeBWorK::WWSafe;
 use WeBWorK::SafeTemplate;
+use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
@@ -52,6 +53,10 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 	die "User $mail_data->{recipient} does not have an email address -- skipping\n"
 		unless ($user_record->email_address =~ /\S/);
 
+	my $email_template = $mail_data->{achievement}{email_template};
+	die "Achievement notification filename \"$email_template\" is unsafe and cannot be used.\n"
+		unless isAchievementAssetSafe($email_template);
+
 	my $compartment = WeBWorK::WWSafe->new;
 	$compartment->share_from('main',
 		[qw(%Encode:: %Mojo::Base:: %Mojo::Exception:: %Mojo::Template:: %WeBWorK::SafeTemplate::)]);
@@ -74,9 +79,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		pointsEarned    => $mail_data->{pointsEarned}
 	};
 
-	our $template =
-		Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$mail_data->{achievement}{email_template}")
-		->slurp;
+	our $template = Mojo::File->new("$ce->{courseDirs}{achievement_notifications}/$email_template")->slurp;
 	$compartment->share(qw($template $template_vars));
 
 	my $body = $compartment->reval(
