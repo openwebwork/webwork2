@@ -79,7 +79,7 @@ sub renderSampleProblem ($c) {
 		}
 
 		(undef, my $macro_files) = Pod::Simple::Search->new->inc(0)->survey("$pg_root/macros");
-		my %macro_locations = map { basename($_) => $_ =~ s!$pg_root/macros/!!r } keys %$macro_files;
+		my %macro_locations = map { basename($_) => $_ =~ s!^\Q$pg_root\E/macros/!!r } keys %$macro_files;
 
 		# Render a problem with its documentation.
 		my $problemFile = "$pg_root/tutorial/sample-problems/" . $c->stash->{filePath} . '.pg';
