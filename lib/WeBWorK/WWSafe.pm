@@ -367,14 +367,130 @@ sub varglob {
 	return *{ $obj->root() . "::$var" };
 }
 
+# Snapshot the DESTROY, AUTOLOAD, and overload methods in the shared packages.  This must be called by the compartment
+# creator once the compartment is fully set up but before fully restricted code runs.  The resulting baseline lets
+# _clean_stash distinguish shared hooks from ones that restricted code adds to or overwrites in a shared package.
+sub snapshot_hooks {
+	my ($obj) = @_;
+	no strict 'refs';
+
+	# The names of the packages aliased into the compartment via share_from which
+	# are the roots of the shared stash subtrees that must be preserved.
+	my %shared = map { /^%(.+::)$/ ? ($1 => 1) : () } keys %{ $obj->{Shares} || {} };
+
+	# $snapshot->{stash}: refaddr(stash) => { ref => stash, count => key count, hooks => { hook name => code } }
+	#     for every package in a shared subtree. The key count lets _clean_stash skip the (static) shared packages that
+	#     problem code did not touch instead of re-walking them.
+	# $snapshot->{hooks}: a flat [ stash, hook name, code ] list of every baseline hook, used to detect and undo hooks
+	#     that problem code overwrites in place (which does not change a stash's key count).
+	my (%stash, @hooks);
+	my %seen;
+	my @queue = keys %shared;
+	while (defined(my $pkg = shift @queue)) {
+		my $s = \%{$pkg};
+		next if $seen{ refaddr $s }++;
+		my %h;
+		for my $key (keys %$s) {
+			next unless ref \$s->{$key} eq 'GLOB';
+			if (substr($key, -2) eq '::') {
+				push @queue, "$pkg$key" unless "$pkg$key" eq $pkg;
+			} elsif ($key eq 'DESTROY' || $key eq 'AUTOLOAD' || substr($key, 0, 1) eq '(') {
+				my $code = *{ $s->{$key} }{CODE} or next;
+				$h{$key} = $code;
+				push @hooks, [ $s, $key, $code ];
+			}
+		}
+		$stash{ refaddr $s } = { ref => $s, count => scalar keys %$s, hooks => \%h };
+	}
+
+	$obj->{HookSnapshot} = { stash => \%stash, hooks => \@hooks };
+	return;
+}
+
 sub _clean_stash {
+	my ($obj) = @_;
+	no strict 'refs';
+	my $root = $obj->{Root} . '::';
+
+	my $snapshot = $obj->{HookSnapshot};
+
+	# Hold removed or replaced code references until this method returns so that freeing one cannot run a DESTROY
+	# (or otherwise perturb the stashes) while the cleanup is still in progress.
+	my @saved;
+
+	# Strip DESTROY/AUTOLOAD/overload hooks defined in compartment-local packages. This also serves as the complete
+	# cleanup while the compartment is still being set up, before the baseline snapshot has been taken.
+	_strip_local_hooks($root, \@saved);
+
+	return unless $snapshot;
+
+	# Restore any baseline hook in a shared package that problem code overwrote in place. Overwriting reuses the
+	# existing glob, so it leaves the stash's key count unchanged and is not caught by the pass below.
+	for my $hook (@{ $snapshot->{hooks} }) {
+		my ($s, $key, $orig) = @$hook;
+		my $glob = $s->{$key};
+		next unless $glob && ref \$glob eq 'GLOB';
+		my $cur = *{$glob}{CODE} or next;
+		next if refaddr($cur) == refaddr($orig);
+		push @saved, $cur;
+		no warnings 'redefine';
+		*{$glob} = $orig;
+	}
+
+	# Strip hooks that problem code added to a shared package, or to a new package it created under a shared namespace.
+	# Only shared packages whose key count changed since the baseline can have gained a hook or a sub-package, so the
+	# untouched shared packages are skipped.
+	my $stashes = $snapshot->{stash};
+	for my $info (values %$stashes) {
+		my $s = $info->{ref};
+		next if scalar(keys %$s) == $info->{count};
+		my $baseline_hooks = $info->{hooks};
+		for my $key (keys %$s) {
+			next unless ref \$s->{$key} eq 'GLOB';
+			if (substr($key, -2) eq '::') {
+				my $child = *{ $s->{$key} }{HASH} or next;
+				next if $stashes->{ refaddr $child };     # a baseline (legitimate) package
+				next if refaddr($child) == refaddr($s);
+				_strip_subtree($child, \@saved, {});      # a package created by problem code
+			} elsif ($key eq 'DESTROY' || $key eq 'AUTOLOAD' || substr($key, 0, 1) eq '(') {
+				next if $baseline_hooks->{$key};          # a baseline hook (restored above if overwritten)
+				push @saved, delete $s->{$key};           # a hook added by problem code
+			}
+		}
+	}
+
+	return;
+}
+
+# Strip every DESTROY/AUTOLOAD/overload hook from $stash and all packages beneath it. This is used for a package
+# created by problem code under a shared namespace, so nothing in the subtree is legitimate.
+sub _strip_subtree {
+	my ($stash, $saved, $seen) = @_;
+	return if $seen->{ refaddr $stash }++;
+
+	my @children;
+	for my $key (keys %$stash) {
+		next unless ref \$stash->{$key} eq 'GLOB';
+		if (substr($key, -2) eq '::') {
+			my $child = *{ $stash->{$key} }{HASH};
+			push @children, $child if $child && refaddr($child) != refaddr($stash);
+		} elsif ($key eq 'DESTROY' || $key eq 'AUTOLOAD' || substr($key, 0, 1) eq '(') {
+			push @$saved, delete $stash->{$key};
+		}
+	}
+
+	_strip_subtree($_, $saved, $seen) for @children;
+	return;
+}
+
+# Strip DESTROY/AUTOLOAD/overload hooks from compartment-local packages, but leave
+# shared packages alone (stripping their hooks would corrupt the package).
+sub _strip_local_hooks {
 	my ($root, $saved_refs, $orig_root) = @_;
 	$saved_refs ||= [];
 	$orig_root = $root unless defined $orig_root;
 	no strict 'refs';
 
-	# share_from can alias a whole external package's stash into the compartment. Stripping its
-	# DESTROY/AUTOLOAD/overload hooks here would corrupt the shared package. So leave stashes like this alone.
 	if ($root ne $orig_root) {
 		(my $local_name = $root) =~ s/^\Q$orig_root\E//;
 		return if \%{$root} eq \%{$local_name};
@@ -387,7 +503,7 @@ sub _clean_stash {
 
 	for (grep /::$/, keys %$root) {
 		next if \%{ $root . $_ } eq \%$root;
-		_clean_stash($root . $_, $saved_refs, $orig_root);
+		_strip_local_hooks($root . $_, $saved_refs, $orig_root);
 	}
 }
 
@@ -422,7 +538,7 @@ sub reval {
 			Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
 		}
 	}
-	_clean_stash($root . '::') if $sg != sub_generation();
+	$obj->_clean_stash if $sg != sub_generation();
 	$obj->wrap_code_refs_within(@subret);
 	return (wantarray) ? @subret : $subret[0];
 }
@@ -490,7 +606,7 @@ sub wrap_code_ref {
 				? Opcode::_safe_call_sv($root, $obj->{Mask}, $sub_with_args)
 				: scalar Opcode::_safe_call_sv($root, $obj->{Mask}, $sub_with_args);
 			$error = $@;
-			_clean_stash($root . '::') if $sg != sub_generation();
+			$obj->_clean_stash if $sg != sub_generation();
 		};
 		if ($error) {    # rethrow exception
 			$error =~ s/\t\(in cleanup\) //;    # prefix added by G_KEEPERR
@@ -525,7 +641,7 @@ sub rdo {
 			? Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub)
 			: scalar Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
 	}
-	_clean_stash($root . '::') if $sg != sub_generation();
+	$obj->_clean_stash if $sg != sub_generation();
 	$obj->wrap_code_refs_within(@subret);
 	return (wantarray) ? @subret : $subret[0];
 }
