@@ -66,4 +66,12 @@
 			}
 		}
 	});
+
+	for (const button of document.getElementsByName('reset-button')) {
+		button.addEventListener('click', () => {
+			for (const checkbox of allCheckboxes) {
+				checkbox.checked = checkbox.dataset.isAssigned === '1';
+			}
+		});
+	}
 })();
