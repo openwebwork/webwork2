@@ -39,7 +39,7 @@
 		class         => 'visually-hidden',
 		tabindex      => -1,
 		'aria-hidden' => 'true' =%>
-	<div class="mt-2">
+	<div class="mt-2 submit-buttons-container">
 		% if ($numberAssignedCurrentUsers < $numberCurrentUsers) {
 			<%= submit_button maketext('Assign to All Current Users'),
 				name  => 'assignToAll',
@@ -55,8 +55,9 @@
 		<%= maketext('Use the "Assigned" checkboxes to assign/unassign this set. Unassigning the set will '
 				. 'delete all of the data for the associated user and cannot be undone.') =%>
 	</p>
-	<div class="mb-2">
+	<div class="mb-2 submit-buttons-container">
 		<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+		<button name="reset-button" type="button" class="btn btn-primary"><%= maketext('Reset') %></button>
 	</div>
 	<div class="table-responsive">
 		<table class="table table-bordered table-sm font-sm text-nowrap w-auto">
@@ -134,7 +135,10 @@
 			</tbody>
 		</table>
 	</div>
-	<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+	<div class="submit-buttons-container">
+		<%= submit_button maketext('Save'), name => 'assignToSelected', class => 'btn btn-primary' =%>
+		<button name="reset-button" type="button" class="btn btn-primary"><%= maketext('Reset') %></button>
+	</div>
 	<div
 		class="modal fade"
 		id="unassign_confirm_dialog"
