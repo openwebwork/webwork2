@@ -523,11 +523,15 @@ sub getFilePaths ($c) {
 				if $c->{file_type} eq 'hardcopy_header';
 		}
 	} elsif ($c->{file_type} eq 'problem') {
-		# First try getting the merged problem for the current user.
-		my $problem_record = $db->getMergedProblem($c->param('user'), $c->{setID}, $c->{problemID});
+		# First try getting the merged problem for the effective user.
+		my $problem_record = $db->getMergedProblem($c->param('effectiveUser'), $c->{setID}, $c->{problemID});
 
-		# If that doesn't work, then the problem is not assigned to this user (or this problem belongs to a gateway
-		# test, since the problem editor can not deal with problems from versioned sets). So get the global record.
+		# If the problem isn't assigned to the effective user, try the current user (provided it is different).
+		$problem_record = $db->getMergedProblem($user, $c->{setID}, $c->{problemID})
+			if !defined $problem_record && $user ne $c->param('effectiveUser');
+
+		# If neither of the above worked, the problem wasn't assigned to either user or this problem belongs to
+		# a gateway test (the editor cannot handle problems from versioned sets). Get the global record instead.
 		$problem_record = $db->getGlobalProblem($c->{setID}, $c->{problemID}) unless defined $problem_record;
 
 		if (defined $problem_record) {
