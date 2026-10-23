@@ -151,7 +151,7 @@
 				data                            => { bs_toggle => 'tooltip', bs_placement => 'top' } =%>
 			% # Only show the report bugs in problem button if editing an OPL or Contrib problem.
 			% if ($ce->{webworkURLs}{OPLBugReporter}
-				% && $c->{editFilePath} =~ m|^$ce->{courseDirs}{templates}/([^/]*)/|
+				% && $c->{editFilePath} =~ m|^\Q$ce->{courseDirs}{templates}\E/([^/]*)/|
 				% && ($1 eq 'Library' || $1 eq 'Contrib'))
 			% {
 				<%= link_to maketext('Report Bugs in this Problem') =>

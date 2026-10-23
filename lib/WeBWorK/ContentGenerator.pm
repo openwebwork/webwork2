@@ -306,7 +306,7 @@ This can be overridden by different modules.
 sub prepare_activity_entry ($c) {
 	my $location = $c->location;
 	my $string =
-		($c->req->url->path->to_string =~ s/^$location//r)
+		($c->req->url->path->to_string =~ s/^\Q$location\E//r)
 		. "  --->  "
 		. join("\t", (map { $_ eq 'key' || $_ eq 'passwd' ? '' : $_ . " => " . $c->param($_) } $c->param()));
 	$string =~ s/\t+/\t/g;

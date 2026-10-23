@@ -561,12 +561,12 @@ sub getDefList {
 	find(
 		{
 			wanted => sub {
-				if ($File::Find::dir =~ /^$topdir\/Library/ || $File::Find::dir =~ /^$topdir\/Contrib/) {
+				if ($File::Find::dir =~ /^\Q$topdir\E\/Library/ || $File::Find::dir =~ /^\Q$topdir\E\/Contrib/) {
 					$File::Find::prune = 1;
 					return;
 				}
 				if (@{ [ $File::Find::dir =~ /\//g ] } > $max_depth) { $File::Find::prune = 1; return; }
-				push @found_set_defs, $_ =~ s|^$topdir/?||r if m|/set[^/]*\.def$|;
+				push @found_set_defs, $_ =~ s|^\Q$topdir\E/?||r if m|/set[^/]*\.def$|;
 			},
 			follow_fast => 1,
 			no_chdir    => 1,

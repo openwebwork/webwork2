@@ -293,7 +293,7 @@ sub get_problem_directories ($c, $lib) {
 	my $includetop              = shift @all_problem_directories;
 
 	for (my $j = 0; $j < scalar(@all_problem_directories); $j++) {
-		$all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
+		$all_problem_directories[$j] =~ s|^\Q$ce->{courseDirs}->{templates}\E/?||;
 	}
 	@all_problem_directories = sortByName(undef, @all_problem_directories);
 	unshift @all_problem_directories, $main_problems if ($includetop);

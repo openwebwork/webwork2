@@ -21,22 +21,22 @@ sub PODindex ($c) {
 
 	my $docs = [];
 	for (sort keys %$docFiles) {
-		push(@$docs, $docFiles->{$_} =~ s!^$pgRoot/!!r);
+		push(@$docs, $docFiles->{$_} =~ s!^\Q$pgRoot\E/!!r);
 	}
 
 	my $macros = {};
 	for (sort keys %$macroFiles) {
-		my $macro = $macroFiles->{$_} =~ s!^$pgRoot/macros/(.+)/.+$!$1!r;
-		if ($macro =~ /^$pgRoot/) {
-			push(@$docs, $macroFiles->{$_} =~ s!^$pgRoot/!!r);
+		my $macro = $macroFiles->{$_} =~ s!^\Q$pgRoot\E/macros/(.+)/.+$!$1!r;
+		if ($macro =~ /^\Q$pgRoot\E/) {
+			push(@$docs, $macroFiles->{$_} =~ s!^\Q$pgRoot\E/!!r);
 		} else {
-			push(@{ $macros->{$macro} }, $macroFiles->{$_} =~ s!^$pgRoot/macros/$macro/!!r);
+			push(@{ $macros->{$macro} }, $macroFiles->{$_} =~ s!^\Q$pgRoot\E/macros/\Q$macro\E/!!r);
 		}
 	}
 
 	my $libs = [];
 	for (sort keys %$libFiles) {
-		push(@$libs, $libFiles->{$_} =~ s!^$pgRoot/lib/!!r);
+		push(@$libs, $libFiles->{$_} =~ s!^\Q$pgRoot\E/lib/!!r);
 	}
 
 	return $c->render(

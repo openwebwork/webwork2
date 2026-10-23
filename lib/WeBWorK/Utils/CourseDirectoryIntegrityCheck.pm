@@ -107,7 +107,8 @@ sub updateCourseDirectories {
 	# Sort courseDirs by path.  The important thing for the order is that a directory that is a subdirectory of
 	# another is listed after the directory containing it.
 	my @course_dirs =
-		grep { $_ ne 'root' } sort { $ce->{courseDirs}{$a} =~ /^$ce->{courseDirs}{$b}/ } keys %{ $ce->{courseDirs} };
+		grep { $_ ne 'root' }
+		sort { $ce->{courseDirs}{$a} =~ /^\Q$ce->{courseDirs}{$b}\E/ } keys %{ $ce->{courseDirs} };
 
 	# These are the directories in the model course that can be copied if not found in this course.
 	my %model_course_dirs = (

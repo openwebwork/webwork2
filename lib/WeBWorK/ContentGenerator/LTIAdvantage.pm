@@ -45,7 +45,7 @@ sub initializeRoute ($c, $routeCaptures) {
 				}
 			}
 		} else {
-			$c->stash->{courseID} = $1 if $target =~ m|$location/([^/]*)|;
+			$c->stash->{courseID} = $1 if $target =~ m|\Q$location\E/([^/]*)|;
 		}
 
 		$routeCaptures->{courseID} = $c->stash->{courseID} if $c->stash->{courseID};

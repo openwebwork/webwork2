@@ -519,7 +519,7 @@ sub saveFile ($c) {
 	return $c->render(
 		json => {
 			message =>
-				$c->maketext('Saved to file "[_1]"', $outputFilePath =~ s/$ce->{courseDirs}{templates}/[TMPL]/r)
+				$c->maketext('Saved to file "[_1]"', $outputFilePath =~ s/^\Q$ce->{courseDirs}{templates}\E/[TMPL]/r)
 		}
 	);
 }
