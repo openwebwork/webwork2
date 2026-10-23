@@ -57,7 +57,7 @@
 								<td>
 									<div class="d-flex flex-column gap-1">
 										% for my $field (@{ $_->{fields} }) {
-											<span class="text-nowrap" style="height:28px">
+											<span class="text-nowrap" style="height: 28px">
 												<%= include
 													'ContentGenerator/Instructor/AchievementList/edit_table_row',
 													fieldName => "achievement.$achievement_id.$field",
