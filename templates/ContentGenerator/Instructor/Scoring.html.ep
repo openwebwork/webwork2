@@ -112,7 +112,7 @@
 	<%= link_to $c->{scoringFileName} =>
 		$c->systemLink(url_for('instructor_scoring_download'), params => { getFile => $c->{scoringFileName} }),
 		class => 'font-monospace' =%>
-	<pre class="mt-2 bg-light border" style="font-size:smaller; width:fit-content; max-width:100%;">
+	<pre class="mt-2 bg-light border" style="font-size: smaller; width: fit-content; max-width: 100%">
 		<%== readFile("$scoringDir/$c->{scoringFileName}") =%>\
 	</pre>
 % }

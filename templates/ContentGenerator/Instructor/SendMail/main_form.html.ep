@@ -212,7 +212,7 @@
 			% }
 		% }
 		% if (@rows) {
-			<pre class="overflow-scroll" style="max-height: 100px;"><% =%>\
+			<pre class="overflow-scroll" style="max-height: 100px"><% =%>\
 				<%== join('', ' ', $c->data_format(1 .. $cols)) =%><br><% =%>\
 				<%== join('<br>', map { join('', ' ', $c->data_format2(@$_)) } @rows) =%>\
 			</pre>

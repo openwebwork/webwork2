@@ -88,7 +88,7 @@
 % if ($c->{pg}{render_fail}) {
 	<div class="row g-0 mb-2">
 		<div class="col-10 alert alert-danger m-0">
-			<h2 style="color:red"><%= maketext('PG question failed to render') %></h2>
+			<h2 style="color: red"><%= maketext('PG question failed to render') %></h2>
 			<p class="m-0">
 				<%= maketext('Processing of this PG problem was not completed.  Probably because of a '
 						. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.'
