@@ -37,8 +37,12 @@
 				<thead>
 					<tr>
 						<th
-							style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray"
+							style="
+								text-align: left;
+								padding: 0.25rem;
+								border: 1px solid black;
+								background-color: lightgray;
+							"
 							colspan="2"
 						>
 							<%= maketext('Data about the problem') %>
@@ -98,8 +102,12 @@
 				<thead>
 					<tr>
 						<th
-							style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray"
+							style="
+								text-align: left;
+								padding: 0.25rem;
+								border: 1px solid black;
+								background-color: lightgray;
+							"
 							colspan="2"
 						>
 							<%= maketext('Data about the assignment') %>
@@ -145,8 +153,12 @@
 				<thead>
 					<tr>
 						<th
-							style="text-align: left; padding: 0.25rem; border: 1px solid black;
-							background-color: lightgray"
+							style="
+								text-align: left;
+								padding: 0.25rem;
+								border: 1px solid black;
+								background-color: lightgray;
+							"
 							colspan="2"
 						>
 							<%= maketext('Data about the problem processor') =%>
@@ -175,8 +187,12 @@
 				<thead>
 					<tr>
 						<th
-							style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray"
+							style="
+								text-align: left;
+								padding: 0.25rem;
+								border: 1px solid black;
+								background-color: lightgray;
+							"
 							colspan="2"
 						>
 							<%= maketext('Data about the user') %>
@@ -217,8 +233,12 @@
 				<thead>
 					<tr>
 						<th
-							style="text-align: left; padding: 0.25rem; border: 1px solid black;
-						background-color: lightgray"
+							style="
+								text-align: left;
+								padding: 0.25rem;
+								border: 1px solid black;
+								background-color: lightgray;
+							"
 							colspan="2"
 						>
 							<%= maketext('Data about the environment') %>

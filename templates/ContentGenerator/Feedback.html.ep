@@ -16,7 +16,7 @@
 	<div class="border border-dark rounded mb-1 p-3">
 		% for (split /\n\r?/, param('feedback')) {
 			% if ($_) {
-				<p class="m-0" style="white-space: pre-wrap;"><%= $_ %></p>
+				<p class="m-0" style="white-space: pre-wrap"><%= $_ %></p>
 			% } else {
 				<div class="mt-3"></div>
 			% }

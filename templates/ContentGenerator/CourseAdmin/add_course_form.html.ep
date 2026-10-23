@@ -67,7 +67,7 @@
 				$ce->{admin_course_id}) =%>
 		</div>
 		<div class="col-lg-4 col-md-5 col-sm-6">
-			<div class="overflow-auto border rounded px-2" style="max-height: 100px;">
+			<div class="overflow-auto border rounded px-2" style="max-height: 100px">
 				% for my $user ($db->listUsers) {
 					% my $val  = $db->getPermissionLevel($user)->permission;
 					% my $role = maketext((grep { $ce->{userRoles}{$_} eq $val } keys %{ $ce->{userRoles} })[0]);
