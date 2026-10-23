@@ -48,23 +48,18 @@ async sub initialize ($c) {
 			# This should never happen.
 			die 'Request to grade a set version before any tests have been taken.' if $noSetVersions;
 
-			# Determine if answers can be recorded, and set last_attempt_time if appropriate.
+			# Determine if answers can be recorded, and if so record the submission time so that the time spent waiting
+			# for proctor authorization does not count against the time limit.  If that fails because the test was
+			# already submitted, then this submission will not be graded after proctor authorization.
+			my $problem = $db->getMergedProblemVersion($effectiveUserID, $c->stash->{setID},
+				$versionNum, ($db->listProblemVersions($effectiveUserID, $c->stash->{setID}, $versionNum))[0]);
 			if (WeBWorK::ContentGenerator::GatewayQuiz::can_recordAnswers(
-				$c,
-				$db->getUser($userID),
-				$db->getPermissionLevel($userID),
-				$c->{effectiveUser},
-				$c->stash->{userSet},
-				$db->getMergedProblemVersion(
-					$effectiveUserID, $c->stash->{setID},
-					$versionNum, ($db->listProblemVersions($effectiveUserID, $c->stash->{setID}, $versionNum))[0]
-				)
+				$c,                               $db->getUser($userID),
+				$db->getPermissionLevel($userID), $c->{effectiveUser},
+				$c->stash->{userSet},             $problem
 			))
 			{
-				$c->stash->{userSet}->version_last_attempt_time(int($c->submitTime));
-				# FIXME: This saves all of the merged set data into the set_user table.  We live with this in other
-				# places for versioned sets, but it's not ideal.
-				$db->putSetVersion($c->stash->{userSet});
+				WeBWorK::ContentGenerator::GatewayQuiz::recordSubmissionTime($c, $c->stash->{userSet}, $problem);
 			}
 		}
 	}
