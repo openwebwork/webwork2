@@ -30,7 +30,7 @@
 				<td><%= $rank %></td>
 				<td><%= $points %></td>
 				% if ($c->{showLevels}) {
-					<td class="text-center" style="white-space: nowrap;">
+					<td class="text-center" style="white-space: nowrap">
 						% if ($level) {
 							<%= $level->{name} %>
 							<br>
@@ -43,7 +43,7 @@
 					</td>
 				% }
 				% if ($c->{showUserNames}) {
-					<td style="white-space: nowrap;">
+					<td style="white-space: nowrap">
 						<%= $user->first_name %><br><%= $user->last_name %>
 					</td>
 				% }
