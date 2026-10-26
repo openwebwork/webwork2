@@ -758,13 +758,17 @@ sub view_handler ($c) {
 	if ($c->{file_type} eq 'problem' || $c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to Problem.pm or GatewayQuiz.pm.
 		# We need to know if the set is a gateway set to determine the redirect.
-		my $globalSet = $c->db->getGlobalSet($c->{setID});
+		my $globalSet = $c->{setID} ? $c->db->getGlobalSet($c->{setID}) : undef;
 
 		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
-			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
-			: $c->url_for('problem_detail', setID => $c->{setID}, problemID => $c->{problemID}),
+			? $c->url_for('gateway_quiz', setID => 'Undefined_Set')
+			: $c->url_for(
+				'problem_detail',
+				setID     => $c->{setID}     // 'Undefined_Set',
+				problemID => $c->{problemID} // 1
+			),
 			params => {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
@@ -995,13 +999,17 @@ sub save_handler ($c) {
 	if ($c->{file_type} eq 'problem' || $c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to Problem.pm or GatewayQuiz.pm.
 		# We need to know if the set is a gateway set to determine the redirect.
-		my $globalSet = $c->db->getGlobalSet($c->{setID});
+		my $globalSet = $c->{setID} ? $c->db->getGlobalSet($c->{setID}) : undef;
 
 		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
-			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
-			: $c->url_for('problem_detail', setID => $c->{setID}, problemID => $c->{problemID}),
+			? $c->url_for('gateway_quiz', setID => 'Undefined_Set')
+			: $c->url_for(
+				'problem_detail',
+				setID     => $c->{setID}     // 'Undefined_Set',
+				problemID => $c->{problemID} // 1
+			),
 			params => {
 				displayMode    => $c->{displayMode},
 				problemSeed    => $c->{problemSeed},
