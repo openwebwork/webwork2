@@ -64,6 +64,28 @@ for (const [immediate, extension, ready] of [
 			const { SvgMaction } = MathJax._.output.svg.Wrappers.maction;
 			switchToBSStyle(SvgMaction.styles, '@media (prefers-color-scheme: dark) /* svg maction */');
 		}
+	],
+	[
+		MathJax._.ui?.menu,
+		'ui/menu',
+		() => {
+			// Apply selected theme to the context menu.
+			const { Menu } = MathJax._.ui.menu.Menu;
+			const initMenu = Menu.prototype.initMenu;
+			Menu.prototype.initMenu = function () {
+				initMenu.call(this);
+				const sheet = this.document.document.getElementById?.('MJX-Menu-styles')?.sheet;
+				if (!sheet) return;
+				for (let i = sheet.cssRules.length - 1; i >= 0; --i) {
+					const rule = sheet.cssRules[i];
+					if (!(rule instanceof CSSMediaRule) || !/prefers-color-scheme:\s*dark/.test(rule.conditionText))
+						continue;
+					const rules = Array.from(rule.cssRules, (r) => `[data-bs-theme='dark'] ${r.cssText}`);
+					sheet.deleteRule(i);
+					for (const css of rules.reverse()) sheet.insertRule(css, i);
+				}
+			};
+		}
 	]
 ]) {
 	if (immediate) {
