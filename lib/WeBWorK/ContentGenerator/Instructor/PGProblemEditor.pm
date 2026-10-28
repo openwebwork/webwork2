@@ -129,15 +129,23 @@ use constant ACTION_FORM_TITLES => {
 	revert           => x('Revert'),
 };
 
-sub pre_header_initialize ($c) {
-	my $ce    = $c->ce;
-	my $authz = $c->authz;
-	my $user  = $c->param('user');
+sub initialize ($c) {
+	my $ce = $c->ce;
+	my $db = $c->db;
 
-	# Check permissions
+	# Make sure these are defined for the templates.
+	$c->stash->{problemContents}       = '';
+	$c->stash->{formsToShow}           = ACTION_FORMS();
+	$c->stash->{actionFormTitles}      = ACTION_FORM_TITLES();
+	$c->stash->{hardcopyLabels}        = [];
+	$c->stash->{sampleProblemMetadata} = {};
+
 	return
-		unless $authz->hasPermissions($user, 'access_instructor_tools')
-		&& $authz->hasPermissions($user, 'modify_problem_sets');
+		unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')
+		&& $c->authz->hasPermissions($c->param('user'), 'modify_problem_sets');
+
+	# Record status messages carried over if this is a redirect.
+	$c->addmessage($c->authen->flash('status_message') || '');
 
 	$c->{courseID}  = $c->stash('courseID');
 	$c->{setID}     = $c->stash('setID');
@@ -169,7 +177,10 @@ sub pre_header_initialize ($c) {
 		}
 	}
 
-	return unless $c->{file_type};
+	unless ($c->{file_type}) {
+		$c->stash->{sampleProblemMetadata} = generateMetadata("$ce->{pg_dir}/tutorial/sample-problems");
+		return;
+	}
 
 	# Clean up sourceFilePath and check that sourceFilePath is relative to the templates folder
 	if ($c->{file_type} eq 'source_path_for_problem_file') {
@@ -202,36 +213,8 @@ sub pre_header_initialize ($c) {
 		$c->$actionHandler;
 	}
 
-	return;
-}
-
-sub initialize ($c) {
-	my $ce    = $c->ce;
-	my $db    = $c->db;
-	my $authz = $c->authz;
-	my $user  = $c->param('user');
-
-	# Make sure these are defined for the templates.
-	$c->stash->{problemContents}  = '';
-	$c->stash->{formsToShow}      = ACTION_FORMS();
-	$c->stash->{actionFormTitles} = ACTION_FORM_TITLES();
-	$c->stash->{hardcopyLabels}   = [];
-
-	unless ($c->{file_type}) {
-		$c->stash->{sampleProblemMetadata} = generateMetadata("$ce->{pg_dir}/tutorial/sample-problems");
-		return;
-	}
-
 	# Tell the templates if we are working on a PG file
 	$c->{is_pg} = $c->{file_type} =~ /problem/ || $c->{file_type} =~ /header/;
-
-	# Check permissions
-	return
-		unless $authz->hasPermissions($user, 'access_instructor_tools')
-		&& $authz->hasPermissions($user, 'modify_problem_sets');
-
-	# Record status messages carried over if this is a redirect
-	$c->addmessage($c->authen->flash('status_message') || '');
 
 	$c->addbadmessage($c->maketext('Changes in this file have not yet been permanently saved.'))
 		if $c->{inputFilePath} eq $c->{tempFilePath} && -r $c->{tempFilePath};

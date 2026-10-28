@@ -277,7 +277,7 @@ sub get_instructor_comment ($c, $problem) {
 
 # Template methods
 
-async sub pre_header_initialize ($c) {
+async sub initialize ($c) {
 	# Make sure these are defined for the templates.
 	$c->stash->{problems}            = [];
 	$c->stash->{pg_results}          = [];

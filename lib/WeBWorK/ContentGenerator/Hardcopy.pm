@@ -52,19 +52,19 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 #
 # file_path
 #   Contains the path of the final hardcopy file generated relative to the temporary directory parent.
-#   This is set by generate_hardcopy(), and used by pre_header_initialize() and body().
+#   This is set by generate_hardcopy(), and used by initialize() and body().
 #
 # file_name
 #   Contains the name of the final hardcopy file generated  without path.
-#   This is set by generate_hardcopy(), and used by pre_header_initialize() only on successful hardcopy generation.
+#   This is set by generate_hardcopy(), and used by initialize() only on successful hardcopy generation.
 #
 # file_type
 #   Contains the type of the final hardcopy file (either pdf or zip).
-#   This is set by generate_hardcopy(), and used by pre_header_initialize() only on successful hardcopy generation.
+#   This is set by generate_hardcopy(), and used by initialize() only on successful hardcopy generation.
 #
 # temp_file_map
 #   Reference to a hash mapping temporary file names to URL.
-#   Set by generate_hardcopy(), and used by pre_header_initialize(), used by body()
+#   Set by generate_hardcopy(), and used by initialize(), used by body()
 #
 # hardcopy_errors
 #   reference to an array of Mojo::ByteStream objects containing HTML strings
@@ -102,7 +102,7 @@ our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 # UI subroutines
 ################################################################################
 
-async sub pre_header_initialize ($c) {
+async sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 	my $authz = $c->authz;
@@ -885,9 +885,8 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	my $authz  = $c->authz;
 	my $userID = $c->param("user");
 
-	# we may already have the MergedSet from checking hide_work and
-	#    hide_score in pre_header_initialize; check to see if that's true,
-	#    and otherwise, get the set.
+	# We may already have the MergedSet from checking hide_work and hide_score in initialize.
+	# Check to see if that's true, and otherwise, get the set.
 	my %mergedSets = %{ $c->{mergedSets} };
 	my $uid        = $TargetUser->user_id;
 	my $MergedSet;

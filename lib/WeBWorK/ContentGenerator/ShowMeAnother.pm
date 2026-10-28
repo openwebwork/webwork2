@@ -12,7 +12,7 @@ use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq);
 use WeBWorK::Utils::Rendering qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets      qw(format_set_name_display);
 
-async sub pre_header_initialize ($c) {
+async sub initialize ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
@@ -28,11 +28,11 @@ async sub pre_header_initialize ($c) {
 				&& $c->authen->session->{showMeAnother}{problemID} ne $c->stash('problemID'))
 		);
 
-	# Run the parent package pre_header_initialize to initialize data used by this package.
+	# Run the parent package initialize to initialize data used by this package.
 	# FIXME: This is highly inefficient. At the very least it results in yet another renderPG call (generally a very
 	# expensive call) that is not used. There are also many things done by the parent package in initialization that
 	# shouldn't be done for this package (like processing for problem randomization).
-	await $c->SUPER::pre_header_initialize;
+	await $c->SUPER::initialize;
 
 	unless ($c->{can}{showMeAnother}) {
 		delete $c->authen->session->{showMeAnother};

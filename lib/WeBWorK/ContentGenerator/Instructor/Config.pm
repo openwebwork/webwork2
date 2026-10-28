@@ -39,7 +39,7 @@ sub objectify ($c, $data) {
 	return "WeBWorK::ConfigObject::$data->{type}"->new($data, $c);
 }
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	$c->stash->{configValues} = [];
 
 	return unless $c->authz->hasPermissions($c->param('user'), 'modify_problem_sets');

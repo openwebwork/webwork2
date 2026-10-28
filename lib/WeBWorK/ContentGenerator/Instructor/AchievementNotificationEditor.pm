@@ -18,22 +18,21 @@ use constant ACTION_FORM_TITLES => {
 	disable  => x('Disable Notifications'),
 };
 
-sub pre_header_initialize ($c) {
-	my $courseID      = $c->stash('courseID');
-	my $achievementID = $c->stash('achievementID');
-
+sub initialize ($c) {
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}             = ACTION_FORMS();
 	$c->stash->{actionFormTitles}        = ACTION_FORM_TITLES();
 	$c->stash->{achievementNotification} = '';
 
-	# Check permissions
-	return unless ($c->authz->hasPermissions($c->param('user'), 'edit_achievements'));
+	return unless $c->authz->hasPermissions($c->param('user'), 'edit_achievements');
 
-	# Get the achievement
+	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect.
+
+	my $achievementID = $c->stash('achievementID');
+
 	$c->{achievement} = $c->db->getAchievement($achievementID);
 
-	if (!$c->{achievement}) {
+	unless ($c->{achievement}) {
 		$c->addbadmessage($c->maketext('Achievement [_1] not found!', $achievementID));
 		return;
 	}
@@ -43,41 +42,28 @@ sub pre_header_initialize ($c) {
 		. ($c->{achievement}->email_template || 'default.txt.epl');
 
 	my $actionID = $c->param('action');
-
-	# Perform a save or save_as action
 	if ($actionID) {
-		die "Action $actionID not found" unless (grep { $_ eq $actionID } @{ ACTION_FORMS() });
+		unless (grep { $_ eq $actionID } @{ ACTION_FORMS() }) {
+			$c->addbadmessage('Invalid action requested.');
+			return;
+		}
 
 		my $actionHandler = "${actionID}_handler";
 		$c->$actionHandler;
 	}
 
-	return;
-}
-
-sub initialize ($c) {
-	my $authz          = $c->authz;
-	my $user           = $c->param('user');
-	my $sourceFilePath = $c->{sourceFilePath};
-
-	return unless ($authz->hasPermissions($user, 'edit_achievements'));
-
-	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect
-
-	# Check source file path
-	if (!-e $sourceFilePath) {
-		$c->addbadmessage($c->maketext('The file [_1] cannot be found.', $sourceFilePath));
+	unless (-e $c->{sourceFilePath}) {
+		$c->addbadmessage($c->maketext('The file [_1] cannot be found.', $c->{sourceFilePath}));
 		return;
 	}
 
-	# Find the text for the achievement.
 	unless ($c->stash('achievementNotification') =~ /\S/) {
-		unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{achievement_notifications}, 1)) {
+		unless (path_is_subdir($c->{sourceFilePath}, $c->ce->{courseDirs}{achievement_notifications}, 1)) {
 			$c->addbadmessage('Path is Unsafe!');
 			return;
 		}
 
-		eval { $c->stash->{achievementNotification} = readFile($sourceFilePath); };
+		eval { $c->stash->{achievementNotification} = readFile($c->{sourceFilePath}); };
 		$c->stash->{achievementNotification} = $@ if $@;
 	}
 
@@ -95,9 +81,6 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 	return $sourceFilePath =~ s|^$achievementsDir/*||r;    # remove templates path and any slashes that follow
 }
 
-# saveFileChanges does most of the work. It is a separate method so that it can
-# be called from either pre_header_initialize or initialize, depending on
-# whether a redirect is needed or not.
 sub saveFileChanges ($c, $outputFilePath) {
 	my $ce = $c->ce;
 

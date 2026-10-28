@@ -34,7 +34,7 @@ my %uploadDir = (
 );
 
 # Check that the user is authorized, and see if there is a download to perform.
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	return unless $c->authz->hasPermissions($c->param('user'), 'manage_course_files');
 
 	my $action = $c->param('action');

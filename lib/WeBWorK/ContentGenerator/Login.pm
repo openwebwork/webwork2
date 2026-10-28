@@ -71,7 +71,7 @@ sub can ($c, $arg) {
 	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
 }
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $ce     = $c->ce;
 	my $authen = $c->authen;
 
