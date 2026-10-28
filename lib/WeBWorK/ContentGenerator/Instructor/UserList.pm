@@ -148,11 +148,19 @@ use constant FIELD_PROPERTIES => {
 	password   => { name => x('Password (set/delete/enforce)'), type => 'password' },
 };
 
-async sub pre_header_initialize ($c) {
+async sub initialize ($c) {
 	my $authz = $c->authz;
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 	my $user  = $c->authen->{user_id};
+
+	# Make sure these are defined for the template.
+	$c->stash->{formsToShow}     = VIEW_FORMS();
+	$c->stash->{formTitles}      = FORM_TITLES();
+	$c->stash->{formPerms}       = FORM_PERMS();
+	$c->stash->{fields}          = FIELDS();
+	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
+	$c->stash->{CSVList}         = [];
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
@@ -257,6 +265,15 @@ async sub pre_header_initialize ($c) {
 		}
 	}
 
+	# Update the stash values that depend on the edit mode. Note that this is done
+	# after the action handler is called as that can change the edit mode.
+	if ($c->{editMode}) {
+		$c->stash->{formsToShow} = EDIT_FORMS();
+	} else {
+		$c->stash->{CSVList} =
+			Mojo::File->new($c->ce->{courseDirs}{templates})->list->grep(sub { -f && m/\.lst$/ })->map('basename');
+	}
+
 	# Sort all users
 	my $primarySortSub   = SORT_SUBS()->{ $c->{primarySortField} }{ $c->{primarySortOrder} };
 	my $secondarySortSub = SORT_SUBS()->{ $c->{secondarySortField} }{ $c->{secondarySortOrder} };
@@ -277,22 +294,6 @@ async sub pre_header_initialize ($c) {
 		}
 		grep { $c->{visibleUserIDs}{ $_->user_id } } (values %allUsers)
 	];
-
-	return;
-}
-
-sub initialize ($c) {
-	# Make sure these are defined for the template.
-	# This is done here as it needs to occur after the action handler has been executed.
-	$c->stash->{formsToShow}     = $c->{editMode} ? EDIT_FORMS() : VIEW_FORMS();
-	$c->stash->{formTitles}      = FORM_TITLES();
-	$c->stash->{formPerms}       = FORM_PERMS();
-	$c->stash->{fields}          = FIELDS();
-	$c->stash->{fieldProperties} = FIELD_PROPERTIES();
-	$c->stash->{CSVList} =
-		$c->{editMode}
-		? []
-		: Mojo::File->new($c->ce->{courseDirs}{templates})->list->grep(sub { -f && m/\.lst$/ })->map('basename');
 
 	return;
 }

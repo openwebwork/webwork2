@@ -42,7 +42,7 @@
 		<%= $status_name ? maketext($status_name) : $value =%>
 	% }
 % } elsif ($properties->{type} eq 'permission') {
-	% # Use the permission that was saved in the user record in pre_header_initialize.
+	% # Use the permission that was saved in the user record in initialize.
 	% my $value = $user->{permission};
 	% if ($c->{editMode}) {
 		% my @values;

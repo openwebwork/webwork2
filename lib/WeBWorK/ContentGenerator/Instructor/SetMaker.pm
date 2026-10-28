@@ -376,7 +376,7 @@ sub process_search ($c, @dbsearch) {
 	return @dbsearch;
 }
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	# Make sure these are defined for the templates.
 	$c->stash->{pg_files} = [];
 	$c->stash->{plist}    = [];
