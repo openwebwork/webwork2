@@ -1419,14 +1419,12 @@ sub output_past_answer_button ($c) {
 			$problemID = join('.', jitar_id_to_seq($problemID));
 		}
 
-		my $hiddenFields = $c->hidden_authen_fields;
-		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		return $c->form_for(
 			'answer_log',
 			method => 'POST',
 			target => 'WW_Info',
 			$c->c(
-				$hiddenFields,
+				$c->hidden_authen_fields,
 				$c->hidden_field(courseID          => $c->stash('courseID')),
 				$c->hidden_field(selected_problems => $problemID),
 				$c->hidden_field(selected_sets     => $c->{problem}->set_id),

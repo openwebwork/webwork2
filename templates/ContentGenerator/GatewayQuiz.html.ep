@@ -840,7 +840,7 @@
 % # Add a show answers option if appropriate.
 % if ($authz->hasPermissions($userID, 'view_answers')) {
 	<%= form_for 'answer_log', method => 'POST', target => 'WW_Info', begin =%>
-		<%= $c->hidden_authen_fields('pastans-') =%>
+		<%= $c->hidden_authen_fields =%>
 		<%= hidden_field courseID => $ce->{courseName} =%>
 		<%= hidden_field selected_sets => "$setID,v$setVersionID" =%>
 		<%= hidden_field selected_users => $effectiveUserID =%>

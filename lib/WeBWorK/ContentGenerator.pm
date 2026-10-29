@@ -972,21 +972,12 @@ fragments.
 
 =item hidden_fields(@fields)
 
-Return hidden <INPUT> tags for each field mentioned in @fields (or all fields if
-list is empty), taking data from the current request.
-
-A hash of options may be passed for the first argument of this method.  The only
-supported option is an "id_prefix" to prepend to the id's of all of the hidden
-inputs that are created.
+Return hidden input tags for each field mentioned in C<@fields> (or all fields
+if that list is empty), taking data from the current request.
 
 =cut
 
-# FIXME: Hidden fields have no need for an id attribute.  Fix the javascript that finds these in by using the id, and
-# remove the id here.  Then the id_prefix hack isn't needed.  The name does not need to be unique.
 sub hidden_fields ($c, @fields) {
-	my %options   = ref $fields[0] eq 'HASH' ? %{ shift @fields } : ();
-	my $id_prefix = $options{id_prefix} // '';
-
 	@fields = $c->param unless @fields;
 
 	my $html = $c->c;
@@ -994,7 +985,7 @@ sub hidden_fields ($c, @fields) {
 		my @values = $c->param($param);
 		for my $value (@values) {
 			next unless defined($value);
-			push(@$html, $c->hidden_field($param => $value, id => "${id_prefix}hidden_$param"));
+			push(@$html, $c->hidden_field($param => $value));
 		}
 	}
 
@@ -1003,10 +994,7 @@ sub hidden_fields ($c, @fields) {
 
 =item hidden_authen_fields()
 
-Use hidden_fields to return hidden <INPUT> tags for request fields used in
-authentication.
-
-An optional $id_prefix may be passed as the first argument of this method.
+Return hidden input tags for request fields used in authentication.
 
 If session_management_via is "session_cookie" then the hidden authentication
 fields that are return are for the "user" and the "effectiveUser".  If
@@ -1016,14 +1004,13 @@ session_management_via is "key" then the "key" is added.
 
 # FIXME: The "user" also should not be added to forms when session_management_via is "session_cookie". However, the
 # user param is used everywhere to get the user id.  That should be changed.
-sub hidden_authen_fields ($c, $id_prefix = undef) {
+sub hidden_authen_fields ($c) {
 	my @fields = ('user', 'effectiveUser');
 	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
 
 	# Make the Shibboleth bypass_query parameter persistent if it is configured.
 	push(@fields, $c->ce->{shibboleth}{bypass_query}) if $c->ce->{shibboleth}{bypass_query};
 
-	return $c->hidden_fields({ id_prefix => $id_prefix }, @fields) if defined $id_prefix;
 	return $c->hidden_fields(@fields);
 }
 
