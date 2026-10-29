@@ -1451,6 +1451,13 @@ sub output_past_answer_button ($c) {
 sub output_email_instructor ($c) {
 	my $user = $c->db->getUser($c->param('user'));
 
+	# If the problem failed to render, then include the first part of the error message in the email.
+	my $problemError;
+	if ($c->{pg}{flags}{error_flag}) {
+		my @lines = split(/\n/, $c->{pg}{errors} // '');
+		$problemError = join("\n", @lines > 20 ? (@lines[ 0 .. 19 ], '...') : @lines);
+	}
+
 	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the
 	# feedbackMacro method and only for that case.
 	return $c->feedbackMacro(
@@ -1471,6 +1478,7 @@ sub output_email_instructor ($c) {
 		showHints          => $c->{will}{showHints},
 		showSolutions      => $c->{will}{showSolutions},
 		pg_object          => $c->{pg},
+		defined $problemError ? (problemError => $problemError) : ()
 	);
 }
 
