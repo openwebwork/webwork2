@@ -21,7 +21,6 @@
 	</p>
 % } else {
 	<%= form_for 'set_list', method => 'POST', begin =%>
-		<%= hidden_field force_passwd_authen => 1 =%>
 		<p><%= submit_button maketext('Log In Again'), name => 'submit', class => 'btn btn-primary' =%></p>
 	<% end =%>
 % }

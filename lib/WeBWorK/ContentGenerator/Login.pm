@@ -88,7 +88,7 @@ sub pre_header_initialize ($c) {
 
 	if (!$c->stash->{externalAuth}) {
 		# Preserve the form data posted to the requested URI
-		my @fields_to_print = grep { !m/^(user|passwd|key|force_passwd_authen)$/ } $c->param;
+		my @fields_to_print = grep { !m/^(user|passwd|key)$/ } $c->param;
 
 		# Important note. If hidden_fields is passed an empty array it prints ALL parameters as hidden fields.
 		# That is not what we want in this case, so we don't print at all if @fields_to_print is empty.
