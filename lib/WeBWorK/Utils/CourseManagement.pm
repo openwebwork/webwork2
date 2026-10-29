@@ -918,7 +918,7 @@ sub archiveCourse {
 	my $tar        = Archive::Tar->new;
 	$tar->add_files($course_dir, @$files);
 	for ($tar->get_files) {
-		$tar->rename($_->full_path, $_->full_path =~ s!^$parent_dir/!!r);
+		$tar->rename($_->full_path, $_->full_path =~ s!^\Q$parent_dir\E/!!r);
 	}
 	my $ok = $tar->write($tmp_archive_path, COMPRESS_GZIP);
 

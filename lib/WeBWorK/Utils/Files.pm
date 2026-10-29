@@ -15,7 +15,7 @@ our @EXPORT_OK = qw(
 
 sub surePathToFile ($start_directory, $path) {
 	# If the path starts with $start_directory (which is permitted but optional) remove this initial segment.
-	$path =~ s|^$start_directory/?|| if $path =~ m|^$start_directory|;
+	$path =~ s|^\Q$start_directory\E/?|| if $path =~ m|^\Q$start_directory\E|;
 
 	my $parent = path($start_directory);
 	my $child  = $parent->child($path);
@@ -46,7 +46,7 @@ sub listFilesRecursive ($dir, $match_qr, $prune_qr = '', $match_full = 0, $prune
 	find(
 		{
 			wanted => sub {
-				my $relFile = $File::Find::name =~ s|^$dir/?||r;
+				my $relFile = $File::Find::name =~ s|^\Q$dir\E/?||r;
 
 				if (-d $File::Find::name) {
 					# Skip unreadable directories (and broken symlinks, incidentally).
@@ -89,7 +89,7 @@ sub path_is_subdir ($path, $dir, $allow_relative = 0) {
 
 	$dir = canonpath($dir);
 	$dir .= '/' unless $dir =~ m|/$|;
-	return 0 unless $path =~ m|^$dir|;
+	return 0 unless $path =~ m|^\Q$dir\E|;
 
 	return 1;
 }
