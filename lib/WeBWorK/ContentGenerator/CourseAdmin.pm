@@ -1252,7 +1252,7 @@ sub do_unarchive_course ($c) {
 						$c->current_route,
 						method => 'POST',
 						$c->c(
-							$c->hidden_authen_fields('upgrade_course_'),
+							$c->hidden_authen_fields,
 							$c->hidden_field(subDisplay        => 'upgrade_course'),
 							$c->hidden_field(upgrade_course    => 1),
 							$c->hidden_field(upgrade_courseIDs => $new_courseID),
@@ -1271,7 +1271,7 @@ sub do_unarchive_course ($c) {
 						$c->current_route,
 						method => 'POST',
 						$c->c(
-							$c->hidden_authen_fields('unarchive_more_'),
+							$c->hidden_authen_fields,
 							$c->hidden_fields('subDisplay'),
 							$c->hidden_field(unarchive_courseID => $unarchive_courseID),
 							$c->submit_button(
