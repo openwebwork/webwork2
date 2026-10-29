@@ -62,7 +62,7 @@ sub initialize ($c) {
 	my $authz         = $c->authz;
 	my $courseName    = $c->stash('courseID');
 	my $achievementID = $c->stash('achievementID');
-	my $user          = $c->param('user');
+	my $user          = $c->authen->{user_id};
 
 	# Make sure these are available in the templates.
 	$c->stash->{formsToShow}  = VIEW_FORMS();
@@ -343,7 +343,7 @@ sub delete_handler ($c) {
 sub create_handler ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	# Create achievement
 	my $newAchievementID = $c->param('action.create.id');

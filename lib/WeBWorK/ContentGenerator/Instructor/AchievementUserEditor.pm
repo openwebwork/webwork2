@@ -12,7 +12,7 @@ sub initialize ($c) {
 	my $authz         = $c->authz;
 	my $db            = $c->db;
 	my $achievementID = $c->stash('achievementID');
-	my $user          = $c->param('user');
+	my $user          = $c->authen->{user_id};
 
 	# Make sure these are defined for the template.
 	$c->stash->{userRecords}            = [];

@@ -375,7 +375,7 @@ sub createEmailSenderTransportSMTP ($ce) {
 
 sub generateURLs ($c, %params) {
 	my $db       = $c->db;
-	my $userName = $c->param('user');
+	my $userName = $c->authen->{user_id};
 
 	# generate context URLs
 	my ($emailableURL, $returnURL);

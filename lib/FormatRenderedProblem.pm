@@ -229,7 +229,7 @@ sub formatRenderedProblem ($c, $renderedProblem) {
 		COURSE_LANG_AND_DIR          => get_lang_and_dir($formLanguage),
 		theme                        => $inputsRef->{theme} || $ce->{defaultTheme},
 		courseID                     => $inputsRef->{courseID}       // '',
-		user                         => $inputsRef->{user}           // '',
+		user                         => $c->authen->{user_id}        // '',
 		passwd                       => $inputsRef->{passwd}         // '',
 		disableCookies               => $inputsRef->{disableCookies} // '',
 		key                          => $c->authen->{session_key},

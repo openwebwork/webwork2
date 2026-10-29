@@ -1,7 +1,7 @@
 % if ($authen && $authen->was_verified) {
 	% my $db = stash('db');
 	%
-	% my $userID          = param('user');
+	% my $userID          = $authen->{user_id};
 	% my $user            = $db->getUser($userID);
 	% my $effectiveUserID = param('effectiveUser');
 	% my $userName        = $user->full_name || $user->user_id;

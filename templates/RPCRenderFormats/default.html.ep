@@ -88,9 +88,9 @@
 							%= hidden_field passwd => $passwd
 						% }
 						% if (stash->{disable_cookies} || $ce->{session_management_via} ne 'session_cookie') {
+							%= hidden_field user => $user
 							%= hidden_field key => $key
 						% }
-						%= hidden_field user => $user
 						%= hidden_field sourceFilePath => $sourceFilePath
 						%= hidden_field problemSource => $problemSource
 						%= hidden_field rawProblemSource => $rawProblemSource

@@ -54,7 +54,7 @@
 									% my ($item, $form) = @$_;
 									<dt class="fs-4"><%= $item->name %></dt>
 									<dd class="mx-3 mb-4">
-										% if (param('user') eq param('effectiveUser')) {
+										% if ($authen->{user_id} eq param('effectiveUser')) {
 											<%= form_for current_route,
 												method => 'POST',
 												name   => 'use_reward',
@@ -109,9 +109,9 @@
 			</span>
 		% }
 	% }
-	% if ($authz->hasPermissions(param('user'), 'view_own_answers_early')
+	% if ($authz->hasPermissions($authen->{user_id}, 'view_own_answers_early')
 		% && $c->{set}->assignment_type !~ /gateway/
-		% && param('user') eq param('effectiveUser')
+		% && $authen->{user_id} eq param('effectiveUser')
 		% && time < $c->{set}->answer_date)
 	% {
 		<%= link_to maketext('Show Answers Now') => '#modal_view_answers_early',

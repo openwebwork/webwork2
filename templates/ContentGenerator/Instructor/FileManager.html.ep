@@ -4,7 +4,7 @@
 	<%= javascript getAssetURL($ce, 'js/FileManager/filemanager.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'manage_course_files')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'manage_course_files')) {
 	<em><%= maketext('You are not authorized to manage course files') %></em>
 	% last;
 % }

@@ -10,7 +10,7 @@
 		tabindex="-1"
 		aria-labelledby="delete_confirm_dialog_title"
 		aria-hidden="true"
-		data-current-user="<%= param('user') %>"
+		data-current-user="<%= $authen->{user_id} %>"
 	>
 		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
 			<div class="modal-content">

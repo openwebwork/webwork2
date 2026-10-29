@@ -142,7 +142,7 @@ async sub pre_header_initialize ($c) {
 	my $authz = $c->authz;
 	my $ce    = $c->ce;
 	my $db    = $c->db;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
 
@@ -388,7 +388,7 @@ sub edit_handler ($c) {
 
 sub delete_handler ($c) {
 	my $db   = $c->db;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 	my $num  = 0;
 
 	return (1, $c->maketext('Deleted [_1] [plural,_1,user].', $num)) unless $c->param('action.delete.confirm');
@@ -506,7 +506,7 @@ sub export_handler ($c) {
 
 sub reset_2fa_handler ($c) {
 	my $db   = $c->db;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 	my $num  = 0;
 
 	return (1, $c->maketext('Reset two factor authentication for [_1] [plural,_1,user].', $num))
@@ -725,7 +725,7 @@ sub importUsersFromCSV ($c, $fileName, $replaceExisting, $fallbackPasswordSource
 			push @skipped, $user_id;
 			next;
 		}
-		if ($user_id eq $c->param('user')) {               # don't replace yourself!!
+		if ($user_id eq $c->authen->{user_id}) {           # don't replace yourself!!
 			push @skipped, $user_id;
 			next;
 		}

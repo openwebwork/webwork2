@@ -17,7 +17,7 @@ sub initialize ($c) {
 	my $ce = $c->ce;
 
 	# Get user Data
-	$c->{userName}    = $c->param('user');
+	$c->{userName}    = $c->authen->{user_id};
 	$c->{studentName} = $c->param('effectiveUser') // $c->{userName};
 	$c->{globalData}  = $db->getGlobalUserAchievement($c->{studentName});
 

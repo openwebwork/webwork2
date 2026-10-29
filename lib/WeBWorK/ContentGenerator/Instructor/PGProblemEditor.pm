@@ -132,7 +132,7 @@ use constant ACTION_FORM_TITLES => {
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Check permissions
 	return
@@ -209,7 +209,7 @@ sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Make sure these are defined for the templates.
 	$c->stash->{problemContents}  = '';
@@ -392,7 +392,7 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 # It returns an absolute path to the file.
 # $path should be an absolute path to the original file.
 sub determineTempEditFilePath ($c, $path) {
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 	my $setID = $c->{setID} // 'Undefined_Set';
 
 	my $templatesDirectory   = $c->ce->{courseDirs}{templates};
@@ -455,7 +455,7 @@ sub determineOriginalEditFilePath ($c, $path) {
 		} elsif (($newpath =~ m|hardcopyTheme\.([^/]*\.xml)\.[^/]*$|)) {
 			$newpath = "$ce->{courseDirs}{hardcopyThemes}/$1";
 		} else {
-			my $user = $c->param('user');
+			my $user = $c->authen->{user_id};
 			$newpath =~ s|\.$user\.tmp$||;
 		}
 	} else {
@@ -488,7 +488,7 @@ sub isTempEditFilePath ($c, $path) {
 sub getFilePaths ($c) {
 	my $ce   = $c->ce;
 	my $db   = $c->db;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	my $editFilePath;
 
@@ -524,7 +524,7 @@ sub getFilePaths ($c) {
 		}
 	} elsif ($c->{file_type} eq 'problem') {
 		# First try getting the merged problem for the current user.
-		my $problem_record = $db->getMergedProblem($c->param('user'), $c->{setID}, $c->{problemID});
+		my $problem_record = $db->getMergedProblem($c->authen->{user_id}, $c->{setID}, $c->{problemID});
 
 		# If that doesn't work, then the problem is not assigned to this user (or this problem belongs to a gateway
 		# test, since the problem editor can not deal with problems from versioned sets). So get the global record.
@@ -1307,7 +1307,7 @@ sub save_as_handler ($c) {
 
 sub revert_handler ($c) {
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	unless (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(

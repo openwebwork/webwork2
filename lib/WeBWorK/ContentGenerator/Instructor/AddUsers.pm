@@ -15,7 +15,7 @@ sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	# Make sure these are defined for the template.
 	$c->stash->{statusValues}     = [];
@@ -111,7 +111,7 @@ sub initialize ($c) {
 	# Create the array of permission values for the permission selects.
 	for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
 		next
-			unless $ce->{userRoles}{$role} <= $db->getPermissionLevel($c->param('user'))->permission;
+			unless $ce->{userRoles}{$role} <= $db->getPermissionLevel($c->authen->{user_id})->permission;
 		push(
 			@{ $c->stash->{permissionValues} },
 			[

@@ -2,7 +2,7 @@
 %
 % my $courseID    = stash('courseID');
 % my $set         = $c->{set};
-% my $user        = param('user');
+% my $user        = $authen->{user_id};
 % my $multiSet    = $authz->hasPermissions($user, 'view_multiple_sets');
 % my $maxVersions = $set->versions_per_interval || 0;
 %

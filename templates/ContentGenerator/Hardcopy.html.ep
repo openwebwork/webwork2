@@ -1,4 +1,4 @@
-% my $perm_view_errors = $authz->hasPermissions(param('user'), 'download_hardcopy_view_errors');
+% my $perm_view_errors = $authz->hasPermissions($authen->{user_id}, 'download_hardcopy_view_errors');
 %
 % if ($c->has_errors) {
 	% my $file_path     = $c->{file_path};

@@ -18,7 +18,7 @@ sub initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $userID = $c->param('user');
+	my $userID = $c->authen->{user_id};
 	$c->{user} = $db->getUser($userID);
 	return unless defined $c->{user};
 

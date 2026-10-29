@@ -22,7 +22,7 @@ async sub initialize ($c) {
 	my $courseName = $c->stash('courseID');
 	my $setID      = $c->stash('setID');
 	my $problemID  = $c->stash('problemID');
-	my $userID     = $c->param('user');
+	my $userID     = $c->authen->{user_id};
 
 	# Make sure these are defined for the template.
 	$c->stash->{set}          = $db->getGlobalSet($setID);

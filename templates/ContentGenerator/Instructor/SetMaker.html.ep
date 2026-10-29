@@ -5,7 +5,7 @@
 	<%= javascript getAssetURL($ce, 'js/RenderProblem/renderproblem.js'), defer => undef =%>
 	<%= javascript getAssetURL($ce, 'js/SetMaker/setmaker.js'), defer => undef =%>
 	%
-	% if ($authz->hasPermissions(scalar(param('user')), 'modify_tags')) {
+	% if ($authz->hasPermissions($authen->{user_id}, 'modify_tags')) {
 		<%= javascript "$ce->{webworkURLs}{htdocs}/js/TagWidget/tagwidget.js",
 			id    => 'tag-widget-script',
 			defer => undef,
@@ -13,7 +13,7 @@
 	% }
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
 	% last;
 % }
@@ -21,6 +21,7 @@
 <%= form_for current_route, method => 'POST', name => 'library_browser_form', begin =%>
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field hidden_course_id => $courseID =%>
+	<%= hidden_field hidden_user_id => $authen->{user_id} =%>
 	<%= hidden_field hidden_language => $ce->{language} =%>
 	<%= hidden_field browse_which => $c->{browse_which} =%>
 	<%= hidden_field problem_seed => $c->{problem_seed} =%>

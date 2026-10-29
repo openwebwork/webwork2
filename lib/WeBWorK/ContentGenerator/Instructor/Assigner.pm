@@ -13,7 +13,7 @@ sub pre_header_initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 	my $ce    = $c->ce;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Make sure these are defined for the template.
 	$c->stash->{users}      = [];

@@ -2,7 +2,7 @@
 %
 % # If navigation is restricted, then don't show the body and instead display a
 % # message informing the user to access assignments via an LMS.
-% unless ($authz->hasPermissions(param('user'), 'navigation_allowed')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'navigation_allowed')) {
 	<div class="alert alert-danger">
 		<b>
 			% if ($ce->{LTI}) {
@@ -33,7 +33,7 @@
 % if (@{ stash('sets') }) {
 	<div class="d-flex justify-content-end gap-2 mb-3">
 		<%= hidden_field courseID => $ce->{courseName} =%>
-		<%= hidden_field userName => param('user') =%>
+		<%= hidden_field userName => $authen->{user_id} =%>
 		<div class="btn-group" role="group" aria-label="<%= maketext('Display choice') %>">
 			<button
 				id="show-by-date-btn"
