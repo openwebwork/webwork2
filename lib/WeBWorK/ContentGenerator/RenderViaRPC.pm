@@ -121,16 +121,16 @@ async sub renderProblem ($c) {
 	my $db = $c->db;
 
 	# Determine an effective user for this interaction or create one if it is not given.
-	# Use effectiveUser if given, and $rh->{user} otherwise.
+	# Use effectiveUser if given, and the authenticated user otherwise.
 	my $effectiveUserName;
 	if (defined $rh->{effectiveUser} && $rh->{effectiveUser} =~ /\S/) {
 		$effectiveUserName = $rh->{effectiveUser};
 	} else {
-		$effectiveUserName = $rh->{user};
+		$effectiveUserName = $c->authen->{user_id};
 	}
 
 	if ($UNIT_TESTS_ON) {
-		print STDERR "RenderProblem.pm:  user = $rh->{user}\n";
+		print STDERR 'RenderProblem.pm:  user = ' . $c->authen->{user_id} . "\n";
 		print STDERR "RenderProblem.pm:  courseName = $rh->{courseID}\n";
 		print STDERR "RenderProblem.pm:  effectiveUserName = $effectiveUserName\n";
 		print STDERR 'environment fileName', $rh->{fileName}, "\n";

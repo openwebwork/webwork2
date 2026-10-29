@@ -16,12 +16,12 @@ use WeBWorK::HTML::StudentNav         qw(studentNav);
 use WeBWorK::Localize;
 
 sub initialize ($c) {
-	$c->{studentID} = $c->param('effectiveUser') // $c->param('user');
+	$c->{studentID} = $c->param('effectiveUser') // $c->authen->{user_id};
 	return;
 }
 
 sub nav ($c, $args) {
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'become_student');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'become_student');
 
 	return $c->tag(
 		'div',
@@ -45,7 +45,7 @@ sub scoring_info ($c) {
 
 	# Return if the files don't exist.
 	if (!(-e "$ce->{courseDirs}{scoring}/$merge_file" && -e "$filePath")) {
-		if ($c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')) {
+		if ($c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools')) {
 			return $c->maketext(
 				'There is no additional grade information.  A message about additional grades can go in '
 					. '~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be '
@@ -130,7 +130,7 @@ sub scoring_info ($c) {
 				$merge_file
 			)
 		)
-	) if $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
+	) if $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	return $output->join('');
 }

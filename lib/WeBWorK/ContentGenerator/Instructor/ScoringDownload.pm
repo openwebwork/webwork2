@@ -16,7 +16,7 @@ sub pre_header_initialize ($c) {
 	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $file       = $c->param('getFile');
-	my $user       = $c->param('user');
+	my $user       = $c->authen->{user_id};
 
 	# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
 	# See checkName in FileManager.pm for a more complete sanitization.

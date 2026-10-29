@@ -17,7 +17,7 @@ sub initialize ($c) {
 	my $db    = $c->db;
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");

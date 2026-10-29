@@ -76,7 +76,7 @@
 			</div>
 		</div>
 	</div>
-	% if ($authz->hasPermissions(param('user'), 'assign_problem_sets')) {
+	% if ($authz->hasPermissions($authen->{user_id}, 'assign_problem_sets')) {
 		<div class="row mb-2">
 			<%= label_for
 				import_users_select => maketext('Assign this set to which users?'),
@@ -84,8 +84,8 @@
 			<div class="col-auto">
 				<%= select_field
 					'action.import.assign' => [
-						[ maketext('all current users')          => 'all' ],
-						[ maketext('only') . ' ' . param('user') => param('user'), selected => undef ]
+						[ maketext('all current users')               => 'all' ],
+						[ maketext('only') . ' ' . $authen->{user_id} => $authen->{user_id}, selected => undef ]
 					],
 					id    => 'import_users_select',
 					class => 'form-select form-select-sm' =%>

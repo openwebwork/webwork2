@@ -27,7 +27,7 @@ sub hardcopyRenderedProblem ($c, $renderedProblem) {
 	my @errors;
 
 	my $courseID = $c->req->param('courseID');
-	my $userID   = $c->req->param('user');
+	my $userID   = $c->authen->{user_id};
 
 	# Create the parent directory for the temporary working directory.
 	my $temp_dir_parent_path = path("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");

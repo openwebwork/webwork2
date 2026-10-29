@@ -19,7 +19,7 @@
 	<%= maketext('Recitation') =%>: <%= $studentRecord->recitation %>
 	<br>
 % }
-% if ($authz->hasPermissions(param('user'), 'become_student')) {
+% if ($authz->hasPermissions($authen->{user_id}, 'become_student')) {
 	<%= maketext('Act as:') =%>
 	<%= link_to $studentRecord->user_id =>
 		$c->systemLink(url_for('set_list'), params => { effectiveUser => $c->{studentID} }) =%>

@@ -14,7 +14,7 @@ async sub initialize ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
-	my $userID          = $c->param('user');
+	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser') || '';
 
 	$c->{effectiveUser} = $c->db->getUser($effectiveUserID);

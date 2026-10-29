@@ -47,7 +47,7 @@
 	% if ($c->{editMode}) {
 		% my @values;
 		% for my $role (sort { $ce->{userRoles}{$a} <=> $ce->{userRoles}{$b} } keys %{ $ce->{userRoles} }) {
-			% next unless $ce->{userRoles}{$role} <= $db->getPermissionLevel(param('user'))->permission;
+			% next unless $ce->{userRoles}{$role} <= $db->getPermissionLevel($authen->{user_id})->permission;
 			% push(
 				% @values,
 				% [
@@ -69,7 +69,7 @@
 	% }
 % } elsif ($properties->{type} eq 'password') {
 	% # Note that this is only called if in editMode.
-	% if ($user->user_id eq param('user')) {
+	% if ($user->user_id eq $authen->{user_id}) {
 		% # Don't allow a user to change their own password from this form.
 		<div class="alert alert-danger px-1 py-0 m-0">
 			<%= maketext('You may not change your own password here!') =%>

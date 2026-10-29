@@ -46,7 +46,7 @@
 		<div class="font-sm">
 			% if (ref $status_msg) {
 				<%= $status_msg->{msg} %>
-				% if ($status_msg->{override} && $c->authz->hasPermissions(param('user'), 'override_indicator')) {
+				% if ($status_msg->{override} && $c->authz->hasPermissions($authen->{user_id}, 'override_indicator')) {
 					<a
 						class="set-id-tooltip px-1"
 						role="button"
@@ -64,7 +64,7 @@
 				<%= $status_msg %>
 			% }
 		</div>
-		% if (!$set->visible && $authz->hasPermissions(param('user'), 'view_unopened_sets')) {
+		% if (!$set->visible && $authz->hasPermissions($authen->{user_id}, 'view_unopened_sets')) {
 			<div class="font-sm"><em><%= maketext('(This set is hidden from students.)') %></em></div>
 		% }
 		<div class="font-sm">
@@ -75,7 +75,7 @@
 	</div>
 	% if (
 		% $set->assignment_type !~ /gateway/
-		% && ($authz->hasPermissions(param('user'), 'view_multiple_sets')
+		% && ($authz->hasPermissions($authen->{user_id}, 'view_multiple_sets')
 			% || (after($set->open_date) && (!$is_restricted || after($set->due_date))))
 	% )
 	% {

@@ -387,7 +387,7 @@ Create the link to the webwork installation landing page with a logo and alt tex
 sub webwork_logo ($c) {
 	my $ce = $c->ce;
 
-	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed')) {
+	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed')) {
 		# If navigation is restricted for this user, then the webwork logo is not a link to the courses page.
 		return $c->tag(
 			'span',
@@ -478,7 +478,7 @@ sub links ($c) {
 	my $authz  = $c->authz;
 
 	# Grab data from the request.
-	my $userID        = $c->param('user');
+	my $userID        = $c->authen->{user_id};
 	my $eUserID       = $c->param('effectiveUser');
 	my $courseID      = $c->stash('courseID');
 	my $setID         = $c->stash('setID');
@@ -602,7 +602,7 @@ sub path ($c, $args = {}) {
 
 	# Determine if navigation is restricted for this user.
 	my $restrict_navigation =
-		$c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
+		$c->authen->was_verified && !$c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	my @path;
 
@@ -936,7 +936,7 @@ module and their values.
 =cut
 
 sub feedbackMacro ($c, %params) {
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'submit_feedback');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'submit_feedback');
 
 	if ($c->ce->{courseURLs}{feedbackURL}) {
 		return $c->link_to(
@@ -946,7 +946,7 @@ sub feedbackMacro ($c, %params) {
 		);
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
 		$params{notifyAddresses} =
-			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->param('user'))));
+			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->authen->{user_id})));
 		return $c->include(
 			'ContentGenerator/Base/feedback_macro_form',
 			params          => \%params,
@@ -996,17 +996,15 @@ sub hidden_fields ($c, @fields) {
 
 Return hidden input tags for request fields used in authentication.
 
-If session_management_via is "session_cookie" then the hidden authentication
-fields that are return are for the "user" and the "effectiveUser".  If
-session_management_via is "key" then the "key" is added.
+If session_management_via is "session_cookie" then the only hidden
+authentication field that is returned is for the "effectiveUser".  If
+session_management_via is "key" then the "user" and "key" are added.
 
 =cut
 
-# FIXME: The "user" also should not be added to forms when session_management_via is "session_cookie". However, the
-# user param is used everywhere to get the user id.  That should be changed.
 sub hidden_authen_fields ($c) {
-	my @fields = ('user', 'effectiveUser');
-	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
+	my @fields = ('effectiveUser');
+	push(@fields, 'user', 'key') if $c->ce->{session_management_via} ne 'session_cookie';
 
 	# Make the Shibboleth bypass_query parameter persistent if it is configured.
 	push(@fields, $c->ce->{shibboleth}{bypass_query}) if $c->ce->{shibboleth}{bypass_query};

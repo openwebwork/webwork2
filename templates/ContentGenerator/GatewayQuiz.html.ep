@@ -61,7 +61,7 @@
 	% }
 % end
 %
-% my $userID          = param('user');
+% my $userID          = $authen->{user_id};
 % my $effectiveUserID = param('effectiveUser');
 %
 % # If the set is invalid, then show that information and exit.

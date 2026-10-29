@@ -51,7 +51,7 @@
 						<%= $prettySetID =%>
 					</span>
 				<% end =%>
-				% if ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+				% if ($authz->hasPermissions($authen->{user_id}, 'modify_problem_sets')) {
 					<%= link_to $c->systemLink(
 						url_for('instructor_set_list', setID => $set_id),
 						params => { editMode => 1, visible_sets => $set_id }

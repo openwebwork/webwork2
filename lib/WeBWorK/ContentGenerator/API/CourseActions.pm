@@ -223,7 +223,7 @@ sub deleteUser ($c) {
 		unless $db->getUser($c->req->param('user_id'));
 
 	return $c->renderError('You cannot delete yourself from the course.')
-		if $c->req->param('user_id') eq $c->req->param('user');
+		if $c->req->param('user_id') eq $c->authen->{user_id};
 
 	my $del = $db->deleteUser($c->req->param('user_id'));
 	return $c->renderError('User ' . $c->req->param('user_id') . ' could not be deleted.') unless $del;
@@ -249,7 +249,7 @@ sub editUser ($c) {
 
 	# Get the permission level, so that it can be verified that the permission level of the
 	# user being edited is less than or equal to that of the one doing the editing.
-	my $callerPermission = $db->getPermissionLevel($c->req->param('user'));
+	my $callerPermission = $db->getPermissionLevel($c->authen->{user_id});
 	my $permissionLevel  = $db->getPermissionLevel($c->req->param('user_id'));
 
 	return $c->renderError('You do not have permission to edit ' . $c->req->param('user_id'))
@@ -265,7 +265,7 @@ sub editUser ($c) {
 	$response->{user}    = unbless($user);
 
 	if (defined $c->req->param('permission') && $c->req->param('permission') =~ /\d*/) {
-		if ($c->req->param('user_id') eq $c->req->param('user')) {
+		if ($c->req->param('user_id') eq $c->authen->{user_id}) {
 			$response->{message} .= ' You cannot change your own permissions.';
 			$response->{permission_changed} = false;
 		} else {
@@ -319,7 +319,7 @@ sub changeUserPassword ($c) {
 
 	# Get the permission level, so that it can be verified that the permission level of the user being edited is less
 	# than or equal to that of the one doing the editing.
-	my $callerPermission = $db->getPermissionLevel($c->req->param('user'));
+	my $callerPermission = $db->getPermissionLevel($c->authen->{user_id});
 	my $permissionLevel  = $db->getPermissionLevel($c->req->param('user_id'));
 	return $c->renderError('You do not have permission to change the password for ' . $c->req->param('user_id'))
 		unless $callerPermission

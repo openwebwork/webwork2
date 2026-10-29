@@ -223,7 +223,7 @@
 				>
 					<%= maketext('Add') %>
 				</button>
-				% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
+				% if ($authz->hasPermissions($authen->{user_id}, 'modify_tags')) {
 					<button
 						id="tagger<%= $cnt %>"
 						class="tag-edit-btn btn btn-secondary btn-sm ms-2"
@@ -307,7 +307,7 @@
 						$isGatewaySet ? () : (problemID => '1')
 					),
 					params => {
-						effectiveUser  => scalar(param('user')),
+						effectiveUser  => $authen->{user_id},
 						editMode       => 'SetMaker',
 						problemSeed    => $c->{problem_seed},
 						sourceFilePath => $sourceFileName,

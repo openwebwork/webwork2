@@ -15,7 +15,7 @@ sub initialize ($c) {
 	$c->stash->{users}      = [];
 	$c->stash->{lastUpdate} = 0;
 
-	return unless ($c->authz->hasPermissions($c->param('user'), 'score_sets') && $ce->{LTIGradeMode});
+	return unless ($c->authz->hasPermissions($c->authen->{user_id}, 'score_sets') && $ce->{LTIGradeMode});
 
 	my $allUserSets = {};
 	for ($db->listUserSetsWhere) { push(@{ $allUserSets->{ $_->[0] } }, $_->[1]) }

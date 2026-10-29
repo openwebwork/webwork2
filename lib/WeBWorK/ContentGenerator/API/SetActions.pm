@@ -210,11 +210,11 @@ sub createNewSet ($c) {
 	my $selfassign = $c->req->param('selfassign') // '';
 	if ($selfassign && $selfassign !~ /false/i) {
 		my $userSet = $db->newUserSet;
-		$userSet->user_id($c->req->param('user'));
+		$userSet->user_id($c->authen->{user_id});
 		$userSet->set_id($newSetName);
 		$userSet->version_id(0);
 		$db->addUserSet($userSet);
-		$message .= ' Set was assigned to ' . $c->req->param('user') . '.';
+		$message .= ' Set was assigned to ' . $c->authen->{user_id} . '.';
 	}
 	return $c->render(json => { message => $message });
 }
