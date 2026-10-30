@@ -8,7 +8,7 @@ use Mojo::JSON            qw(false true);
 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils               qw(initializeUserProblem);
-use WeBWorK::Utils                   qw(cryptPassword);
+use WeBWorK::Utils                   qw(cryptPassword isValidEmailAddress);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Utils::Files            qw(surePathToFile path_is_subdir);
 use WeBWorK::ConfigValues            qw(getConfigValues);
@@ -132,6 +132,9 @@ sub addUser ($c) {
 	} else {
 		# Add a new user.
 		my $ce = $c->ce;
+
+		return $c->renderError('The email_address parameter is not a valid email address.')
+			if $c->req->param('email_address') && !isValidEmailAddress($c->req->param('email_address'));
 
 		my $new_student =
 			$db->newUser(user_id => $c->req->param('user_id'), status => $ce->{statuses}{Enrolled}{abbrevs}[0]);
