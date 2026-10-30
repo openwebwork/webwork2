@@ -28,7 +28,7 @@
 		% if ($can{getSubmitButton}) {
 			% $enter_key_name = 'submitAnswers';
 			% $enter_key_value =
-				% (param('user') ne $effectiveUser)
+				% ($authen->{user_id} ne $effectiveUser)
 				% ? maketext('Submit Answers for [_1]', $effectiveUser)
 				% : maketext('Submit Answers');
 		% } elsif ($can{checkAnswers}) {
@@ -60,7 +60,7 @@
 	% }
 	%
 	% if ($can{getSubmitButton}) {
-		% if (param('user') ne $effectiveUser) {
+		% if ($authen->{user_id} ne $effectiveUser) {
 			% # If acting as a student, make it clear that answer submissions will
 			% # apply to the student's records, not the instructor's.
 			<%= submit_button maketext('Submit Answers for [_1]', $effectiveUser),

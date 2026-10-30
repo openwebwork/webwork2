@@ -1,4 +1,4 @@
-% unless ($authz->hasPermissions(param('user'), 'submit_feedback')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'submit_feedback')) {
 	<p><%= maketext('You are not allowed to send email.') %></p>
 	<p><%= link_to maketext('Cancel E-Mail') => $returnURL %></p>
 	% last;

@@ -4,12 +4,12 @@
 	<%= javascript getAssetURL($ce, 'js/SendMail/sendmail.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools') %></div>
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'send_mail')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'send_mail')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to send mail to students') %></div>
 	% last;
 % }

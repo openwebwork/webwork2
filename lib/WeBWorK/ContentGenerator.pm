@@ -387,7 +387,7 @@ Create the link to the webwork installation landing page with a logo and alt tex
 sub webwork_logo ($c) {
 	my $ce = $c->ce;
 
-	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed')) {
+	if ($c->authen->was_verified && !$c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed')) {
 		# If navigation is restricted for this user, then the webwork logo is not a link to the courses page.
 		return $c->tag(
 			'span',
@@ -478,7 +478,7 @@ sub links ($c) {
 	my $authz  = $c->authz;
 
 	# Grab data from the request.
-	my $userID        = $c->param('user');
+	my $userID        = $c->authen->{user_id};
 	my $eUserID       = $c->param('effectiveUser');
 	my $courseID      = $c->stash('courseID');
 	my $setID         = $c->stash('setID');
@@ -602,7 +602,7 @@ sub path ($c, $args = {}) {
 
 	# Determine if navigation is restricted for this user.
 	my $restrict_navigation =
-		$c->authen->was_verified && !$c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
+		$c->authen->was_verified && !$c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	my @path;
 
@@ -936,7 +936,7 @@ module and their values.
 =cut
 
 sub feedbackMacro ($c, %params) {
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'submit_feedback');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'submit_feedback');
 
 	if ($c->ce->{courseURLs}{feedbackURL}) {
 		return $c->link_to(
@@ -946,7 +946,7 @@ sub feedbackMacro ($c, %params) {
 		);
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
 		$params{notifyAddresses} =
-			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->param('user'))));
+			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->authen->{user_id})));
 		return $c->include(
 			'ContentGenerator/Base/feedback_macro_form',
 			params          => \%params,
@@ -972,21 +972,12 @@ fragments.
 
 =item hidden_fields(@fields)
 
-Return hidden <INPUT> tags for each field mentioned in @fields (or all fields if
-list is empty), taking data from the current request.
-
-A hash of options may be passed for the first argument of this method.  The only
-supported option is an "id_prefix" to prepend to the id's of all of the hidden
-inputs that are created.
+Return hidden input tags for each field mentioned in C<@fields> (or all fields
+if that list is empty), taking data from the current request.
 
 =cut
 
-# FIXME: Hidden fields have no need for an id attribute.  Fix the javascript that finds these in by using the id, and
-# remove the id here.  Then the id_prefix hack isn't needed.  The name does not need to be unique.
 sub hidden_fields ($c, @fields) {
-	my %options   = ref $fields[0] eq 'HASH' ? %{ shift @fields } : ();
-	my $id_prefix = $options{id_prefix} // '';
-
 	@fields = $c->param unless @fields;
 
 	my $html = $c->c;
@@ -994,7 +985,7 @@ sub hidden_fields ($c, @fields) {
 		my @values = $c->param($param);
 		for my $value (@values) {
 			next unless defined($value);
-			push(@$html, $c->hidden_field($param => $value, id => "${id_prefix}hidden_$param"));
+			push(@$html, $c->hidden_field($param => $value));
 		}
 	}
 
@@ -1003,27 +994,21 @@ sub hidden_fields ($c, @fields) {
 
 =item hidden_authen_fields()
 
-Use hidden_fields to return hidden <INPUT> tags for request fields used in
-authentication.
+Return hidden input tags for request fields used in authentication.
 
-An optional $id_prefix may be passed as the first argument of this method.
-
-If session_management_via is "session_cookie" then the hidden authentication
-fields that are return are for the "user" and the "effectiveUser".  If
-session_management_via is "key" then the "key" is added.
+If session_management_via is "session_cookie" then the only hidden
+authentication field that is returned is for the "effectiveUser".  If
+session_management_via is "key" then the "user" and "key" are added.
 
 =cut
 
-# FIXME: The "user" also should not be added to forms when session_management_via is "session_cookie". However, the
-# user param is used everywhere to get the user id.  That should be changed.
-sub hidden_authen_fields ($c, $id_prefix = undef) {
-	my @fields = ('user', 'effectiveUser');
-	push(@fields, 'key') if $c->ce->{session_management_via} ne 'session_cookie';
+sub hidden_authen_fields ($c) {
+	my @fields = ('effectiveUser');
+	push(@fields, 'user', 'key') if $c->ce->{session_management_via} ne 'session_cookie';
 
 	# Make the Shibboleth bypass_query parameter persistent if it is configured.
 	push(@fields, $c->ce->{shibboleth}{bypass_query}) if $c->ce->{shibboleth}{bypass_query};
 
-	return $c->hidden_fields({ id_prefix => $id_prefix }, @fields) if defined $id_prefix;
 	return $c->hidden_fields(@fields);
 }
 

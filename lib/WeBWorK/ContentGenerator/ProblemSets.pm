@@ -30,7 +30,7 @@ sub can ($c, $arg) {
 		my $text = DEFAULT_COURSE_INFO_TXT;
 		eval { $text = readFile($course_info_path) } if -f $course_info_path;
 
-		return $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools')
+		return $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools')
 			|| $text ne DEFAULT_COURSE_INFO_TXT;
 	}
 
@@ -41,7 +41,7 @@ sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	if ($authz->hasPermissions($user, 'access_instructor_tools')) {
 		my $status_message = $c->authen->flash('status_message');
@@ -117,7 +117,7 @@ sub getSetStatus ($c, $set) {
 	my $ce             = $c->ce;
 	my $db             = $c->db;
 	my $authz          = $c->authz;
-	my $effectiveUser  = $c->param('effectiveUser')                      || $c->param('user');
+	my $effectiveUser  = $c->param('effectiveUser')                      || $c->authen->{user_id};
 	my $restricted_msg = restricted_set_message($c, $set, 'conditional') || restricted_set_message($c, $set, 'lti');
 
 	# Determine set status.

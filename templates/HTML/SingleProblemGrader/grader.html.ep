@@ -11,6 +11,7 @@
 	class="problem-grader d-none"
 	id="problem-grader-<%= $grader->{problem_id} %>"
 	data-grader-title="<%= maketext('Problem Grader') %>"
+	data-user-id="<%= $authen->{user_id} %>"
 >
 	<div class="problem-grader-table">
 		% my $currentScore    = 0;

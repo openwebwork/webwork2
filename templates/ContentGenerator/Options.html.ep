@@ -1,7 +1,7 @@
 % require WeBWorK::PG;
 %
 % unless (defined $c->{user}) {
-	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('user')) %></div>
+	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', $authen->{user_id}) %></div>
 	% last;
 % }
 %

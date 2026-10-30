@@ -28,7 +28,7 @@ sub pre_header_initialize ($c) {
 	$c->stash->{achievementNotification} = '';
 
 	# Check permissions
-	return unless ($c->authz->hasPermissions($c->param('user'), 'edit_achievements'));
+	return unless ($c->authz->hasPermissions($c->authen->{user_id}, 'edit_achievements'));
 
 	# Get the achievement
 	$c->{achievement} = $c->db->getAchievement($achievementID);
@@ -57,7 +57,7 @@ sub pre_header_initialize ($c) {
 
 sub initialize ($c) {
 	my $authz          = $c->authz;
-	my $user           = $c->param('user');
+	my $user           = $c->authen->{user_id};
 	my $sourceFilePath = $c->{sourceFilePath};
 
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));

@@ -137,7 +137,7 @@ use constant SORTABLE_FIELDS => {
 sub pre_header_initialize ($c) {
 	my $db         = $c->db;
 	my $authz      = $c->authz;
-	my $user       = $c->param('user');
+	my $user       = $c->authen->{user_id};
 	my $courseName = $c->stash('courseID');
 
 	# Check permissions
@@ -168,7 +168,7 @@ sub initialize ($c) {
 	my $authz      = $c->authz;
 	my $courseName = $c->stash('courseID');
 	my $setID      = $c->stash('setID');
-	my $user       = $c->param('user');
+	my $user       = $c->authen->{user_id};
 
 	# Make sure these are defined for the templates.
 	$c->stash->{fieldNames}     = VIEW_FIELD_ORDER();
@@ -503,7 +503,7 @@ sub create_handler ($c) {
 	}
 
 	# Assign set to current active user.
-	my $userName = $c->param('user');
+	my $userName = $c->authen->{user_id};
 	assignSetToUser($db, $userName, $newSetRecord);    # Cures weird date error when no-one assigned to set.
 	$c->addgoodmessage($c->maketext(
 		'Set [_1] was assigned to [_2].',

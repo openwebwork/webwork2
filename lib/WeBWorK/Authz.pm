@@ -202,7 +202,7 @@ sub checkSet ($self) {
 	# To check set restrictions we need a set and a user.
 	my $setName           = $c->stash('setID');
 	my $setVersion        = $c->stash('versionID') // 0;
-	my $userName          = $c->param('user');
+	my $userName          = $c->authen->{user_id};
 	my $effectiveUserName = $c->param('effectiveUser');
 
 	# If there is no input userName, then the content generator will be forcing a login, so just bail.

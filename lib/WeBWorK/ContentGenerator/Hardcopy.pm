@@ -107,7 +107,7 @@ async sub pre_header_initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 
-	my $userID            = $c->param('user');
+	my $userID            = $c->authen->{user_id};
 	my $eUserID           = $c->param('effectiveUser');
 	my @setIDs            = $c->param('selected_sets');
 	my @userIDs           = $c->param('selected_users');
@@ -311,7 +311,7 @@ sub display_form ($c) {
 	my $db      = $c->db;
 	my $ce      = $c->ce;
 	my $authz   = $c->authz;
-	my $userID  = $c->param("user");
+	my $userID  = $c->authen->{user_id};
 	my $eUserID = $c->param("effectiveUser");
 
 	# first time we show up here, fill in some values
@@ -481,7 +481,7 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	my $authz = $c->authz;
 
 	my $courseID = $c->stash('courseID');
-	my $userID   = $c->param('user');
+	my $userID   = $c->authen->{user_id};
 
 	# Create the temporary directory.
 	my $temp_dir_parent_path = Mojo::File->new("$ce->{webworkDirs}{tmp}/$courseID/hardcopy/$userID");
@@ -883,7 +883,7 @@ async sub write_set_tex ($c, $FH, $TargetUser, $themeTree, $setID) {
 	my $ce     = $c->ce;
 	my $db     = $c->db;
 	my $authz  = $c->authz;
-	my $userID = $c->param("user");
+	my $userID = $c->authen->{user_id};
 
 	# we may already have the MergedSet from checking hide_work and
 	#    hide_score in pre_header_initialize; check to see if that's true,
@@ -1046,7 +1046,7 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 	my $ce           = $c->ce;
 	my $db           = $c->db;
 	my $authz        = $c->authz;
-	my $userID       = $c->param("user");
+	my $userID       = $c->authen->{user_id};
 	my $eUserID      = $c->param("effectiveUser");
 	my $versioned    = $c->{versioned};
 	my %canShowScore = %{ $c->{canShowScore} };

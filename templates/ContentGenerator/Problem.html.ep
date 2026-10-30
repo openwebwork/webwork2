@@ -33,7 +33,7 @@
 	<%= javascript getAssetURL($ce, 'node_modules/jquery-ui-dist/jquery-ui.min.js') =%>
 	%
 	% # This is for tagging menus (if allowed)
-	% if ($authz->hasPermissions(param('user'), 'modify_tags')) {
+	% if ($authz->hasPermissions($authen->{user_id}, 'modify_tags')) {
 		<%= javascript getAssetURL($ce, 'js/TagWidget/tagwidget.js'),
 			id    => 'tag-widget-script',
 			defer => undef,

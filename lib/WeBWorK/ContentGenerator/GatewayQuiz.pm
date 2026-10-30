@@ -297,7 +297,7 @@ async sub pre_header_initialize ($c) {
 	my $authz = $c->authz;
 
 	my $setID           = $c->stash('setID');
-	my $userID          = $c->param('user');
+	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser');
 	my $isFakeSet       = 0;
 
@@ -1277,7 +1277,7 @@ sub path ($c, $args) {
 	my $setID      = $c->stash('setID');
 	my $courseName = $ce->{courseName};
 
-	my $navigation_allowed = $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
+	my $navigation_allowed = $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	return $c->pathMacro(
 		$args,
@@ -1298,7 +1298,7 @@ sub path ($c, $args) {
 
 sub nav ($c, $args) {
 	my $db              = $c->db;
-	my $userID          = $c->param('user');
+	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser');
 
 	return '' if $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation};

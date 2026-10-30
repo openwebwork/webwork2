@@ -58,7 +58,7 @@ sub initialize ($c) {
 	$c->stash->{ternarySortField}   = $c->param('ternarySortField')   || 'state';
 	$c->stash->{ternarySortOrder}   = $c->param('ternarySortOrder')   || 'ASC';
 
-	return unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
+	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	# Get a list of all jobs.  If this is not the admin course, then restrict to the jobs for this course.
 	my $jobs = $c->minion->jobs;

@@ -16,7 +16,7 @@ sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 	my $setID = $c->stash('setID');
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Make sure these are defined for the template.
 	$c->stash->{user_records}               = [];

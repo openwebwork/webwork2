@@ -17,7 +17,7 @@ use WeBWorK::Utils::Sets  qw(grade_set format_set_name_display);
 sub initialize ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	# Check permissions
 	return unless $c->authz->hasPermissions($user, 'access_instructor_tools');
@@ -64,7 +64,7 @@ sub initialize ($c) {
 }
 
 sub page_title ($c) {
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	my $setID = $c->stash('setID') || '';
 
@@ -338,7 +338,7 @@ sub problem_stats ($c) {
 
 	my $db        = $c->db;
 	my $ce        = $c->ce;
-	my $user      = $c->param('user');
+	my $user      = $c->authen->{user_id};
 	my $courseID  = $c->stash('courseID');
 	my $problemID = $c->stash('problemID');
 

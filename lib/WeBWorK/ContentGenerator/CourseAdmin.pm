@@ -39,7 +39,7 @@ use WeBWorK::DB;
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	return unless $authz->hasPermissions($user, 'create_and_delete_courses');
 
@@ -1252,7 +1252,7 @@ sub do_unarchive_course ($c) {
 						$c->current_route,
 						method => 'POST',
 						$c->c(
-							$c->hidden_authen_fields('upgrade_course_'),
+							$c->hidden_authen_fields,
 							$c->hidden_field(subDisplay        => 'upgrade_course'),
 							$c->hidden_field(upgrade_course    => 1),
 							$c->hidden_field(upgrade_courseIDs => $new_courseID),
@@ -1271,7 +1271,7 @@ sub do_unarchive_course ($c) {
 						$c->current_route,
 						method => 'POST',
 						$c->c(
-							$c->hidden_authen_fields('unarchive_more_'),
+							$c->hidden_authen_fields,
 							$c->hidden_fields('subDisplay'),
 							$c->hidden_field(unarchive_courseID => $unarchive_courseID),
 							$c->submit_button(
@@ -2484,7 +2484,7 @@ sub manage_otp_secrets_form ($c) {
 		my $total    = 0;
 		my $courseID = $c->param('sourceResetCourseID');
 		for my $user ($c->param('otp_reset_row')) {
-			if ($courseID eq $c->ce->{courseName} && $user eq $c->param('user')) {
+			if ($courseID eq $c->ce->{courseName} && $user eq $c->authen->{user_id}) {
 				$c->addbadmessage($c->maketext('You may not reset your own OTP secret!'));
 				next;
 			}
@@ -2504,7 +2504,7 @@ sub manage_otp_secrets_form ($c) {
 		my $total = 0;
 		for my $row ($c->param('otp_copy_row')) {
 			my ($s_course, $s_user, $d_course, $d_user) = split(':', $row);
-			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->authen->{user_id}) {
 				$c->addbadmessage(
 					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!'));
 				next;
@@ -2612,7 +2612,7 @@ sub copy_otp_secrets_confirm ($c) {
 				$dbs{$d_course} = WeBWorK::DB->new($dest_ce);
 			}
 
-			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->param('user')) {
+			if ($d_course eq $c->ce->{courseName} && $d_user eq $c->authen->{user_id}) {
 				$dest_error = 'danger';
 				$error_message =
 					$c->maketext('You cannot overwrite your OTP secret with one from another course or user!');
@@ -2670,7 +2670,7 @@ sub reset_otp_secrets_confirm ($c) {
 	for my $user (@dest_users) {
 		my $error = '';
 
-		if ($source_course eq $c->ce->{courseName} && $user eq $c->param('user')) {
+		if ($source_course eq $c->ce->{courseName} && $user eq $c->authen->{user_id}) {
 			$error = $c->maketext('You may not reset your own OTP secret!');
 		} else {
 			my $password = $db->getPassword($user);

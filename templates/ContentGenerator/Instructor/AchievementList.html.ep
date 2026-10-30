@@ -6,7 +6,7 @@
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'edit_achievements')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'edit_achievements')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to edit achievements.') %></div>
 	% last;
 % }

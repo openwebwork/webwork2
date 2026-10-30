@@ -42,7 +42,7 @@ sub objectify ($c, $data) {
 sub pre_header_initialize ($c) {
 	$c->stash->{configValues} = [];
 
-	return unless $c->authz->hasPermissions($c->param('user'), 'modify_problem_sets');
+	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets');
 
 	# Record status messages carried over if this is a redirect
 	$c->addmessage($c->authen->flash('status_message') || '');
@@ -73,7 +73,7 @@ sub pre_header_initialize ($c) {
 			for my $con (@configSectionArray) {
 				my $conobject = $c->objectify($con);
 				if (defined $ce->{permissionLevels}{"change_config_$con->{var}"}
-					&& !$c->authz->hasPermissions($c->param('user'), "change_config_$con->{var}"))
+					&& !$c->authz->hasPermissions($c->authen->{user_id}, "change_config_$con->{var}"))
 				{
 					# The user does not have permission to change this configuration value.
 					# So use the current course environment value.

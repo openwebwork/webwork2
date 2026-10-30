@@ -16,7 +16,7 @@ use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 sub initialize ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	# Check permissions
 	return unless $c->authz->hasPermissions($user, "access_instructor_tools");
@@ -54,7 +54,7 @@ sub initialize ($c) {
 }
 
 sub page_title ($c) {
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	if ($c->current_route eq 'instructor_user_progress') {
 		return $c->maketext('Student Progress for [_1]', $c->{studentID});
@@ -301,7 +301,7 @@ sub displayStudentStats ($c) {
 	my @allSetIDs;
 	for my $set (@sets) {
 		# Don't show hidden sets unless user has appropriate permissions.
-		next unless ($set->visible || $authz->hasPermissions($c->param('user'), 'view_hidden_sets'));
+		next unless ($set->visible || $authz->hasPermissions($c->authen->{user_id}, 'view_hidden_sets'));
 
 		my $setID = $set->set_id();
 
@@ -394,16 +394,18 @@ sub displayStudentStats ($c) {
 						$c->tag(
 							'th',
 							dir => 'ltr',
-							(after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets'))
-							? $c->link_to($setName => $act_as_student_set_url)
-							: $setName
+							(
+								after($set->open_date)
+								|| $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')
+							) ? $c->link_to($setName => $act_as_student_set_url) : $setName
 						),
 						$c->tag(
 							'td',
 							colspan => $max_problems + 3,
 							$c->tag(
 								'em',
-								after($set->open_date) ? $c->maketext('No versions of this test have been taken.')
+								after($set->open_date)
+								? $c->maketext('No versions of this test have been taken.')
 								: $c->maketext(
 									'Will open on [_1].',
 									$c->formatDateTime($set->open_date, $ce->{studentDateDisplayFormat})
@@ -421,7 +423,7 @@ sub displayStudentStats ($c) {
 			&& $set->assignment_type =~ /gateway/
 			&& defined $set->hide_score
 			&& (
-				!$authz->hasPermissions($c->param('user'), 'view_hidden_work')
+				!$authz->hasPermissions($c->authen->{user_id}, 'view_hidden_work')
 				&& ($set->hide_score eq 'Y' || ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))
 			)
 			)
@@ -433,7 +435,7 @@ sub displayStudentStats ($c) {
 					(
 						$set->hide_work eq 'N'
 						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
-						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
+						|| $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')
 					)
 					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
 					: $c->maketext('version [_1]', $set->version_id)
@@ -468,7 +470,7 @@ sub displayStudentStats ($c) {
 		my $show_problem_scores = 1;
 
 		if (defined $set->hide_score_by_problem
-			&& !$authz->hasPermissions($c->param('user'), 'view_hidden_work')
+			&& !$authz->hasPermissions($c->authen->{user_id}, 'view_hidden_work')
 			&& $set->hide_score_by_problem eq 'Y')
 		{
 			$show_problem_scores = 0;
@@ -537,7 +539,7 @@ sub displayStudentStats ($c) {
 		}
 
 		# Only show scores for open sets, and don't link to non open sets.
-		if (after($set->open_date) || $authz->hasPermissions($c->param('user'), 'view_unopened_sets')) {
+		if (after($set->open_date) || $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')) {
 			# Set the set name and link. If a test, don't link to the version unless the problems can be seen.
 			my $thisSetName = $setIsVersioned
 				? $c->link_to($setName => $act_as_student_set_url) . ' ('
@@ -545,7 +547,7 @@ sub displayStudentStats ($c) {
 					(
 						$set->hide_work eq 'N'
 						|| ($set->hide_work eq 'BeforeAnswerDate' && time >= $set->answer_date)
-						|| $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
+						|| $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')
 					)
 					? $c->link_to($c->maketext('version [_1]', $set->version_id) => $act_as_student_test_url)
 					: $c->maketext('version [_1]', $set->version_id)

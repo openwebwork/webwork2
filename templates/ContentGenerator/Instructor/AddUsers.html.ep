@@ -1,14 +1,14 @@
 % use WeBWorK::Utils::Sets qw(format_set_name_display);
 % use WeBWorK::Utils       qw(getAssetURL);
 %
-% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('You are not authorized to access instructor tools.') =%>
 	</div>
 	% last;
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'modify_student_data')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'modify_student_data')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify student data.') =%></div>
 	% last;
 % }
@@ -22,7 +22,7 @@
 % my $numberOfStudents = param('number_of_students') // 5;
 %
 <%= form_for current_route, method => 'POST', begin =%>
-	<%= $c->hidden_authen_fields('create_') =%>
+	<%= $c->hidden_authen_fields =%>
 	<div class="input-group d-inline-flex w-auto mb-3">
 		<%= submit_button maketext('Create'), class => 'btn btn-primary' =%>
 		<%= number_field

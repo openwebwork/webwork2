@@ -68,7 +68,7 @@ sub UserItems ($c, $userName, $set, $records) {
 	my @items;
 
 	# When acting as another user, achievement items can be listed but not used.
-	$use_item_id = '' if $userName ne $c->param('user');
+	$use_item_id = '' if $userName ne $c->authen->{user_id};
 
 	for my $item (@{ +ITEMS }) {
 		next unless $globalData->{$item};

@@ -35,7 +35,7 @@ async sub initialize ($c) {
 	return if $c->{invalidSet} && (!$c->{viewSetCheck} || $c->{viewSetCheck} eq 'hidden');
 
 	# This will all be valid if the above check passes.
-	my $userID  = $c->param('user');
+	my $userID  = $c->authen->{user_id};
 	my $eUserID = $c->param('effectiveUser');
 
 	# Don't show "Start New Test" button when acting as another user, unless user has permissions to do so.
@@ -148,7 +148,7 @@ async sub initialize ($c) {
 
 sub nav ($c, $args) {
 	# Don't show the nav if the user does not have unrestricted navigation permissions.
-	return '' unless $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	return $c->tag(
 		'div',
@@ -176,7 +176,7 @@ sub siblings ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	my $user    = $c->param('user');
+	my $user    = $c->authen->{user_id};
 	my $eUserID = $c->param('effectiveUser');
 
 	# Restrict navigation to other problem sets if not allowed.
@@ -222,7 +222,7 @@ sub gateway_body ($c) {
 
 	my $set             = $c->{set};
 	my $effectiveUserID = $c->param('effectiveUser');
-	my $userID          = $c->param('user');
+	my $userID          = $c->authen->{user_id};
 
 	my $effectiveUser = $db->getUser($effectiveUserID);
 

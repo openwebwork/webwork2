@@ -10,11 +10,11 @@
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to access instructor tools.') =%></div>
 	% last;
 % }
-% if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_student_data')) {
+% if ($c->{editMode} && !$authz->hasPermissions($authen->{user_id}, 'modify_student_data')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to modify student data') =%></div>
 	% last;
 % }
@@ -54,7 +54,7 @@
 				% || $ce->{LTIVersion} ne 'v1p3'
 				% || !$ce->{LTI}{v1p3}{preferred_source_of_username}
 				% || !$db->getSettingValue('LTINamesRolesServiceURL'));
-		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
+		% next if $formPerms->{$actionID} && !$authz->hasPermissions($authen->{user_id}, $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$CSVList ? ' disabled' : '';
 		% my $active   = '';

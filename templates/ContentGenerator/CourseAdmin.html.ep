@@ -5,7 +5,7 @@
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'create_and_delete_courses')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'create_and_delete_courses')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('You are not authorized to create or delete courses.') %>
 	</div>
