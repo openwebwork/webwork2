@@ -425,6 +425,8 @@
 		<%= hidden_field courseID => $ce->{courseName} =%>
 		%
 		<%= hidden_field startTime => param('startTime') || time =%>
+		<%= hidden_field versionLastAttemptTime => $c->{set}->version_last_attempt_time || 0 =%>
+		<%= hidden_field attemptNumber => $c->{attemptNumber} =%>
 		% if ($numProbPerPage && $numPages > 1) {
 			<%= hidden_field newPage => '' =%>
 			<%= hidden_field currentPage => $pageNumber =%>

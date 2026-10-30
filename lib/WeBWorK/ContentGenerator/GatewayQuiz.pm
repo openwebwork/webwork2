@@ -11,7 +11,7 @@ deal with versioning sets
 use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::Utils                    qw(encodeAnswers decodeAnswers wwRound);
+use WeBWorK::Utils                    qw(encodeAnswers decodeAnswers max wwRound);
 use WeBWorK::Utils::DateTime          qw(before between after);
 use WeBWorK::Utils::Files             qw(path_is_subdir);
 use WeBWorK::Utils::Instructor        qw(assignSetVersionToUser);
@@ -225,6 +225,39 @@ sub can_gradeUnsubmittedTest ($c, $user, $permissionLevel, $effectiveUser, $set,
 		!$submitAnswers
 		&& $c->can_showProblemGrader($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
 		&& (after($set->due_date + $c->ce->{gatewayGracePeriod}) && !$set->version_last_attempt_time);
+}
+
+# Save the time of a test submission to the set version's version_last_attempt_time, but only if the test has not been
+# submitted since the test page was rendered.  Returns 1 if the time was saved, and 0 if the test was submitted since
+# the page was rendered. This is used to protect against various forms of resubmission being graded and replacing the
+# first valid submission.  This is also used by the LoginProctor module when a proctored test is submitted.  In that
+# case the versionLastAttemptTime parameter is updated to the new value so that the proctor login form forwards it to
+# this module when the proctor authorizes grading.
+sub recordSubmissionTime ($c, $set, $problem) {
+	my $attemptNumber = $c->param('attemptNumber');
+	return 0
+		if defined $attemptNumber
+		&& $attemptNumber =~ /^\d+$/
+		&& $attemptNumber != $problem->num_correct + $problem->num_incorrect;
+
+	my $expectedTime = $c->param('versionLastAttemptTime');
+	$expectedTime = $set->version_last_attempt_time || 0 unless defined $expectedTime && $expectedTime =~ /^\d+$/;
+	my $submissionTime = max(int($c->submitTime), $expectedTime + 1);
+
+	return 0
+		if $c->db->{set_version}->update_where(
+			{ version_last_attempt_time => $submissionTime },
+			{
+				user_id                   => $set->user_id,
+				set_id                    => $set->set_id,
+				version_id                => $set->version_id,
+				version_last_attempt_time => $expectedTime
+			}
+		) == 0;
+
+	$c->{submissionTime} = $submissionTime;
+	$c->param(versionLastAttemptTime => $submissionTime);
+	return 1;
 }
 
 sub can_showScore ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
@@ -799,9 +832,18 @@ async sub pre_header_initialize ($c) {
 		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 	);
 
-	# Does the user have permission to use certain options?
 	my @args = ($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
-	my %can  = (
+
+	if ($want{recordAnswers} && $c->can_recordAnswers(@args) && !$c->recordSubmissionTime($set, $problem)) {
+		$c->{submitAnswers} = 0;
+		$want{recordAnswers} = 0;
+		$c->addbadmessage(
+			$c->maketext(
+				'This submission was not graded because this test was already submitted from another page or window.')
+		);
+	}
+
+	my %can = (
 		showOldAnswers        => $c->can_showOldAnswers(@args),
 		showCorrectAnswers    => $c->can_showCorrectAnswers(@args),
 		showProblemGrader     => $c->can_showProblemGrader(@args),
@@ -981,6 +1023,29 @@ async sub pre_header_initialize ($c) {
 		}
 
 		my @pureProblems = $db->getAllProblemVersions($effectiveUserID, $setID, $versionID);
+
+		# Another submission may occur from a page rendered after this submission arrived but before it finishes
+		# grading.  So before saving any scores, save the new number of attempts for one problem, but only if it still
+		# has the number of attempts that it had when this request started.  This is done in a single database update,
+		# so only one submission can be recorded for each attempt.
+		my $alreadyGraded = 0;
+		if ($c->{submitAnswers} && $will{recordAnswers}) {
+			my $firstProblem = $problems[ $probOrder[0] ];
+			my $state        = $pg_results[ $probOrder[0] ]{state};
+			$alreadyGraded = $db->{problem_version}->update_where(
+				{ num_correct => $state->{num_of_correct_ans}, num_incorrect => $state->{num_of_incorrect_ans} },
+				{
+					user_id       => $effectiveUserID,
+					set_id        => $setID,
+					version_id    => $versionID,
+					problem_id    => $firstProblem->problem_id,
+					num_correct   => $firstProblem->num_correct   || [ 0, undef ],
+					num_incorrect => $firstProblem->num_incorrect || [ 0, undef ]
+				}
+			) == 0;
+			$will{recordAnswers} = 0 if $alreadyGraded;
+		}
+
 		for my $i (0 .. $#problems) {
 			# Process each problem.
 			my $pureProblem = $pureProblems[ $probOrder[$i] ];
@@ -1058,7 +1123,11 @@ async sub pre_header_initialize ($c) {
 						. $problem->num_incorrect);
 			} elsif ($c->{submitAnswers}) {
 				# This is the case answers were submitted but cannot be saved. Report an error message.
-				if ($c->{isClosed}) {
+				if ($alreadyGraded) {
+					$scoreRecordedMessage[ $probOrder[$i] ] = $c->maketext(
+						'Your score was not recorded because this test was already submitted from another page or '
+							. 'window.');
+				} elsif ($c->{isClosed}) {
 					$scoreRecordedMessage[ $probOrder[$i] ] =
 						$c->maketext('Your score was not recorded because this problem set version is not open.');
 				} elsif ($problem->num_correct + $problem->num_incorrect >= $set->attempts_per_version) {
@@ -1169,7 +1238,7 @@ async sub pre_header_initialize ($c) {
 		)
 	{
 		# Save the submission time if we're recording the answer, or if the first submission occurs after the due_date.
-		$set->version_last_attempt_time($timeNowInt)
+		$set->version_last_attempt_time($c->{submissionTime} // $timeNowInt)
 			if (
 				$c->{submitAnswers}
 				&& (

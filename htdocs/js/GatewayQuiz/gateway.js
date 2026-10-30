@@ -8,6 +8,23 @@
 (() => {
 	if (!document.gwquiz) return;
 
+	// Only allow the form to be submitted once. The page remains displayed while the request is pending, and so if the
+	// server response is slow the user might click on "Grade Test" again which would send another submission without
+	// confirmation.
+	let formSubmitted = false;
+	document.gwquiz.addEventListener('submit', (evt) => {
+		if (formSubmitted) evt.preventDefault();
+		formSubmitted = true;
+	});
+
+	// If the page is restored from the back-forward cache, then allow the form to be submitted again. The server will
+	// refuse to grade a submission from this page if the test was graded in the meantime.
+	window.addEventListener('pageshow', (evt) => {
+		if (!evt.persisted) return;
+		formSubmitted = false;
+		actuallySubmit = false;
+	});
+
 	// Gateway timer
 	const timerDiv = document.getElementById('gwTimer'); // The timer div element
 	let actuallySubmit = false; // This needs to be set to true to allow an actual submission.
@@ -386,7 +403,7 @@
 			// Prevent the link from being followed.
 			evt.preventDefault();
 			document.gwquiz.newPage.value = pageChangeLink.dataset.pageNumber;
-			document.gwquiz.submit();
+			document.gwquiz.requestSubmit();
 		});
 	});
 
