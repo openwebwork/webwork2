@@ -591,12 +591,8 @@ sub getConfigValues ($ce) {
 			{
 				var  => 'permissionLevels{change_pg_display_settings}',
 				doc  => x('Allowed to change display settings used in pg problems'),
-				doc2 => x(
-					'Users at this level and higher are allowed to change display settings used in pg problems.'
-						. 'Note that if it is expected that there will be students that have vision impairments and '
-						. 'MathQuill is enabled to assist with answer entry, then you should not set this '
-						. 'permission to a level above student as those students may need to disable MathQuill.'
-				),
+				doc2 =>
+					x('Users at this level and higher are allowed to change display settings used in pg problems.'),
 				type => 'permission'
 			},
 			{
