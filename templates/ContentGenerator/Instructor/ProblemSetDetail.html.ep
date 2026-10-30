@@ -189,7 +189,7 @@
 	</div>
 	%
 	% # General set information
-	<div class="card mb-2 border border-dark-subtle" style="width:fit-content">
+	<div class="card mb-2 border border-dark-subtle" style="width: fit-content">
 		<div class="card-body p-2">
 			<div class="card-title fw-bold"><%= maketext('Set Parameters') %></div>
 			<div class="card-text">
@@ -234,7 +234,7 @@
 	%
 	% # Display header information
 	% if (!@editForUser) {
-		<div class="card mb-2 border border-dark-subtle" style="width:fit-content">
+		<div class="card mb-2 border border-dark-subtle" style="width: fit-content">
 			<div class="card-body p-2">
 				<div class="card-title fw-bold"><%= maketext("Headers") %></div>
 				% for my $headerType (@$headers) {

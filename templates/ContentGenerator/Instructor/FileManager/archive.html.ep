@@ -1,6 +1,6 @@
 % use Mojo::File qw(path);
 %
-<div class="card mb-2" style="max-width:700px">
+<div class="card mb-2" style="max-width: 700px">
 	<div class="card-body">
 		<div class="mb-3" id="files-label">
 			<%= maketext('The following files have been selected for archiving.  Select the type '
