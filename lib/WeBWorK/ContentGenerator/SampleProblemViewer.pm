@@ -4,7 +4,7 @@ use Mojo::Base 'WeBWorK::ContentGenerator', -signatures;
 use File::Basename qw(basename);
 use Pod::Simple::Search;
 
-use WeBWorK::Utils::Files            qw(path_is_subdir);
+use WeBWorK::Utils::Files            qw(pathIsSubdir);
 use WeBWorK::PG::SampleProblemParser qw(parseSampleProblem generateMetadata getSampleProblemCode getSearchData);
 
 =head1 NAME
@@ -33,7 +33,7 @@ sub renderSampleProblem ($c) {
 	if ($c->stash->{filePath} =~ /\.pg$/) {
 		my $sampleProblemFile = "$pg_root/tutorial/sample-problems/" . $c->stash->{filePath};
 		return $c->render(data => $c->maketext('File not found.'))
-			unless path_is_subdir($sampleProblemFile, $c->ce->{pg_dir} . '/tutorial/sample-problems')
+			unless pathIsSubdir($sampleProblemFile, $c->ce->{pg_dir} . '/tutorial/sample-problems')
 			&& -r $sampleProblemFile;
 
 		# Render the .pg file as a downloadable file.

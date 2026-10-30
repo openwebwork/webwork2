@@ -12,7 +12,7 @@ use Exporter qw(import);
 use Mojo::File;
 
 use WeBWorK::Utils             qw(cryptPassword x);
-use WeBWorK::Utils::Files      qw(surePathToFile);
+use WeBWorK::Utils::Files      qw(surePathToFile readFile pathIsSafe);
 use WeBWorK::Utils::Instructor qw(assignProblemsToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
@@ -1755,16 +1755,9 @@ sub initialize ($c) {
 						my $param =
 							@paramValues > 1 && $paramValues[0] eq 'numeric' ? $paramValues[1] : $paramValues[0];
 						if (defined $param && $param ne '') {
-							# Protect exploits with source_file
 							if ($field eq 'source_file') {
-								if ($param =~ /\.\./ || $param =~ /^\//) {
-									$c->addbadmessage($c->maketext(
-										'Source file paths cannot include .. or start with /: '
-											. 'your source file path was modified.'
-									));
-								}
-								$param =~ s|\.\.||g;    # prevent access to files above template
-								$param =~ s|^/||;       # prevent access to files above template
+								$param = $c->sanitizeSourceFile($param);
+								next unless defined $param;
 							}
 
 							$changed ||= changed($record->$field, $param);
@@ -1784,16 +1777,9 @@ sub initialize ($c) {
 						$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
 							unless defined $param && $param ne '';
 
-						# Protect exploits with source_file
 						if ($field eq 'source_file') {
-							if ($param =~ /\.\./ || $param =~ /^\//) {
-								$c->addbadmessage($c->maketext(
-									'Source file paths cannot include .. or start with /: '
-										. 'your source file path was modified.'
-								));
-							}
-							$param =~ s|\.\.||g;    # prevent access to files above template
-							$param =~ s|^/||;       # prevent access to files above template
+							$param = $c->sanitizeSourceFile($param);
+							next unless defined $param;
 						}
 
 						$changed ||= changed($record->$field, $param);
@@ -1821,16 +1807,9 @@ sub initialize ($c) {
 					$param = defined $properties{$field}{default} ? $properties{$field}{default} : ''
 						unless defined $param && $param ne '';
 
-					# Protect exploits with source_file
 					if ($field eq 'source_file') {
-						if ($param =~ /\.\./ || $param =~ /^\//) {
-							$c->addbadmessage($c->maketext(
-								'Source file paths cannot include .. or start with /: '
-									. 'your source file path was modified.'
-							));
-						}
-						$param =~ s|\.\.||g;    # prevent access to files above template
-						$param =~ s|^/||;       # prevent access to files above template
+						$param = $c->sanitizeSourceFile($param);
+						next unless defined $param;
 					}
 					$changed ||= changed($problemRecord->$field, $param);
 					$problemRecord->$field($param);
@@ -2202,6 +2181,8 @@ sub checkFile ($c, $filePath, $headerType) {
 			return $c->maketext("Invalid headerType [_1]", $headerType);
 		}
 	} else {
+		return $c->maketext('This source file path is not allowed!') unless pathIsSafe($filePath);
+
 		# Only filePaths in the template directory can be accessed.
 		$filePath = "$ce->{courseDirs}{templates}/$filePath";
 	}
@@ -2212,6 +2193,17 @@ sub checkFile ($c, $filePath, $headerType) {
 	return $c->maketext("This source file is a directory!")  if -d $filePath;
 	return $c->maketext("This source file does not exist!") unless -e $filePath;
 	return $c->maketext("This source file is not a plain file!");
+}
+
+# Source files are relative to the templates directory, so leading slashes are removed.
+# Undefined is returned if the path is unsafe.
+sub sanitizeSourceFile ($c, $sourceFile) {
+	unless (pathIsSafe($sourceFile)) {
+		$c->addbadmessage($c->maketext(
+			'The source file path "[_1]" contains a ".." directory and was not saved.', $sourceFile));
+		return;
+	}
+	return $sourceFile =~ s|^/+||r;
 }
 
 sub userCountMessage ($c, $count, $numUsers) {

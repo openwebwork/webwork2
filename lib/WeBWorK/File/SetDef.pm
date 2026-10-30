@@ -12,7 +12,7 @@ use Carp;
 use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils             qw(x);
 use WeBWorK::Utils::DateTime   qw(formatDateTime getDefaultSetDueDate parseDateTime timeToSec);
-use WeBWorK::Utils::Files      qw(surePathToFile);
+use WeBWorK::Utils::Files      qw(surePathToFile pathIsSafe);
 use WeBWorK::Utils::Instructor qw(assignSetToUser assignSetToAllUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
@@ -622,7 +622,7 @@ SET: for my $set (@sets) {
 		my $fileName = "set$set.def";
 
 		# Files can be exported to sub directories but not parent directories.
-		if ($fileName =~ /\.\./) {
+		unless (pathIsSafe($fileName)) {
 			push @skipped, $set;
 			$reason{$set} = [ x(q{Illegal filename contains '..'}) ];
 			next SET;

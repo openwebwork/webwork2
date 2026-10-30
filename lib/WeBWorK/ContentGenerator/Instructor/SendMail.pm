@@ -12,7 +12,8 @@ use Mojo::File;
 use Mojo::Util qw(xml_escape);
 use Text::Wrap qw(wrap);
 
-use WeBWorK::Utils qw(processEmailMessage);
+use WeBWorK::Utils        qw(processEmailMessage);
+use WeBWorK::Utils::Files qw(pathIsSafe fileNameIsValid);
 
 sub initialize ($c) {
 	my $db     = $c->db;
@@ -37,12 +38,28 @@ sub initialize ($c) {
 	# check the database to see if there is a file we should use.
 	# if they have been defined via parameter then we should update the db
 
+	if ($openfilename && !pathIsSafe($openfilename)) {
+		$c->addbadmessage($c->maketext(
+			'The message file "[_1]" cannot be opened because its name contains a ".." directory.',
+			$openfilename
+		));
+		$openfilename = undef;
+	}
+
 	if ($openfilename) {
 		$db->setSettingValue("${userID}_openfile", $openfilename);
 	} elsif (defined $openfilename) {
 		$db->deleteSetting("${userID}_openfile");
 	} elsif ($db->settingExists("${userID}_openfile")) {
 		$openfilename = $db->getSettingValue("${userID}_openfile");
+		$openfilename = undef unless pathIsSafe($openfilename);
+	}
+
+	if ($mergefile && !pathIsSafe($mergefile)) {
+		$c->addbadmessage($c->maketext(
+			'The merge file "[_1]" cannot be used because its name contains a ".." directory.', $mergefile
+		));
+		$mergefile = undef;
 	}
 
 	if ($mergefile) {
@@ -51,7 +68,7 @@ sub initialize ($c) {
 		$db->deleteSetting("${userID}_mergefile");
 	} elsif ($db->settingExists("${userID}_mergefile")) {
 		$mergefile = $db->getSettingValue("${userID}_mergefile");
-		$mergefile = undef unless (-e "$ce->{courseDirs}{scoring}/$mergefile");
+		$mergefile = undef if !pathIsSafe($mergefile) || !-e "$ce->{courseDirs}{scoring}/$mergefile";
 	}
 
 	# Figure out action from submit data
@@ -155,14 +172,20 @@ sub initialize ($c) {
 	}
 
 	# Sanity check on save file name
-	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
+	if ($action eq 'saveAs' && $output_file && !fileNameIsValid($output_file)) {
+		$c->addbadmessage($c->maketext(
+			'"[_1]" is not an allowed name. Names can only contain letters, digits, spaces, and the characters '
+				. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period. '
+				. 'The message was not saved.',
+			$output_file
+		));
+	} elsif (!pathIsSafe($output_file)) {
 		$c->addbadmessage($c->maketext(
 			'For security reasons, you cannot specify a message file from a directory higher than the '
-				. q{email directory (you can't use ../blah/blah for example). }
+				. q{email directory (for example the file name may not contain a .. path component). }
 				. 'Please specify a different file or move the needed file to the email directory.'
 		));
-	}
-	if ($output_file && $output_file !~ m|\.msg$|) {
+	} elsif ($output_file && $output_file !~ m|\.msg$|) {
 		$c->addbadmessage($c->maketext(
 			'Invalid file name "[_1]". All email file names must end with the ".msg" extension.  '
 				. 'Choose a file name with the ".msg" extension. The message was not saved.',
@@ -242,8 +265,8 @@ sub initialize ($c) {
 	if ($action eq 'saveMessage' or $action eq 'saveAs') {
 		# Check that an output file was specified and protect against overwriting an existing file.
 		if ($action eq 'saveAs') {
-			if (!$output_file) {
-				# A message has been already set if no output filename was specified.  So just return here in that case.
+			if (!fileNameIsValid($output_file)) {
+				# A message has already been set if the output filename is missing or invalid.
 				return;
 			} elsif (-e "$emailDirectory/$output_file") {
 				$c->addbadmessage($c->maketext(
@@ -268,9 +291,10 @@ sub initialize ($c) {
 		);
 
 		# Save the message
-		$c->saveMessageFile($temp_body, "${emailDirectory}/$output_file")
-			unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || $output_file !~ m|\.msg$|);
-		if (-w "${emailDirectory}/$output_file") {    # if there are no errors report success
+		if (pathIsSafe($output_file)
+			&& $output_file =~ m|\.msg$|
+			&& $c->saveMessageFile($temp_body, "${emailDirectory}/$output_file"))
+		{
 			$c->addgoodmessage($c->maketext('Message saved to file [_1].', "$emailDirectory/$output_file"));
 			$c->{input_file} = $output_file;
 			$db->setSettingValue("${userID}_openfile", $output_file);
@@ -386,16 +410,18 @@ sub print_preview ($c) {
 # Utility methods
 
 sub saveMessageFile ($c, $body, $msgFileName) {
-	open(my $PROBLEM, ">:encoding(UTF-8)", $msgFileName)
-		|| $c->addbadmessage("Could not open $msgFileName for writing. "
-			. 'Check that the permissions for this file are 660 (-rw-rw----).');
-	print $PROBLEM $body if -w $msgFileName;
-	close $PROBLEM;
+	if (open(my $PROBLEM, '>:encoding(UTF-8)', $msgFileName)) {
+		print $PROBLEM $body if -w $msgFileName;
+		close $PROBLEM;
+	} else {
+		$c->addbadmessage($c->maketext('Could not open [_1] for writing.', $msgFileName));
+		return;
+	}
 
-	chmod 0660, "$msgFileName"
-		|| $c->addbadmessage("CAN'T CHANGE PERMISSIONS ON FILE $msgFileName");
+	chmod(0660, $msgFileName)
+		|| $c->addbadmessage($c->maketext('Could not change permissions on file [_1].', $msgFileName));
 
-	return;
+	return 1;
 }
 
 sub read_input_file ($c, $filePath) {

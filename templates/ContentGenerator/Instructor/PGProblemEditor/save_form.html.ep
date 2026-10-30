@@ -1,6 +1,6 @@
-% use WeBWorK::Utils::Files qw(path_is_subdir);
+% use WeBWorK::Utils::Files qw(pathIsSubdir);
 % # Can't save files outside of the course templates directory, and can't save if lacking write permissions.
-% last if !path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1) || !-w $c->{editFilePath};
+% last if !pathIsSubdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1) || !-w $c->{editFilePath};
 %
 <div>
 	<div class="mb-2">

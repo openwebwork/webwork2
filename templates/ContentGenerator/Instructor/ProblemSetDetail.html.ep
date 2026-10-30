@@ -418,8 +418,7 @@
 					% )
 					% : $globalProblems->{$problemID}->source_file;
 				%
-				% my $problemFile =
-					% ((param("problem.$problemID.source_file") || $sourceFile) =~ s|^/||r) =~ s|\.\.||gr;
+				% my $problemFile = (param("problem.$problemID.source_file") || $sourceFile) =~ s|^/+||r;
 				%
 				% my $error = $c->checkFile($problemFile, undef);
 				%
