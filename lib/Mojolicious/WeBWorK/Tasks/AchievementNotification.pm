@@ -79,6 +79,10 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		->slurp;
 	$compartment->share(qw($template $template_vars));
 
+	# Record the hooks of the shared packages before running the instructor provided template, so that any
+	# DESTROY/AUTOLOAD/overload hook the template might add under one of those namespaces can be stripped.
+	$compartment->snapshot_hooks;
+
 	my $body = $compartment->reval(
 		'my $renderer = WeBWorK::SafeTemplate->new(vars => 1); $renderer->render($template, $template_vars);', 1);
 
