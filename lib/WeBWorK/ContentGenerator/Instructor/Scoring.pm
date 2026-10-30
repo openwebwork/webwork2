@@ -103,6 +103,21 @@ sub initialize ($c) {
 	return;
 }
 
+sub scoringDownload ($c) {
+	if ($c->authz->hasPermissions($c->param('user'), 'score_sets')) {
+		my $file = $c->param('getFile');
+		if (my $error = $c->WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file)) {
+			$c->render(text => $error, status => 404);
+		} else {
+			$c->render_file(filepath => $c->ce->{courseDirs}{scoring} . "/$file");
+		}
+	} else {
+		$c->render(text => 'You do not have permission to access scoring data.', status => 404);
+	}
+
+	return;
+}
+
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
 # will have to be rewritten some.
 # $format can be any of "normal", "full", "everything", "info", or "totals".  An undefined value defaults to "normal"
