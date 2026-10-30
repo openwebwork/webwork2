@@ -9,7 +9,7 @@ use Mojo::Base 'Exporter', -signatures;
 
 use DateTime;
 
-use WeBWorK::Utils                    qw(sortAchievements nfreeze_base64 thaw_base64);
+use WeBWorK::Utils::Achievements      qw(getAchievementAssetPaths sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::Utils::Tags;
 use WeBWorK::WWSafe;
@@ -195,18 +195,21 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$counter    = $userAchievement->counter;
 		$maxCounter = $achievement->max_counter;
 
+		# Determine location of achievement evaluator.
+		my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($ce, 'test', $achievement->test);
+		my $sourceFilePath = $courseFilePath // $systemFilePath;
+		unless ($sourceFilePath) {
+			warn 'Invalid achievement evaluator file "' . $achievement->test . qq{" for "$achievement_id".};
+			next;
+		}
+
 		# Check the achievement using Safe.
-		my $sourceFilePath = $ce->{courseDirs}{achievements} . '/' . $achievement->test;
-		if (-e $sourceFilePath) {
+		{
 			local $/ = undef;
 			open(my $SOURCE, '<', $sourceFilePath);
 			$source = <$SOURCE>;
 			close($SOURCE);
-		} else {
-			warn('Couldnt find achievement evaluator $sourceFilePath');
-			next;
 		}
-
 		my $earned = $compartment->reval($preamble . "\n" . $source);
 		warn "There were errors in achievement $achievement_id\n" . $@ if $@;
 

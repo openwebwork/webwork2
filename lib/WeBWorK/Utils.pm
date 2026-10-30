@@ -4,7 +4,7 @@ use Mojo::Base 'Exporter', -signatures;
 use Email::Sender::Transport::SMTP;
 use Mojo::JSON qw(from_json to_json);
 use Mojo::Util qw(b64_encode b64_decode encode decode);
-use Storable   qw(nfreeze thaw);
+use Storable   qw(thaw);
 
 our @EXPORT_OK = qw(
 	runtime_use
@@ -14,8 +14,6 @@ our @EXPORT_OK = qw(
 	decodeAnswers
 	encode_utf8_base64
 	decode_utf8_base64
-	nfreeze_base64
-	thaw_base64
 	min
 	max
 	wwRound
@@ -23,7 +21,6 @@ our @EXPORT_OK = qw(
 	utf8Crypt
 	undefstr
 	sortByName
-	sortAchievements
 	getSectionRecitationFilters
 	filterBySectionRecitation
 	not_blank
@@ -94,24 +91,6 @@ sub encode_utf8_base64 ($in) {
 
 sub decode_utf8_base64 ($in) {
 	return decode('UTF-8', b64_decode($in));
-}
-
-sub nfreeze_base64 ($in) {
-	return b64_encode(nfreeze($in));
-}
-
-sub thaw_base64 ($string) {
-	my $result;
-
-	eval { $result = thaw(b64_decode($string)); };
-
-	if ($@) {
-		warn('Deleting corrupted achievement data.');
-		return {};
-	} else {
-		return $result;
-	}
-
 }
 
 sub min (@items) {
@@ -234,38 +213,6 @@ sub filterBySectionRecitation ($filter, @users) {
 	my ($field, $value) = split(/:/, $filter // 'all', 2);
 	return @users unless $field eq 'section' || $field eq 'recitation';
 	return grep { $_->$field eq $value } @users;
-}
-
-sub sortAchievements (@achievements) {
-	# First sort by achievement id.
-	@achievements = sort { uc($a->{achievement_id}) cmp uc($b->{achievement_id}) } @achievements;
-
-	# Next sort by number.
-	@achievements = sort { ($a->number || 0) <=> ($b->number || 0) } @achievements;
-
-	# Finally sort by category. Always place level achievements last.
-	@achievements = sort {
-		if ($a->{category} eq 'level' && $b->{category} eq 'level') {
-			return 0;
-		} elsif ($a->{category} eq 'level') {
-			return 1;
-		} elsif ($b->{category} eq 'level') {
-			return -1;
-		} elsif ($a->number && $b->number) {
-			return $a->number <=> $b->number;
-		} elsif ($a->{category} eq $b->{category}) {
-			return 0;
-		} elsif ($a->{category} eq 'secret') {
-			return -1;
-		} elsif ($b->{category} eq 'secret') {
-			return 1;
-		} else {
-			return $a->{category} cmp $b->{category};
-		}
-	} @achievements;
-
-	return @achievements;
-
 }
 
 ################################################################################
@@ -655,20 +602,6 @@ Usage: C<decode_utf8_base64($in)>
 
 Base 64 decodes, and then UTF-8 decodes the input and returns the result.
 
-=head2 nfreeze_base64
-
-Usage: C<nfreeze_base64($in)>
-
-This C<Storable::nfreeze> encodes and then base 64 encodes C<$in> and returns
-the result.
-
-=head2 thaw_base64
-
-Usage: C<thaw_base64($in)>
-
-This base 64 decodes and then C<Storable::thaw> decodes C<$in> and returns
-result.
-
 =head2 min
 
 Usage: C<min(@items)>
@@ -744,13 +677,6 @@ Usage: C<filterBySectionRecitation($filter, @users)>
 Returns the users in C<@users> that match C<$filter>, which should be one of the
 values returned by C<getSectionRecitationFilters>. All users are returned if
 C<$filter> is undefined or "all".
-
-=head2 sortAchievements
-
-Usage: C<sortAchievements(@achievements)>
-
-Returns C<@achievements> sorted first by achievement id, then by number or
-category (if the achievement does not have a number).
 
 =head2 not_blank
 

@@ -3,6 +3,13 @@
 	// Store event listeners so they can be removed.
 	const event_listeners = {};
 
+	const is_invalid_filename = (filename) =>
+		filename.startsWith('/') ||
+		filename.startsWith('..') ||
+		filename.includes('../') ||
+		filename.includes('/..') ||
+		filename.endsWith('/');
+
 	const show_errors = (ids, elements) => {
 		for (const id of ids) elements.push(document.getElementById(id));
 		for (const element of elements) {
@@ -129,6 +136,38 @@
 					)
 				);
 				delete_confirm_modal.show();
+			}
+		} else if (action === 'save_edit') {
+			const invalid_inputs = Array.from(
+				document.querySelectorAll('input[name$=".test"], input[name$=".icon"]')
+			).filter((input) => is_invalid_filename(input.value.trim()));
+			if (invalid_inputs.length) {
+				e.preventDefault();
+				e.stopPropagation();
+				const err_msg = document.getElementById('save_edit_filename_err_msg');
+				err_msg?.classList.remove('d-none');
+				for (const input of invalid_inputs) {
+					input.classList.add('is-invalid');
+					if (!(input.id in event_listeners)) {
+						event_listeners[input.id] = () => {
+							// Only clear this field's own invalid marking, and only once it is valid.
+							if (is_invalid_filename(input.value.trim())) return;
+							input.classList.remove('is-invalid');
+							input.removeEventListener('change', event_listeners[input.id]);
+							delete event_listeners[input.id];
+
+							// Hide the shared error message once no fields remain invalid.
+							if (
+								!document.querySelector(
+									'input[name$=".test"].is-invalid, input[name$=".icon"].is-invalid'
+								)
+							) {
+								err_msg?.classList.add('d-none');
+							}
+						};
+						input.addEventListener('change', event_listeners[input.id]);
+					}
+				}
 			}
 		}
 	});
