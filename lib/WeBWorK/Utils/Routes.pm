@@ -502,8 +502,9 @@ my %routeParameters = (
 	},
 	instructor_scoring_download => {
 		title  => x('Scoring Download'),
-		module => 'Instructor::ScoringDownload',
-		path   => '/scoringDownload'
+		module => 'Instructor::Scoring',
+		path   => '/scoringDownload',
+		action => 'scoringDownload'
 	},
 	instructor_mail_merge => {
 		title  => x('Email'),
