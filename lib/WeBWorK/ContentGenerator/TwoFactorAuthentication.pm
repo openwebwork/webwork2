@@ -15,7 +15,7 @@ use Mojo::Util qw(b64_encode);
 use WeBWorK::Utils::TOTP;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $ce = $c->ce;
 
 	# Preserve the form data posted to the requested URI

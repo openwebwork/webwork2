@@ -11,7 +11,7 @@ WeBWorK::ContentGenerator::Instructor::ScoringDownload - Download scoring data f
 
 use WeBWorK::ContentGenerator::Instructor::FileManager;
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $ce         = $c->ce;
 	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};

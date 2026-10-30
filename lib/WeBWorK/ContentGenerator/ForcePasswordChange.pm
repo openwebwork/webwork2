@@ -8,7 +8,7 @@ they can access the course.
 
 =cut
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	# Preserve the form data posted to the requested URI.
 	my @fields_to_print =
 		grep { !m/^(user|passwd|key|force_passwd_authen|newPassword|confirmPassword)$/ } $c->param;

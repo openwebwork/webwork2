@@ -35,30 +35,12 @@ the main body of the page.
 # You might need some utility functions:
 #use WeBWorK::Utils qw(function1 function2);
 
-# SKEL: If you need to do any processing before the HTTP header is sent, do it
-# in this method.  Note that this method may be async.
-#
-#sub pre_header_initialize ($c) {
-#	# Do your processing here! Don't print or return anything -- store data in
-#	# the $c hash or in $c->stash for later retrieveal.
-#}
-
-# SKEL: This method is not actually of any use anymore.
-#
-#sub header ($c) {
-#	# The return value of this method is not used.
-#	# The practice is to return the status code of the response.
-#	return 0;
-#}
-
-# SKEL: If you need to do any processing after the HTTP header is sent, but before
-# any template processing occurs, or you need to calculate values that will be
-# used in multiple methods, do it in this method.  Note that this method may be
-# async.
+# SKEL: If you need to do any processing, do it in this method.  Note that this
+# method may be async.
 #
 #sub initialize ($c) {
-#	# Do your processing here! Don't print or return anything -- store data in
-#	# the $c hash or in $c->stash for later retrieveal.
+#	# Do processing here! Store data in the $c hash or in $c->stash for
+#	# later retrieval.
 #}
 
 # Note that all of the template methods below except head should ensure that the

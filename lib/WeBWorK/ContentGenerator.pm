@@ -48,47 +48,27 @@ use WeBWorK::Authen::LTI::GradePassback  qw(massUpdate);
 
 =over
 
-=item go()
+=item go
 
-Generates a page, using methods from the particular subclass of ContentGenerator
-that is instantiated. Generatoion is broken up into several steps, to give
-subclasses ample control over the process.
+This is the default Mojolicious controller action that is called for a route,
+and is responsible for rendering the response using methods from the particular
+C<WeBWorK::ContentGenerator> module for the route.
 
-=over
+This method first checks for an LTI mass grade pass back if LTI is enabled,
+calls the L<WeBWorK::Authz/checkSet> method and caches the result in C<<
+$c->{invalidSet} >>, and writes to the course activity log if the courseID stash
+value is set and the activity log is enabled.
 
-=item 1
+Then C<initialize> method is called if the subclass defines it. This method may
+perform any processing that is needed before the response is rendered. Note that
+this method may call C<reply_with_file> or C<reply_with_redirect>. In that case
+the C<go> method will handle those replies and return rather than proceeding to
+the remaining steps below once the C<initialize> method is finished.
 
-go() will attempt to call the method pre_header_initialize(). This method may be
-implemented in subclasses which must do processing before the HTTP header is
-emitted.
-
-=item 2
-
-go() will attempt to call the method header(). This method emits the HTTP
-header. It is defined in this class (see below), but may be overridden in
-subclasses which need to send different header information. For some reason, the
-return value of header() will be used as the result of this function, if it is
-defined.
-
-FIXME: figure out what the deal is with the return value of header(). If we sent
-a header, it's too late to set the status by returning. If we didn't, header()
-didn't perform its function!
-
-=item 3
-
-At this point, go() will terminate if the request is a HEAD request.
-
-=item 4
-
-go() then attempts to call the method initialize(). This method may be
-implemented in subclasses which must do processing after the HTTP header is sent
-but before any content is sent.
-
-=item 5
-
-The method content() is called to send the page content to client.
-
-=back
+Finally the C<content> method is called. This method is responsible for actually
+rendering the content for the request. The default method is defined in this
+package and renders the template for the subclass, but it may be overridden in
+subclasses.
 
 =cut
 
@@ -108,10 +88,9 @@ async sub go ($c) {
 
 	my $tx = $c->render_later->tx;
 
-	if ($c->can('pre_header_initialize')) {
-		my $pre_header_initialize = $c->pre_header_initialize;
-		await $pre_header_initialize
-			if ref $pre_header_initialize eq 'Future' || ref $pre_header_initialize eq 'Mojo::Promise';
+	if ($c->can('initialize')) {
+		my $initialize = $c->initialize;
+		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
 	}
 
 	# Reply with a file.
@@ -124,20 +103,11 @@ async sub go ($c) {
 		return $c->do_reply_with_redirect($c->{reply_with_redirect});
 	}
 
-	if ($c->can('initialize')) {
-		my $initialize = $c->initialize;
-		await $initialize if ref $initialize eq 'Future' || ref $initialize eq 'Mojo::Promise';
-	}
-
 	$c->stash->{footerWidthClass} //= $c->can('info') ? 'col-md-8' : 'col-12';
 
 	$c->content;
 
-	# All content generator modules must have rendered at this point unless there was an error in which case an error
-	# response will be rendered.  There is no special handing for HEAD requests.  Mojolicious takes care of that in its
-	# render methods.  This just returns the status code of the response (typically set by the Mojolicious render
-	# methods.  Although this return value isn't actually used at this point.
-	return $c->header;
+	return;
 }
 
 =item do_reply_with_file($fileHash)
@@ -195,11 +165,11 @@ standard way.
 =item reply_with_file($type, $source, $name, $delete_after)
 
 Enables file sending mode, causing go() to send the file specified by $source to
-the client after calling pre_header_initialize(). The content type sent is
-$type, and the suggested client-side file name is $name. If $delete_after is
-true, $source is deleted after it is sent.
+the client after calling initialize(). The content type sent is $type, and the
+suggested client-side file name is $name. If $delete_after is true, $source is
+deleted after it is sent.
 
-Must be called from pre_header_initialize().
+Must be called from initialize().
 
 =cut
 
@@ -217,9 +187,9 @@ sub reply_with_file ($c, $type, $source, $name, $delete_after = 0) {
 =item reply_with_redirect($url)
 
 Enables redirect mode, causing go() to redirect to the given URL after calling
-pre_header_initialize().
+initialize().
 
-Must be called from pre_header_initialize().
+Must be called from initialize().
 
 =cut
 
@@ -325,45 +295,17 @@ The following are the standard content generator methods. Some are defined here,
 but may be overridden in a subclass. Others are not defined unless they are
 defined in a subclass.
 
-FIXME: The names of the first three methods don't really make sense anymore.
-There really is no need for both of the pre_header_initialize and initialize
-methods.  The initialize method should be dropped and the pre_header_initialize
-method renamed.
-
 =over
-
-=item pre_header_initialize()
-
-Not defined in this package.
-
-May be defined by a subclass to perform any early processing that is needed.
-This method must be used if responding with a file or redirect.
-
-This method may be asynchronous.
-
-=item header()
-
-Defined in this package.
-
-This method is not really useful anymore.  For now it returns the response
-status code and this return value is ignored.  Headers are now set when
-rendering a response (as it really should have been done before.
-
-=cut
-
-sub header {
-	my $self = shift;
-	return $self->res->code;
-}
 
 =item initialize()
 
 Not defined in this package.
 
 May be defined by a subclass to perform any early processing that is needed.
-This method cannot be used if responding with a file or redirect.
 
 This method may be asynchronous.
+
+=cut
 
 =item output_course_lang_and_dir()
 
@@ -804,10 +746,6 @@ sub exists_theme_file ($c, $arg) {
 
 Various routines are defined in this package for rendering common WeBWorK
 idioms.
-
-FIXME: some of these should be moved to WeBWorK::HTML:: modules!
-
-# ------------------------------------------------------------------------------
 
 =head2 Template escape handler macros
 

@@ -134,34 +134,6 @@ use constant SORTABLE_FIELDS => {
 	visible              => 1
 };
 
-sub pre_header_initialize ($c) {
-	my $db         = $c->db;
-	my $authz      = $c->authz;
-	my $user       = $c->param('user');
-	my $courseName = $c->stash('courseID');
-
-	# Check permissions
-	return unless $authz->hasPermissions($user, 'access_instructor_tools');
-
-	# Get the list of global sets and the number of users and cache them for later use.
-	$c->{allSetIDs}  = [ $db->listGlobalSets ];
-	$c->{totalUsers} = $db->countUsers;
-
-	if (defined $c->param('action') && $c->param('action') eq 'score' && $authz->hasPermissions($user, 'score_sets')) {
-		my $scope       = $c->param('action.score.scope');
-		my @setsToScore = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
-
-		return unless @setsToScore;
-
-		$c->reply_with_redirect($c->systemLink(
-			$c->url_for('instructor_scoring'),
-			params => { scoreSelected => 'ScoreSelected', selectedSet => \@setsToScore }
-		));
-	}
-
-	return;
-}
-
 sub initialize ($c) {
 	my $db         = $c->db;
 	my $ce         = $c->ce;
@@ -182,6 +154,22 @@ sub initialize ($c) {
 
 	# Determine if the user has permission to do anything here.
 	return unless $authz->hasPermissions($user, 'access_instructor_tools');
+
+	# Get the list of global sets and the number of users and cache them for later use.
+	$c->{allSetIDs}  = [ $db->listGlobalSets ];
+	$c->{totalUsers} = $db->countUsers;
+
+	if (defined $c->param('action') && $c->param('action') eq 'score' && $authz->hasPermissions($user, 'score_sets')) {
+		my $scope       = $c->param('action.score.scope');
+		my @setsToScore = $scope eq 'all' ? @{ $c->{allSetIDs} } : $c->param('selected_sets');
+		if (@setsToScore) {
+			$c->reply_with_redirect($c->systemLink(
+				$c->url_for('instructor_scoring'),
+				params => { scoreSelected => 'ScoreSelected', selectedSet => \@setsToScore }
+			));
+			return;
+		}
+	}
 
 	# Determine if edit mode or export mode is request, and check permissions for these modes.
 	$c->{editMode} = $c->param("editMode") || 0;

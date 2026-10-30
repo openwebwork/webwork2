@@ -9,7 +9,7 @@ WeBWorK::ContentGenerator::Instructor::Assigner - Assign homework sets to users.
 
 use WeBWorK::Utils::Instructor qw(assignSetsToUsers unassignSetsFromUsers);
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;
 	my $ce    = $c->ce;

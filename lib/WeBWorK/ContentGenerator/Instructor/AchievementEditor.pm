@@ -21,68 +21,48 @@ use constant ACTION_FORM_TITLES => {
 
 use constant DEFAULT_ICON => 'defaulticon.png';
 
-sub pre_header_initialize ($c) {
-	my $ce    = $c->ce;
-	my $authz = $c->authz;
-	my $user  = $c->param('user');
-
+sub initialize ($c) {
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}         = ACTION_FORMS();
 	$c->stash->{actionFormTitles}    = ACTION_FORM_TITLES();
 	$c->stash->{achievementContents} = '';
 
-	# Check permissions
-	return unless ($authz->hasPermissions($user, 'edit_achievements'));
+	return unless $c->authz->hasPermissions($c->param('user'), 'edit_achievements');
 
-	# Get the achievement
-	my $Achievement = $c->db->getAchievement($c->stash('achievementID'));
+	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect.
 
-	if (!$Achievement) {
+	$c->{achievement} = $c->db->getAchievement($c->stash('achievementID'));
+
+	unless ($c->{achievement}) {
 		$c->addbadmessage($c->maketext("Achievement [_1] not found!", $c->stash('achievementID')));
 		return;
 	}
 
-	$c->{achievement}    = $Achievement;
-	$c->{sourceFilePath} = $ce->{courseDirs}{achievements} . '/' . $Achievement->test;
+	$c->{sourceFilePath} = $c->ce->{courseDirs}{achievements} . '/' . $c->{achievement}->test;
 
 	my $actionID = $c->param('action');
-
-	# Perform a save or save_as action
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ ACTION_FORMS() }) {
-			die "Action $actionID not found";
+			$c->addbadmessage('Invalid action requested.');
+			return;
 		}
 
 		my $actionHandler = "${actionID}_handler";
 		$c->$actionHandler;
 	}
 
-	return;
-}
-
-sub initialize ($c) {
-	my $authz          = $c->authz;
-	my $user           = $c->param('user');
-	my $sourceFilePath = $c->{sourceFilePath};
-
-	return unless ($authz->hasPermissions($user, 'edit_achievements'));
-
-	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect
-
-	# Check source file path
-	if (not(-e $sourceFilePath)) {
-		$c->addbadmessage('The file "' . $c->shortPath($sourceFilePath) . '" cannot be found.');
+	unless (-e $c->{sourceFilePath}) {
+		$c->addbadmessage('The file "' . $c->shortPath($c->{sourceFilePath}) . '" cannot be found.');
 		return;
 	}
 
-	# Find the text for the achievement.
 	unless ($c->stash->{achievementContents} =~ /\S/) {
-		unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{achievements}, 1)) {
+		unless (path_is_subdir($c->{sourceFilePath}, $c->ce->{courseDirs}{achievements}, 1)) {
 			$c->addbadmessage('Path is Unsafe!');
 			return;
 		}
 
-		eval { $c->stash->{achievementContents} = readFile($sourceFilePath) };
+		eval { $c->stash->{achievementContents} = readFile($c->{sourceFilePath}) };
 		$c->stash->{achievementContents} = $@ if $@;
 	}
 
@@ -102,15 +82,12 @@ sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 	return $sourceFilePath;
 }
 
-# saveFileChanges does most of the work. It is a separate method so that it can
-# be called from either pre_header_initialize or initialize, depending on
-# whether a redirect is needed or not.
 sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 	my $ce = $c->ce;
 
 	if (defined($achievementContents) and ref($achievementContents)) {
 		$achievementContents = ${$achievementContents};
-	} elsif (!not_blank($achievementContents)) {    # if the AchievementContents is undefined or empty
+	} elsif (!not_blank($achievementContents)) {     # if the AchievementContents is undefined or empty
 		$achievementContents = $c->stash->{achievementContents};
 	}
 
@@ -118,7 +95,7 @@ sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
 		$c->addbadmessage($c->maketext('You must specify an file name in order to save a new file.'));
 		return '';
 	}
-	my $do_not_save = 0;                            # flag to prevent saving of file
+	my $do_not_save = 0;                             # flag to prevent saving of file
 	my $editErrors  = '';
 
 	# write changes to the appropriate files
