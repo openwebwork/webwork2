@@ -318,7 +318,7 @@ sub initialize ($c) {
 	$c->stash->{hardcopyThemesAvailable} = $hardcopyThemesAvailable;
 
 	$c->{prettyProblemNumber} = $c->{problemID} // '';
-	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if $c->{setID};
+	$c->{set}                 = $c->db->getGlobalSet($c->{setID}) if defined $c->{setID};
 	$c->{prettyProblemNumber} = join('.', jitar_id_to_seq($c->{prettyProblemNumber}))
 		if $c->{set} && $c->{set}->assignment_type eq 'jitar';
 
@@ -354,7 +354,7 @@ sub page_title ($c) {
 	return $c->maketext('Course Information for course [_1]', $c->stash('courseID'))
 		if $c->{file_type} eq 'course_info';
 
-	if ($setID) {
+	if (defined $setID) {
 		my $set = $c->db->getGlobalSet($setID);
 		if ($set && $set->assignment_type eq 'jitar') {
 			$problemID = join('.', jitar_id_to_seq($problemID));
@@ -758,13 +758,17 @@ sub view_handler ($c) {
 	if ($c->{file_type} eq 'problem' || $c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to Problem.pm or GatewayQuiz.pm.
 		# We need to know if the set is a gateway set to determine the redirect.
-		my $globalSet = $c->db->getGlobalSet($c->{setID});
+		my $globalSet = defined $c->{setID} ? $c->db->getGlobalSet($c->{setID}) : undef;
 
 		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
-			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
-			: $c->url_for('problem_detail', setID => $c->{setID}, problemID => $c->{problemID}),
+			? $c->url_for('gateway_quiz', setID => 'Undefined_Set')
+			: $c->url_for(
+				'problem_detail',
+				setID     => $c->{setID}     // 'Undefined_Set',
+				problemID => $c->{problemID} // 1
+			),
 			params => {
 				displayMode    => $displayMode,
 				problemSeed    => $problemSeed,
@@ -995,13 +999,17 @@ sub save_handler ($c) {
 	if ($c->{file_type} eq 'problem' || $c->{file_type} eq 'source_path_for_problem_file') {
 		# Redirect to Problem.pm or GatewayQuiz.pm.
 		# We need to know if the set is a gateway set to determine the redirect.
-		my $globalSet = $c->db->getGlobalSet($c->{setID});
+		my $globalSet = defined $c->{setID} ? $c->db->getGlobalSet($c->{setID}) : undef;
 
 		$c->authen->flash(status_message => $c->{status_message}->join(''));
 		$c->reply_with_redirect($c->systemLink(
 			defined $globalSet && $globalSet->assignment_type =~ /gateway/
-			? $c->url_for('gateway_quiz',   setID => 'Undefined_Set')
-			: $c->url_for('problem_detail', setID => $c->{setID}, problemID => $c->{problemID}),
+			? $c->url_for('gateway_quiz', setID => 'Undefined_Set')
+			: $c->url_for(
+				'problem_detail',
+				setID     => $c->{setID}     // 'Undefined_Set',
+				problemID => $c->{problemID} // 1
+			),
 			params => {
 				displayMode    => $c->{displayMode},
 				problemSeed    => $c->{problemSeed},
@@ -1247,7 +1255,7 @@ sub save_as_handler ($c) {
 				$c->shortPath($outputFilePath)
 			));
 			$c->addgoodmessage($c->maketext('No changes have been made to set [_1]', $c->{setID}))
-				if $c->{setID} && $c->{setID} ne 'Undefined_Set';
+				if defined $c->{setID} && $c->{setID} ne 'Undefined_Set';
 		} else {
 			$c->addbadmessage($c->maketext('Unknown saveMode: [_1].', $saveMode));
 			return;
