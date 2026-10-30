@@ -4,13 +4,14 @@ use Mojo::Base 'WeBWorK::ContentGenerator::API', -signatures;
 use Time::HiRes qw(gettimeofday);
 use Date::Format;
 use Data::Structure::Util qw(unbless);
-use Mojo::JSON            qw(false true);
+use Mojo::File;
+use Mojo::JSON qw(false true);
 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils               qw(initializeUserProblem);
 use WeBWorK::Utils                   qw(cryptPassword isValidEmailAddress);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
-use WeBWorK::Utils::Files            qw(surePathToFile path_is_subdir);
+use WeBWorK::Utils::Files            qw(surePathToFile pathIsSubdir filePathIsValid);
 use WeBWorK::ConfigValues            qw(getConfigValues);
 use WeBWorK::CourseConfig            qw(findConfigObject canChangeConfig buildSimpleConfig writeSimpleConfig);
 use WeBWorK::Debug                   qw(debug);
@@ -473,9 +474,20 @@ sub saveFile ($c) {
 			'File not saved. The file "[_1]" is not contained in the templates directory!',
 			$outputFilePath
 		))
-			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{templates}, 1);
+			unless pathIsSubdir($outputFilePath, $ce->{courseDirs}{templates}, 1);
 
 		$outputFilePath = "$ce->{courseDirs}{templates}/$outputFilePath" unless $outputFilePath =~ m|^/|;
+
+		# Existing files may be overwritten, but the name of a new file must be valid.
+		unless (-e $outputFilePath) {
+			my $relativePath = Mojo::File->new($outputFilePath)->to_rel($ce->{courseDirs}{templates})->to_string;
+			return $c->renderError($c->maketext(
+				'"[_1]" is not an allowed file path. Each part of the path can only contain letters, digits, spaces, '
+					. 'and the characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
+				$relativePath
+			))
+				unless filePathIsValid($relativePath);
+		}
 
 		# Make sure any missing directories are created.
 		surePathToFile($ce->{courseDirs}{templates}, $outputFilePath);

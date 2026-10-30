@@ -3,12 +3,7 @@
 	// Store event listeners so they can be removed.
 	const event_listeners = {};
 
-	const is_invalid_filename = (filename) =>
-		filename.startsWith('/') ||
-		filename.startsWith('..') ||
-		filename.includes('../') ||
-		filename.includes('/..') ||
-		filename.endsWith('/');
+	const is_invalid_filename = (filename) => /(^|\/)\.\.(\/|$)/.test(filename) || filename.endsWith('/');
 
 	const show_errors = (ids, elements) => {
 		for (const id of ids) elements.push(document.getElementById(id));

@@ -21,8 +21,7 @@
 		<%= maketext('Please choose a different filename for new template.') %>
 	</div>
 	<div id="invalid_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
-		<%=
-			maketext('Filenames cannot start with a slash, "/", contain a double dot, "..", or end with a slash, "/".')
-		%>
+		<%= maketext('Each part of the file path can only contain letters, digits, spaces, and the characters '
+				. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.') %>
 	</div>
 </div>

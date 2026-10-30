@@ -100,7 +100,7 @@ use Mojo::File;
 use XML::LibXML;
 
 use WeBWorK::Utils                   qw(not_blank x max);
-use WeBWorK::Utils::Files            qw(surePathToFile readFile path_is_subdir);
+use WeBWorK::Utils::Files            qw(surePathToFile readFile pathIsSubdir filePathIsValid);
 use WeBWorK::Utils::Instructor       qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR            qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets             qw(format_set_name_display);
@@ -226,7 +226,7 @@ sub initialize ($c) {
 		'The file "[_1]" is a template. You may use "Save As" to create a new file.',
 		$c->shortPath($c->{inputFilePath})
 	))
-		if !path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates});
+		if !pathIsSubdir($c->{editFilePath}, $ce->{courseDirs}{templates});
 
 	# Find the text for the editor, either in the temporary file if it exists, in the original file in the template
 	# directory, or in the problem contents gathered in the initialization phase.
@@ -235,7 +235,7 @@ sub initialize ($c) {
 
 	unless ($problemContents =~ /\S/) {    # non-empty contents
 		if (-r $c->{tempFilePath} && !-d $c->{tempFilePath}) {
-			if (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
+			if (pathIsSubdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 				eval { $problemContents = readFile($c->{tempFilePath}) };
 				$problemContents = $@ if $@;
 				$c->{inputFilePath} = $c->{tempFilePath};
@@ -243,7 +243,7 @@ sub initialize ($c) {
 				$c->stash->{file_error} = $c->maketext('Unable to open a temporary file at the given location.');
 			}
 		} elsif (-r $c->{editFilePath} && !-d $c->{editFilePath}) {
-			if (path_is_subdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1)
+			if (pathIsSubdir($c->{editFilePath}, $ce->{courseDirs}{templates}, 1)
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{setHeader}
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{blankProblem}
@@ -252,7 +252,7 @@ sub initialize ($c) {
 				eval { $problemContents = readFile($c->{editFilePath}) };
 				$problemContents = $@ if $@;
 				$c->{inputFilePath} = $c->{editFilePath};
-			} elsif (path_is_subdir($c->{editFilePath}, "$ce->{pg_dir}/tutorial/sample-problems")) {
+			} elsif (pathIsSubdir($c->{editFilePath}, "$ce->{pg_dir}/tutorial/sample-problems")) {
 				$problemContents = getSampleProblemCode($c->{editFilePath});
 			} else {
 				$c->stash->{file_error} = $c->maketext('The given file path is not a valid location.');
@@ -618,7 +618,7 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 		return;
 	}
 
-	unless (path_is_subdir($outputFilePath, $ce->{courseDirs}{templates}, 1)) {
+	unless (pathIsSubdir($outputFilePath, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
 			'The file [_1] is not contained in the course templates directory and cannot be modified.',
 			$outputFilePath
@@ -708,7 +708,7 @@ sub saveFileChanges ($c, $outputFilePath, $backup = 0) {
 	# Clean up temp files on save or save_as.
 	# Unlink the temporary file if there are no errors and the save or save_as button has been pushed.
 	if (($c->{action} eq 'save' || $c->{action} eq 'save_as') && -w $c->{tempFilePath}) {
-		if (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
+		if (pathIsSubdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 			$c->addgoodmessage($c->maketext('Deleted temp file at [_1]', $c->shortPath($c->{tempFilePath})));
 			unlink($c->{tempFilePath});
 
@@ -770,7 +770,7 @@ sub add_problem_handler ($c) {
 	my $templatesPath  = $c->ce->{courseDirs}{templates};
 	my $sourceFilePath = $c->{editFilePath} =~ s|^\Q$templatesPath\E/||r;
 
-	unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{templates}, 1)) {
+	unless (pathIsSubdir($sourceFilePath, $c->ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
 			'The source file path [_1] is not contained in the course templates directory and cannot be added.',
 			$c->{editFilePath}
@@ -937,10 +937,13 @@ sub save_as_handler ($c) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 	}
 
-	# Make sure the file name contains only valid characters.
-	if ($new_file_name && $new_file_name =~ m![^-_.a-zA-Z0-9 /]!) {
+	if ($new_file_name && !filePathIsValid($new_file_name)) {
 		$do_not_save = 1;
-		$c->addbadmessage($c->maketext('The specified file name "[_1]" contains illegal characters.', $new_file_name));
+		$c->addbadmessage($c->maketext(
+			'"[_1]" is not an allowed file path. Each part of the path can only contain letters, digits, spaces, and '
+				. 'the characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
+			$new_file_name
+		));
 	}
 
 	# Rescue the user in case they forgot to end the file name with the right extension.
@@ -1165,7 +1168,7 @@ sub revert_handler ($c) {
 	my $ce   = $c->ce;
 	my $user = $c->authen->{user_id};
 
-	unless (path_is_subdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
+	unless (pathIsSubdir($c->{tempFilePath}, $ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(
 			'The temporary file [_1] is not contained in the course templates directory and cannot be deleted.',
 			$c->{tempFilePath}

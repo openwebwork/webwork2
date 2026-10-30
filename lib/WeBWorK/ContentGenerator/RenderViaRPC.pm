@@ -23,7 +23,7 @@ use Mojo::Util qw(url_unescape);
 use WeBWorK::Debug            qw(debug);
 use WeBWorK::DB::Utils        qw(global2user fake_set fake_problem);
 use WeBWorK::Utils            qw(decode_utf8_base64);
-use WeBWorK::Utils::Files     qw(readFile path_is_subdir);
+use WeBWorK::Utils::Files     qw(readFile pathIsSubdir);
 use WeBWorK::Utils::Logs      qw(writeCourseLog);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use FormatRenderedProblem;
@@ -86,7 +86,7 @@ async sub go ($c) {
 	} elsif (defined $c->req->param('sourceFilePath') && $c->req->param('sourceFilePath') =~ /\S/) {
 		# If the source file path is provided, ensure it is contained in the course's templates directory.
 		return $c->renderError($c->maketext('Unable to render the source file path as it is unsafe.'))
-			unless path_is_subdir($c->ce->{courseDirs}{templates} . '/' . $c->req->param('sourceFilePath'),
+			unless pathIsSubdir($c->ce->{courseDirs}{templates} . '/' . $c->req->param('sourceFilePath'),
 				$c->ce->{courseDirs}{templates});
 	}
 

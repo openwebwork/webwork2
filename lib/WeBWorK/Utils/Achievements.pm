@@ -4,11 +4,12 @@ use Mojo::Base 'Exporter', -signatures;
 use Storable   qw(nfreeze thaw);
 use Mojo::Util qw(b64_encode b64_decode);
 
+use WeBWorK::Utils::Files qw(pathIsSafe);
+
 our @EXPORT_OK = qw(
 	nfreeze_base64
 	thaw_base64
 	sortAchievements
-	isAchievementAssetSafe
 	getAchievementAssetPaths
 	isAchievementAssetOverridden
 	getAchievementIconURL
@@ -61,13 +62,9 @@ sub sortAchievements (@achievements) {
 	return @achievements;
 }
 
-sub isAchievementAssetSafe ($asset) {
-	return !defined $asset || $asset eq '' || $asset =~ m#^/|/$|^\.\.|\.\./|/\.\.# ? 0 : 1;
-}
-
 sub getAchievementAssetPaths ($ce, $type, $asset) {
 	my ($coursePath, $systemPath);
-	if (!isAchievementAssetSafe($asset)) {
+	if (!pathIsSafe($asset)) {
 		# Unsafe asset, skip.
 	} elsif ($type eq 'icon') {
 		$systemPath = "$ce->{webworkDirs}{achievementIcons}/$asset"
@@ -118,17 +115,6 @@ Usage: C<sortAchievements(@achievements)>
 
 Returns C<@achievements> sorted first by achievement id, then by number or
 category (if the achievement does not have a number).
-
-=head2 isAchievementAssetSafe
-
-Usage: C<isAchievementAssetSafe($asset)>
-
-This is a simple test if an achievement C<$asset> filename is safe. A
-filename is safe if it is a file inside an achievement asset directory
-or subdirectory. This is a crude test that tests if C<$asset> is defined,
-nonempty, not absolute (doesn't start with a slash), not a directory (ends
-with a slash), doesn't start with "..", and doesn't contain "../" or "/..".
-This will also reject nonstandard filenames like "..foo" or "foo../bar".
 
 =head2 getAchievementAssetPaths
 
