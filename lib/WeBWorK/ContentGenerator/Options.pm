@@ -7,6 +7,8 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
+use Mojo::Util qw(xml_escape);
+
 use WeBWorK::Utils qw(cryptPassword utf8Crypt);
 use WeBWorK::Localize;
 
@@ -53,10 +55,12 @@ sub initialize ($c) {
 						if ($@) {
 							$c->log->error("Error changing ${e_user_name}'s password: $@");
 							$c->addbadmessage($c->maketext(
-								"[_1]'s password was not changed due to an internal error.", $e_user_name
+								"[_1]'s password was not changed due to an internal error.",
+								xml_escape($e_user_name)
 							));
 						} else {
-							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
+							$c->addgoodmessage(
+								$c->maketext("[_1]'s password has been changed.", xml_escape($e_user_name)));
 						}
 					} else {
 						$effectiveUserPassword->password(cryptPassword($newP));
@@ -65,10 +69,12 @@ sub initialize ($c) {
 						if ($@) {
 							$c->log->error("Error changing ${e_user_name}'s password: $@");
 							$c->addbadmessage($c->maketext(
-								"[_1]'s password was not changed due to an internal error.", $e_user_name
+								"[_1]'s password was not changed due to an internal error.",
+								xml_escape($e_user_name)
 							));
 						} else {
-							$c->addgoodmessage($c->maketext("[_1]'s password has been changed.", $e_user_name));
+							$c->addgoodmessage(
+								$c->maketext("[_1]'s password has been changed.", xml_escape($e_user_name)));
 						}
 					}
 				} else {
