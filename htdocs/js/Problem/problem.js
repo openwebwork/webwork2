@@ -98,11 +98,11 @@
 		];
 	};
 
-	const layoutPopoversInClone = (clone, layout) => {
-		const setStyles = (element, styles) => {
-			for (const [name, value] of Object.entries(styles)) element.style.setProperty(name, value, 'important');
-		};
+	const setStyles = (element, styles) => {
+		for (const [name, value] of Object.entries(styles)) element.style.setProperty(name, value, 'important');
+	};
 
+	const layoutPopoversInClone = (clone, layout) => {
 		setStyles(clone, {
 			position: 'relative',
 			'box-sizing': 'border-box',
@@ -128,6 +128,76 @@
 		});
 	};
 
+	const checkImages = {
+		checkbox:
+			"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath " +
+			"fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' " +
+			"d='m6 10 3 3 6-6'/%3e%3c/svg%3e\")",
+		radio:
+			"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e" +
+			"%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e\")"
+	};
+
+	// Record checkbox, radio button, and select states since they are not rendered correctly in the screenshot.
+	const getFormState = () => {
+		const inputs = Array.from(problemBody.querySelectorAll('input[type="checkbox"], input[type="radio"]')).filter(
+			(input) => input.getClientRects().length
+		);
+		const options = Array.from(problemBody.querySelectorAll('option'));
+		for (const option of options) option.dataset.screenshotSelected = option.selected ? '1' : '0';
+		return [
+			inputs.map((input, index) => {
+				input.dataset.screenshotInput = index.toString();
+				const rect = input.getBoundingClientRect();
+				const style = getComputedStyle(input);
+				return {
+					type: input.type,
+					checked: input.checked,
+					styles: Object.fromEntries([
+						['width', `${rect.width}px`],
+						['height', `${rect.height}px`],
+						...[
+							'margin-top',
+							'margin-right',
+							'margin-bottom',
+							'margin-left',
+							'vertical-align',
+							'box-shadow'
+						].map((name) => [name, style.getPropertyValue(name)])
+					])
+				};
+			}),
+			() => {
+				for (const input of inputs) delete input.dataset.screenshotInput;
+				for (const option of options) delete option.dataset.screenshotSelected;
+			}
+		];
+	};
+
+	const setFormStateInClone = (clone, inputStates) => {
+		for (const option of clone.querySelectorAll('[data-screenshot-selected]'))
+			option.toggleAttribute('selected', option.dataset.screenshotSelected === '1');
+
+		for (const input of clone.querySelectorAll('[data-screenshot-input]')) {
+			const state = inputStates[parseInt(input.dataset.screenshotInput)];
+			if (!state) continue;
+			const replacement = document.createElement('span');
+			setStyles(replacement, {
+				display: 'inline-block',
+				'box-sizing': 'border-box',
+				...state.styles,
+				border: `1px solid ${state.checked ? '#0d6efd' : '#767676'}`,
+				'border-radius': state.type === 'radio' ? '50%' : '0.25em',
+				'background-color': state.checked ? '#0d6efd' : '#fff',
+				'background-image': state.checked ? checkImages[state.type] : 'none',
+				'background-size': 'contain',
+				'background-repeat': 'no-repeat',
+				'background-position': 'center'
+			});
+			input.replaceWith(replacement);
+		}
+	};
+
 	let screenshotTaken = false;
 
 	feedbackForm.addEventListener('submit', async (e) => {
@@ -145,18 +215,20 @@
 				(async () => {
 					const [popoverLayout, removePopoverMarks] = getPopoverLayout();
 					removeMarks.push(removePopoverMarks);
+					const [inputStates, removeFormStateMarks] = getFormState();
+					removeMarks.push(removeFormStateMarks);
 					const [pseudoElementStyles, removePseudoElementMarks] = await getPseudoElementImageStyles();
 					removeMarks.push(removePseudoElementMarks);
 					return modernScreenshot.domToPng(problemBody, {
 						scale: Math.min(Math.max(window.devicePixelRatio || 1, 1), 2),
 						timeout: 10000,
 						...(popoverLayout.numPopovers
-							? {
-									width: popoverLayout.width,
-									height: popoverLayout.height,
-									onCloneNode: (clone) => layoutPopoversInClone(clone, popoverLayout)
-								}
+							? { width: popoverLayout.width, height: popoverLayout.height }
 							: {}),
+						onCloneNode: (clone) => {
+							setFormStateInClone(clone, inputStates);
+							if (popoverLayout.numPopovers) layoutPopoversInClone(clone, popoverLayout);
+						},
 						onCreateForeignObjectSvg: (svg) => {
 							const style = document.createElement('style');
 							// Prevent MathJax output from being clipped.
