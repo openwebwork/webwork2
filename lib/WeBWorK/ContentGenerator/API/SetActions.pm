@@ -261,7 +261,7 @@ sub reorderProblems ($c) {
 	for my $problem ($db->getAllGlobalProblems($setID)) {
 		my $recordFound = 0;
 		for (my $i = 0; $i < @problemList; ++$i) {
-			$problemList[$i] =~ s|^$templatesDir/*||;
+			$problemList[$i] =~ s|^\Q$templatesDir\E/*||;
 			if ($problem->{source_file} eq $problemList[$i]) {
 				if ($db->existsGlobalProblem($setID, $i + 1)) {
 					$problem->problem_id($i + 1);

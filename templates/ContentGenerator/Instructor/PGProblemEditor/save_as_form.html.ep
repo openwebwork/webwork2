@@ -12,7 +12,7 @@
 	% $c->{file_type} eq 'blank_problem'    ? 'newProblem.pg'
 	% : $c->{file_type} eq 'sample_problem' ? basename($c->{editFilePath})
 	% : $isHardcopyTheme                    ? 'hardcopyThemes/' . ($c->{editFilePath} =~ s|^.*\/||r)
-	% :   ($c->{editFilePath} =~ s|^$ce->{courseDirs}{templates}/||r) =~ s|^$ce->{webworkDirs}{assets}/pg/||r;
+	% :   ($c->{editFilePath} =~ s|^\Q$ce->{courseDirs}{templates}\E/||r) =~ s|^\Q$ce->{webworkDirs}{assets}\E/pg/||r;
 %
 % # Suggest that modifications be saved to the "local" subdirectory if its not in a writable directory
 % $shortFilePath = "local/$shortFilePath" unless $isTemplate || $isHardcopyTheme || -w dirname($c->{editFilePath});

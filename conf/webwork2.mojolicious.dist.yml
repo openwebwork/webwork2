@@ -51,6 +51,12 @@ JSON_ERROR_LOG: 0
 # Additional urls may also be added, and multiple headers may be set per url.
 # The headers will be added to all responses to urls that start with the url
 # given.
+#
+# The url path is matched using the regex match pattern /^$path/, and must be
+# a valid regex match string.  For example, in the extra_ssl_headers below,
+# the path '.*' matches all paths. Note that this means dots "." will match
+# any character, so to use a literal dot it must be escaped, "\.". This
+# applies to any special character in regex matching (e.g. ., +, *, (, )).
 
 #extra_headers:
 #  /webwork2/render_rpc:

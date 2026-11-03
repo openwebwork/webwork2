@@ -564,7 +564,7 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 
 	# Calculate paths for each temp file of interest.  These paths are relative to the $temp_dir_parent_path.
 	# makeTempDirectory's interface forces us to reverse-engineer the relative temp dir path from the absolute path.
-	my $temp_dir_rel_path = $temp_dir_path =~ s/^$temp_dir_parent_path\///r;
+	my $temp_dir_rel_path = $temp_dir_path =~ s/^\Q$temp_dir_parent_path\E\///r;
 	my %temp_file_map     = map { $_ => "$temp_dir_rel_path/$_" } @temp_files;
 
 	# Make sure the final file exists.
@@ -596,7 +596,7 @@ async sub generate_hardcopy ($c, $format, $userIDsRef, $setIDsRef) {
 	# If there were any errors, then the final file will not be served directly, but will be served via reply_with_file
 	# and the full file path will be built at that time.  So the path needs to be relative to the temporary directory
 	# parent path.
-	$final_file_final_path =~ s/^$temp_dir_parent_path\/// if ($c->has_errors);
+	$final_file_final_path =~ s/^\Q$temp_dir_parent_path\E\/// if $c->has_errors;
 
 	# remove the temp directory if there are no errors
 	$c->delete_temp_dir($temp_dir_path) unless ($c->has_errors || $PreserveTempFiles);
@@ -694,7 +694,7 @@ sub generate_hardcopy_tex ($c, $temp_dir_path, $final_file_basename) {
 
 			for my $resource (@$resource_list) {
 				my $basename = $resource =~ s/.*\///r;
-				$data =~ s{$resource}{$basename}g;
+				$data =~ s{\Q$resource\E}{$basename}g;
 
 				# Copy the image file into the bundle directory.
 				eval { Mojo::File->new($resource)->copy_to($bundle_path) };

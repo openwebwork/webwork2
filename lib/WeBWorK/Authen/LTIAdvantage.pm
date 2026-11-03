@@ -230,7 +230,7 @@ sub get_credentials ($self) {
 		# That will be verified later in WeBWorK::Authen::LTIAdvantage::SubmitGrade::update_sourcedid.
 		my $location = $c->location;
 		my $target   = $c->url_for($c->stash->{LTILaunchRedirect})->path;
-		$c->stash->{setID} = $1 if $target =~ m|$location/$ce->{courseName}/([^/]*)|;
+		$c->stash->{setID} = $1 if $target =~ m|\Q$location\E/$ce->{courseName}/([^/]*)|;
 
 		$self->{login_type}        = 'normal';
 		$self->{credential_source} = 'LTIAdvantage';

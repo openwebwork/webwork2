@@ -479,7 +479,7 @@ sub MakeArchive ($c) {
 			$tar->add_files(map {"$dir/$_"} @files);
 			# Make file names in the archive relative to the current working directory.
 			for ($tar->get_files) {
-				$tar->rename($_->full_path, $_->full_path =~ s!^$dir/!!r);
+				$tar->rename($_->full_path, $_->full_path =~ s!^\Q$dir\E/!!r);
 			}
 			$ok    = $tar->write("$dir/$archive", COMPRESS_GZIP);
 			$error = $tar->error unless $ok;

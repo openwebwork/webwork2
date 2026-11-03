@@ -44,7 +44,7 @@
 	%
 	% # Show problems
 	% for (my $i = 0; $i < @$plist; ++$i) {
-		% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+		% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^\Q$ce->{courseDirs}{templates}\E/?||;
 		% my $sourceFileData = $pg_files->[ $i + $c->{first_index} ];
 		% if ($sourceFileData->{children}) {
 			% # If this problem has children, then show the problem and all children.
@@ -56,7 +56,7 @@
 				% for (@{ $sourceFileData->{children} }) {
 					% ++$i;
 					% last if $i == @$plist;    # Protection in case of malformed data.
-					% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^$ce->{courseDirs}{templates}/?||;
+					% $pg_files->[ $i + $c->{first_index} ]{filepath} =~ s|^\Q$ce->{courseDirs}{templates}\E/?||;
 					<%= include 'ContentGenerator/Instructor/SetMaker/problem_row',
 						sourceFileData => $pg_files->[ $i + $c->{first_index} ],
 						pg_file        => $plist->[$i],

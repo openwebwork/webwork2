@@ -20,7 +20,7 @@
 					$lib
 					? (
 						map { [
-							$_ =~ s/^$lib\/(.*)$/$1/r => $_,
+							$_ =~ s/^\Q$lib\E\/(.*)$/$1/r => $_,
 							$_ eq $selected_library ? (selected => undef) : ()
 						] } @$prob_dirs
 					)

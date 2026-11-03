@@ -130,7 +130,7 @@ sub generate_hardcopy_tex ($c, $renderedProblem, $working_dir, $errors) {
 		unless ($@) {
 			for my $resource (keys %$resource_list) {
 				my $file_path = path($resource_list->{$resource});
-				$data =~ s{$file_path}{$file_path->basename}ge;
+				$data =~ s{\Q$file_path\E}{$file_path->basename}ge;
 
 				eval { $file_path->copy_to($working_dir) };
 				push(@$errors, qq{Failed to copy image "$file_path" into directory "$working_dir": $@}) if $@;

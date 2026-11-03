@@ -270,7 +270,7 @@ sub initialize ($c) {
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{setHeader}
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
 				|| $c->{editFilePath} eq $ce->{webworkFiles}{screenSnippets}{blankProblem}
-				|| $c->{editFilePath} =~ m|^$ce->{webworkDirs}{hardcopyThemes}/[^/]*\.xml$|)
+				|| $c->{editFilePath} =~ m|^\Q$ce->{webworkDirs}{hardcopyThemes}\E/[^/]*\.xml$|)
 			{
 				eval { $problemContents = readFile($c->{editFilePath}) };
 				$problemContents = $@ if $@;
@@ -371,10 +371,10 @@ sub shortPath ($c, $file) {
 	my $root   = $c->ce->{courseDirs}{root};
 	my $ww     = $c->ce->{webworkDirs}{root};
 	my $sample = $c->ce->{pg_dir} . '/tutorial/sample-problems';
-	$file =~ s|^$tmpl|[TMPL]|;
-	$file =~ s|^$root|[COURSE]|;
-	$file =~ s|^$ww|[WW]|;
-	$file =~ s|^$sample|[SAMPLE]|;
+	$file =~ s|^\Q$tmpl\E|[TMPL]|;
+	$file =~ s|^\Q$root\E|[COURSE]|;
+	$file =~ s|^\Q$ww\E|[WW]|;
+	$file =~ s|^\Q$sample\E|[SAMPLE]|;
 
 	return $file;
 }
@@ -383,7 +383,7 @@ sub shortPath ($c, $file) {
 
 sub getRelativeSourceFilePath ($c, $sourceFilePath) {
 	my $templatesDir = $c->ce->{courseDirs}{templates};
-	$sourceFilePath =~ s|^$templatesDir/*||;    # remove templates path and any slashes that follow
+	$sourceFilePath =~ s|^\Q$templatesDir\E/*||;    # remove templates path and any slashes that follow
 	return $sourceFilePath;
 }
 
@@ -403,16 +403,16 @@ sub determineTempEditFilePath ($c, $path) {
 	$c->addbadmessage($c->maketext('The path to the original file should be absolute.'))
 		unless $path =~ m|^/|;
 
-	if ($path =~ /^$tmpEditFileDirectory/) {
+	if ($path =~ /^\Q$tmpEditFileDirectory\E/) {
 		$c->addbadmessage($c->maketext('The path cannot be the temporary edit directory.'));
 	} else {
-		if ($path =~ /^$templatesDirectory/) {
+		if ($path =~ /^\Q$templatesDirectory\E/) {
 			$path = $c->getRelativeSourceFilePath($path);
 			$path = "$tmpEditFileDirectory/$path.$user.tmp";
 		} elsif ($path eq $c->ce->{webworkFiles}{screenSnippets}{blankProblem}) {
 			# Handle the case of the blank problem in snippets.
 			$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";
-		} elsif ($path =~ m|^$pgRoot/tutorial/sample-problems/(.*\.pg)$|) {
+		} elsif ($path =~ m|^\Q$pgRoot\E/tutorial/sample-problems/(.*\.pg)$|) {
 			# Handle the case of a sample problem.
 			$path = "$tmpEditFileDirectory/$1.$user.tmp";
 		} elsif ($path eq $c->ce->{webworkFiles}{hardcopySnippets}{setHeader}) {
@@ -421,7 +421,7 @@ sub determineTempEditFilePath ($c, $path) {
 		} elsif ($path eq $c->ce->{webworkFiles}{screenSnippets}{setHeader}) {
 			# Handle the case of the hardcopy header in snippets.
 			$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";
-		} elsif ($path =~ m|$hardcopyThemesDir/([^/]*\.xml)$|) {
+		} elsif ($path =~ m|\Q$hardcopyThemesDir\E/([^/]*\.xml)$|) {
 			# Handle the case of the hardcopy themes in assets/hardcopyThemes.
 			$path = "$tmpEditFileDirectory/hardcopyTheme.$1.$user.tmp";
 		} else {
@@ -444,7 +444,7 @@ sub determineOriginalEditFilePath ($c, $path) {
 
 	if ($c->isTempEditFilePath($newpath)) {
 		my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
-		$newpath =~ s|^$tmpEditFileDirectory/||;
+		$newpath =~ s|^\Q$tmpEditFileDirectory\E/||;
 
 		if ($newpath =~ m|blank\.[^/]*$|) {
 			$newpath = $ce->{webworkFiles}{screenSnippets}{blankProblem};
@@ -477,7 +477,7 @@ sub isTempEditFilePath ($c, $path) {
 
 	my $tmpEditFileDirectory = $c->getTempEditFileDirectory();
 
-	return $path =~ /^$tmpEditFileDirectory/ ? 1 : 0;
+	return $path =~ /^\Q$tmpEditFileDirectory\E/ ? 1 : 0;
 }
 
 # Determine file paths. This defines the following variables:
@@ -848,7 +848,7 @@ sub add_problem_handler ($c) {
 	my $db = $c->db;
 
 	my $templatesPath  = $c->ce->{courseDirs}{templates};
-	my $sourceFilePath = $c->{editFilePath} =~ s|^$templatesPath/||r;
+	my $sourceFilePath = $c->{editFilePath} =~ s|^\Q$templatesPath\E/||r;
 
 	unless (path_is_subdir($sourceFilePath, $c->ce->{courseDirs}{templates}, 1)) {
 		$c->addbadmessage($c->maketext(

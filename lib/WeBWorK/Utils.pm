@@ -538,7 +538,7 @@ sub getAssetURL ($ce, $file, $isThemeFile = 0) {
 	if ($isThemeFile) {
 		# If the theme directory is the default location, then the file is in the static assets list.
 		# Otherwise just use the given file name.
-		if ($ce->{webworkDirs}{themes} =~ /^$ce->{webworkDirs}{htdocs}\/themes$/) {
+		if ($ce->{webworkDirs}{themes} =~ /^\Q$ce->{webworkDirs}{htdocs}\E\/themes$/) {
 			$rtlfile = "themes/$ce->{defaultTheme}/$rtlfile" if defined $rtlfile;
 			$file    = "themes/$ce->{defaultTheme}/$file";
 		} else {

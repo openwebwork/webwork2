@@ -71,7 +71,7 @@ sub listLib ($c) {
 		my $dir = $File::Find::dir;
 		$File::Find::prune = 1 if $depthfinder->($dir) > $maxdepth;
 		if ($dir =~ /\S/) {
-			$dir =~ s|^$dirPath2/*||;
+			$dir =~ s|^\Q$dirPath2\E/*||;
 			$libDirectoryList{$dir} = {};
 		}
 	};
