@@ -9,6 +9,7 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 
 use Email::Address::XS;
 use Mojo::File;
+use Mojo::Util qw(xml_escape);
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Utils qw(processEmailMessage);
@@ -342,13 +343,13 @@ sub print_preview ($c) {
 	my $rh_merge_data = $c->read_scoring_file($merge_file);
 
 	if ($merge_file && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
-		$c->addbadmessage('No merge data for student id: '
-				. $c->{preview_user}->student_id
-				. '; name: '
-				. $c->{preview_user}->first_name . ' '
-				. $c->{preview_user}->last_name
-				. '; login: '
-				. $c->{preview_user}->user_id);
+		$c->addbadmessage($c->maketext(
+			'No merge data for student id: [_1]; name: [_2] [_3]; login: [_4]',
+			map { xml_escape($_) } (
+				$c->{preview_user}->student_id, $c->{preview_user}->first_name,
+				$c->{preview_user}->last_name,  $c->{preview_user}->user_id
+			)
+		));
 	}
 
 	my ($msg, $preview_header) = processEmailMessage(

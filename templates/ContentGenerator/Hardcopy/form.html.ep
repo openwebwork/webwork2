@@ -1,3 +1,4 @@
+% use Mojo::Util                         qw(xml_escape);
 % use WeBWorK::Utils::Sets               qw(format_set_name_display);
 % use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 %
@@ -59,7 +60,7 @@
 					dir => 'ltr',
 					format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)
 				),
-				join(' ', $user->first_name, $user->last_name)
+				xml_escape(join(' ', $user->first_name, $user->last_name))
 			) =%>
 		</p>
 	% }
