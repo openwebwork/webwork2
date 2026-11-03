@@ -28,17 +28,17 @@
 	<%= javascript getAssetURL($ce, 'js/SelectAll/selectall.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'access_instructor_tools')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'access_instructor_tools')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to access instructor tools.') %></div>
 	% last;
 % }
 %
-% if ($c->{editMode} && !$authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+% if ($c->{editMode} && !$authz->hasPermissions($authen->{user_id}, 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0"><%= maketext('You are not authorized to modify sets.') %></div>
 	% last;
 % }
 %
-% if ($c->{exportMode} && !$authz->hasPermissions(param('user'), 'modify_set_def_files')) {
+% if ($c->{exportMode} && !$authz->hasPermissions($authen->{user_id}, 'modify_set_def_files')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<%= maketext('You are not authorized to modify set definition files.') =%>
 	</div>
@@ -90,7 +90,7 @@
 				% || $ce->{LTIGradeMode} ne 'homework'
 				% || !$db->getSettingValue('LTILineitemsURL'));
 		% # Check permissions
-		% next if $formPerms->{$actionID} && !$authz->hasPermissions(param('user'), $formPerms->{$actionID});
+		% next if $formPerms->{$actionID} && !$authz->hasPermissions($authen->{user_id}, $formPerms->{$actionID});
 		%
 		% my $disabled = $actionID eq 'import' && !@$setDefList ? ' disabled' : '';
 		% my $active   = '';

@@ -42,7 +42,7 @@ sub initialize ($c) {
 	my $authz = $c->authz;
 
 	# get form fields
-	my $userID    = $c->param('user');
+	my $userID    = $c->authen->{user_id};
 	my $route     = $c->param('route');
 	my $setID     = $c->param('set');
 	my $problemID = $c->param('problem');

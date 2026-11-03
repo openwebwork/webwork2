@@ -162,7 +162,7 @@ async sub dispatch ($c) {
 			# to continue here.
 			return 1 if $c->current_route eq 'ltiadvantage_login';
 
-			my $userID = $c->param('user');
+			my $userID = $c->authen->{user_id};
 			debug("Hi, $userID, glad you made it.\n");
 
 			# Tell authorizer to cache this user's permission level

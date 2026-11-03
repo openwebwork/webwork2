@@ -199,7 +199,7 @@ sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers
 	return 0 unless $ce->{pg}{options}{enableShowMeAnother};
 
 	if (after($set->open_date, $c->submitTime)
-		|| $c->authz->hasPermissions($c->param('user'), 'can_use_show_me_another_early'))
+		|| $c->authz->hasPermissions($c->authen->{user_id}, 'can_use_show_me_another_early'))
 	{
 		$c->{showMeAnother}{TriesNeeded} = $ce->{pg}{options}{showMeAnotherDefault}
 			if $c->{showMeAnother}{TriesNeeded} == -2;
@@ -245,7 +245,7 @@ async sub pre_header_initialize ($c) {
 
 	my $setID           = $c->stash('setID');
 	my $problemID       = $c->stash('problemID');
-	my $userID          = $c->param('user');
+	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser');
 	$c->{editMode} = $c->param('editMode');
 
@@ -757,7 +757,7 @@ sub nav ($c, $args) {
 
 	my $setID     = $c->{set}->set_id;
 	my $problemID = $c->{problem}->problem_id;
-	my $userID    = $c->param('user');
+	my $userID    = $c->authen->{user_id};
 	my $eUserID   = $c->param('effectiveUser');
 
 	my $mergedSet = $db->getMergedSet($eUserID, $setID);
@@ -844,7 +844,7 @@ sub path ($c, $args) {
 		$prettyProblemNumber = join('.', jitar_id_to_seq($prettyProblemNumber));
 	}
 
-	my $navigation_allowed = $c->authz->hasPermissions($c->param('user'), 'navigation_allowed');
+	my $navigation_allowed = $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	my @path = (
 		WeBWorK               => $navigation_allowed ? $c->url_for('root')     : '',
@@ -898,7 +898,7 @@ sub page_title ($c) {
 	}
 
 	# Add the edit link to the sub header if the user has the permissions to edit problems.
-	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')) {
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(
@@ -924,7 +924,7 @@ sub page_title ($c) {
 	}
 
 	# Add the tag edit button to the sub header if the user has permission to edit tags.
-	if ($c->authz->hasPermissions($c->param('user'), 'modify_tags')) {
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_tags')) {
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(
@@ -951,7 +951,7 @@ sub output_problem_lang_and_dir ($c) {
 sub output_problem_body ($c) {
 	# If there are translation errors then render those with the body text of the problem.
 	if ($c->{pg}{flags}{error_flag}) {
-		if ($c->authz->hasPermissions($c->param('user'), 'view_problem_debugging_info')) {
+		if ($c->authz->hasPermissions($c->authen->{user_id}, 'view_problem_debugging_info')) {
 			# For instructors render the body text of the problem with the errors.
 			return $c->include(
 				'ContentGenerator/Base/error_output',
@@ -1003,7 +1003,7 @@ sub output_score_summary ($c) {
 	my $problem       = $c->{problem};
 	my $set           = $c->{set};
 	my $pg            = $c->{pg};
-	my $effectiveUser = $c->param('effectiveUser') || $c->param('user');
+	my $effectiveUser = $c->param('effectiveUser') || $c->authen->{user_id};
 
 	my $prEnabled         = $ce->{pg}{options}{enablePeriodicRandomization} // 0;
 	my $rerandomizePeriod = $ce->{pg}{options}{periodicRandomizationPeriod} // 0;
@@ -1227,7 +1227,7 @@ sub output_misc ($c) {
 	push(@$output, $c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}));
 
 	# Only allow file editing for users that have the permission to modify problem sets.
-	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')) {
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
 		push(@$output, $c->hidden_field(editMode => $c->{editMode}))
 			if defined $c->{editMode} && $c->{editMode} eq 'temporaryFile';
 		push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
@@ -1396,7 +1396,7 @@ sub output_achievement_message ($c) {
 
 # Output a custom edit message
 sub output_custom_edit_message ($c) {
-	if ($c->authz->hasPermissions($c->param('user'), 'modify_problem_sets')
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')
 		&& $c->{editMode}
 		&& $c->{editMode} eq 'temporaryFile')
 	{
@@ -1412,21 +1412,19 @@ sub output_custom_edit_message ($c) {
 
 # Output the "Show Past Answers" button
 sub output_past_answer_button ($c) {
-	if ($c->authz->hasPermissions($c->param('user'), 'view_answers')) {
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'view_answers')) {
 		my $problemID = $c->{problem}->problem_id;
 		my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
 		if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
 			$problemID = join('.', jitar_id_to_seq($problemID));
 		}
 
-		my $hiddenFields = $c->hidden_authen_fields;
-		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		return $c->form_for(
 			'answer_log',
 			method => 'POST',
 			target => 'WW_Info',
 			$c->c(
-				$hiddenFields,
+				$c->hidden_authen_fields,
 				$c->hidden_field(courseID          => $c->stash('courseID')),
 				$c->hidden_field(selected_problems => $problemID),
 				$c->hidden_field(selected_sets     => $c->{problem}->set_id),
@@ -1449,7 +1447,7 @@ sub output_past_answer_button ($c) {
 
 # Output the "Email Instructor" button
 sub output_email_instructor ($c) {
-	my $user = $c->db->getUser($c->param('user'));
+	my $user = $c->db->getUser($c->authen->{user_id});
 
 	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the
 	# feedbackMacro method and only for that case.

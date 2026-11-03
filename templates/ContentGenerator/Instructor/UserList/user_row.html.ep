@@ -18,7 +18,7 @@
 			<div class="d-flex justify-content-between gap-1">
 				% # Make the user id the label for the select user checkbox.
 				<%= label_for $user->user_id . '_checkbox', begin =%>
-					% if (!$authz->hasPermissions(param('user'), 'become_student')) {
+					% if (!$authz->hasPermissions($authen->{user_id}, 'become_student')) {
 						<%= $user->user_id =%>
 					% } else {
 						<%= link_to $user->user_id =>
@@ -59,7 +59,7 @@
 		% # User ID ("edit sets assigned to user" link)
 		<td>
 			% my $sets = $db->countUserSets($user->user_id);
-			% if (!$authz->hasPermissions(param('user'), 'assign_problem_sets')) {
+			% if (!$authz->hasPermissions($authen->{user_id}, 'assign_problem_sets')) {
 				<%= $sets =%>/<%= $c->{totalSets} =%>
 			% } else {
 				<%= link_to "$sets/$c->{totalSets}" =>

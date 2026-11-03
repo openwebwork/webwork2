@@ -97,7 +97,7 @@
 	const countLine = document.getElementById('library_count_line');
 
 	const settingStoreID = `WW.${document.getElementsByName('hidden_course_id')[0]?.value ?? 'unknownCourse'}.${
-		document.getElementsByName('user')[0]?.value ?? 'unknownUser'
+		document.getElementsByName('hidden_user_id')[0]?.value ?? 'unknownUser'
 	}.setmaker`;
 	const includeOPLInitialStatus = includeOPL?.checked;
 	const includeContribInitialStatus = includeContrib?.checked;

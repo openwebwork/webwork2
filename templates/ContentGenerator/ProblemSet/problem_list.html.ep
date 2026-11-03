@@ -40,8 +40,8 @@
 						</th>
 						<th><%= maketext('Counts for Parent') %></th>
 					% }
-					% if ($authz->hasPermissions(param('user'), 'access_instructor_tools')
-						% && $authz->hasPermissions(param('user'), 'problem_grader'))
+					% if ($authz->hasPermissions($authen->{user_id}, 'access_instructor_tools')
+						% && $authz->hasPermissions($authen->{user_id}, 'problem_grader'))
 					% {
 						<th><%= maketext('Grader') %></th>
 					% }

@@ -5,7 +5,7 @@
 	<%= javascript getAssetURL($ce, 'js/Config/config.js'), defer => undef =%>
 % end
 %
-% unless ($authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'modify_problem_sets')) {
 	<div class="alert alert-danger p-1 mb-0">
 		<em><%= maketext('You are not authorized to modify the course configuration.') %></em>
 	</div>
@@ -59,7 +59,8 @@
 							% my $conobject = $c->objectify($con);
 							% next
 								% if (defined $ce->{permissionLevels}{"change_config_$conobject->{var}"}
-									% && !$authz->hasPermissions(param('user'), "change_config_$conobject->{var}"));
+									% && !$authz->hasPermissions($authen->{user_id}, "change_config_$conobject->{var}")
+								% );
 							% # Hide sensitive variables from being displayed.
 							% my $default_value = $conobject->get_value($default_ce);
 							% my $current_value = $conobject->get_value($ce3);

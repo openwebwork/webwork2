@@ -38,7 +38,7 @@ sub pre_header_initialize ($c) {
 	$c->stash->{E_BAD_NAME}     = E_BAD_NAME;
 	$c->stash->{courseID}       = $c->stash('courseID');
 
-	my $userID = $c->param('user');
+	my $userID = $c->authen->{user_id};
 
 	return unless ($authz->hasPermissions($userID, 'access_instructor_tools'));
 

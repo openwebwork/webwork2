@@ -8,7 +8,7 @@
 	% end
 % }
 %
-% unless ($authz->hasPermissions(param('user'), 'score_sets')) {
+% unless ($authz->hasPermissions($authen->{user_id}, 'score_sets')) {
 	<div class="alert alert-danger p-1"><%= maketext('You are not authorized to update lti scores') %></div>
 	% last;
 % }

@@ -20,7 +20,7 @@ sub initialize ($c) {
 	my $ce = $c->ce;
 
 	# Get user Data
-	$c->{userName}    = $c->param('user');
+	$c->{userName}    = $c->authen->{user_id};
 	$c->{studentName} = $c->param('effectiveUser') // $c->{userName};
 
 	return unless $c->authz->hasPermissions($c->{userName}, 'view_leaderboard');

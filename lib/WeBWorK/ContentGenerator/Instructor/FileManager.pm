@@ -35,7 +35,7 @@ my %uploadDir = (
 
 # Check that the user is authorized, and see if there is a download to perform.
 sub pre_header_initialize ($c) {
-	return unless $c->authz->hasPermissions($c->param('user'), 'manage_course_files');
+	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'manage_course_files');
 
 	my $action = $c->param('action');
 	$c->Download if $action && ($action eq 'Download' || $action eq $c->maketext('Download'));
@@ -196,7 +196,7 @@ sub Edit ($c) {
 	# If its a restricted file, dont allow the web editor to edit it unless that option has been set for the course.
 	for my $restrictedFile (@{ $c->ce->{uneditableCourseFiles} }) {
 		if (Mojo::File->new($file)->realpath eq Mojo::File->new("$c->{courseRoot}/$restrictedFile")->realpath
-			&& !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files'))
+			&& !$c->authz->hasPermissions($c->authen->{user_id}, 'edit_restricted_files'))
 		{
 			$c->addbadmessage($c->maketext('You do not have permission to edit this file.'));
 			return $c->Refresh;
@@ -553,7 +553,7 @@ sub unpack_archive ($c, $archive) {
 				next;
 			}
 
-			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+			if (!$c->authz->hasPermissions($c->authen->{user_id}, 'edit_restricted_files')
 				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
 				@{ $c->ce->{uneditableCourseFiles} })
 			{
@@ -601,7 +601,7 @@ sub unpack_archive ($c, $archive) {
 				next;
 			}
 
-			if (!$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+			if (!$c->authz->hasPermissions($c->authen->{user_id}, 'edit_restricted_files')
 				&& grep { $out_file eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
 				@{ $c->ce->{uneditableCourseFiles} })
 			{
@@ -806,7 +806,7 @@ sub Upload ($c) {
 	$c->addbadmessage($invalidUploadFilenameMsg) if $invalidUploadFilenameMsg;
 
 	if (-e "$dir/$name" || $invalidUploadFilenameMsg) {
-		my $isProtected = !$c->authz->hasPermissions($c->param('user'), 'edit_restricted_files')
+		my $isProtected = !$c->authz->hasPermissions($c->authen->{user_id}, 'edit_restricted_files')
 			&& grep { Mojo::File->new("$dir/$name")->realpath eq Mojo::File->new("$c->{courseRoot}/$_")->realpath }
 			@{ $c->ce->{uneditableCourseFiles} };
 

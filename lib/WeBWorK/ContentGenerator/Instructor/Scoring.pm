@@ -23,7 +23,7 @@ sub initialize ($c) {
 	my $authz      = $c->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $courseName = $c->stash('courseID');
-	my $user       = $c->param('user');
+	my $user       = $c->authen->{user_id};
 
 	# Check permission
 	return unless $authz->hasPermissions($user, "access_instructor_tools");

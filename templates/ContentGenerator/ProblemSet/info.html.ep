@@ -1,4 +1,4 @@
-% if (defined $c->{set} && $authz->hasPermissions(param('user'), 'modify_problem_sets')) {
+% if (defined $c->{set} && $authz->hasPermissions($authen->{user_id}, 'modify_problem_sets')) {
 	<h2 class="d-flex align-items-center justify-content-center">
 		<%= maketext('Set Info') =%>
 		<%= link_to maketext('Edit') => $c->systemLink(

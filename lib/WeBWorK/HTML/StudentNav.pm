@@ -10,7 +10,7 @@ WeBWorK::HTML::StudentNav - student navigation for all users assigned to a set.
 our @EXPORT_OK = qw(studentNav);
 
 sub studentNav ($c, $setID) {
-	my $userID = $c->param('user');
+	my $userID = $c->authen->{user_id};
 
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 

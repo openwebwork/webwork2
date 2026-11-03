@@ -8,7 +8,7 @@ use Caliper::Entity;
 use Caliper::Sensor;
 
 sub add_defaults ($c, $event_hash) {
-	my $user_id = $c->param('user');
+	my $user_id = $c->authen->{user_id};
 	my $actor   = Caliper::Actor::generate_actor($c, $user_id);
 
 	$event_hash->{'@context'} = 'http://purl.imsglobal.org/ctx/caliper/v1p2' unless exists $event_hash->{'@context'};

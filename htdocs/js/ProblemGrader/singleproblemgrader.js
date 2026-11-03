@@ -220,7 +220,7 @@
 	}
 
 	const settingStoreID = `WW.${document.getElementsByName('courseID')[0]?.value ?? 'unknownCourse'}.${
-		document.getElementsByName('user')[0]?.value ?? 'unknownUser'
+		document.querySelector('.problem-grader')?.dataset.userId ?? 'unknownUser'
 	}.problem_grader`;
 	let gradersOpen = localStorage.getItem(`${settingStoreID}.open`) === 'true';
 

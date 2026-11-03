@@ -24,7 +24,7 @@ use constant DEFAULT_ICON => 'defaulticon.png';
 sub pre_header_initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
-	my $user  = $c->param('user');
+	my $user  = $c->authen->{user_id};
 
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}         = ACTION_FORMS();
@@ -62,7 +62,7 @@ sub pre_header_initialize ($c) {
 
 sub initialize ($c) {
 	my $authz          = $c->authz;
-	my $user           = $c->param('user');
+	my $user           = $c->authen->{user_id};
 	my $sourceFilePath = $c->{sourceFilePath};
 
 	return unless ($authz->hasPermissions($user, 'edit_achievements'));

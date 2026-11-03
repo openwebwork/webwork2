@@ -18,7 +18,7 @@ use constant PAST_ANSWERS_FILENAME => 'past_answers';
 async sub initialize ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	unless ($c->authz->hasPermissions($user, 'view_answers')) {
 		$c->addbadmessage(q{You aren't authorized to view past answers});
@@ -231,7 +231,7 @@ async sub initialize ($c) {
 sub getInstructorData ($c) {
 	my $db   = $c->db;
 	my $ce   = $c->ce;
-	my $user = $c->param('user');
+	my $user = $c->authen->{user_id};
 
 	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for
 	# the user if such restrictions are defined.

@@ -11,7 +11,7 @@ they can access the course.
 sub pre_header_initialize ($c) {
 	# Preserve the form data posted to the requested URI.
 	my @fields_to_print =
-		grep { !m/^(user|passwd|key|force_passwd_authen|newPassword|confirmPassword)$/ } $c->param;
+		grep { !m/^(user|passwd|key|newPassword|confirmPassword)$/ } $c->param;
 	push(@fields_to_print, 'user', 'key') if $c->ce->{session_management_via} ne 'session_cookie';
 	$c->stash->{hidden_fields} = @fields_to_print ? $c->hidden_fields(@fields_to_print) : '';
 

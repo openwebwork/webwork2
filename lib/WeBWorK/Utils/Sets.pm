@@ -249,7 +249,7 @@ sub restricted_set_message($c, $set, $status) {
 	my $authz = $c->authz;
 
 	if ($status eq 'conditional') {
-		my $user       = $c->param('effectiveUser') || $c->param('user');
+		my $user       = $c->param('effectiveUser') || $c->authen->{user_id};
 		my @restricted = $ce->{options}{enableConditionalRelease} ? is_restricted($db, $set, $user) : ();
 		return '' unless @restricted;
 
@@ -271,8 +271,8 @@ sub restricted_set_message($c, $set, $status) {
 	if ($status eq 'lti') {
 		# Only show this message if unable to view unopened sets or acting as another user.
 		return ''
-			if $authz->hasPermissions($c->param('user'), 'view_unopened_sets')
-			&& (!$c->param('effectiveUser') || $c->param('effectiveUser') eq $c->param('user'));
+			if $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')
+			&& (!$c->param('effectiveUser') || $c->param('effectiveUser') eq $c->authen->{user_id});
 
 		if ($ce->{LTIVersion}
 			&& ($ce->{LTIVersion} ne 'v1p3' || !$ce->{LTI}{v1p3}{ignoreMissingSourcedID})

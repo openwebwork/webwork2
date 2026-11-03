@@ -27,7 +27,7 @@ sub initialize ($c) {
 	$c->stash->{fields}      = DATE_FIELDS_ORDER();
 	$c->stash->{fieldLabels} = DATE_FIELDS();
 
-	return unless $c->authz->hasPermissions($c->param('user'), 'access_instructor_tools');
+	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	my $editForUserID = $c->stash('userID');
 

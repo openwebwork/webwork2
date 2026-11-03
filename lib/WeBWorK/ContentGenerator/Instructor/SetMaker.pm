@@ -37,7 +37,7 @@ my %ignoredir = (
 );
 
 sub prepare_activity_entry ($c) {
-	my $user = $c->param('user') || 'NO_USER';
+	my $user = $c->authen->{user_id} || 'NO_USER';
 	return ("In SetMaker as user $user");
 }
 
@@ -395,7 +395,7 @@ sub pre_header_initialize ($c) {
 	# These directories will have individual buttons
 	$c->{problibs} = $ce->{courseFiles}{problibs} // {};
 
-	my $userName = $c->param('user');
+	my $userName = $c->authen->{user_id};
 	my $user     = $db->getUser($userName);          # checked
 	die "record for user $userName (real user) does not exist."
 		unless defined $user;
