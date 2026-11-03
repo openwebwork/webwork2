@@ -346,12 +346,20 @@
 	% if (%$globalProblems) {
 		% # Create rows for problems.
 		<h2><%= maketext('Problems') %></h2>
+		% if ($problemsLocked && !@editForUser) {
+			<div class="alert alert-info p-1 mb-3">
+				<%= maketext('Students have begun working this test, so problems can no longer be '
+						. 'added, deleted, or reordered.') =%>
+			</div>
+		% }
 		<div id="psd_toolbar" class="col-12 d-flex flex-wrap mb-3">
 			% if (@editForUser != 1) {
 				<div class="btn-group w-auto me-3 py-1">
-					<button id="psd_renumber" class="btn btn-secondary" type="button">
-						<%= maketext('Renumber Problems') =%>
-					</button>
+					% if (!$problemsLocked) {
+						<button id="psd_renumber" class="btn btn-secondary" type="button">
+							<%= maketext('Renumber Problems') =%>
+						</button>
+					% }
 					<button id="psd_render_all" class="btn btn-secondary" type="button">
 						<%= maketext('Render All') =%>
 					</button>
@@ -456,7 +464,7 @@
 							>
 								<div class="pdr_handle me-1 text-nowrap" id="pdr_handle_<%= $problemID %>">
 									<span class="pdr_problem_number"><%= $problemNumber %></span>
-									% if (!@editForUser) {
+									% if (!@editForUser && !$problemsLocked) {
 										<i
 											class="<%= $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v' %>"
 											data-bs-title="<%= maketext('Move') %>"
@@ -467,59 +475,63 @@
 								</div>
 								<div class="d-flex align-items-center">
 									% if (!@editForUser) {
-										<div
-											class="pdr_move_buttons btn-group btn-group-sm me-1"
-											role="group"
-											aria-label="<%= maketext('Reorder problem') %>"
-										>
-											<button
-												type="button"
-												class="psd_move_up btn btn-secondary px-1 px-sm-2"
-												id="psd_move_up_<%= $problemID %>"
-												aria-label="<%= maketext('Move problem up') %>"
-												data-bs-title="<%= maketext('Move problem up') %>"
-												data-bs-toggle="tooltip"
-											>
-												<i class="fas fa-chevron-up" aria-hidden="true"></i>
-											</button>
-											<button
-												type="button"
-												class="psd_move_down btn btn-secondary px-1 px-sm-2"
-												id="psd_move_down_<%= $problemID %>"
-												aria-label="<%= maketext('Move problem down') %>"
-												data-bs-title="<%= maketext('Move problem down') %>"
-												data-bs-toggle="tooltip"
-											>
-												<i class="fas fa-chevron-down" aria-hidden="true"></i>
-											</button>
-										</div>
-										% if ($isJitarSet) {
+										% if (!$problemsLocked) {
 											<div
-												class="pdr_nest_buttons btn-group btn-group-sm me-1"
+												class="pdr_move_buttons btn-group btn-group-sm me-1"
 												role="group"
-												aria-label="<%= maketext('Change nesting level') %>"
+												aria-label="<%= maketext('Reorder problem') %>"
 											>
 												<button
 													type="button"
-													class="psd_denest btn btn-secondary px-1 px-sm-2"
-													id="psd_denest_<%= $problemID %>"
-													aria-label="<%= maketext('De-nest problem to parent level') %>"
-													data-bs-title="<%= maketext('De-nest problem') %>"
+													class="psd_move_up btn btn-secondary px-1 px-sm-2"
+													id="psd_move_up_<%= $problemID %>"
+													aria-label="<%= maketext('Move problem up') %>"
+													data-bs-title="<%= maketext('Move problem up') %>"
 													data-bs-toggle="tooltip"
 												>
-													<i class="fas fa-outdent" aria-hidden="true"></i>
+													<i class="fas fa-chevron-up" aria-hidden="true"></i>
 												</button>
 												<button
 													type="button"
-													class="psd_nest btn btn-secondary px-1 px-sm-2"
-													id="psd_nest_<%= $problemID %>"
-													aria-label="<%= maketext('Nest problem under previous problem') %>"
-													data-bs-title="<%= maketext('Nest problem') %>"
+													class="psd_move_down btn btn-secondary px-1 px-sm-2"
+													id="psd_move_down_<%= $problemID %>"
+													aria-label="<%= maketext('Move problem down') %>"
+													data-bs-title="<%= maketext('Move problem down') %>"
 													data-bs-toggle="tooltip"
 												>
-													<i class="fas fa-indent" aria-hidden="true"></i>
+													<i class="fas fa-chevron-down" aria-hidden="true"></i>
 												</button>
 											</div>
+											% if ($isJitarSet) {
+												<div
+													class="pdr_nest_buttons btn-group btn-group-sm me-1"
+													role="group"
+													aria-label="<%= maketext('Change nesting level') %>"
+												>
+													<button
+														type="button"
+														class="psd_denest btn btn-secondary px-1 px-sm-2"
+														id="psd_denest_<%= $problemID %>"
+														aria-label="<%= maketext('De-nest problem to parent level') %>"
+														data-bs-title="<%= maketext('De-nest problem') %>"
+														data-bs-toggle="tooltip"
+													>
+														<i class="fas fa-outdent" aria-hidden="true"></i>
+													</button>
+													<button
+														type="button"
+														class="psd_nest btn btn-secondary px-1 px-sm-2"
+														id="psd_nest_<%= $problemID %>"
+														aria-label="<%=
+															maketext('Nest problem under previous problem')
+														%>"
+														data-bs-title="<%= maketext('Nest problem') %>"
+														data-bs-toggle="tooltip"
+													>
+														<i class="fas fa-indent" aria-hidden="true"></i>
+													</button>
+												</div>
+											% }
 										% }
 										<%= $collapseButton =%>
 									% }
@@ -693,7 +705,7 @@
 									%> d-flex flex-row align-items-center"
 								>
 									% if (@editForUser != 1) {
-										% if (!@editForUser) {
+										% if (!@editForUser && !$problemsLocked) {
 											<div class="form-check form-check-inline form-control-sm">
 												<%= check_box
 													deleteProblem => $problemID,
@@ -753,7 +765,7 @@
 			%
 			<ol
 				id="psd_list"
-				class="sortable-branch <%= @editForUser ? 'disable_renumber' : '' %>"
+				class="sortable-branch <%= @editForUser || $problemsLocked ? 'disable_renumber' : '' %>"
 				data-repeat-file-text="<%= maketext('This problem uses the same source file as number ~[_1~].') %>"
 			>
 				% if ($isJitarSet) {
@@ -793,20 +805,22 @@
 				auto_render => maketext('Automatically render problems on page load'),
 				class       => 'input-group-text' =%>
 		</div>
-		<div class="input-group mb-2">
-			<div class="input-group-text">
-				<%= check_box force_renumber => '1', id => 'force_renumber', class => 'form-check-input mt-0' =%>
+		% if (!$problemsLocked) {
+			<div class="input-group mb-2">
+				<div class="input-group-text">
+					<%= check_box force_renumber => '1', id => 'force_renumber', class => 'form-check-input mt-0' =%>
+				</div>
+				<%= label_for
+					force_renumber => maketext('Force problems to be numbered consecutively from one'),
+					class          => 'input-group-text' =%>
 			</div>
-			<%= label_for
-				force_renumber => maketext('Force problems to be numbered consecutively from one'),
-				class          => 'input-group-text' =%>
-		</div>
+		% }
 	% } else {
 		<p><b><%= maketext("This set doesn't contain any problems yet.") %></b></p>
 	% }
 	%
-	% # Always allow one to add a new problem, unless a set version is being edited.
-	% if (!$editingSetVersion) {
+	% # Allow adding new problems unless a set version is being edited or students have begun working the test.
+	% if (!$editingSetVersion && !$problemsLocked) {
 		<div class="input-group">
 			<div class="input-group-text">
 				<%= check_box add_blank_problem => '1', id => 'add_blank_problem', class => 'form-check-input mt-0' =%>
