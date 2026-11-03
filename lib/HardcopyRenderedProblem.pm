@@ -68,6 +68,10 @@ sub hardcopyRenderedProblem ($c, $renderedProblem) {
 	write_tex($c, $renderedProblem, $fh, \@errors);
 	$fh->close;
 
+	# If writing the TeX file failed (for example if the hardcopy theme was not found),
+	# then the file is incomplete and hardcopy generation can not continue.
+	return join("\n", @errors) if @errors;
+
 	# Call the pdf generation subroutine if the pdf outputformat was specified or if no outputformat was specified.
 	if (!$c->req->param('outputformat') || $c->req->param('outputformat') eq 'pdf') {
 		generate_hardcopy_pdf($c, $working_dir, \@errors);
@@ -199,7 +203,7 @@ sub write_tex ($c, $renderedProblem, $FH, $errors) {
 		$themeFile = "$ce->{webworkDirs}{hardcopyThemes}/$theme";
 	} else {
 		push(@$errors, "Couldn't locate file for theme $theme.");
-		return join("\n", @$errors);
+		return;
 	}
 	my $themeTree = XML::LibXML->load_xml(location => $themeFile);
 
