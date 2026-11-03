@@ -58,7 +58,7 @@ BEGIN {
 use lib "$ENV{WEBWORK_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils                   qw(runtime_use cryptPassword);
+use WeBWorK::Utils                   qw(runtime_use cryptPassword isValidEmailAddress);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::File::Classlist         qw(parse_classlist);
 use WeBWorK::DB::Record::User;
@@ -100,6 +100,14 @@ if ($users) {
 	for my $record (@classlist) {
 		my %record  = %$record;
 		my $user_id = $record{user_id};
+
+		if (defined $record{email_address}
+			&& $record{email_address} ne ''
+			&& !isValidEmailAddress($record{email_address}))
+		{
+			warn qq{Invalid email address "$record{email_address}" for user $user_id will not be set.\n};
+			$record{email_address} = '';
+		}
 
 		# Set the default status if the status field is not set.
 		$record{status} = $ce->{statuses}{Enrolled}{abbrevs}[0] unless $record{status};

@@ -1,6 +1,7 @@
 package WeBWorK::Utils;
 use Mojo::Base 'Exporter', -signatures;
 
+use Email::Address::XS;
 use Email::Sender::Transport::SMTP;
 use Mojo::JSON qw(from_json to_json);
 use Mojo::Util qw(b64_encode b64_decode encode decode);
@@ -31,6 +32,7 @@ our @EXPORT_OK = qw(
 	fetchEmailRecipients
 	processEmailMessage
 	createEmailSenderTransportSMTP
+	isValidEmailAddress
 	generateURLs
 	formatEmailSubject
 	getAssetURL
@@ -371,6 +373,10 @@ sub createEmailSenderTransportSMTP ($ce) {
 		defined $ce->{mail}->{smtpSSLOptions} ? (ssl_options   => $ce->{mail}{smtpSSLOptions}) : (),
 		timeout => $ce->{mail}{smtpTimeout},
 	});
+}
+
+sub isValidEmailAddress ($address) {
+	return Email::Address::XS->parse_bare_address($address // '')->is_valid;
 }
 
 sub generateURLs ($c, %params) {
@@ -802,6 +808,12 @@ Usage: C<createEmailSenderTransportSMTP($ce)>
 
 This returns an C<Email::Sender::Transport::SMTP> object for use in sending
 emails. A valid C<WeBWorK::CourseEnvironment> object must be provided in C<$ce>.
+
+=head2 isValidEmailAddress
+
+Usage: C<isValidEmailAddress($address)>
+
+Returns true if C<$address> is a valid email address, and false otherwise.
 
 =head2 generateURLs
 

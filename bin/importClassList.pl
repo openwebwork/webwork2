@@ -17,7 +17,7 @@ use WeBWorK::CourseEnvironment;
 
 use WeBWorK::DB              qw(check_user_id);
 use WeBWorK::File::Classlist qw(parse_classlist);
-use WeBWorK::Utils           qw(cryptPassword);
+use WeBWorK::Utils           qw(cryptPassword isValidEmailAddress);
 use WeBWorK::File::Classlist qw(parse_classlist);
 
 if ((scalar(@ARGV) != 2)) {
@@ -87,6 +87,14 @@ sub importUsersFromCSV {
 		if (not exists $allUserIDs{$user_id} and not $createNew) {
 			push @skipped, $user_id;
 			next;
+		}
+
+		if (defined $record{email_address}
+			&& $record{email_address} ne ''
+			&& !isValidEmailAddress($record{email_address}))
+		{
+			warn "Invalid email address '$record{email_address}' for user $user_id will not be set.\n";
+			$record{email_address} = '';
 		}
 
 		# set default status is status field is "empty"

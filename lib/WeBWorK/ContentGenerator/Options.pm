@@ -7,7 +7,7 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
-use WeBWorK::Utils qw(cryptPassword utf8Crypt);
+use WeBWorK::Utils qw(cryptPassword utf8Crypt isValidEmailAddress);
 use WeBWorK::Localize;
 
 sub page_title ($c) {
@@ -128,17 +128,24 @@ sub initialize ($c) {
 
 	my $newA = $c->param('newAddress');
 	if ($changeOptions && $authz->hasPermissions($userID, 'change_email_address') && $newA) {
-		my $oldA = $c->{effectiveUser}->email_address;
-		$c->{effectiveUser}->email_address($newA);
-		eval { $db->putUser($c->{effectiveUser}) };
-		if ($@) {
-			$c->{effectiveUser}->email_address($oldA);
-			$c->log->error("Unable to save new email address for $userID: $@");
-			$c->addbadmessage($c->maketext('Your email address has not been changed due to an internal error.'));
+		if (!isValidEmailAddress($newA)) {
+			$c->addbadmessage(
+				$c->maketext(
+					'Your email address has not been changed. The new email address you entered is not valid.')
+			);
 		} else {
-			$c->param('currAddress', $c->param('newAddress'));
-			$c->param('newAddress',  undef);
-			$c->addgoodmessage($c->maketext('Your email address has been changed.'));
+			my $oldA = $c->{effectiveUser}->email_address;
+			$c->{effectiveUser}->email_address($newA);
+			eval { $db->putUser($c->{effectiveUser}) };
+			if ($@) {
+				$c->{effectiveUser}->email_address($oldA);
+				$c->log->error("Unable to save new email address for $userID: $@");
+				$c->addbadmessage($c->maketext('Your email address has not been changed due to an internal error.'));
+			} else {
+				$c->param('currAddress', $newA);
+				$c->param('newAddress',  undef);
+				$c->addgoodmessage($c->maketext('Your email address has been changed.'));
+			}
 		}
 	}
 

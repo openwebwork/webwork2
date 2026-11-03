@@ -15,7 +15,7 @@ use Time::localtime;
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug                   qw(debug);
-use WeBWorK::Utils                   qw(cryptPassword trim_spaces);
+use WeBWorK::Utils                   qw(cryptPassword trim_spaces isValidEmailAddress);
 use WeBWorK::Utils::CourseManagement qw(
 	addCourse
 	renameCourse
@@ -275,6 +275,10 @@ sub add_course_validate ($c) {
 					$_
 				);
 		}
+
+		my $email = trim_spaces($c->param("add_initial_email_$_"));
+		push @errors, $c->maketext('The email address for user number [_1] is not valid.', $_)
+			if $email ne '' && !isValidEmailAddress($email);
 	}
 
 	return @errors;
