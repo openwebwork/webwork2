@@ -153,9 +153,14 @@ sub initialize ($c) {
 
 	# Determine displayMode and problemSeed that are needed for viewing the problem.
 	# They are also two of the parameters which can be set by the editor.
-	# Note that the problem seed may be overridden by the value obtained from the problem record later.
+	# Honor the problemSeed parameter if it is a nonzero integer.
 	$c->{displayMode} = $c->param('displayMode') // 'MathJax';
-	$c->{problemSeed} = (($c->param('problemSeed') // '') =~ s/^\s*|\s*$//gr) || DEFAULT_SEED();
+	$c->{problemSeed} = DEFAULT_SEED();
+	my $problemSeed = ($c->param('problemSeed') // '') =~ s/^\s*|\s*$//gr;
+	if ($problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
+		$c->{problemSeed}      = $problemSeed;
+		$c->{problemSeedGiven} = 1;
+	}
 
 	# Insure that file_type is defined
 	$c->{file_type} = ($c->param('file_type') // '') =~ s/^\s*|\s*$//gr;
@@ -515,8 +520,9 @@ sub getFilePaths ($c) {
 
 		if (defined $problem_record) {
 			$editFilePath = "$ce->{courseDirs}{templates}/" . $problem_record->source_file;
-			# Define the problem seed for later use.
-			$c->{problemSeed} = $problem_record->problem_seed if $problem_record->can('problem_seed');
+			# Update the problem seed if it wasn't given in a parameter.
+			$c->{problemSeed} = $problem_record->problem_seed
+				if !$c->{problemSeedGiven} && $problem_record->can('problem_seed');
 		} else {
 			$c->addbadmessage(
 				$c->maketext("Cannot find a problem record for set $c->{setID} / problem $c->{problemID}"));
@@ -531,7 +537,6 @@ sub getFilePaths ($c) {
 			$c->addgoodmessage($c->maketext('The original path to the file is [_1].', $forcedSourceFile));
 		}
 		if (not_blank($forcedSourceFile)) {
-			$c->{problemSeed} = DEFAULT_SEED();
 			$editFilePath = "$ce->{courseDirs}{templates}/$forcedSourceFile";
 		} else {
 			$c->addbadmessage($c->maketext('Cannot find a file path to save to.'));
