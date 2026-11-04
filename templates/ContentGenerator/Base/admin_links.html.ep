@@ -24,6 +24,7 @@
 			% [ 'delete_course',         maketext('Delete Course') ],
 			% [ 'archive_course',        maketext('Archive Courses') ],
 			% [ 'unarchive_course',      maketext('Unarchive Course') ],
+			% [ 'clean_course',          maketext('Clean Course') ],
 			% [ 'upgrade_course',        maketext('Upgrade Courses') ],
 			% [ 'hide_inactive_course',  maketext('Hide Courses') ],
 			% [ 'manage_locations',      maketext('Manage Locations') ],

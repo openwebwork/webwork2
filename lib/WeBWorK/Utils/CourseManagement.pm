@@ -987,6 +987,14 @@ $ce is a WeBWorK::CourseEnvironment object that describes the some course's
 environment. (Usually this would be the admin course.) This is used to access
 the course database and get path information.
 
+Returns a string indicating how the course database was restored. This is
+'dbdump' if the database was restored from a JSON database dump, 'mysqldump' if
+the database was restored from a legacy mysqldump archive, and 'none' if the
+archive does not contain a database dump. If 'mysqldump' is returned, then the
+database tables have not been upgraded and may not be compatible with the
+current version of WeBWorK until the course is upgraded. If 'none' is returned,
+then the course has no database tables.
+
 If an error occurs, an exception is thrown.
 
 =cut
@@ -1053,7 +1061,7 @@ sub unarchiveCourse {
 	my $ce2 = WeBWorK::CourseEnvironment->new({ get_SeedCE($ce), courseName => $currCourseID });
 
 	# Step 5: Restore the database tables and delete the database dump directory.
-	my $no_database;
+	my $dbRestoreType     = 'dbdump';
 	my $restore_db_result = 1;
 	my $dbdump_dir        = path("$ce2->{courseDirs}{DATA}/dbdump");
 	if (-e $dbdump_dir) {
@@ -1065,10 +1073,11 @@ sub unarchiveCourse {
 		if (-e $mysqldump_dir) {
 			$restore_db_result = WeBWorK::DB->new($ce2)->restore_tables_mysql($mysqldump_dir);
 			_archiveCourse_remove_dump_dir($ce, $mysqldump_dir);
+			$dbRestoreType = 'mysqldump';
 		} else {
 			warn "course '$currCourseID' has no database dump in its data directory "
 				. "(checked for $dbdump_dir and $mysqldump_dir). database tables will not be restored.\n";
-			$no_database = 1;
+			$dbRestoreType = 'none';
 		}
 	}
 
@@ -1109,14 +1118,14 @@ sub unarchiveCourse {
 			courseID     => $currCourseID,
 			ce           => $ce2,
 			newCourseID  => $newCourseID,
-			skipDBRename => $no_database,
+			skipDBRename => $dbRestoreType eq 'none',
 		);
 	}
 
 	# Step 9: Return a conflicting course to its rightful place.
 	_unarchiveCourse_move_back($restoreCourseData);
 
-	return;
+	return $dbRestoreType;
 }
 
 sub _unarchiveCourse_move_away {
