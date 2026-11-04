@@ -811,11 +811,14 @@ sub page_title ($c) {
 				'span',
 				class => 'ms-2',
 				$c->link_to(
-					$c->maketext('Edit') => $c->systemLink($c->url_for(
-						'instructor_problem_editor_withset_withproblem',
-						setID     => $c->{set}->set_id,
-						problemID => $c->{problem}->problem_id
-					)),
+					$c->maketext('Edit') => $c->systemLink(
+						$c->url_for(
+							'instructor_problem_editor_withset_withproblem',
+							setID     => $c->{set}->set_id,
+							problemID => $c->{problem}->problem_id
+						),
+						params => { problemSeed => $c->{problem}->problem_seed }
+					),
 					target => 'WW_Editor',
 					class  => 'btn btn-sm btn-secondary'
 				)
