@@ -14,7 +14,7 @@ allowed.
 
 =item text
 
-A text string (no quotes allowed).
+A text string.
 
 =item number
 
@@ -62,6 +62,7 @@ This is specifically for The LMS context id used for content selection.
 =cut
 
 use Mojo::File qw(path);
+use XML::LibXML;
 
 use WeBWorK::Utils qw(x);
 

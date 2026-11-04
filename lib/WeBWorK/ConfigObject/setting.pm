@@ -16,7 +16,7 @@ sub get_value ($self, $ce) {
 # so that it is not represented in the course's simple.conf file.
 sub save_string ($self, $oldval, $use_current = 0) {
 	return '' if $use_current;
-	$self->{c}->db->setSettingValue($self->{var}, scalar $self->{c}->param($self->{var}));
+	$self->{c}->db->setSettingValue($self->{var}, scalar $self->new_value);
 	return '';
 }
 
