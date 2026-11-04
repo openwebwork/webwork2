@@ -9,7 +9,7 @@ This produces a list of earned achievements for each student.
 
 =cut
 
-use WeBWorK::Utils qw(sortAchievements thaw_base64);
+use WeBWorK::Utils qw(sortAchievements decodeAchievementData);
 use WeBWorK::AchievementItems;
 
 sub initialize ($c) {
@@ -37,9 +37,7 @@ sub getAchievementLevelData ($c) {
 
 	if ($achievement) {
 		if ($c->{globalData}->next_level_points) {
-			# Get prev_level_points from the globalData frozen_hash in the database.
-			my $globalData = $c->{globalData}->frozen_hash ? thaw_base64($c->{globalData}->frozen_hash) : {};
-			my $prev_level = $globalData->{prev_level_points} || 0;
+			my $prev_level = decodeAchievementData($c->{globalData}->frozen_hash)->{prev_level_points} || 0;
 			$level_goal       = $c->{globalData}->next_level_points - $prev_level;
 			$level_progress   = $c->{globalData}->achievement_points - $prev_level;
 			$level_progress   = 0           if $level_progress < 0;
