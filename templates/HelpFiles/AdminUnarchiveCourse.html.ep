@@ -14,5 +14,7 @@
 <p class="mb-0">
 	<%= maketext('You may check the box to "clean" the unarchived course. This will remove student users '
 			. 'and their associated data from the database after the course is unarchived. It will also remove '
-			. 'the log files, any files in the scoring folder, and any temporary edited files.') =%>
+			. 'the log files, any files in the scoring folder, and any temporary edited files. If the archive was '
+			. 'created with an older version of WeBWorK, then the course cannot be cleaned when it is unarchived. '
+			. 'In that case, upgrade the course and then use the "Clean Course" page to clean the course.') =%>
 </p>

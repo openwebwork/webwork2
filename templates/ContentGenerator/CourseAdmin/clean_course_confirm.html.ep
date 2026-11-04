@@ -1,0 +1,19 @@
+<h2><%= maketext('Clean Course') %> <%= $c->helpMacro('AdminCleanCourse') %></h2>
+<p>
+	<%== maketext(
+		'Are you sure you want to clean the course [_1]? All student users and their associated data, the log '
+			. 'files, any files in the scoring folder, and any temporary edited files will be deleted. '
+			. 'There is no undo available.',
+		tag('b', param('clean_courseID') || '')
+	) =%>
+</p>
+<%= form_for current_route, method => 'POST', begin =%>
+	<%= $c->hidden_authen_fields =%>
+	<%= $c->hidden_fields('subDisplay') =%>
+	<%= $c->hidden_fields('clean_courseID') =%>
+	%
+	<div class="d-flex justify-content-center gap-2">
+		<%= submit_button maketext("Don't clean"), name => 'decline_clean_course', class => 'btn btn-primary' =%>
+		<%= submit_button maketext('Clean'), name => 'confirm_clean_course', class => 'btn btn-primary' =%>
+	</div>
+<% end =%>
