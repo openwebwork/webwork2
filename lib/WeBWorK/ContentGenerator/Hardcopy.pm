@@ -1167,12 +1167,14 @@ async sub write_problem_tex ($c, $FH, $TargetUser, $MergedSet, $themeTree, $prob
 				setID     => $MergedProblem->set_id,
 				problemID => $MergedProblem->problem_id,
 			),
-			$MergedProblem->problem_id == 0
-			# link for a fake problem (like a header file)
-			? (params =>
-					{ sourceFilePath => $MergedProblem->source_file, problemSeed => $MergedProblem->problem_seed })
-			# link for a real problem
-			: (),
+			params => {
+				problemSeed => $MergedProblem->problem_seed,
+				$MergedProblem->problem_id == 0
+				# link for a fake problem (like a header file)
+				? (sourceFilePath => $MergedProblem->source_file)
+				# link for a real problem
+				: ()
+			}
 		);
 
 		if ($MergedProblem->problem_id == 0) {
