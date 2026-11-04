@@ -9,7 +9,7 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 
 use WeBWorK::Localize;
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $ce     = $c->ce;
 	my $db     = $c->db;
 	my $authen = $c->authen;

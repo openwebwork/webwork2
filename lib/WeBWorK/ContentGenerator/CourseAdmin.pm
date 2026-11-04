@@ -35,7 +35,7 @@ use WeBWorK::Utils::CourseDirectoryIntegrityCheck qw(
 );
 use WeBWorK::DB;
 
-sub pre_header_initialize ($c) {
+sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 	my $user  = $c->authen->{user_id};

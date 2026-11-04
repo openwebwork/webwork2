@@ -238,7 +238,7 @@ sub attemptResults ($c, $pg) {
 		: '';
 }
 
-async sub pre_header_initialize ($c) {
+async sub initialize ($c) {
 	my $ce    = $c->ce;
 	my $db    = $c->db;
 	my $authz = $c->authz;
