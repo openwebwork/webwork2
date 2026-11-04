@@ -82,7 +82,8 @@ sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem) {
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
 			&& $authz->hasPermissions($user->user_id, 'problem_grader')
 			&& $set->set_id ne 'Undefined_Set'
-			&& !$c->{invalidSet});
+			&& !$c->{invalidSet}
+			&& !$c->{editMode});
 }
 
 sub can_showAnsGroupInfo ($c, $user, $effectiveUser, $set, $problem) {
@@ -124,6 +125,8 @@ sub can_showSolutions ($c, $user, $effectiveUser, $set, $problem) {
 
 sub can_recordAnswers ($c, $user, $effectiveUser, $set, $problem, $submitAnswers = 0) {
 	my $authz = $c->authz;
+
+	return 0 if $c->{editMode};
 
 	if ($user->user_id ne $effectiveUser->user_id) {
 		return $authz->hasPermissions($user->user_id, 'record_answers_when_acting_as_student');
@@ -355,6 +358,7 @@ async sub initialize ($c) {
 		# If the caller is asking to override the problem seed, do so.
 		my $problemSeed = $c->param('problemSeed');
 		if (defined $problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
+			$c->{seedChanged} = $problemSeed != ($problem->problem_seed || 0);
 			$problem->problem_seed($problemSeed);
 		}
 
@@ -381,7 +385,7 @@ async sub initialize ($c) {
 
 	# Set options from form fields (see comment at top of file for form fields).
 	my $redisplay = $c->param('redisplay');
-	$c->{submitAnswers} = $c->param('submitAnswers');
+	$c->{submitAnswers} = $c->{editMode} ? 0 : $c->param('submitAnswers');
 	my $checkAnswers   = $c->param('checkAnswers');
 	my $previewAnswers = $c->param('previewAnswers') && $ce->{pg}{options}{showPreviewButton} ? 1 : 0;
 	my $requestNewSeed = $c->param('requestNewSeed') // 0;
@@ -531,10 +535,14 @@ async sub initialize ($c) {
 	# requiring another answer submission.
 	my $showReturningFeedback = 0;
 
+	# Do not use answers/persistent data when editing a problem with a different seed.
+	my $useSavedData = !($c->{editMode} && $c->{seedChanged});
+
 	# Reinsert sticky answers. Do this only if new answers are NOT being submitted,
 	# and a new problem version is NOT being opened.
 	if (!($prEnabled && !$problem->{prCount})
 		&& !($c->{submitAnswers} || $previewAnswers || $checkAnswers)
+		&& $useSavedData
 		&& $will{showOldAnswers})
 	{
 		my %oldAnswers = decodeAnswers($problem->last_answer);
@@ -586,7 +594,7 @@ async sub initialize ($c) {
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
-			$prEnabled && !$problem->{prCount}
+			($prEnabled && !$problem->{prCount}) || (!$useSavedData && !defined $formFields->{problem_data})
 			? (problemData => '{}')
 			: ($can{checkAnswers} && defined $formFields->{problem_data})
 			? (problemData => $formFields->{problem_data})
@@ -837,7 +845,7 @@ sub nav ($c, $args) {
 		role         => 'navigation',
 		'aria-label' => 'problem navigation',
 		$c->c($c->tag('div', class => 'd-flex submit-buttons-container', $c->navMacro($args, \%tail, @links)),
-			studentNav($c, $setID))->join('')
+			$c->{editMode} ? '' : studentNav($c, $setID))->join('')
 	);
 }
 
@@ -1230,8 +1238,7 @@ sub output_misc ($c) {
 
 	# Only allow file editing for users that have the permission to modify problem sets.
 	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
-		push(@$output, $c->hidden_field(editMode => $c->{editMode}))
-			if defined $c->{editMode} && $c->{editMode} eq 'temporaryFile';
+		push(@$output, $c->hidden_field(editMode       => $c->{editMode})) if $c->{editMode};
 		push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
 			if defined $c->{problem}{source_file};
 		push(@$output, $c->hidden_field(problemSeed => $c->param('problemSeed'))) if defined $c->param('problemSeed');
