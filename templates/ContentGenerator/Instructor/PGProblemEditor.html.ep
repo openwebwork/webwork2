@@ -95,6 +95,9 @@
 	<%= $c->hidden_authen_fields =%>
 	<%= hidden_field file_type => $c->{file_type} =%>
 	<%= hidden_field courseID => $c->{courseID} =%>
+	% if ($c->{problemSeedGiven}) {
+		<%= hidden_field problemSeed => $c->{problemSeed} =%>
+	% }
 	% if ($setName ne '') {
 		<%= hidden_field hidden_set_id => $setName =%>
 	% }
