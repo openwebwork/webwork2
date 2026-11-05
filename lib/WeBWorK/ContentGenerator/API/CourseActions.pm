@@ -26,6 +26,7 @@ our @apiCalls = qw(
 	updateSetting
 	saveFile
 	getCurrentServerTime
+	dismissBrowserChecksNotice
 );
 
 sub apiCall ($invocant, $command) {
@@ -530,6 +531,17 @@ sub saveFile ($c) {
 # Note that no permission is required to get the current server time. The user only needs to be authenticated.
 sub getCurrentServerTime ($c) {
 	return $c->render(json => { currentServerTime => $c->submitTime });
+}
+
+# Record that the current user dismissed the notice that in-browser answer checks are enabled.
+sub dismissBrowserChecksNotice ($c) {
+	my $user = $c->db->getUser($c->authen->{user_id});
+	return $c->renderError('User not found.') unless $user;
+
+	$user->browser_checks_notice_dismissed(int($c->submitTime));
+	$c->db->putUser($user);
+
+	return $c->render(json => { dismissed => $user->browser_checks_notice_dismissed });
 }
 
 1;

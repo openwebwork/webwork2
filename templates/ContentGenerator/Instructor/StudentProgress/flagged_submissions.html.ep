@@ -1,0 +1,61 @@
+% use List::Util           qw(sum);
+% use WeBWorK::Utils::Sets qw(format_set_name_display);
+%
+% if (@$rows) {
+	% my %students = map { $_->{user}->user_id => 1 } @$rows;
+	% my %sets     = map { $_->{setID}         => 1 } @$rows;
+	<p>
+		<%= maketext(
+			'Found [quant,_1,flagged submission] for [quant,_2,student] in [quant,_3,set].',
+			sum(map { $_->{count} } @$rows),
+			scalar(keys %students),
+			scalar(keys %sets)
+		) =%>
+	</p>
+% } else {
+	<p><%= maketext('No flagged submissions were found.') %></p>
+% }
+<p>
+	<%= maketext('A flag is evidence to investigate, not proof. Tests are only checked for LaTeX in answers, '
+			. 'so submissions in tests are flagged less often.') =%>
+</p>
+% if (@$rows) {
+	<div class="table-responsive">
+		<table class="table table-bordered table-sm">
+			<thead>
+				<tr>
+					<th><%= maketext('Name') %></th>
+					<th><%= maketext('Login Name') %></th>
+					<th><%= maketext('Set') %></th>
+					<th><%= maketext('Flagged') %></th>
+				</tr>
+			</thead>
+			<tbody>
+				% for my $row (@$rows) {
+					<tr>
+						<td><%= $row->{user}->last_name %>, <%= $row->{user}->first_name %></td>
+						<td><%= $row->{user}->user_id %></td>
+						<td>
+							<span dir="ltr"><%= format_set_name_display($row->{setID}) %></span>
+							% if ($row->{versionID}) {
+								<%= maketext('(version [_1])', $row->{versionID}) %>
+							% }
+						</td>
+						<td>
+							<%= link_to $row->{count} => $c->systemLink(
+								url_for('answer_log'),
+								params => {
+									selected_users => $row->{user}->user_id,
+									selected_sets  => $row->{versionID}
+									? "$row->{setID},v$row->{versionID}"
+									: $row->{setID},
+									selected_problems => $row->{problemIDs}
+								}
+							) =%>
+						</td>
+					</tr>
+				% }
+			</tbody>
+		</table>
+	</div>
+% }
