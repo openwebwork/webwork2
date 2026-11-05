@@ -5,6 +5,7 @@
 	% defined $secondary_sort_method ? (secondary_sort => $secondary_sort_method) : (),
 	% defined $ternary_sort_method   ? (ternary_sort   => $ternary_sort_method)   : (),
 	% defined $filter                ? (filter         => $filter)                : (),
+	% $showFlags                     ? (show_flags     => 1)                      : (),
 	% # Preserve display options when the sort headers are clicked for gateway quizzes.
 	% $setIsVersioned
 	% ? (
@@ -135,6 +136,7 @@
 		% section       => maketext('section'),
 		% recitation    => maketext('recitation'),
 		% user_id       => maketext('login name'),
+		% flagged       => maketext('flagged submissions'),
 	% );
 	% if (defined $primary_sort_method) {
 		<p>
@@ -145,6 +147,18 @@
 			% if (defined $ternary_sort_method) {
 				<%= maketext(', then by [_1]', $display_sort_method_name{$ternary_sort_method}) =%>
 			% }
+		</p>
+	% }
+	% if ($flagsEnabled) {
+		% # Sorting by flagged submissions does not make sense when the counts are hidden.
+		% my %hideParams =
+			% map { $_ => $params{$_} } grep { $_ ne 'show_flags' && $params{$_} ne 'flagged' } keys %params;
+		<p>
+			<%= link_to $showFlags
+				? (maketext('Hide flagged submission counts') => $c->systemLink(url_for, params => \%hideParams))
+				: (maketext('Show flagged submission counts') =>
+					$c->systemLink(url_for, params => { %params, show_flags => 1 })),
+				class => 'btn btn-sm btn-secondary' =%>
 		</p>
 	% }
 </div>
@@ -179,6 +193,26 @@
 						$c->systemLink(url_for, params => { %sort_params, primary_sort => 'score' }) =%>
 				</th>
 				<th <%== $rowspan %>><%= maketext('Out Of') %></th>
+				% if ($showFlags) {
+					<th <%== $rowspan %>>
+						<%= link_to maketext('Flagged') =>
+							$c->systemLink(url_for, params => { %sort_params, primary_sort => 'flagged' }) =%>
+						<a
+							class="help-popup"
+							role="button"
+							tabindex="0"
+							data-bs-placement="top"
+							data-bs-toggle="popover"
+							data-bs-content="<%= maketext(
+								'The number of submissions flagged as unusual. Click a number to see the flagged '
+									. 'submissions on the past answers page. A flag is evidence to investigate, not '
+									. 'proof.') =%>"
+						>
+							<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+							<span class="visually-hidden"><%= maketext('Flagged Submissions Help') =%></span>
+						</a>
+					</th>
+				% }
 				% # Additional columns that may be shown depending on if showing a gateway quiz and user selection.
 				% if ($showColumns->{date}) {
 					<th <%== $rowspan %>><%= maketext('Date') %></th>
@@ -335,6 +369,22 @@
 						</td>
 						<td><%= $rec->{score} %></td>
 						<td><%= $rec->{total} %></td>
+						% if ($showFlags) {
+							<td>
+								% if ($rec->{flagged}) {
+									<%= link_to $rec->{flagged} => $c->systemLink(
+										url_for('answer_log'),
+										params => {
+											selected_users    => $rec->{record}{user_id},
+											selected_sets     => $setID,
+											selected_problems => $pastAnswerProblems
+										}
+									) =%>
+								% } else {
+									0
+								% }
+							</td>
+						% }
 						% if (@{ $rec->{problem_scores} }) {
 							% for (0 .. $#{ $rec->{problem_scores} }) {
 								<td class="problem-data">
