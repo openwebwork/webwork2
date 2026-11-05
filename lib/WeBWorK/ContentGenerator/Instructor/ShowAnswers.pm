@@ -10,6 +10,8 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 use Text::CSV;
 use Mojo::File;
 
+use WeBWorK::Utils::AnswerFlags
+	qw(answer_flag_description answer_types_from_flags browser_checks_enabled flag_past_answers);
 use WeBWorK::Utils::JITAR     qw(jitar_id_to_seq prob_id_sort);
 use WeBWorK::Utils::Rendering qw(renderPG);
 
@@ -39,6 +41,10 @@ async sub initialize ($c) {
 	my @selectedSetPairs = map { [ $_ =~ /^([^,]+)(?:,v(\d+))?$/ ] } @$selectedSets;
 
 	my $instructor = $c->authz->hasPermissions($user, 'access_instructor_tools');
+
+	# Unusual answer flags must never be shown to students.
+	my $showFlags = $instructor && $ce->{options}{flagUnusualAnswers};
+	$c->stash->{showFlags} = $showFlags;
 
 	# If not instructor then force table to use current user-id
 	$selectedUsers = [$user] if !$instructor;
@@ -86,6 +92,8 @@ async sub initialize ($c) {
 
 			next unless @problemNumbers;
 
+			my %answerTypesByProblem;
+
 			for my $problemNumber (@problemNumbers) {
 				my @pastAnswers = $db->getPastAnswersWhere(
 					{
@@ -108,10 +116,7 @@ async sub initialize ($c) {
 				# If a problem was not found for this user, then it doesn't make sense to show past answers.
 				next unless defined $problem;
 
-				my @answerTypes;
-				# If $problem->flags ends in a comma, then this is the old type of flags value without answer types.
-				@answerTypes = split(',', $problem->flags =~ s/:needs_grading$//r)
-					if $problem->flags && $problem->flags !~ /,$/;
+				my @answerTypes = answer_types_from_flags($problem->flags);
 
 				# If the answer types were not saved in the flags for this user, then render the user's problem to
 				# figure out what type the answers are.  This is usually only the case for the old type of flags value,
@@ -153,6 +158,8 @@ async sub initialize ($c) {
 						if defined $fallbackAnswerTypes{$displaySetName}{$problemNumber};
 				}
 
+				$answerTypesByProblem{$problemNumber} = \@answerTypes;
+
 				for my $pastAnswer (@pastAnswers) {
 					$records{$studentUser}{$displaySetName}{$problemNumber}{ $pastAnswer->answer_id } = {
 						time        => $pastAnswer->timestamp,
@@ -164,11 +171,35 @@ async sub initialize ($c) {
 					};
 				}
 			}
+
+			if ($showFlags && $records{$studentUser} && $records{$studentUser}{$displaySetName}) {
+				# All of the user's submissions in the set are needed for the timing checks.
+				my $flags = flag_past_answers(
+					$ce,
+					[
+						$db->getPastAnswersWhere(
+							{ user_id => $studentUser, set_id => $setName, version_id => $setVersion }
+						)
+					],
+					timing      => ($setRecord->assignment_type // '') !~ /gateway/,
+					answerTypes => \%answerTypesByProblem
+				);
+				for my $problemRecords (values %{ $records{$studentUser}{$displaySetName} }) {
+					for my $answerID (keys %$problemRecords) {
+						$problemRecords->{$answerID}{flags} = $flags->{$answerID} if $flags->{$answerID};
+					}
+				}
+			}
 		}
 	}
 
 	$c->stash->{records}              = \%records;
 	$c->stash->{prettyProblemNumbers} = \%prettyProblemNumbers;
+
+	# Show when each student dismissed the notice that in-browser answer checks are enabled.
+	$c->stash->{noticeDismissed} =
+		{ map { $_->user_id => $_->browser_checks_notice_dismissed } $db->getUsers(keys %records) }
+		if $showFlags && browser_checks_enabled($ce) && %records;
 
 	# Prepare a csv if we are an instructor
 	if ($instructor && $c->param('createCSV')) {
@@ -196,6 +227,7 @@ async sub initialize ($c) {
 			$columns[4] = $c->maketext('Scores');
 			$columns[5] = $c->maketext('Answers');
 			$columns[6] = $c->maketext('Comment');
+			$columns[7] = $c->maketext('Flags') if $showFlags;
 
 			$csv->print($fh, \@columns);
 
@@ -212,6 +244,8 @@ async sub initialize ($c) {
 							$columns[4] = join(',',  @{ $record{scores} });
 							$columns[5] = join("\t", @{ $record{answers} });
 							$columns[6] = $record{comment};
+							$columns[7] = join(' ', map { answer_flag_description($c, $_) } @{ $record{flags} // [] })
+								if $showFlags;
 
 							$csv->print($fh, \@columns);
 						}

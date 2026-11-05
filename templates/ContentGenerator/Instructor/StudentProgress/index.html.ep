@@ -36,3 +36,29 @@
 		</div>
 	</div>
 </div>
+% if ($ce->{options}{flagUnusualAnswers}) {
+	<div class="row">
+		<div class="col-lg-10 mb-2">
+			<div id="flagged-submissions" class="card">
+				<div class="card-body p-2">
+					<h2 class="card-title text-center fs-3"><%= maketext('Flagged submissions') %></h2>
+					% if (param('find_flagged')) {
+						<%= $c->displayFlaggedSubmissions =%>
+						% my $hideURL = $c->systemLink(url_for);
+						<%= link_to maketext('Hide flagged submissions') => $hideURL, class => 'btn btn-secondary' =%>
+					% } else {
+						<p>
+							<%= maketext('Check all sets for submissions flagged as unusual. '
+									. 'This can take a while in large courses.') =%>
+						</p>
+						% my $findURL  = $c->systemLink(url_for, params => { find_flagged => 1 });
+						% my $findText = maketext('Find flagged submissions in all sets');
+						<%=
+							link_to $findText => $findURL->fragment('flagged-submissions'), class => 'btn btn-primary'
+						=%>
+					% }
+				</div>
+			</div>
+		</div>
+	</div>
+% }
