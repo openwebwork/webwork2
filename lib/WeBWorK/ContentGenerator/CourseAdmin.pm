@@ -155,6 +155,24 @@ sub initialize ($c) {
 			} else {
 				$method_to_call = 'unarchive_course_form';
 			}
+		} elsif ($subDisplay eq 'clean_course') {
+			if (defined $c->param('clean_course')) {
+				@errors = $c->clean_course_validate;
+				if (@errors) {
+					$method_to_call = 'clean_course_form';
+				} else {
+					$method_to_call = 'clean_course_confirm';
+				}
+			} elsif (defined $c->param('confirm_clean_course')) {
+				@errors = $c->clean_course_validate;
+				if (@errors) {
+					$method_to_call = 'clean_course_form';
+				} else {
+					$method_to_call = 'do_clean_course';
+				}
+			} else {
+				$method_to_call = 'clean_course_form';
+			}
 		} elsif ($subDisplay eq 'upgrade_course') {
 			if (defined $c->param('upgrade_course')) {
 				@errors = $c->upgrade_course_validate;
@@ -1195,7 +1213,7 @@ sub do_unarchive_course ($c) {
 
 	my $unarchive_courseID = $c->param('unarchive_courseID') || '';
 
-	eval {
+	my $dbRestoreType = eval {
 		unarchiveCourse(
 			newCourseID => $new_courseID,
 			archivePath => "$ce->{webworkDirs}{courses}/$ce->{admin_course_id}/archives/$unarchive_courseID",
@@ -1217,29 +1235,7 @@ sub do_unarchive_course ($c) {
 	} else {
 		writeLog($ce, 'hosted_courses', join("\t", "\tunarchived", '', '', "$unarchive_courseID to $new_courseID",));
 
-		if ($c->param('clean_up_course')) {
-			my $ce_new = WeBWorK::CourseEnvironment->new({ courseName => $new_courseID });
-			my $db_new = WeBWorK::DB->new($ce_new);
-
-			for my $student_id ($db_new->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
-				$db_new->deleteUser($student_id->[0]);
-			}
-
-			for my $file (values %{ $ce_new->{courseFiles}{logs} }) {
-				eval { Mojo::File->new($file)->remove };
-				$c->addbadmessage($c->maketext('Failed to remove file [_1]: [_2]', $file, $@)) if $@;
-			}
-
-			if (-d $ce_new->{courseDirs}{scoring}) {
-				eval { Mojo::File->new($ce_new->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
-				$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
-			}
-
-			if (-d $ce_new->{courseDirs}{tmpEditFileDir}) {
-				eval { Mojo::File->new($ce_new->{courseDirs}{tmpEditFileDir})->remove_tree({ keep_root => 1 }) };
-				$c->addbadmessage($c->maketext('Failed to remove temporary edited files: [_1]', $@)) if $@;
-			}
-		}
+		$c->clean_up_course($new_courseID) if $c->param('clean_up_course') && $dbRestoreType eq 'dbdump';
 
 		return $c->c(
 			$c->tag(
@@ -1247,6 +1243,19 @@ sub do_unarchive_course ($c) {
 				class => 'alert alert-success p-1 mb-2',
 				$c->maketext('Successfully unarchived [_1] to the course [_2]', $unarchive_courseID, $new_courseID),
 			),
+			$c->param('clean_up_course') && $dbRestoreType ne 'dbdump'
+			? $c->tag(
+				'div',
+				class => 'alert alert-warning p-1 mb-2',
+				$dbRestoreType eq 'mysqldump'
+				? $c->maketext(
+					'The course could not be cleaned because it was archived with an older version of WeBWorK. '
+						. 'Upgrade the course, and then use the "Clean Course" page to clean up the course.'
+					)
+				: $c->maketext(
+					'The course could not be cleaned because the archive does not contain the course database.')
+				)
+			: '',
 			$c->tag(
 				'div',
 				class => 'd-flex justify-content-between',
@@ -1288,6 +1297,112 @@ sub do_unarchive_course ($c) {
 			)
 		)->join('');
 	}
+}
+
+sub clean_course_form ($c) {
+	return $c->include(
+		'ContentGenerator/CourseAdmin/clean_course_form',
+		courseIDs => [
+			sort { lc($a) cmp lc($b) }
+			grep { $_ ne $c->stash('courseID') && $_ ne 'modelCourse' } listCourses($c->ce)
+		]
+	);
+}
+
+sub clean_course_validate ($c) {
+	my $clean_courseID = $c->param('clean_courseID') || '';
+
+	return $c->maketext('You must specify a course name.') unless $clean_courseID;
+	return $c->maketext('You cannot clean the course you are currently using.')
+		if $clean_courseID eq $c->stash('courseID');
+	return $c->maketext('The course [_1] does not exist.', $clean_courseID)
+		if $clean_courseID eq 'modelCourse' || !grep { $_ eq $clean_courseID } listCourses($c->ce);
+
+	my (undef, $dbStatus) =
+		WeBWorK::Utils::CourseDBIntegrityCheck->new(WeBWorK::CourseEnvironment->new({ courseName => $clean_courseID }))
+		->checkCourseTables($clean_courseID);
+	return $c->maketext(
+		'The database for the course [_1] must be upgraded before the course can be cleaned. '
+			. 'Use the "Upgrade Courses" page to upgrade the course.',
+		$clean_courseID
+	) unless $c->formatReportOnDatabaseTables($dbStatus)->{all_tables_ok};
+
+	return;
+}
+
+sub clean_course_confirm ($c) {
+	return $c->include('ContentGenerator/CourseAdmin/clean_course_confirm');
+}
+
+sub do_clean_course ($c) {
+	my $clean_courseID = $c->param('clean_courseID');
+
+	return $c->tag(
+		'div',
+		class => 'alert alert-danger p-1 my-2',
+		$c->maketext('An error occurred while cleaning the course [_1].', $clean_courseID)
+	) unless $c->clean_up_course($clean_courseID);
+
+	writeLog($c->ce, 'hosted_courses', join("\t", "\tCleaned", '', '', $clean_courseID));
+
+	return $c->c(
+		$c->tag(
+			'div',
+			class => 'alert alert-success p-1 my-2',
+			$c->maketext('Successfully cleaned the course [_1].', $clean_courseID),
+		),
+		$c->form_for(
+			$c->current_route,
+			method => 'POST',
+			$c->c(
+				$c->hidden_authen_fields,
+				$c->hidden_fields('subDisplay'),
+				$c->tag(
+					'div',
+					class => 'text-center',
+					$c->submit_button(
+						$c->maketext('OK'),
+						name  => 'decline_clean_course',
+						class => 'btn btn-primary'
+					)
+				)
+			)->join('')
+		)
+	)->join('');
+}
+
+# Remove student users, log files, scoring files, and temporary edited files from the course. The course database must
+# be up to date when this is called. Returns 1 if the student users were deleted, and 0 otherwise.
+sub clean_up_course ($c, $courseID) {
+	my $ce = WeBWorK::CourseEnvironment->new({ courseName => $courseID });
+	my $db = WeBWorK::DB->new($ce);
+
+	eval {
+		for my $student_id ($db->listPermissionLevelsWhere({ permission => $ce->{userRoles}{student} })) {
+			$db->deleteUser($student_id->[0]);
+		}
+	};
+	if ($@) {
+		$c->addbadmessage($c->maketext('Failed to remove student users: [_1]', ref $@ ? $@->message : $@));
+		return 0;
+	}
+
+	for my $file (values %{ $ce->{courseFiles}{logs} }) {
+		eval { Mojo::File->new($file)->remove };
+		$c->addbadmessage($c->maketext('Failed to remove file [_1]: [_2]', $file, $@)) if $@;
+	}
+
+	if (-d $ce->{courseDirs}{scoring}) {
+		eval { Mojo::File->new($ce->{courseDirs}{scoring})->remove_tree({ keep_root => 1 }) };
+		$c->addbadmessage($c->maketext('Failed to remove scoring files: [_1]', $@)) if $@;
+	}
+
+	if (-d $ce->{courseDirs}{tmpEditFileDir}) {
+		eval { Mojo::File->new($ce->{courseDirs}{tmpEditFileDir})->remove_tree({ keep_root => 1 }) };
+		$c->addbadmessage($c->maketext('Failed to remove temporary edited files: [_1]', $@)) if $@;
+	}
+
+	return 1;
 }
 
 # Course upgrade methods

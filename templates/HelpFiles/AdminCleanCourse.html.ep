@@ -1,0 +1,12 @@
+% layout 'help_macro';
+% title maketext('Clean Course Help');
+%
+<p>
+	<%= maketext('Select a course to clean. This will remove student users and their associated data from the '
+			. 'database. It will also remove the log files, any files in the scoring folder, and any temporary '
+			. 'edited files. Warning, this cannot be undone.') =%>
+</p>
+<p class="mb-0">
+	<%= maketext('The course database must be up to date before the course can be cleaned. If the course was created '
+			. 'with an older version of WeBWorK, use the "Upgrade Courses" page to upgrade the course first.') =%>
+</p>
