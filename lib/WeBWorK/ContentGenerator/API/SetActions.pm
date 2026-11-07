@@ -165,6 +165,8 @@ sub createNewSet ($c) {
 
 	$newSetName =~ s/\s/_/g;
 
+	return $c->renderError("The set name '$newSetName' is reserved.") if $newSetName eq 'Undefined_Set';
+
 	my $db = $c->db;
 
 	return $c->renderError("The set name '$newSetName' already exists. "

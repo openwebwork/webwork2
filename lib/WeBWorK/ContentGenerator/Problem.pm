@@ -81,7 +81,6 @@ sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem) {
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
 			&& $authz->hasPermissions($user->user_id, 'problem_grader')
-			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet}
 			&& !$c->{editMode});
 }
@@ -198,6 +197,8 @@ sub can_useMathQuill ($c) {
 sub can_showMeAnother ($c, $user, $effectiveUser, $set, $problem, $submitAnswers = 0) {
 	my $ce = $c->ce;
 
+	return 0 if $c->{editMode};
+
 	# If the showMeAnother button isn't enabled for the course, then it can't be used.
 	return 0 unless $ce->{pg}{options}{enableShowMeAnother};
 
@@ -257,18 +258,39 @@ async sub initialize ($c) {
 
 	return unless defined $user && defined $effectiveUser;    # This should be impossible.
 
-	# Check that the set is valid.  $c->{invalidSet} is set in checkSet called by ContentGenerator.pm.
+	# Undefined_Set requires editMode, editMode must be valid, and both require permission to modify problem sets.
+	if (
+		($c->{editMode} || $setID eq 'Undefined_Set')
+		&& (($c->{editMode} // '') !~ /^(temporaryFile|savedFile)$/
+			|| !$authz->hasPermissions($userID, 'modify_problem_sets'))
+		)
+	{
+		$c->{invalidProblem} = $c->{invalidSet} = 1;
+	}
+
+	# Check that the set is valid.  $c->{invalidSet} is set above or in checkSet called by ContentGenerator.pm.
 	return if $c->{invalidSet};
 
 	# Obtain the merged set for $effectiveUser
 	$c->{set} = $db->getMergedSet($effectiveUserID, $setID);
+
+	# If the set is not assigned to the effective user, use a fake set in editMode, otherwise the set is invalid.
+	# Note that checkSet does not check this for the show_me_another route.
+	unless ($c->{set}) {
+		if ($c->{editMode}) {
+			$c->{set} = fake_set($db);
+		} else {
+			$c->{invalidProblem} = $c->{invalidSet} = 1;
+			return;
+		}
+	}
 
 	# Determine if the set should be considered open.
 	# It is open if the user can view unopened sets or is an instructor editing a problem from the problem editor,
 	# or it is after the set open date and is not conditionally restricted and is not jitar hidden or closed.
 	return
 		unless $authz->hasPermissions($userID, 'view_unopened_sets')
-		|| $setID eq 'Undefined_Set'
+		|| $c->{editMode}
 		|| (
 			after($c->{set}->open_date, $c->submitTime)
 			&& !(
@@ -292,24 +314,10 @@ async sub initialize ($c) {
 	# Obtain the merged problem for the effective user.
 	my $problem = $db->getMergedProblem($effectiveUserID, $setID, $problemID);
 
-	if ($authz->hasPermissions($userID, 'modify_problem_sets')) {
-		# This is the case of the problem editor for a user that can modify problem sets.
-
-		# If a user set does not exist for this user and this set, then check
-		# the global set.  If that does not exist, then create a fake set.  If it does, then add fake user data.
-		unless (defined $c->{set}) {
-			my $userSetClass = $db->{set_user}->{record};
-			my $globalSet    = $db->getGlobalSet($setID);
-
-			if (not defined $globalSet) {
-				$c->{set} = fake_set($db);
-			} else {
-				$c->{set} = global2user($userSetClass, $globalSet);
-				$c->{set}->psvn(0);
-			}
-		}
-
-		# If a problem is not defined obtain the global problem, convert it to a user problem, and add fake user data.
+	# Deal with creating fake sets/problems, updating problem source if needed when in editMode.
+	if ($c->{editMode}) {
+		# If the problem is not assigned to the effective user, use the global problem with fake user data.
+		# If there is no global problem, create a fake problem from sourceFilePath.
 		unless (defined $problem) {
 			my $globalProblem = $db->getGlobalProblem($setID, $problemID);
 
@@ -342,39 +350,37 @@ async sub initialize ($c) {
 			}
 		}
 
-		# Now we're sure we have valid UserSet and UserProblem objects
-
-		# Deal with possible editor overrides.
-		# If the caller is asking to override the source file, and editMode calls for a temporary file, do so.
+		# Use the temporary file if one was passed in.
 		my $sourceFilePath = $c->param('sourceFilePath');
-		if (defined $c->{editMode} && $c->{editMode} eq 'temporaryFile' && defined $sourceFilePath) {
+		if ($c->{editMode} eq 'temporaryFile' && defined $sourceFilePath) {
 			die 'sourceFilePath is unsafe!'
-				unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates}, 1);
+				unless path_is_subdir($sourceFilePath, $ce->{courseDirs}{templates}, 1);
 			$problem->source_file($sourceFilePath);
 		}
 
-		# If the problem does not have a source file or no source file has been passed in
-		# then this is really an invalid problem (probably from a bad URL).
-		$c->{invalidProblem} = !(defined $sourceFilePath || $problem->source_file);
-
-		# If the caller is asking to override the problem seed, do so.
+		# Override the problem seed if one was passed in.
 		my $problemSeed = $c->param('problemSeed');
 		if (defined $problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
 			$c->{seedChanged} = $problemSeed != ($problem->problem_seed || 0);
 			$problem->problem_seed($problemSeed);
 		}
+	}
 
+	# The problem is invalid if it does not exist, has no source file,
+	# or is in a hidden set that the user cannot view (hidden sets are allowed in editMode).
+	$c->{invalidProblem} =
+		!(defined $problem
+			&& $problem->source_file
+			&& ($c->{editMode} || $c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
+
+	if ($c->{editMode} || $authz->hasPermissions($userID, 'modify_problem_sets')) {
+		# Show the set visibility, except for the Undefined_Set which is not a real set.
 		$c->addmessage($c->{set}->visible
 			? $c->tag('p', class => 'font-visible m-0', $c->maketext('This set is visible to students.'))
-			: $c->tag('p', class => 'font-hidden m-0',  $c->maketext('This set is hidden from students.')));
-
-	} else {
-		# Test for additional problem validity if it's not already invalid.
-		$c->{invalidProblem} =
-			!(defined $problem && ($c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
-
-		$c->addbadmessage($c->maketext('This problem will not count toward your grade.'))
-			if $problem && !$problem->value && !$c->{invalidProblem};
+			: $c->tag('p', class => 'font-hidden m-0',  $c->maketext('This set is hidden from students.')))
+			if $setID ne 'Undefined_Set';
+	} elsif (!$c->{invalidProblem} && !$problem->value) {
+		$c->addbadmessage($c->maketext('This problem will not count toward your grade.'));
 	}
 
 	$c->{userID}          = $userID;
@@ -397,8 +403,7 @@ async sub initialize ($c) {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	if (
-		$c->{set}->set_id ne 'Undefined_Set'
-		&& $c->{submitAnswers}
+		$c->{submitAnswers}
 		&& (
 			!defined $formFields->{num_attempts}
 			|| (defined $formFields->{num_attempts}
@@ -588,7 +593,8 @@ async sub initialize ($c) {
 				: 0
 			),
 			debuggingOptions => getTranslatorDebuggingOptions($authz, $userID),
-			($prEnabled && !$problem->{prCount}) || (!$useSavedData && !defined $formFields->{problem_data})
+			($prEnabled && !$problem->{prCount})
+				|| (!$useSavedData && !defined $formFields->{problem_data})
 			? (problemData => '{}')
 			: ($can{checkAnswers} && defined $formFields->{problem_data})
 			? (problemData => $formFields->{problem_data})
@@ -631,7 +637,7 @@ sub siblings ($c) {
 	my $authz = $c->authz;
 
 	# Can't show sibling problems if the set is invalid.
-	return '' if $c->{invalidSet};
+	return '' if $c->{invalidSet} || $c->{editMode};
 
 	my $setID   = $c->{set}->set_id;
 	my $eUserID = $c->param('effectiveUser');
@@ -639,7 +645,7 @@ sub siblings ($c) {
 	my @problemRecords = $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 	my @problemIDs     = map { $_->problem_id } @problemRecords;
 
-	my $isJitarSet = $setID ne 'Undefined_Set' && $c->{set}->assignment_type eq 'jitar' ? 1 : 0;
+	my $isJitarSet = $c->{set}->assignment_type eq 'jitar' ? 1 : 0;
 
 	# Variables for the progress bar
 	my $num_of_problems = 0;
@@ -755,7 +761,7 @@ sub siblings ($c) {
 }
 
 sub nav ($c, $args) {
-	return '' if $c->{invalidProblem} || $c->{invalidSet};
+	return '' if $c->{invalidProblem} || $c->{invalidSet} || $c->{editMode};
 
 	my %can = %{ $c->{can} };
 
@@ -776,34 +782,32 @@ sub nav ($c, $args) {
 	my ($prevID, $nextID);
 
 	# Find the next or previous problem, and determine if it is actually open for a jitar set.
-	if (!$c->{invalidProblem}) {
-		my @problemIDs =
-			map { $_->[3] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
+	my @problemIDs =
+		map { $_->[3] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
-		if ($isJitarSet) {
-			my @processedProblemIDs;
-			for my $id (@problemIDs) {
-				push @processedProblemIDs, $id
-					unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
-					&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
-			}
-			@problemIDs = @processedProblemIDs;
+	if ($isJitarSet) {
+		my @processedProblemIDs;
+		for my $id (@problemIDs) {
+			push @processedProblemIDs, $id
+				unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+				&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
 		}
-
-		my $curr_index = 0;
-
-		for (my $i = 0; $i <= $#problemIDs; $i++) {
-			$curr_index = $i if $problemIDs[$i] == $problemID;
-		}
-
-		$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
-		$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
-		$nextID = ''
-			if ($isJitarSet
-				&& $nextID
-				&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
-				&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
+		@problemIDs = @processedProblemIDs;
 	}
+
+	my $curr_index = 0;
+
+	for (my $i = 0; $i <= $#problemIDs; $i++) {
+		$curr_index = $i if $problemIDs[$i] == $problemID;
+	}
+
+	$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
+	$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
+	$nextID = ''
+		if ($isJitarSet
+			&& $nextID
+			&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+			&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
 
 	my @links;
 
@@ -815,12 +819,8 @@ sub nav ($c, $args) {
 		push @links, $c->maketext('Previous Problem'), '', $c->maketext('Previous Problem');
 	}
 
-	if (defined $setID && $setID ne 'Undefined_Set') {
-		push @links, $c->maketext('Problem List'), $c->url_for('problem_list', setID => $setID),
-			$c->maketext('Problem List');
-	} else {
-		push @links, $c->maketext('Problem List'), '', $c->maketext('Problem List');
-	}
+	push @links, $c->maketext('Problem List'), $c->url_for('problem_list', setID => $setID),
+		$c->maketext('Problem List');
 
 	if ($nextID) {
 		push @links, $c->maketext('Next Problem'),
@@ -840,7 +840,7 @@ sub nav ($c, $args) {
 		role         => 'navigation',
 		'aria-label' => 'problem navigation',
 		$c->c($c->tag('div', class => 'd-flex submit-buttons-container', $c->navMacro($args, \%tail, @links)),
-			$c->{editMode} ? '' : studentNav($c, $setID))->join('')
+			studentNav($c, $setID))->join('')
 	);
 }
 
@@ -857,7 +857,8 @@ sub path ($c, $args) {
 	my @path = (
 		WeBWorK               => $navigation_allowed ? $c->url_for('root')     : '',
 		$c->stash('courseID') => $navigation_allowed ? $c->url_for('set_list') : '',
-		$c->stash('setID')    => $c->url_for('problem_list'),
+		# Don't link to the Undefined_Set, since it does not exist.
+		$c->stash('setID') => $c->stash('setID') eq 'Undefined_Set' ? '' : $c->url_for('problem_list'),
 	);
 
 	if ($c->current_route eq 'show_me_another') {
@@ -887,7 +888,7 @@ sub page_title ($c) {
 		$c->maketext('[_1]: Problem [_2]', $c->tag('span', dir => 'ltr', format_set_name_display($setID)), $problemID);
 
 	# Return here if we don't have the requisite information.
-	return $header if ($c->{invalidSet} || $c->{invalidProblem});
+	return $header if $c->{invalidSet} || $c->{invalidProblem};
 
 	my $ce      = $c->ce;
 	my $problem = $c->{problem};
@@ -906,24 +907,18 @@ sub page_title ($c) {
 	}
 
 	# Add the edit link to the sub header if the user has the permissions to edit problems.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
+	if (!$c->{editMode} && $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(
 				'span',
 				class => 'ms-2',
 				$c->link_to(
-					$c->maketext('Edit') => $c->systemLink(
-						$c->url_for(
-							'instructor_problem_editor_withset_withproblem',
-							setID     => $c->{set}->set_id,
-							problemID => $c->{problem}->problem_id
-						),
-						# If we are here without a real homework set, carry that through.
-						$c->{set}->set_id eq 'Undefined_Set'
-						? (params => [ 'sourceFilePath' => $c->param('sourceFilePath') ])
-						: ()
-					),
+					$c->maketext('Edit') => $c->systemLink($c->url_for(
+						'instructor_problem_editor_withset_withproblem',
+						setID     => $c->{set}->set_id,
+						problemID => $c->{problem}->problem_id
+					)),
 					target => 'WW_Editor',
 					class  => 'btn btn-sm btn-secondary'
 				)
@@ -931,8 +926,9 @@ sub page_title ($c) {
 		)->join('');
 	}
 
-	# Add the tag edit button to the sub header if the user has permission to edit tags.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_tags')) {
+	# Add the tag edit button to the sub header if the user has permission to edit tags
+	# and we are not viewing a temporary file.
+	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_tags') && ($c->{editMode} // '') ne 'temporaryFile') {
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(
@@ -1049,45 +1045,58 @@ sub output_score_summary ($c) {
 
 	my $output = $c->c;
 
-	unless (defined $pg->{state}{state_summary_msg} && $pg->{state}{state_summary_msg} =~ /\S/) {
+	if ($c->{editMode}) {
+		# Only show the score for the answers that were checked in editMode.
 		push(
 			@$output,
-			$c->{submitAnswers} ? $c->{scoreRecordedMessage} . $c->tag('br') : '',
-			$c->maketext('You have attempted this problem [quant,_1,time,times].', $attempts),
-			$prMessage,
-			$c->tag('br'),
-			$c->{submitAnswers}
-			? (
-				$c->maketext(
-					'You received a score of [_1] for this attempt.',
-					wwRound(0,
-						compute_reduced_score($ce, $problem, $set, $pg->{result}{score}, $c->submitTime) * 100)
-						. '%'
-				),
-				$c->tag('br')
-				)
-			: '',
-			$problem->attempted
-			? (
-				$c->maketext(
-					'Your overall recorded score is [_1].  [_2]',
-					wwRound(0, $problem->status * 100) . '%',
-					$problem->value ? '' : $c->maketext('(This problem will not count toward your grade.)')
-				),
-				$c->tag('br')
-				)
-			: '',
-			$setClosed ? $setClosedMessage : $c->maketext(
-				'You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.',
-				$problem->max_attempts - $attempts
+			$c->maketext(
+				'You received a score of [_1] for this attempt.',
+				wwRound(0, $pg->{result}{score} * 100) . '%'
 			)
-		);
+		) if $c->{will}{checkAnswers};
 	} else {
-		push(@$output, $pg->{state}{state_summary_msg});
+		unless (defined $pg->{state}{state_summary_msg} && $pg->{state}{state_summary_msg} =~ /\S/) {
+			push(
+				@$output,
+				$c->{submitAnswers} ? $c->{scoreRecordedMessage} . $c->tag('br') : '',
+				$c->maketext('You have attempted this problem [quant,_1,time,times].', $attempts),
+				$prMessage,
+				$c->tag('br'),
+				$c->{submitAnswers}
+				? (
+					$c->maketext(
+						'You received a score of [_1] for this attempt.',
+						wwRound(
+							0,
+							compute_reduced_score($ce, $problem, $set, $pg->{result}{score}, $c->submitTime) * 100
+							)
+							. '%'
+					),
+					$c->tag('br')
+					)
+				: '',
+				$problem->attempted
+				? (
+					$c->maketext(
+						'Your overall recorded score is [_1].  [_2]',
+						wwRound(0, $problem->status * 100) . '%',
+						$problem->value ? '' : $c->maketext('(This problem will not count toward your grade.)')
+					),
+					$c->tag('br')
+					)
+				: '',
+				$setClosed ? $setClosedMessage : $c->maketext(
+					'You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.',
+					$problem->max_attempts - $attempts
+				)
+			);
+		} else {
+			push(@$output, $pg->{state}{state_summary_msg});
+		}
 	}
 
 	# Print jitar specific information for students (and notify instructor if necessary).
-	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
+	if (!$c->{editMode} && $set->assignment_type eq 'jitar') {
 		my @problemIDs =
 			map { $_->[3] }
 			$db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
@@ -1234,9 +1243,9 @@ sub output_misc ($c) {
 	# Save state for viewOptions
 	push(@$output, $c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}));
 
-	# Only allow file editing for users that have the permission to modify problem sets.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
-		push(@$output, $c->hidden_field(editMode       => $c->{editMode})) if $c->{editMode};
+	# Add hidden fields when in editMode.
+	if ($c->{editMode}) {
+		push(@$output, $c->hidden_field(editMode       => $c->{editMode}));
 		push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
 			if defined $c->{problem}{source_file};
 		push(@$output, $c->hidden_field(problemSeed => $c->param('problemSeed'))) if defined $c->param('problemSeed');
@@ -1330,7 +1339,7 @@ sub output_summary ($c) {
 		)
 	) if $c->{resubmitDetected};
 
-	if ($c->{set}->set_id ne 'Undefined_Set' && $c->{set}->assignment_type eq 'jitar') {
+	if (!$c->{editMode} && $c->{set}->assignment_type eq 'jitar') {
 		my $hasChildren = 0;
 
 		my @problemIDs =
@@ -1388,12 +1397,11 @@ sub output_summary ($c) {
 
 # Output the achievement message if there is one.
 sub output_achievement_message ($c) {
-	# If achievements are enabled and this is not an undefined set,
-	# check to see if there are new achievements and output them.
+	# If achievements are enabled check to see if there are new achievements and output them.
+	# Note, submitAnswers will always be false when in editMode, so this only works on real problems.
 	if ($c->ce->{achievementsEnabled}
 		&& $c->{will}{recordAnswers}
-		&& $c->{submitAnswers}
-		&& $c->{problem}->set_id ne 'Undefined_Set')
+		&& $c->{submitAnswers})
 	{
 		return checkForAchievements($c->{problem}, $c);
 	}
@@ -1419,7 +1427,7 @@ sub output_custom_edit_message ($c) {
 
 # Output the "Show Past Answers" button
 sub output_past_answer_button ($c) {
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'view_answers')) {
+	if (!$c->{editMode} && $c->authz->hasPermissions($c->authen->{user_id}, 'view_answers')) {
 		my $problemID = $c->{problem}->problem_id;
 		my $setRecord = $c->db->getGlobalSet($c->{problem}->set_id);
 		if (defined $setRecord && $setRecord->assignment_type eq 'jitar') {
@@ -1454,6 +1462,8 @@ sub output_past_answer_button ($c) {
 
 # Output the "Email Instructor" button
 sub output_email_instructor ($c) {
+	return '' if $c->{editMode};
+
 	my $user = $c->db->getUser($c->authen->{user_id});
 
 	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the

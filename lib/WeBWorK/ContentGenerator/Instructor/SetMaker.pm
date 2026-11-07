@@ -564,6 +564,8 @@ sub initialize ($c) {
 
 			if (!$newSetName) {
 				$c->addbadmessage($c->maketext('Please specify a new set name.'));
+			} elsif ($newSetName eq 'Undefined_Set') {
+				$c->addbadmessage($c->maketext('The set name "[_1]" is reserved.', $newSetName));
 			} elsif (defined $db->getGlobalSet($newSetName)) {
 				$c->addbadmessage($c->maketext('The set "[_1]" already exists.', $newSetName));
 			} else {
