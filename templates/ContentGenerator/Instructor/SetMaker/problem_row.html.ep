@@ -308,7 +308,7 @@
 					),
 					params => {
 						effectiveUser  => $authen->{user_id},
-						editMode       => 'SetMaker',
+						editMode       => 'savedFile',
 						problemSeed    => $c->{problem_seed},
 						sourceFilePath => $sourceFileName,
 					}

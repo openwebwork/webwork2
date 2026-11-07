@@ -95,7 +95,7 @@
 					: ''
 				)
 			} =%>
-	% } else {
+	% } elsif (!$c->{editMode}) {
 		% # If showMeAnother is available for the course, and for the current problem and is either not yet
 		% # available because the student hasn't tried enough times or is no longer available because the user has used
 		% # show me another the maximum allowed number of times then gray it out. Otherwise display nothing.
