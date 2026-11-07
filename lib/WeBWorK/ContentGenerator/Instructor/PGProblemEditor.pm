@@ -313,13 +313,16 @@ sub initialize ($c) {
 sub path ($c, $args) {
 	# We need to build a path to the problem being edited by hand, since it is not the same as the url path for this
 	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
+	# Don't link to the set or problem for the Undefined_Set, since neither exist.
+	my $isUndefinedSet = ($c->stash('setID') // '') eq 'Undefined_Set';
 	return $c->pathMacro(
 		$args,
 		'WeBWorK'                         => $c->url_for('root'),
 		$c->stash('courseID')             => $c->url_for('set_list'),
-		($c->stash('setID') // '')        => $c->url_for('problem_list'),
-		($c->{prettyProblemNumber} // '') =>
-			$c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
+		($c->stash('setID') // '')        => $isUndefinedSet ? '' : $c->url_for('problem_list'),
+		($c->{prettyProblemNumber} // '') => $isUndefinedSet
+		? ''
+		: $c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
 		$c->maketext('Editor') => ''
 	);
 }

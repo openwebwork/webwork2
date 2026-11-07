@@ -429,6 +429,8 @@ sub create_handler ($c) {
 			$newSetID =~ s/_/ /gr
 		)
 	) unless $newSetID =~ m/^[-a-zA-Z0-9_.]*$/;
+	return (0, $c->maketext('Failed to create new set: The set name "[_1]" is reserved.', 'Undefined_Set'))
+		if $newSetID eq 'Undefined_Set';
 	return (
 		0,
 		$c->maketext(

@@ -84,6 +84,12 @@ sub importSetsFromDef ($ce, $db, $setDefFiles, $existingSets = undef, $assign = 
 
 		my $prettySetID = format_set_name_display($setData->{setID});
 
+		if ($setData->{setID} eq 'Undefined_Set') {
+			push @skipped, $setData->{setID};
+			push @errors,  [ x('The set name "[_1]" is reserved.'), 'Undefined_Set' ];
+			next;
+		}
+
 		if ($allSets{ $setData->{setID} }) {
 			# This set already exists!
 			push @skipped, $setData->{setID};
