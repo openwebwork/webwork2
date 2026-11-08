@@ -189,10 +189,11 @@ sub checkSet ($self) {
 
 	# First check to see if we have to worried about set-level access restrictions.
 	return 0
-		unless grep {/^$node_name$/}
+		unless grep { $node_name eq $_ }
 		(qw(
 			problem_list
 			problem_detail
+			show_me_another
 			gateway_quiz
 			gateway_quiz_version
 			proctored_gateway_quiz
@@ -215,9 +216,6 @@ sub checkSet ($self) {
 		if ($set && $set->set_id eq $setName && $set->user_id eq $effectiveUserName && $set->version_id == $setVersion)
 		{
 			# If we have all of this, then we can just use this set and skip the rest.
-		} elsif ($setName eq 'Undefined_Set' && $self->hasPermissions($userName, 'access_instructor_tools')) {
-			# This is the case of previewing a problem from a 'try it' link.
-			return 0;
 		} else {
 			if ($db->existsSetVersion($effectiveUserName, $setName, $setVersion)) {
 				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $setVersion);
@@ -241,10 +239,6 @@ sub checkSet ($self) {
 		} else {
 			if ($db->existsUserSet($effectiveUserName, $setName)) {
 				$set = $db->getMergedSet($effectiveUserName, $setName);
-			} elsif ($setName eq 'Undefined_Set' && $self->hasPermissions($userName, 'access_instructor_tools')) {
-				# This is the case of the library browser, when we don't actually have a set to look at. This only
-				# happens for instructor tool users.
-				return 0;
 			} else {
 				return $c->maketext('Requested set "[_1]" is not assigned to user [_2].', $setName, $effectiveUserName);
 			}
@@ -301,7 +295,10 @@ sub checkSet ($self) {
 	}
 
 	# Check to be sure that gateways are being sent to the correct content generator.
-	if (defined $set->assignment_type && $set->assignment_type =~ /gateway/ && $node_name eq 'problem_detail') {
+	if (defined $set->assignment_type
+		&& $set->assignment_type =~ /gateway/
+		&& ($node_name eq 'problem_detail' || $node_name eq 'show_me_another'))
+	{
 		return $c->maketext(
 			'Requested set "[_1]" is a test but the regular homework assignment content '
 				. 'generator [_2] was called.  Try re-entering the set from the problem sets listing page.',

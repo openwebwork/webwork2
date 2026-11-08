@@ -151,9 +151,7 @@
 		<p>
 			<%= maketext('Render or re-render the problem, course info file, or set header being edited. This does not '
 					. 'change the permanent file on the disk. You can view different versions of the same problem by '
-					. 'changing the seed. You can also change the manner in which the mathematics is typeset. If "Open '
-					. 'in new window" is checked, then the problem will open in a new tab or window showing the '
-					. 'problem as it will be rendered for students in the set.') =%>
+					. 'changing the seed. You can also change the manner in which the mathematics is typeset.') =%>
 		</p>
 		<p>
 			<%= maketext('This tab is available for all file types except hardcopy header files.') =%>
@@ -205,12 +203,11 @@
 	<dd>
 		<p>
 			<%= maketext('Save the contents of the editor window to the file on disk and re-render the problem. If '
-					. '"Open in new window" is checked, then the problem will open in a new tab or window showing the '
-					. 'problem as it will be rendered for students in the set. If "Create backup" is checked then a '
-					. 'backup of the current file on disk will be created before overwriting it with the contents of '
-					. 'the editor window. If a backup already exists, then a "Delete oldest backup" check box will be '
-					. 'present. If that is checked, then the oldest backup will be deleted when "Save" is clicked. '
-					. 'These backups can be reverted to and managed on the "Revert" tab.') =%>
+					. '"Create backup" is checked then a backup of the current file on disk will be created before '
+					. 'overwriting it with the contents of the editor window. If a backup already exists, then a '
+					. '"Delete oldest backup" check box will be present. If that is checked, then the oldest backup '
+					. 'will be deleted when "Save" is clicked. These backups can be reverted to and managed on the '
+					. '"Revert" tab.') =%>
 		</p>
 		<p>
 			<%= maketext('This tab is available for all files, but is only active for files in the course templates '
