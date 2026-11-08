@@ -480,14 +480,20 @@ async sub initialize ($c) {
 		if (defined $problem->{prPeriod} && $problem->{prPeriod} > -1);
 
 	$prEnabled = 0 if ($rerandomizePeriod < 1 || $c->{editMode});
+
+	my $canUpdateProblemRandomization = $userID eq $effectiveUserID
+		|| $authz->hasPermissions($userID, 'record_answers_when_acting_as_student');
+
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 			if !defined $problem->{prCount} || $problem->{prCount} =~ /^\s*$/;
 
-		$problem->{prCount} += $c->{submitAnswers} ? 1 : 0;
+		$problem->{prCount} += $c->{submitAnswers} && $canUpdateProblemRandomization ? 1 : 0;
 
 		$requestNewSeed = 0
-			if ($problem->{prCount} < $rerandomizePeriod || after($c->{set}->due_date, $c->submitTime));
+			if (!$canUpdateProblemRandomization
+				|| $problem->{prCount} < $rerandomizePeriod
+				|| after($c->{set}->due_date, $c->submitTime));
 
 		if ($requestNewSeed) {
 			# obtain new random seed to hopefully change the problem
@@ -495,7 +501,7 @@ async sub initialize ($c) {
 				($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
 			$problem->{prCount} = 0;
 		}
-		if ($problem->{prCount} > -1) {
+		if ($canUpdateProblemRandomization && $problem->{prCount} > -1) {
 			my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
 			$pureProblem->problem_seed($problem->{problem_seed});
 			$pureProblem->prCount($problem->{prCount});
@@ -507,9 +513,11 @@ async sub initialize ($c) {
 	my %will = map { $_ => $can{$_} && $want{$_} } keys %can;
 
 	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($c->{set}->due_date, $c->submitTime)) {
-		$can{requestNewSeed}         = 1;
+		$c->{newVersionRequired}     = 1;
+		$can{requestNewSeed}         = $canUpdateProblemRandomization;
 		$want{requestNewSeed}        = 1;
-		$will{requestNewSeed}        = 1;
+		$will{requestNewSeed}        = $canUpdateProblemRandomization;
+		$can{getSubmitButton}        = 0;
 		$c->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
 		# being recorded and the number of attempts from being increased.
@@ -1015,7 +1023,7 @@ sub output_score_summary ($c) {
 
 	my $prMessage = '';
 	if ($prEnabled) {
-		my $attempts_before_rr = $c->{will}{requestNewSeed} ? 0 : ($rerandomizePeriod - $problem->{prCount});
+		my $attempts_before_rr = $c->{newVersionRequired} ? 0 : ($rerandomizePeriod - $problem->{prCount});
 
 		$prMessage = ' '
 			. $c->maketext('You have [quant,_1,attempt,attempts] left before new version will be requested.',
