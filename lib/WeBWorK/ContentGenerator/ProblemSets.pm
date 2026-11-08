@@ -10,7 +10,7 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 use WeBWorK::Debug           qw(debug);
 use WeBWorK::Utils           qw(sortByName);
 use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files    qw(readFile path_is_subdir);
+use WeBWorK::Utils::Files    qw(readFile);
 use WeBWorK::Utils::Sets     qw(restricted_set_message);
 use WeBWorK::Localize;
 
@@ -81,25 +81,6 @@ sub initialize ($c) {
 	return unless $ce->{courseFiles}{course_info};
 
 	my $course_info_path = "$ce->{courseDirs}{templates}/$ce->{courseFiles}{course_info}";
-
-	if ($authz->hasPermissions($user, 'access_instructor_tools')) {
-		if (defined $c->param('editMode') && $c->param('editMode') eq 'temporaryFile') {
-			$course_info_path = $c->param('sourceFilePath');
-			$course_info_path = "$ce->{courseDirs}{templates}/$course_info_path"
-				unless $course_info_path =~ m!^/!;
-
-			unless (path_is_subdir($course_info_path, $ce->{courseDirs}{templates})) {
-				$c->addbadmessage('sourceFilePath is unsafe!');
-				return '';
-			}
-
-			$c->addmessage($c->tag(
-				'p',
-				class => 'temporaryFile',
-				$c->maketext('Viewing temporary file: [_1]', $course_info_path)
-			));
-		}
-	}
 
 	if (-f $course_info_path) {
 		$c->stash->{course_info_contents} = eval { readFile($course_info_path) };

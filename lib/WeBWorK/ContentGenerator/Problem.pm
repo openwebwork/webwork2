@@ -10,7 +10,6 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 use WeBWorK::Debug           qw(debug);
 use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
-use WeBWorK::Utils::Files    qw(path_is_subdir);
 use WeBWorK::Utils::JITAR    qw(seq_to_jitar_id jitar_id_to_seq is_jitar_problem_hidden is_jitar_problem_closed
 	jitar_problem_finished jitar_problem_adjusted_status);
 use WeBWorK::Utils::LanguageAndDirection qw(get_problem_lang_and_dir);
@@ -19,7 +18,6 @@ use WeBWorK::Utils::ProblemProcessing    qw(process_and_log_answer jitar_send_wa
 use WeBWorK::Utils::Rendering     qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets          qw(is_restricted format_set_name_display);
 use WeBWorK::AchievementEvaluator qw(checkForAchievements);
-use WeBWorK::DB::Utils            qw(global2user fake_set fake_problem);
 use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::HTML::SingleProblemGrader;
@@ -31,16 +29,6 @@ use WeBWorK::HTML::StudentNav qw(studentNav);
 #
 #     user - user ID of real user
 #     effectiveUser - user ID of effective user
-#
-# Integration with PGProblemEditor:
-#
-#     editMode - if set, indicates alternate problem source location.
-#                can be "temporaryFile" or "savedFile".
-#
-#     sourceFilePath - path to file to be edited
-#     problemSeed - force problem seed to value
-#     success - success message to display
-#     failure - failure message to display
 #
 # Rendering options:
 #
@@ -81,7 +69,6 @@ sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem) {
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
 			&& $authz->hasPermissions($user->user_id, 'problem_grader')
-			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet});
 }
 
@@ -247,7 +234,6 @@ async sub initialize ($c) {
 	my $problemID       = $c->stash('problemID');
 	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser');
-	$c->{editMode} = $c->param('editMode');
 
 	my $user          = $c->authen->{user};
 	my $effectiveUser = $c->authen->{effective_user};
@@ -258,12 +244,10 @@ async sub initialize ($c) {
 	# Obtain the merged set for $effectiveUser
 	$c->{set} = $db->getMergedSet($effectiveUserID, $setID);
 
-	# Determine if the set should be considered open.
-	# It is open if the user can view unopened sets or is an instructor editing a problem from the problem editor,
-	# or it is after the set open date and is not conditionally restricted and is not jitar hidden or closed.
+	# Determine if the set should be considered open. It is open if the user can view unopened sets, or it
+	# is after the set open date and is not conditionally restricted and is not jitar hidden or closed.
 	return
 		unless $authz->hasPermissions($userID, 'view_unopened_sets')
-		|| $setID eq 'Undefined_Set'
 		|| (
 			after($c->{set}->open_date, $c->submitTime)
 			&& !(
@@ -277,7 +261,7 @@ async sub initialize ($c) {
 		);
 
 	# When a set is created enable_reduced_scoring is null, so we have to set it
-	if ($c->{set} && $c->{set}->enable_reduced_scoring ne '0' && $c->{set}->enable_reduced_scoring ne '1') {
+	if ($c->{set}->enable_reduced_scoring ne '0' && $c->{set}->enable_reduced_scoring ne '1') {
 		my $globalSet = $db->getGlobalSet($c->{set}->set_id);
 		$globalSet->enable_reduced_scoring('0');
 		$db->putGlobalSet($globalSet);
@@ -287,88 +271,16 @@ async sub initialize ($c) {
 	# Obtain the merged problem for the effective user.
 	my $problem = $db->getMergedProblem($effectiveUserID, $setID, $problemID);
 
+	# Set the problem as invalid if it was not assigned to the effective user or is hidden.
+	$c->{invalidProblem} =
+		!(defined $problem && ($c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
+	$c->addbadmessage($c->maketext('This problem will not count toward your grade.'))
+		if !$c->{invalidProblem} && !$problem->value;
+
 	if ($authz->hasPermissions($userID, 'modify_problem_sets')) {
-		# This is the case of the problem editor for a user that can modify problem sets.
-
-		# If a user set does not exist for this user and this set, then check
-		# the global set.  If that does not exist, then create a fake set.  If it does, then add fake user data.
-		unless (defined $c->{set}) {
-			my $userSetClass = $db->{set_user}->{record};
-			my $globalSet    = $db->getGlobalSet($setID);
-
-			if (not defined $globalSet) {
-				$c->{set} = fake_set($db);
-			} else {
-				$c->{set} = global2user($userSetClass, $globalSet);
-				$c->{set}->psvn(0);
-			}
-		}
-
-		# If a problem is not defined obtain the global problem, convert it to a user problem, and add fake user data.
-		unless (defined $problem) {
-			my $globalProblem = $db->getGlobalProblem($setID, $problemID);
-
-			# If the global problem doesn't exist either, bail!
-			if (!defined $globalProblem) {
-				my $sourceFilePath = $c->param('sourceFilePath');
-
-				# These are problems from setmaker.  If declared invalid, they won't come up.
-				if (defined $sourceFilePath) {
-					die 'sourceFilePath is unsafe!'
-						unless path_is_subdir($sourceFilePath, $ce->{courseDirs}{templates}, 1);
-				} else {
-					$c->{invalidProblem} = $c->{invalidSet} = 1;
-					return;
-				}
-
-				$problem = fake_problem($db);
-				$problem->problem_id(1);
-				$problem->source_file($sourceFilePath);
-				$problem->user_id($effectiveUserID);
-			} else {
-				$problem = global2user($db->{problem_user}{record}, $globalProblem);
-				$problem->user_id($effectiveUserID);
-				$problem->problem_seed(0);
-				$problem->status(0);
-				$problem->attempted(0);
-				$problem->last_answer('');
-				$problem->num_correct(0);
-				$problem->num_incorrect(0);
-			}
-		}
-
-		# Now we're sure we have valid UserSet and UserProblem objects
-
-		# Deal with possible editor overrides.
-		# If the caller is asking to override the source file, and editMode calls for a temporary file, do so.
-		my $sourceFilePath = $c->param('sourceFilePath');
-		if (defined $c->{editMode} && $c->{editMode} eq 'temporaryFile' && defined $sourceFilePath) {
-			die 'sourceFilePath is unsafe!'
-				unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates}, 1);
-			$problem->source_file($sourceFilePath);
-		}
-
-		# If the problem does not have a source file or no source file has been passed in
-		# then this is really an invalid problem (probably from a bad URL).
-		$c->{invalidProblem} = !(defined $sourceFilePath || $problem->source_file);
-
-		# If the caller is asking to override the problem seed, do so.
-		my $problemSeed = $c->param('problemSeed');
-		if (defined $problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
-			$problem->problem_seed($problemSeed);
-		}
-
 		$c->addmessage($c->{set}->visible
 			? $c->tag('p', class => 'font-visible m-0', $c->maketext('This set is visible to students.'))
 			: $c->tag('p', class => 'font-hidden m-0',  $c->maketext('This set is hidden from students.')));
-
-	} else {
-		# Test for additional problem validity if it's not already invalid.
-		$c->{invalidProblem} =
-			!(defined $problem && ($c->{set}->visible || $authz->hasPermissions($userID, 'view_hidden_sets')));
-
-		$c->addbadmessage($c->maketext('This problem will not count toward your grade.'))
-			if $problem && !$problem->value && !$c->{invalidProblem};
 	}
 
 	$c->{userID}          = $userID;
@@ -391,8 +303,7 @@ async sub initialize ($c) {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	if (
-		$c->{set}->set_id ne 'Undefined_Set'
-		&& $c->{submitAnswers}
+		$c->{submitAnswers}
 		&& (
 			!defined $formFields->{num_attempts}
 			|| (defined $formFields->{num_attempts}
@@ -472,12 +383,12 @@ async sub initialize ($c) {
 	my $rerandomizePeriod = $ce->{pg}{options}{periodicRandomizationPeriod} // 0;
 
 	$problem->{prPeriod} = $ce->{problemDefaults}{prPeriod}
-		if (defined $problem->{prPeriod} && $problem->{prPeriod} =~ /^\s*$/);
+		if defined $problem->{prPeriod} && $problem->{prPeriod} =~ /^\s*$/;
 
 	$rerandomizePeriod = $problem->{prPeriod}
-		if (defined $problem->{prPeriod} && $problem->{prPeriod} > -1);
+		if defined $problem->{prPeriod} && $problem->{prPeriod} > -1;
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1 || $c->{editMode});
+	$prEnabled = 0 if $rerandomizePeriod < 1;
 
 	my $canUpdateProblemRandomization = $userID eq $effectiveUserID
 		|| $authz->hasPermissions($userID, 'record_answers_when_acting_as_student');
@@ -637,7 +548,7 @@ sub siblings ($c) {
 	my @problemRecords = $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 	my @problemIDs     = map { $_->problem_id } @problemRecords;
 
-	my $isJitarSet = $setID ne 'Undefined_Set' && $c->{set}->assignment_type eq 'jitar' ? 1 : 0;
+	my $isJitarSet = $c->{set}->assignment_type eq 'jitar' ? 1 : 0;
 
 	# Variables for the progress bar
 	my $num_of_problems = 0;
@@ -761,47 +672,41 @@ sub nav ($c, $args) {
 	my $ce    = $c->ce;
 	my $authz = $c->authz;
 
-	my $setID     = $c->{set}->set_id;
-	my $problemID = $c->{problem}->problem_id;
-	my $userID    = $c->authen->{user_id};
-	my $eUserID   = $c->param('effectiveUser');
-
-	my $mergedSet = $db->getMergedSet($eUserID, $setID);
-	return '' if !$mergedSet;
-
-	my $isJitarSet = $mergedSet->assignment_type eq 'jitar';
+	my $setID      = $c->{set}->set_id;
+	my $problemID  = $c->{problem}->problem_id;
+	my $userID     = $c->authen->{user_id};
+	my $eUserID    = $c->param('effectiveUser');
+	my $isJitarSet = $c->{set}->assignment_type eq 'jitar';
 
 	my ($prevID, $nextID);
 
 	# Find the next or previous problem, and determine if it is actually open for a jitar set.
-	if (!$c->{invalidProblem}) {
-		my @problemIDs =
-			map { $_->[3] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
+	my @problemIDs =
+		map { $_->[3] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
-		if ($isJitarSet) {
-			my @processedProblemIDs;
-			for my $id (@problemIDs) {
-				push @processedProblemIDs, $id
-					unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
-					&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
-			}
-			@problemIDs = @processedProblemIDs;
+	if ($isJitarSet) {
+		my @processedProblemIDs;
+		for my $id (@problemIDs) {
+			push @processedProblemIDs, $id
+				unless !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+				&& is_jitar_problem_hidden($db, $eUserID, $setID, $id);
 		}
-
-		my $curr_index = 0;
-
-		for (my $i = 0; $i <= $#problemIDs; $i++) {
-			$curr_index = $i if $problemIDs[$i] == $problemID;
-		}
-
-		$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
-		$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
-		$nextID = ''
-			if ($isJitarSet
-				&& $nextID
-				&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
-				&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
+		@problemIDs = @processedProblemIDs;
 	}
+
+	my $curr_index = 0;
+
+	for (my $i = 0; $i <= $#problemIDs; $i++) {
+		$curr_index = $i if $problemIDs[$i] == $problemID;
+	}
+
+	$prevID = $problemIDs[ $curr_index - 1 ] if $curr_index - 1 >= 0;
+	$nextID = $problemIDs[ $curr_index + 1 ] if $curr_index + 1 <= $#problemIDs;
+	$nextID = ''
+		if ($isJitarSet
+			&& $nextID
+			&& !$authz->hasPermissions($eUserID, 'view_unopened_sets')
+			&& is_jitar_problem_closed($db, $ce, $eUserID, $setID, $nextID));
 
 	my @links;
 
@@ -813,12 +718,8 @@ sub nav ($c, $args) {
 		push @links, $c->maketext('Previous Problem'), '', $c->maketext('Previous Problem');
 	}
 
-	if (defined $setID && $setID ne 'Undefined_Set') {
-		push @links, $c->maketext('Problem List'), $c->url_for('problem_list', setID => $setID),
-			$c->maketext('Problem List');
-	} else {
-		push @links, $c->maketext('Problem List'), '', $c->maketext('Problem List');
-	}
+	push @links, $c->maketext('Problem List'), $c->url_for('problem_list', setID => $setID),
+		$c->maketext('Problem List');
 
 	if ($nextID) {
 		push @links, $c->maketext('Next Problem'),
@@ -910,17 +811,11 @@ sub page_title ($c) {
 				'span',
 				class => 'ms-2',
 				$c->link_to(
-					$c->maketext('Edit') => $c->systemLink(
-						$c->url_for(
-							'instructor_problem_editor_withset_withproblem',
-							setID     => $c->{set}->set_id,
-							problemID => $c->{problem}->problem_id
-						),
-						# If we are here without a real homework set, carry that through.
-						$c->{set}->set_id eq 'Undefined_Set'
-						? (params => [ 'sourceFilePath' => $c->param('sourceFilePath') ])
-						: ()
-					),
+					$c->maketext('Edit') => $c->systemLink($c->url_for(
+						'instructor_problem_editor_withset_withproblem',
+						setID     => $c->{set}->set_id,
+						problemID => $c->{problem}->problem_id
+					)),
 					target => 'WW_Editor',
 					class  => 'btn btn-sm btn-secondary'
 				)
@@ -1084,7 +979,7 @@ sub output_score_summary ($c) {
 	}
 
 	# Print jitar specific information for students (and notify instructor if necessary).
-	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
+	if ($set->assignment_type eq 'jitar') {
 		my @problemIDs =
 			map { $_->[3] }
 			$db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
@@ -1228,15 +1123,6 @@ sub output_score_summary ($c) {
 sub output_misc ($c) {
 	my $output = $c->c;
 
-	# Only allow file editing for users that have the permission to modify problem sets.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
-		push(@$output, $c->hidden_field(editMode => $c->{editMode}))
-			if defined $c->{editMode} && $c->{editMode} eq 'temporaryFile';
-		push(@$output, $c->hidden_field(sourceFilePath => $c->{problem}{source_file}))
-			if defined $c->{problem}{source_file};
-		push(@$output, $c->hidden_field(problemSeed => $c->param('problemSeed'))) if defined $c->param('problemSeed');
-	}
-
 	# Make sure the student nav filter setting is preserved when the problem form is submitted.
 	push(@$output, $c->hidden_field(studentNavFilter => $c->param('studentNavFilter')))
 		if $c->param('studentNavFilter');
@@ -1325,7 +1211,7 @@ sub output_summary ($c) {
 		)
 	) if $c->{resubmitDetected};
 
-	if ($c->{set}->set_id ne 'Undefined_Set' && $c->{set}->assignment_type eq 'jitar') {
+	if ($c->{set}->assignment_type eq 'jitar') {
 		my $hasChildren = 0;
 
 		my @problemIDs =
@@ -1387,26 +1273,9 @@ sub output_achievement_message ($c) {
 	# check to see if there are new achievements and output them.
 	if ($c->ce->{achievementsEnabled}
 		&& $c->{will}{recordAnswers}
-		&& $c->{submitAnswers}
-		&& $c->{problem}->set_id ne 'Undefined_Set')
+		&& $c->{submitAnswers})
 	{
 		return checkForAchievements($c->{problem}, $c);
-	}
-
-	return '';
-}
-
-# Output a custom edit message
-sub output_custom_edit_message ($c) {
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')
-		&& $c->{editMode}
-		&& $c->{editMode} eq 'temporaryFile')
-	{
-		return $c->tag(
-			'p',
-			class => 'temporaryFile',
-			$c->maketext('Viewing temporary file: [_1]', $c->{problem}->source_file)
-		);
 	}
 
 	return '';

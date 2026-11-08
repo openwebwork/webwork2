@@ -20,9 +20,9 @@
 % # If it is an absolute path make it relative.
 % $shortFilePath =~ s|^/*|| if $shortFilePath =~ m|^/|;
 %
-% # Don't add to or replace problems in sets or replace set/hardcopy headers if the set is the Undefined_Set or
+% # Don't add to or replace problems in sets or replace set/hardcopy headers if the set is undefined or
 % # if the problem is the blank_problem or a sample problem.
-% my $fileIsAssociatedWithSet = defined $c->{setID} && $c->{setID} ne 'Undefined_Set' && !$isTemplate;
+% my $fileIsAssociatedWithSet = defined $c->{setID} && !$isTemplate;
 %
 <div>
 	<div class="row align-items-center mb-2">
