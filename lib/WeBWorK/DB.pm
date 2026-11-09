@@ -386,7 +386,7 @@ sub create_and_restore_tables {
 		}
 	}
 
-	return 1;
+	return $success;
 }
 
 # Backwards compatibility for course archives created with mysqldump.
