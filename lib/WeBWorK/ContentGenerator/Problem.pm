@@ -249,10 +249,8 @@ async sub initialize ($c) {
 	my $effectiveUserID = $c->param('effectiveUser');
 	$c->{editMode} = $c->param('editMode');
 
-	my $user          = $db->getUser($userID);
-	my $effectiveUser = $db->getUser($effectiveUserID);
-
-	return unless defined $user && defined $effectiveUser;    # This should be impossible.
+	my $user          = $c->authen->{user};
+	my $effectiveUser = $c->authen->{effective_user};
 
 	# Check that the set is valid.  $c->{invalidSet} is set in checkSet called by ContentGenerator.pm.
 	return if $c->{invalidSet};
@@ -1451,7 +1449,7 @@ sub output_past_answer_button ($c) {
 
 # Output the "Email Instructor" button
 sub output_email_instructor ($c) {
-	my $user = $c->db->getUser($c->authen->{user_id});
+	my $user = $c->authen->{user};
 
 	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the
 	# feedbackMacro method and only for that case.

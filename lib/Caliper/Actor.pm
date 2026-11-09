@@ -14,7 +14,10 @@ sub generate_default_actor ($c, $user) {
 sub generate_actor ($c, $user_id) {
 	return { id => 'http://purl.imsglobal.org/caliper/Person', type => 'Person' } unless defined $user_id;
 
-	my $user = $c->db->getUser($user_id);
+	my $user =
+		$user_id eq $c->authen->{user_id}                   ? $c->authen->{user}
+		: $user_id eq $c->authen->{effective_user}->user_id ? $c->authen->{effective_user}
+		:                                                     $c->db->getUser($user_id);
 
 	return $c->ce->{caliper}{custom_actor_generator}($c->ce, $c->db, $user)
 		if ref $c->ce->{caliper}{custom_actor_generator} eq 'CODE';

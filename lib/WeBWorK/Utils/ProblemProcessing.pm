@@ -302,7 +302,8 @@ sub jitar_send_warning_email ($c, $userProblem) {
 	my $status = jitar_problem_adjusted_status($userProblem, $c->db);
 	$status = eval { sprintf('%.0f%%', $status * 100) };    # round to whole number
 
-	my $user = $db->getUser($userID);
+	my $user =
+		$userID eq $c->authen->{effective_user}->user_id ? $c->authen->{effective_user} : $db->getUser($userID);
 
 	debug("Couldn't get user $userID from database") unless $user;
 

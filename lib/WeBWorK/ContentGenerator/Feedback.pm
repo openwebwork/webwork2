@@ -50,20 +50,13 @@ sub initialize ($c) {
 	my $feedback  = $c->param('feedback');
 	my $courseID  = $c->stash('courseID');
 
-	my ($user, $set, $problem);
+	my $user = $c->authen->{user};
+	$c->stash->{user_email_address} = $user->email_address;
 
-	$user = $db->getUser($userID) if $userID;
-	$c->stash->{user_email_address} = $user ? $user->email_address : '';
-
-	if (defined $user) {
-		$set     = $db->getMergedSet($userID, $setID) if defined $setID && $setID ne '';
-		$problem = $db->getMergedProblem($userID, $setID, $problemID)
-			if defined $set && defined $problemID && $problemID ne '';
-	} else {
-		$set     = $db->getGlobalSet($setID) if defined $setID && $setID ne '';
-		$problem = $db->getGlobalProblem($setID, $problemID)
-			if defined $set && defined $problemID && $problemID ne '';
-	}
+	my ($set, $problem);
+	$set     = $db->getMergedSet($userID, $setID) if defined $setID && $setID ne '';
+	$problem = $db->getMergedProblem($userID, $setID, $problemID)
+		if defined $set && defined $problemID && $problemID ne '';
 
 	# Generate context URLs.
 	(my $emailableURL, $c->stash->{returnURL}) = $c->generateURLs(set_id => $setID, problem_id => $problemID);
@@ -82,7 +75,7 @@ sub initialize ($c) {
 
 		# Determine the sender of the email.
 		my $sender;
-		if ($user && $user->email_address) {
+		if ($user->email_address) {
 			$from   = $user->email_address;
 			$sender = $user->rfc822_mailbox;
 		}
@@ -100,7 +93,7 @@ sub initialize ($c) {
 			return;
 		}
 		unless ($sender) {
-			if ($user && $user->full_name) {
+			if ($user->full_name) {
 				$sender = $user->full_name . " <$from>";
 			} else {
 				$sender = $from;
@@ -109,12 +102,10 @@ sub initialize ($c) {
 
 		my $subject = formatEmailSubject(
 			$ce->{mail}{feedbackSubjectFormat},
-			$courseID,
-			$user    ? $user->user_id       : '',
+			$courseID, $user->user_id,
 			$set     ? $set->set_id         : '',
 			$problem ? $problem->problem_id : '',
-			$user    ? $user->section       : '',
-			$user    ? $user->recitation    : ''
+			$user->section, $user->recitation
 		);
 
 		my %data = (
@@ -135,22 +126,19 @@ sub initialize ($c) {
 			->html_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', %data))
 			->header('X-Remote-Host' => $data{remote_host});
 		if ($ce->{feedback_sender_email}) {
-			my $from_name = $user ? $user->full_name : $ce->{generic_sender_name};
-			$email->from("$from_name <$ce->{feedback_sender_email}>")->reply_to($sender);
+			$email->from($user->full_name . " <$ce->{feedback_sender_email}>")->reply_to($sender);
 		} else {
 			$email->from($sender);
 		}
 
 		# Extra headers
-		$email->header('X-WeBWorK-Route',  $route)    if defined $route;
-		$email->header('X-WeBWorK-Course', $courseID) if defined $courseID;
-		if ($user) {
-			$email->header('X-WeBWorK-User',       $user->user_id);
-			$email->header('X-WeBWorK-Section',    $user->section);
-			$email->header('X-WeBWorK-Recitation', $user->recitation);
-		}
-		$email->header('X-WeBWorK-Set',     $set->set_id)         if $set;
-		$email->header('X-WeBWorK-Problem', $problem->problem_id) if $problem;
+		$email->header('X-WeBWorK-Route',      $route)    if defined $route;
+		$email->header('X-WeBWorK-Course',     $courseID) if defined $courseID;
+		$email->header('X-WeBWorK-User',       $user->user_id);
+		$email->header('X-WeBWorK-Section',    $user->section);
+		$email->header('X-WeBWorK-Recitation', $user->recitation);
+		$email->header('X-WeBWorK-Set',        $set->set_id)         if $set;
+		$email->header('X-WeBWorK-Problem',    $problem->problem_id) if $problem;
 
 		# Add the attachment if one was provided.
 		my $fileIDhash = $c->param('attachment');

@@ -15,14 +15,14 @@ use Text::Wrap qw(wrap);
 use WeBWorK::Utils qw(processEmailMessage);
 
 sub initialize ($c) {
-	my $db    = $c->db;
-	my $ce    = $c->ce;
-	my $authz = $c->authz;
-	my $user  = $c->authen->{user_id};
+	my $db     = $c->db;
+	my $ce     = $c->ce;
+	my $authz  = $c->authz;
+	my $userID = $c->authen->{user_id};
 
 	# Check permissions
-	return unless $authz->hasPermissions($user, "access_instructor_tools");
-	return unless $authz->hasPermissions($user, "send_mail");
+	return unless $authz->hasPermissions($userID, "access_instructor_tools");
+	return unless $authz->hasPermissions($userID, "send_mail");
 
 	# Gather directory data
 	my $emailDirectory    = $ce->{courseDirs}{email};
@@ -38,19 +38,19 @@ sub initialize ($c) {
 	# if they have been defined via parameter then we should update the db
 
 	if ($openfilename) {
-		$db->setSettingValue("${user}_openfile", $openfilename);
+		$db->setSettingValue("${userID}_openfile", $openfilename);
 	} elsif (defined $openfilename) {
-		$db->deleteSetting("${user}_openfile");
-	} elsif ($db->settingExists("${user}_openfile")) {
-		$openfilename = $db->getSettingValue("${user}_openfile");
+		$db->deleteSetting("${userID}_openfile");
+	} elsif ($db->settingExists("${userID}_openfile")) {
+		$openfilename = $db->getSettingValue("${userID}_openfile");
 	}
 
 	if ($mergefile) {
-		$db->setSettingValue("${user}_mergefile", $mergefile);
+		$db->setSettingValue("${userID}_mergefile", $mergefile);
 	} elsif (defined $mergefile) {
-		$db->deleteSetting("${user}_mergefile");
-	} elsif ($db->settingExists("${user}_mergefile")) {
-		$mergefile = $db->getSettingValue("${user}_mergefile");
+		$db->deleteSetting("${userID}_mergefile");
+	} elsif ($db->settingExists("${userID}_mergefile")) {
+		$mergefile = $db->getSettingValue("${userID}_mergefile");
 		$mergefile = undef unless (-e "$ce->{courseDirs}{scoring}/$mergefile");
 	}
 
@@ -68,18 +68,17 @@ sub initialize ($c) {
 		$action = 'previewMessage';
 	}
 
-	# Get user record
-	my $ur = $db->getUser($user);
+	my $user = $c->authen->{user};
 
 	# Store data
-	$c->{defaultPreviewUser} = $ur;
-	$c->{from}               = $ur->rfc822_mailbox;
-	$c->{from_name}          = $ur->full_name;
+	$c->{defaultPreviewUser} = $user;
+	$c->{from}               = $user->rfc822_mailbox;
+	$c->{from_name}          = $user->full_name;
 	$c->{defaultSubject}     = $c->stash('courseID') . ' notice';
 	$c->{merge_file}         = $mergefile // '';
 
-	my @classList = $c->param('selected_users') // ($user);
-	$c->{preview_user} = $c->db->getUser($classList[0] || $user);
+	my @classList = $c->param('selected_users') // ($userID);
+	$c->{preview_user} = $classList[0] && $classList[0] ne $userID ? $db->getUser($classList[0]) : $user;
 
 	# Gather database data
 	# Get all users except set level proctors and practice users.  If the current user has restrictions on viewable
@@ -87,11 +86,11 @@ sub initialize ($c) {
 	my @Users = $db->getUsersWhere(
 		{
 			user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
-			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			$ce->{viewable_sections}{$userID} || $ce->{viewable_recitations}{$userID}
 			? (
 				-or => [
-					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+					$ce->{viewable_sections}{$userID}    ? (section    => $ce->{viewable_sections}{$userID})    : (),
+					$ce->{viewable_recitations}{$userID} ? (recitation => $ce->{viewable_recitations}{$userID}) : ()
 				]
 				)
 			: ()
@@ -274,7 +273,7 @@ sub initialize ($c) {
 		if (-w "${emailDirectory}/$output_file") {    # if there are no errors report success
 			$c->addgoodmessage($c->maketext('Message saved to file [_1].', "$emailDirectory/$output_file"));
 			$c->{input_file} = $output_file;
-			$db->setSettingValue("${user}_openfile", $output_file);
+			$db->setSettingValue("${userID}_openfile", $output_file);
 		}
 
 	} elsif ($action eq 'previewMessage') {

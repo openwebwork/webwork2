@@ -599,6 +599,7 @@ sub save_edit_handler ($c) {
 			$User->$field($newValue);
 		}
 		$db->putUser($User);
+		$c->authen->{user} = $User if $userID eq $c->authen->{user_id};
 
 		my $newPermissionLevel = $c->param("user.$userID.permission");
 		$PermissionLevel->permission($newPermissionLevel)

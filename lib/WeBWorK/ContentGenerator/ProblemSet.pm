@@ -43,8 +43,7 @@ async sub initialize ($c) {
 		&& !($authz->hasPermissions($userID, 'record_answers_when_acting_as_student')
 			|| $authz->hasPermissions($userID, 'create_new_set_version_when_acting_as_student'));
 
-	my $user          = $db->getUser($userID);
-	my $effectiveUser = $db->getUser($eUserID);
+	my $effectiveUser = $c->authen->{effective_user};
 	$c->{set} = $authz->{merged_set};
 
 	# Allow a student to view their own answer key early by overriding their answer date to now, if this is
@@ -224,7 +223,7 @@ sub gateway_body ($c) {
 	my $effectiveUserID = $c->param('effectiveUser');
 	my $userID          = $c->authen->{user_id};
 
-	my $effectiveUser = $db->getUser($effectiveUserID);
+	my $effectiveUser = $c->authen->{effective_user};
 
 	my $timeNow   = time;
 	my $timeLimit = ($set->version_time_limit || 0) * $effectiveUser->accommodation_time_factor;

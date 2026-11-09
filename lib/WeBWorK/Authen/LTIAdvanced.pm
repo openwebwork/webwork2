@@ -689,6 +689,7 @@ sub maybe_update_user {
 			$tempUser->useMathQuill($self->{user}->useMathQuill);
 			$tempUser->useMathView($self->{user}->useMathView);
 			$tempUser->accommodation_time_factor($self->{user}->accommodation_time_factor);
+			$tempUser->showOldAnswers($self->{user}->showOldAnswers);
 
 			$tempUser->comment(formatDateTime(time, 0, $ce->{siteDefaults}{timezone}, $ce->{language}));
 			eval { $db->putUser($tempUser) };
@@ -698,6 +699,7 @@ sub maybe_update_user {
 					if ($ce->{debug_lti_parameters});
 				return 0;
 			} else {
+				$self->{user} = $tempUser;
 				$self->write_log_entry("Demographic data for user $userID modified via LTIAdvanced login");
 				warn "Existing user: $userID updated.\n"
 					if ($ce->{debug_lti_parameters});

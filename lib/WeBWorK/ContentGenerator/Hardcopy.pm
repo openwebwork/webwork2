@@ -384,7 +384,7 @@ sub display_form ($c) {
 
 		$canShowCorrectAnswers = 1;
 	} else {    # single user mode
-		$user = $db->getUser($eUserID);
+		$user = $c->authen->{effective_user};
 
 		$selected_set_id = $c->param("selected_sets") // '';
 

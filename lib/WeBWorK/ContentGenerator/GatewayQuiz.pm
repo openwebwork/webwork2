@@ -32,11 +32,11 @@ sub can ($c, $arg) {
 # "can" methods
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-#   ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+#   ($c, $user, $effectiveUser, $set, $problem, $tmplSet)
 # In addition can_recordAnswers and can_checkAnswers have the argument $submitAnswers
 # that is used to distinguish between this submission and the next.
 
-sub can_showOldAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showOldAnswers ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
 
 	return 0 unless $authz->hasPermissions($user->user_id, 'can_show_old_answers');
@@ -49,7 +49,7 @@ sub can_showOldAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $prob
 	);
 }
 
-sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showCorrectAnswers ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
 
 	# Allow correct answers to be viewed after all attempts at a version
@@ -67,7 +67,7 @@ sub can_showCorrectAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $
 						&& $set->due_date == $set->answer_date)
 				)
 		)
-			&& $c->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+			&& $c->can_showProblemScores($user, $effectiveUser, $set, $problem, $tmplSet)
 	);
 }
 
@@ -96,7 +96,7 @@ sub can_showCorrectAnswersForAll ($c, $set, $problem, $tmplSet) {
 	);
 }
 
-sub can_showProblemGrader ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
@@ -107,10 +107,10 @@ sub can_showProblemGrader ($c, $user, $permissionLevel, $effectiveUser, $set, $p
 
 sub can_showHints ($c) { return 1; }
 
-sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showSolutions ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	my $authz = $c->authz;
 	return 1 if $authz->hasPermissions($user->user_id, 'always_show_solution');
-	return $c->can_showCorrectAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
+	return $c->can_showCorrectAnswers($user, $effectiveUser, $set, $problem, $tmplSet);
 }
 
 # When answers are being submitted for a proctored test, allow for a version_last_attempt_time which is the time the set
@@ -121,7 +121,7 @@ sub can_showSolutions ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 # it can not call any of the object methods in the GatewayQuiz package or use anything that is not set for a generic
 # ContentGenerator object. Also make sure that the conditions for recording an unsubmitted test are kept in sync with
 # the conditions of the can_gradeUnsubmittedTest method.
-sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet = 0, $submitAnswers = 0) {
+sub can_recordAnswers ($c, $user, $effectiveUser, $set, $problem, $tmplSet = 0, $submitAnswers = 0) {
 	my $authz = $c->authz;
 
 	# Never record answers for undefined sets
@@ -174,11 +174,11 @@ sub can_recordAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $probl
 # When answers are being submitted for a proctored test, allow for a version_last_attempt_time which is the time the set
 # was submitted.  If that is present, then use that instead of the current time to decide if answers can be checked.
 # This deals with the time between the submission time and the proctor authorization.
-sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0) {
+sub can_checkAnswers ($c, $user, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0) {
 	my $authz = $c->authz;
 
 	return 0
-		if $c->can_recordAnswers($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers)
+		if $c->can_recordAnswers($user, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers)
 		&& !$authz->hasPermissions($user->user_id, 'can_check_and_submit_answers');
 
 	my $submitTime =
@@ -193,8 +193,7 @@ sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $proble
 	# $set->hide_score are both set, then allow scores to be shown, but don't show the score on any individual problem.
 	# To deal with this, use the least restrictive view of hiding, and then filter for the problems themselves later.
 
-	my $canShowProblemScores =
-		$c->can_showProblemScores($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
+	my $canShowProblemScores = $c->can_showProblemScores($user, $effectiveUser, $set, $problem, $tmplSet);
 
 	if (between($set->open_date, $set->due_date + $c->ce->{gatewayGracePeriod}, $submitTime)) {
 		# Look at maximum attempts per version, not for the set, to determine the number of attempts allowed.
@@ -220,11 +219,10 @@ sub can_checkAnswers ($c, $user, $permissionLevel, $effectiveUser, $set, $proble
 }
 
 # If user can use the problem grader, and the test is past due and has not been submitted, allow them to submit.
-sub can_gradeUnsubmittedTest ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0)
-{
+sub can_gradeUnsubmittedTest ($c, $user, $effectiveUser, $set, $problem, $tmplSet, $submitAnswers = 0) {
 	return
 		!$submitAnswers
-		&& $c->can_showProblemGrader($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+		&& $c->can_showProblemGrader($user, $effectiveUser, $set, $problem, $tmplSet)
 		&& (after($set->due_date + $c->ce->{gatewayGracePeriod}) && !$set->version_last_attempt_time);
 }
 
@@ -261,19 +259,19 @@ sub recordSubmissionTime ($c, $set, $problem) {
 	return 1;
 }
 
-sub can_showScore ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showScore ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	return
 		$c->authz->hasPermissions($user->user_id, 'view_hidden_work')
 		|| $set->hide_score eq 'N'
 		|| ($set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date, $c->submitTime));
 }
 
-sub can_showProblemScores ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
-	return $c->can_showScore($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet)
+sub can_showProblemScores ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
+	return $c->can_showScore($user, $effectiveUser, $set, $problem, $tmplSet)
 		&& ($set->hide_score_by_problem eq 'N' || $c->authz->hasPermissions($user->user_id, 'view_hidden_work'));
 }
 
-sub can_showWork ($c, $user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet) {
+sub can_showWork ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 	return $c->authz->hasPermissions($user->user_id, 'view_hidden_work')
 		|| ($set->hide_work eq 'N'
 			|| ($set->hide_work eq 'BeforeAnswerDate' && $c->submitTime > $tmplSet->answer_date));
@@ -335,16 +333,8 @@ async sub initialize ($c) {
 	my $effectiveUserID = $c->param('effectiveUser');
 	my $isFakeSet       = 0;
 
-	# User checks
-	my $user = $db->getUser($userID);
-	die "record for user $userID (real user) does not exist." unless defined $user;
-
-	my $effectiveUser = $db->getUser($effectiveUserID);
-	die "record for user $effectiveUserID (effective user) does not exist." unless defined $effectiveUser;
-
-	my $permissionLevel = $db->getPermissionLevel($userID);
-	die "permission level record for $userID does not exist (but the user does? odd...)"
-		unless defined $permissionLevel;
+	my $user          = $c->authen->{user};
+	my $effectiveUser = $c->authen->{effective_user};
 
 	# Get the version if it is provided.  Note that if a version was provided the version needs to be checked.  That is
 	# done after it has been validated that the user is assigned the set.
@@ -833,7 +823,7 @@ async sub initialize ($c) {
 		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill},
 	);
 
-	my @args = ($user, $permissionLevel, $effectiveUser, $set, $problem, $tmplSet);
+	my @args = ($user, $effectiveUser, $set, $problem, $tmplSet);
 
 	if ($want{recordAnswers} && $c->can_recordAnswers(@args) && !$c->recordSubmissionTime($set, $problem)) {
 		$c->{submitAnswers} = 0;

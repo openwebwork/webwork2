@@ -171,10 +171,10 @@ async sub dispatch ($c) {
 			debug("Now we deal with the effective user:\n");
 			my $eUserID = $c->param('effectiveUser') || $userID;
 			debug("userID=$userID eUserID=$eUserID\n");
+			my $effectiveUser;
 			if ($userID ne $eUserID) {
 				debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
-				my $su_authorized = $authz->hasPermissions($userID, 'become_student');
-				if ($su_authorized) {
+				if ($authz->hasPermissions($userID, 'become_student')) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 				} else {
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
@@ -182,7 +182,17 @@ async sub dispatch ($c) {
 						"You do not have permission to act as another user.\n"
 							. 'Close down your browser (this clears temporary cookies), restart and try again.');
 				}
+
+				$effectiveUser = $db->getUser($eUserID);
+				unless ($effectiveUser) {
+					debug("There is no user $eUserID in this course. Not acting.\n");
+					$eUserID = $userID;
+				}
 			}
+
+			# The same record is used for both when not acting as another
+			# user so that changes made to one are reflected in the other.
+			$c->authen->{effective_user} = $effectiveUser // $c->authen->{user};
 
 			# Set effectiveUser in case it was changed or not set to begin with.
 			$c->param('effectiveUser' => $eUserID);

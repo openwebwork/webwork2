@@ -21,12 +21,9 @@ sub initialize ($c) {
 	my $authz = $c->authz;
 
 	my $userID = $c->authen->{user_id};
-	$c->{user} = $db->getUser($userID);
-	return unless defined $c->{user};
-
+	$c->{user}          = $c->authen->{user};
+	$c->{effectiveUser} = $c->authen->{effective_user};
 	my $effectiveUserID = $c->param('effectiveUser');
-	$c->{effectiveUser} = $db->getUser($effectiveUserID);
-	return unless defined $c->{effectiveUser};
 
 	my $changeOptions = $c->param('changeOptions');
 
