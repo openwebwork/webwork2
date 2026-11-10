@@ -24,8 +24,6 @@ use constant ACTION_FORM_TITLES => {
 use constant DEFAULT_ICON => 'defaulticon.png';
 
 sub initialize ($c) {
-	my $ce = $c->ce;
-
 	# Make sure that are defined for the templates.
 	$c->stash->{formsToShow}         = ACTION_FORMS();
 	$c->stash->{actionFormTitles}    = ACTION_FORM_TITLES();
@@ -33,14 +31,16 @@ sub initialize ($c) {
 
 	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'edit_achievements');
 
-	my $Achievement = $c->db->getAchievement($c->stash('achievementID'));
-	unless ($Achievement) {
+	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect.
+
+	$c->{achievement} = $c->db->getAchievement($c->stash('achievementID'));
+	unless ($c->{achievement}) {
 		$c->addbadmessage($c->maketext('Achievement "[_1]" not found!', $c->stash('achievementID')));
 		return;
 	}
 
-	my $sourceFile = $Achievement->test;
-	my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($ce, 'test', $sourceFile);
+	my $sourceFile = $c->{achievement}->test;
+	my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($c->ce, 'test', $sourceFile);
 	if ($courseFilePath) {
 		$c->{sourceFilePath} = $courseFilePath;
 	} elsif ($systemFilePath) {
@@ -51,8 +51,7 @@ sub initialize ($c) {
 		return;
 	}
 
-	$c->{achievement} = $Achievement;
-	$c->{sourceFile}  = $sourceFile;
+	$c->{sourceFile} = $sourceFile;
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
@@ -81,13 +80,10 @@ sub addBasePath ($c, $file) {
 # saveFileChanges does the work of saving the file for both the save_handler and the save_as_handler.
 # Validate $outputFile before calling this method to produce error messages.
 sub saveFileChanges ($c, $outputFile) {
-	my $ce = $c->ce;
+	my $achievementDir = $c->ce->{courseDirs}{achievements};
 
-	# One last validation check for safety.
-	return 0 unless $outputFile && isAchievementAssetSafe($outputFile);
-
-	my $outputFilePath = "$ce->{courseDirs}{achievements}/$outputFile";
-	surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
+	my $outputFilePath = "$achievementDir/$outputFile";
+	surePathToFile($achievementDir, $outputFilePath);
 	eval {
 		open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
 		print $OUTPUTFILE $c->stash->{achievementContents};
@@ -98,9 +94,9 @@ sub saveFileChanges ($c, $outputFile) {
 	if ($writeFileErrors) {
 		my $errorMessage;
 		# Check why we failed to give better error messages.
-		if (not -d $ce->{courseDirs}{achievements}) {
+		if (not -d $achievementDir) {
 			$errorMessage = $c->maketext('Course achievements directory does not exist.  File not saved.');
-		} elsif (not -w $ce->{courseDirs}{achievements}) {
+		} elsif (not -w $achievementDir) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
 		} elsif (-f $outputFilePath and not -w $outputFilePath) {
@@ -208,7 +204,11 @@ sub save_as_handler ($c) {
 			'Achievement [_1] created with evaluator "[_2]".', $targetAchievementID,
 			$c->addBasePath($new_file_name)
 		));
-		$c->{achievement} = $achievement;
+
+		# Need to redirect to edit the newly created achievement's evaluator.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('instructor_achievement_editor', achievementID => $targetAchievementID)));
 	} elsif ($saveMode eq 'dont_use') {
 		# Don't change any achievements - just report.
 		$c->addgoodmessage($c->maketext(

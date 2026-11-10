@@ -27,13 +27,13 @@ sub initialize ($c) {
 
 	return unless $c->authz->hasPermissions($c->authen->{user_id}, 'edit_achievements');
 
-	my $achievement = $c->db->getAchievement($c->stash('achievementID'));
-	unless ($achievement) {
+	$c->{achievement} = $c->db->getAchievement($c->stash('achievementID'));
+	unless ($c->{achievement}) {
 		$c->addbadmessage($c->maketext('Achievement "[_1]" not found!', $c->stash('achievementID')));
 		return;
 	}
 
-	my $sourceFile = $achievement->email_template || 'default.txt.epl';
+	my $sourceFile = $c->{achievement}->email_template || 'default.txt.epl';
 	unless (isAchievementAssetSafe($sourceFile)) {
 		$c->addbadmessage($c->maketext(
 			'Achievement notification template path "[_1]" is unsafe and cannot be edited.', $sourceFile
@@ -41,7 +41,6 @@ sub initialize ($c) {
 		return;
 	}
 
-	$c->{achievement}    = $achievement;
 	$c->{sourceFile}     = $sourceFile;
 	$c->{sourceFilePath} = $c->ce->{courseDirs}{achievement_notifications} . '/' . $sourceFile;
 
@@ -80,13 +79,10 @@ sub addBasePath ($c, $file) {
 # saveFileChanges does the work of saving the file for both the save_handler and the save_as_handler.
 # Validate $outputFile before calling this method to produce error messages.
 sub saveFileChanges ($c, $outputFile) {
-	my $ce = $c->ce;
+	my $achievementNotificationsDir = $c->ce->{courseDirs}{achievement_notifications};
 
-	# One last validation check for safety.
-	return 0 unless $outputFile && isAchievementAssetSafe($outputFile);
-
-	my $outputFilePath = "$ce->{courseDirs}{achievement_notifications}/$outputFile";
-	surePathToFile($ce->{courseDirs}{achievement_notifications}, $outputFilePath);
+	my $outputFilePath = "$achievementNotificationsDir/$outputFile";
+	surePathToFile($achievementNotificationsDir, $outputFilePath);
 	eval {
 		open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
 		print $OUTPUTFILE $c->stash->{achievementNotification};
@@ -97,9 +93,9 @@ sub saveFileChanges ($c, $outputFile) {
 	if ($writeFileErrors) {
 		my $errorMessage;
 		# Check why we failed to give better error messages.
-		if (not -d $ce->{courseDirs}{achievement_notifications}) {
+		if (not -d $achievementNotificationsDir) {
 			$errorMessage = $c->maketext('Course achievement notifications directory does not exist.  File not saved.');
-		} elsif (not -w $ce->{courseDirs}{achievement_notifications}) {
+		} elsif (not -w $achievementNotificationsDir) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
 		} elsif (-f $outputFilePath and not -w $outputFilePath) {

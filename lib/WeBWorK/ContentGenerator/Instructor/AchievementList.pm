@@ -582,14 +582,14 @@ sub save_edit_handler ($c) {
 	my @selectedAchievementIDs = @{ $c->{selectedAchievementIDs} };
 
 	for my $achievementID (@selectedAchievementIDs) {
-		my $Achievement = $db->getAchievement($achievementID);
-		unless ($Achievement) {
+		my $achievement = $db->getAchievement($achievementID);
+		unless ($achievement) {
 			$c->addbadmessage($c->maketext('No record for achievement "[_1]" found. Skipping.', $achievementID));
 			next;
 		}
 
 		# Update fields.
-		for my $field ($Achievement->NONKEYFIELDS()) {
+		for my $field ($achievement->NONKEYFIELDS()) {
 			# email_template is not editable in this form. Skip.
 			next if $field eq 'email_template';
 
@@ -597,7 +597,7 @@ sub save_edit_handler ($c) {
 
 			if ($field eq 'assignment_type') {
 				my @types = $c->param($param);
-				$Achievement->assignment_type(join(',', @types));
+				$achievement->assignment_type(join(',', @types));
 			} elsif (defined $c->param($param)) {
 				my $value = $c->param($param);
 
@@ -611,7 +611,7 @@ sub save_edit_handler ($c) {
 					&& (!$value ? $field eq 'test' : !isAchievementAssetSafe($value)))
 				{
 					# Skip filename error message for previous saved values.
-					unless ($value eq $Achievement->$field) {
+					unless ($value eq $achievement->$field) {
 						if ($value) {
 							$c->addbadmessage($c->maketext(
 								'Filename "[_1]" for "[_2]" in achievement "[_3]" is unsafe. Not updating.',
@@ -627,12 +627,12 @@ sub save_edit_handler ($c) {
 						}
 					}
 				} else {
-					$Achievement->$field($value);
+					$achievement->$field($value);
 				}
 			}
 		}
 
-		$db->putAchievement($Achievement);
+		$db->putAchievement($achievement);
 	}
 
 	$c->{editMode} = 0;
