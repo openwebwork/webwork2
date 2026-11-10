@@ -130,11 +130,13 @@ async sub initialize ($c) {
 				|| have_different_answers($showMeAnotherNewPG, $showMeAnotherOriginalPG))
 			{
 				# Increment the counter detailing the number of times showMeAnother has been used,
-				# and update the database.
-				my $userProblem =
-					$db->getUserProblem($c->{effectiveUserID}, $c->stash('setID'), $c->stash('problemID'));
-				$userProblem->{showMeAnotherCount} = ++$c->{showMeAnother}{Count};
-				$db->putUserProblem($userProblem);
+				# and update the database unless acting as another user.
+				if ($c->{userID} eq $c->{effectiveUserID}) {
+					my $userProblem =
+						$db->getUserProblem($c->{effectiveUserID}, $c->stash('setID'), $c->stash('problemID'));
+					$userProblem->{showMeAnotherCount} = ++$c->{showMeAnother}{Count};
+					$db->putUserProblem($userProblem);
+				}
 
 				# Save the problem seed from ShowMeAnother so that it can be used when the page reloads.
 				$c->authen->session->{showMeAnother}{problemSeed} = $newProblemSeed;
@@ -158,6 +160,8 @@ async sub initialize ($c) {
 	$c->{can}{recordAnswers}   = 0;
 	$c->{can}{checkAnswers}    = 0;    # This is turned on if the showMeAnother conditions are met below.
 	$c->{can}{getSubmitButton} = 0;
+	$c->{can}{requestNewSeed}  = 0;
+	$c->{newVersionRequired}   = 0;
 
 	if ($c->stash->{isPossible}) {
 		$c->{can}{showCorrectAnswers} =
@@ -286,6 +290,13 @@ sub output_score_summary ($c)        { return '' }
 sub output_comments      ($c)        { return '' }
 sub output_grader        ($c)        { return '' }
 sub nav                  ($c, $args) { return '' }
+
+# Past answers are for the original problem, not this version.
+sub output_past_answer_button ($c) { return '' }
+
+# The problem seed for this version is only stored in the user's session, so a link in a
+# feedback email can not take the instructor to this version of the problem.
+sub output_email_instructor ($c) { return '' }
 
 # Outputs the summary of the questions that the student has answered for the
 # current problem, along with available information about correctness.

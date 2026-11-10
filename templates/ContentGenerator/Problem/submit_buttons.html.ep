@@ -3,7 +3,7 @@
 % my %can           = %{ $c->{can} };
 % my %will          = %{ $c->{will} };
 % my $effectiveUser = param('effectiveUser');
-% if ($will{requestNewSeed}) {
+% if ($will{requestNewSeed} && $authen->{user_id} eq $effectiveUser) {
 	<%= submit_button maketext('Request New Version'),
 		id         => 'enter_key_submit',
 		name       => 'requestNewSeed',
@@ -57,6 +57,13 @@
 			formtarget => '_self',
 			name       => 'checkAnswers',
 			class      => 'btn btn-primary mb-1' =%>
+	% }
+	%
+	% if ($will{requestNewSeed}) {
+		<%= submit_button maketext('Request New Version for [_1]', $effectiveUser),
+			id    => 'submitAnswers_id',
+			name  => 'requestNewSeed',
+			class => 'btn btn-primary mb-1' =%>
 	% }
 	%
 	% if ($can{getSubmitButton}) {
