@@ -54,7 +54,7 @@ $site-nav-width: 250px !default;
 		height: unset;
 	}
 
-	a {
+	a:not(.dropdown-item) {
 		color: var(--ww-primary-foreground-color, white);
 
 		&:hover {
@@ -114,7 +114,7 @@ $site-nav-width: 250px !default;
 			display: block;
 		}
 
-		#color-scheme-chooser {
+		.masthead-menu-button {
 			--bs-btn-color: var(--ww-primary-foreground-color, white) !important;
 			--bs-btn-hover-color: var(--ww-color-chooser-hover-color, #ccc);
 			--bs-btn-active-color: var(--ww-color-chooser-hover-color, #ccc);
@@ -123,17 +123,9 @@ $site-nav-width: 250px !default;
 		}
 	}
 
-	.login-status {
-		flex-shrink: 1;
-		height: $masthead-height - 1px;
-		padding: 4px 10px 4px 0;
+	.login-name {
 		color: var(--ww-primary-foreground-color, white);
-		font-size: 0.85em;
 		font-weight: normal;
-
-		a {
-			color: black;
-		}
 	}
 }
 
