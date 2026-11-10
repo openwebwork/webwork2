@@ -13,7 +13,7 @@ use WeBWorK::Utils            qw(wwRound);
 use WeBWorK::Utils::DateTime  qw(after);
 use WeBWorK::Utils::Files     qw(path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
-use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display);
+use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display test_version_is_complete);
 use WeBWorK::Localize;
 use WeBWorK::AchievementItems;
 use WeBWorK::HTML::StudentNav qw(studentNav);
@@ -254,12 +254,14 @@ sub gateway_body ($c) {
 		my $verSubmits = defined $Problem ? $Problem->num_correct + $Problem->num_incorrect : 0;
 		my $maxSubmits = $verSet->attempts_per_version || 0;
 
+		my $proctored = $verSet->assignment_type =~ /proctored/ && !test_version_is_complete($c, $verSet, $Problem);
+
 		# Build data hash for this version.
 		my $data = {};
 		$data->{id}        = $set->set_id . ',v' . $verSet->version_id;
 		$data->{version}   = $verSet->version_id;
 		$data->{start}     = $c->formatDateTime($verSet->version_creation_time, $ce->{studentDateDisplayFormat});
-		$data->{proctored} = $verSet->assignment_type =~ /proctored/;
+		$data->{proctored} = $proctored;
 
 		# Display close date if this is not a timed test.
 		my $closeText = '';
