@@ -7,11 +7,12 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 
 =cut
 
-use WeBWorK::Debug           qw(debug);
-use WeBWorK::Utils           qw(sortByName);
-use WeBWorK::Utils::DateTime qw(after);
-use WeBWorK::Utils::Files    qw(readFile);
-use WeBWorK::Utils::Sets     qw(restricted_set_message);
+use WeBWorK::Debug            qw(debug);
+use WeBWorK::Utils            qw(sortByName);
+use WeBWorK::Utils::DateTime  qw(after);
+use WeBWorK::Utils::Files     qw(readFile);
+use WeBWorK::Utils::Sets      qw(restricted_set_message);
+use WeBWorK::HTML::StudentNav qw(studentNav);
 use WeBWorK::Localize;
 
 # The "default" data in the course_info.txt file.
@@ -88,6 +89,18 @@ sub initialize ($c) {
 	}
 
 	return;
+}
+
+sub nav ($c, $args) {
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'become_student');
+
+	return $c->tag(
+		'div',
+		class        => 'row sticky-nav',
+		role         => 'navigation',
+		'aria-label' => 'student navigation',
+		studentNav($c, undef)
+	);
 }
 
 sub info ($c) {
