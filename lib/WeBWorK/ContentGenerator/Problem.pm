@@ -831,7 +831,6 @@ sub nav ($c, $args) {
 	}
 
 	my %tail;
-	$tail{showOldAnswers}   = 1                             if $c->{will}{showOldAnswers};
 	$tail{studentNavFilter} = $c->param('studentNavFilter') if $c->param('studentNavFilter');
 
 	return $c->tag(
@@ -1230,9 +1229,6 @@ sub output_score_summary ($c) {
 # Output other necessary elements
 sub output_misc ($c) {
 	my $output = $c->c;
-
-	# Save state for viewOptions
-	push(@$output, $c->hidden_field(showOldAnswers => $c->{will}{showOldAnswers}));
 
 	# Only allow file editing for users that have the permission to modify problem sets.
 	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {

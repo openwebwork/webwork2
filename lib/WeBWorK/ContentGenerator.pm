@@ -455,9 +455,6 @@ sub links ($c) {
 		}
 	}
 
-	# System link parameters that are common to all links (except the Courses link).
-	my %systemlink_params = ($c->param('showOldAnswers') ? (showOldAnswers => $c->param('showOldAnswers')) : ());
-
 	my $current_url = $c->url_for;
 
 	# Subroutine for generating links.
@@ -474,7 +471,7 @@ sub links ($c) {
 		# Mojolicious has already encoded html entities at this point.
 		return $c->link_to(
 			($options{text} // route_title($c, $route_name, 1)) => $c->systemLink(
-				$new_url, params => { %systemlink_params, %{ $options{systemlink_params} // {} } }
+				$new_url, params => $options{systemlink_params} // {}
 			),
 			class => 'nav-link' . ($active ? ' active' : ''),
 			$options{target} ? (target => $options{target}) : (),
