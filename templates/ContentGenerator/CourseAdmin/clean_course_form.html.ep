@@ -1,0 +1,28 @@
+<h2><%= maketext('Clean Course') %> <%= $c->helpMacro('AdminCleanCourse') %></h2>
+%
+% if (@$courseIDs) {
+	<%= form_for current_route, method => 'POST', begin =%>
+		<%= $c->hidden_authen_fields =%>
+		<%= $c->hidden_fields('subDisplay') =%>
+		<div class="mb-2">
+			<%= maketext('Select a course to clean. This will remove student users and their associated data from '
+					. 'the database. It will also remove the log files, any files in the scoring folder, and any '
+					. 'temporary edited files.') =%>
+		</div>
+		<div class="row mb-2">
+			<%= label_for clean_courseID => maketext('Course ID:'), class => 'col-auto col-form-label fw-bold' =%>
+			<div class="col-auto">
+				<%= select_field
+					clean_courseID => $courseIDs,
+					id             => 'clean_courseID',
+					size           => 15,
+					class          => 'form-select' =%>
+			</div>
+		</div>
+		<div>
+			<%= submit_button maketext('Clean Course'), name => 'clean_course', class => 'btn btn-primary' =%>
+		</div>
+	<%= end =%>
+% } else {
+	<p><%= maketext('No courses found') %></p>
+% }

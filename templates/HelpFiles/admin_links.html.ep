@@ -26,6 +26,10 @@
 	<dd><%= maketext(q{Create a .tar.gz archive which includes the course's database and all course files.}) =%></dd>
 	<dt><%= maketext('Unarchive Course') %></dt>
 	<dd><%= maketext(q{Restore a .tar.gz archive.}) =%></dd>
+	<dt><%= maketext('Clean Course') %></dt>
+	<dd>
+		<%= maketext('Remove student users, log files, scoring files, and temporary edited files from a course.') =%>
+	</dd>
 	<dt><%= maketext('Upgrade Courses') %></dt>
 	<dd><%= maketext('Upgrade courses from a previous version of WeBWorK.') =%></dd>
 	<dt><%= maketext('Hide Courses') %></dt>
