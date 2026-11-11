@@ -132,7 +132,7 @@ sub constructPGOptions ($ce, $user, $set, $problem, $psvn, $formFields, $transla
 	$options{setDescription}   = $set->description;
 	$options{setNumber}        = $set->set_id;
 	$options{studentLogin}     = $user->user_id;
-	$options{studentName}      = $user->first_name . ' ' . $user->last_name;
+	$options{studentName}      = $user->full_name;
 	$options{studentID}        = $user->student_id;
 
 	# Permission level of actual user (deprecated)

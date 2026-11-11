@@ -41,7 +41,7 @@ sub initialize ($c) {
 
 			# Check that either password is not defined or if it is defined then we have the right one.
 			if (!defined $password || utf8Crypt($currP // '', $password->password) eq $password->password) {
-				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
+				my $e_user_name = $c->{effectiveUser}->full_name;
 				if ($newP eq $confirmP) {
 					if (!defined $effectiveUserPassword) {
 						$effectiveUserPassword = $db->newPassword();
@@ -85,8 +85,7 @@ sub initialize ($c) {
 					));
 				}
 			} else {
-				my $fieldText =
-					$c->maketext("[_1]'s Current Password", $c->{user}->first_name . ' ' . $c->{user}->last_name);
+				my $fieldText = $c->maketext("[_1]'s Current Password", $c->{user}->full_name);
 				$c->addbadmessage($c->maketext(
 					'The password you entered in the [_1] field does not match your current password. '
 						. 'Please retype your current password and try again.',

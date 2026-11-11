@@ -7,7 +7,7 @@ sub generate_default_actor ($c, $user) {
 	return {
 		id   => Caliper::ResourceIri->new($c->ce)->actor_homepage($user->user_id),
 		type => 'Person',
-		name => $user->first_name . ' ' . $user->last_name
+		name => $user->full_name
 	};
 }
 
