@@ -102,6 +102,48 @@
 		for (const [name, value] of Object.entries(styles)) element.style.setProperty(name, value, 'important');
 	};
 
+	// WebKit offsets box shadows in the SVG foreignObject used for the screenshot.
+	const isWebKit = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium/.test(navigator.userAgent);
+
+	// Replace a box shadow with an outline for a ring shadow (no offset or blur), and remove any other shadow.
+	const boxShadowReplacement = (boxShadow) => {
+		const styles = { 'box-shadow': 'none' };
+		let maxSpread = 0;
+		for (const shadow of boxShadow.split(/,(?![^(]*\))/)) {
+			if (shadow.includes('inset')) continue;
+			const color = shadow.match(/(?:rgba?|hsla?|color)\([^)]*\)|#[\da-f]+/i)?.[0];
+			const lengths = (shadow.replace(/\([^)]*\)/g, '').match(/-?[\d.]+px/g) ?? []).map(parseFloat);
+			if (!color || lengths.length !== 4 || lengths.slice(0, 3).some((length) => length !== 0)) continue;
+			if (lengths[3] > maxSpread) {
+				maxSpread = lengths[3];
+				Object.assign(styles, { outline: `${maxSpread}px solid ${color}`, 'outline-offset': '0' });
+			}
+		}
+		return styles;
+	};
+
+	const getBoxShadows = () => {
+		if (!isWebKit) return [[], () => {}];
+		const elements = Array.from(problemBody.querySelectorAll('*')).filter((element) => {
+			const boxShadow = getComputedStyle(element).boxShadow;
+			return boxShadow && boxShadow !== 'none';
+		});
+		return [
+			elements.map((element, index) => {
+				element.dataset.screenshotShadow = index.toString();
+				return boxShadowReplacement(getComputedStyle(element).boxShadow);
+			}),
+			() => elements.forEach((element) => delete element.dataset.screenshotShadow)
+		];
+	};
+
+	const setBoxShadowsInClone = (clone, boxShadowStyles) => {
+		for (const element of clone.querySelectorAll('[data-screenshot-shadow]')) {
+			const styles = boxShadowStyles[parseInt(element.dataset.screenshotShadow)];
+			if (styles) setStyles(element, styles);
+		}
+	};
+
 	const layoutPopoversInClone = (clone, layout) => {
 		setStyles(clone, {
 			position: 'relative',
@@ -153,18 +195,18 @@
 				return {
 					type: input.type,
 					checked: input.checked,
-					styles: Object.fromEntries([
-						['width', `${rect.width}px`],
-						['height', `${rect.height}px`],
-						...[
-							'margin-top',
-							'margin-right',
-							'margin-bottom',
-							'margin-left',
-							'vertical-align',
-							'box-shadow'
-						].map((name) => [name, style.getPropertyValue(name)])
-					])
+					styles: {
+						...Object.fromEntries([
+							['width', `${rect.width}px`],
+							['height', `${rect.height}px`],
+							...['margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'vertical-align'].map(
+								(name) => [name, style.getPropertyValue(name)]
+							)
+						]),
+						...(isWebKit
+							? boxShadowReplacement(style.boxShadow)
+							: { 'box-shadow': style.getPropertyValue('box-shadow') })
+					}
 				};
 			}),
 			() => {
@@ -217,6 +259,8 @@
 					removeMarks.push(removePopoverMarks);
 					const [inputStates, removeFormStateMarks] = getFormState();
 					removeMarks.push(removeFormStateMarks);
+					const [boxShadowStyles, removeBoxShadowMarks] = getBoxShadows();
+					removeMarks.push(removeBoxShadowMarks);
 					const [pseudoElementStyles, removePseudoElementMarks] = await getPseudoElementImageStyles();
 					removeMarks.push(removePseudoElementMarks);
 					return modernScreenshot.domToPng(problemBody, {
@@ -227,6 +271,7 @@
 							: {}),
 						onCloneNode: (clone) => {
 							setFormStateInClone(clone, inputStates);
+							setBoxShadowsInClone(clone, boxShadowStyles);
 							if (popoverLayout.numPopovers) layoutPopoversInClone(clone, popoverLayout);
 						},
 						onCreateForeignObjectSvg: (svg) => {
