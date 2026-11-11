@@ -512,21 +512,23 @@ sub getConfigValues ($ce) {
 					'<p>Flag answer submissions that show signs that the answers may not have been entered by the '
 						. 'student, for example by an AI agent. Flagged submissions are shown to instructors on the '
 						. '"Past Answers" and "Student Progress" pages, and are never shown to students.</p>'
-						. '<p>Checks of the stored submission data flag a submission that is correct on the first '
-						. 'attempt very soon after the previous submission, that is part of a run of submissions on '
-						. 'several problems at very regular intervals, or that contains LaTeX. These checks apply to '
-						. 'all past submissions, including those made before flagging was enabled. The timing checks '
-						. 'are not done for tests.</p><p>In-browser checks also flag a submission if the answers '
-						. 'were changed without any keyboard, mouse, or touch input, or if the browser reports that '
-						. 'it is controlled by automation software. This information is only recorded while the '
-						. 'in-browser checks are enabled, and is not shown if they are later disabled. Users are '
-						. 'shown a notice about the in-browser checks on problem pages until they dismiss it.</p>'
+						. '<p>Server-side timing checks flag a submission that is correct on the first attempt very '
+						. 'soon after the previous submission, or that is part of a run of submissions on several '
+						. 'problems at very regular intervals. These checks apply to all past submissions, including '
+						. 'those made before flagging was enabled, and are not done for tests. A submission is also '
+						. 'flagged if LaTeX is typed into an answer that is not an essay answer. LaTeX in the options '
+						. 'of radio buttons, checkboxes, and drop down menus is not flagged. This is only checked for '
+						. 'submissions made while flagging is enabled.</p><p>In-browser checks also flag a submission '
+						. 'if the answers were changed without any keyboard, mouse, or touch input, or if the browser '
+						. 'reports that it is controlled by automation software. This information is only recorded '
+						. 'while the in-browser checks are enabled, and is not shown if they are later disabled. Users '
+						. 'are shown a notice about the in-browser checks on problem pages until they dismiss it.</p>'
 						. '<p>A flag is only evidence that should be investigated, and not proof. Students may '
 						. 'legitimately do some of these things, and AI agents can avoid all of them.</p>'
 				),
 				labels => {
 					'0' => x('Disabled'),
-					'1' => x('Checks of stored submission data only'),
+					'1' => x('Server-side checks only'),
 					'2' => x('All checks, including in-browser checks')
 				},
 				values => [qw(0 1 2)],

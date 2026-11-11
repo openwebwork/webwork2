@@ -1,6 +1,8 @@
 package WeBWorK::Utils::AnswerFlags;
 use Mojo::Base 'Exporter', -signatures;
 
+use Mojo::DOM;
+
 =head1 NAME
 
 WeBWorK::Utils::AnswerFlags - Flag answer submissions that show signs that the
@@ -12,17 +14,21 @@ Flags are evidence for an instructor to investigate, not proof.  They must never
 be shown to students.
 
 Flagging is configured by C<$options{flagUnusualAnswers}>.  If it is 0, then
-nothing is flagged.  If it is 1, then only the checks done on the stored
-submission data (timing and LaTeX) are used.  If it is 2, then the in-browser
-checks done by the problem page javascript are also used.
+nothing is flagged.  If it is 1, then only the server-side checks are used.  The
+timing checks are done on the stored submission data, and the LaTeX check is
+done when a submission is recorded.  If it is 2, then the in-browser checks done
+by the problem page javascript are also used.
 
 =cut
 
 our @EXPORT_OK =
-	qw(browser_checks_enabled clean_input_flags answer_types_from_flags flag_past_answers answer_flag_description);
+	qw(browser_checks_enabled submission_input_flags answer_types_from_flags flag_past_answers answer_flag_description);
 
 # Flags that the problem page javascript may send with a submission.
-use constant INPUT_FLAGS => { no_interaction => 1, webdriver => 1 };
+use constant BROWSER_FLAGS => { no_interaction => 1, webdriver => 1 };
+
+# Flags that are determined by the server when a submission is recorded.
+use constant SERVER_FLAGS => { latex => 1 };
 
 # The number of consecutive submissions, the minimum number of distinct problems in those submissions, and the maximum
 # coefficient of variation of the time between them for a run of submissions to be flagged as at regular intervals.
@@ -44,17 +50,50 @@ sub browser_checks_enabled ($ce) {
 	return ($ce->{options}{flagUnusualAnswers} || 0) == 2;
 }
 
-=head2 clean_input_flags
+=head2 submission_input_flags
 
-    my $inputFlags = clean_input_flags($c->param('inputFlags'));
+    my $inputFlags = submission_input_flags($ce, $pg, $formFields, $c->param('inputFlags'));
 
-Returns a comma separated string of the known flags in the given comma separated
-string of flags sent by the problem page javascript.
+Returns a comma separated string of the flags to save in the C<input_flags> field
+of the past answer record for a submission.  This contains the known flags in the
+given comma separated string of flags sent by the problem page javascript if the
+in-browser checks are enabled, and the C<latex> flag if any answer typed into a
+text field of the problem contains LaTeX.
 
 =cut
 
-sub clean_input_flags ($flags) {
-	return join(',', grep { INPUT_FLAGS->{$_} } split(/,/, $flags // ''));
+sub submission_input_flags ($ce, $pg, $formFields, $browserFlags = undef) {
+	my @flags = browser_checks_enabled($ce) ? grep { BROWSER_FLAGS->{$_} } split(/,/, $browserFlags // '') : ();
+	push(@flags, 'latex') if typed_latex($pg, $formFields);
+	return join(',', @flags);
+}
+
+# Returns true if a response to a non-essay answer that was typed into a text input or textarea contains LaTeX.  LaTeX
+# is legitimately submitted by radio buttons, checkboxes, and drop down menus whose options contain LaTeX.
+sub typed_latex ($pg, $formFields) {
+	my %pgAnswers = %{ $pg->{PG_ANSWERS_HASH} // {} };
+
+	my @candidates;
+	for my $answerID (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
+		next if ($pgAnswers{$answerID}{rh_ans}{type} // '') eq 'essay';
+		my $responses = $pgAnswers{$answerID}{response_obj}{responses} // {};
+		for my $responseID (@{ $pgAnswers{$answerID}{response_obj}{response_order} // [] }) {
+			# Radio button and checkbox responses are recorded as a list of the choices.
+			next if ref($responses->{$responseID});
+			push(@candidates, $responseID)
+				if defined $formFields->{$responseID}
+				&& !ref($formFields->{$responseID})
+				&& $formFields->{$responseID} =~ /\\[a-zA-Z]{2,}/;
+		}
+	}
+	return 0 unless @candidates;
+
+	# Only parse the problem HTML if needed.  Drop down menus are select elements or hidden inputs.
+	my %textFields;
+	for (Mojo::DOM->new($pg->{body_text} // '')->find('input[name], textarea[name]')->each) {
+		$textFields{ $_->attr('name') } = 1 if $_->tag eq 'textarea' || lc($_->attr('type') // 'text') eq 'text';
+	}
+	return scalar grep { $textFields{$_} } @candidates;
 }
 
 =head2 answer_types_from_flags
@@ -74,7 +113,7 @@ sub answer_types_from_flags ($flags) {
 
 =head2 flag_past_answers
 
-    my $flags = flag_past_answers($ce, \@pastAnswers, timing => 1, answerTypes => \%answerTypes);
+    my $flags = flag_past_answers($ce, \@pastAnswers, timing => 1);
 
 Takes a reference to an array of the past answer records of one user for one set
 (or one version of a test), and returns a reference to a hash whose keys are the
@@ -82,26 +121,20 @@ answer ids of the flagged past answers, and whose values are references to array
 of flags.  Each flag is a hash with a C<type> key, and possibly other keys with
 details for that type.
 
-Flags saved by the in-browser checks are only included if those checks are
-currently enabled for the course.
+Flags saved when a submission is recorded are included, except that flags saved
+by the in-browser checks are only included if those checks are currently enabled
+for the course.
 
 If the C<timing> option is true, then submissions are flagged that are correct on
 the first attempt very soon after the previous submission, or that are part of a
 run of submissions on several problems at very regular intervals.  These checks
 should not be done for tests since all problems in a test are submitted at once.
 
-The C<answerTypes> option is a reference to a hash whose keys are problem ids and
-whose values are references to arrays of the answer types for the problem.
-Submissions that contain LaTeX in an answer that is not an essay answer are
-flagged.  Answers for problems that are not in this hash, or whose answer types
-are not known, are not checked.
-
 =cut
 
 sub flag_past_answers ($ce, $pastAnswers, %options) {
-	my $answerTypes = $options{answerTypes}                 // {};
 	my $fastSeconds = $ce->{options}{flagFastAnswerSeconds} // 0;
-	my $inputFlags  = browser_checks_enabled($ce);
+	my %knownFlags  = (%{ SERVER_FLAGS() }, browser_checks_enabled($ce) ? %{ BROWSER_FLAGS() } : ());
 
 	my @pastAnswers = sort { $a->timestamp <=> $b->timestamp || $a->answer_id <=> $b->answer_id } @$pastAnswers;
 
@@ -110,21 +143,13 @@ sub flag_past_answers ($ce, $pastAnswers, %options) {
 	my $previousTime;
 
 	for my $pastAnswer (@pastAnswers) {
-		my @answerFlags =
-			$inputFlags ? map { { type => $_ } } split(/,/, clean_input_flags($pastAnswer->input_flags)) : ();
+		my @answerFlags = map { { type => $_ } } grep { $knownFlags{$_} } split(/,/, $pastAnswer->input_flags // '');
 
 		if ($options{timing} && defined $previousTime && !$attempted{ $pastAnswer->problem_id }) {
 			my $scores  = $pastAnswer->scores // '';
 			my $seconds = $pastAnswer->timestamp - $previousTime;
 			push(@answerFlags, { type => 'fast', seconds => $seconds })
 				if $scores ne '' && $scores !~ /[^1]/ && $seconds < $fastSeconds;
-		}
-
-		my $types = $answerTypes->{ $pastAnswer->problem_id };
-		if ($types && @$types) {
-			my @answers = split(/\t/, $pastAnswer->answer_string // '');
-			push(@answerFlags, { type => 'latex' })
-				if grep { ($types->[$_] // '') ne 'essay' && $answers[$_] =~ /\\[a-zA-Z]{2,}/ } 0 .. $#answers;
 		}
 
 		$flags{ $pastAnswer->answer_id }      = \@answerFlags if @answerFlags;

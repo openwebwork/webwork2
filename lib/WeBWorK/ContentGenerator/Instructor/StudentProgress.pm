@@ -8,7 +8,7 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 =cut
 
 use WeBWorK::Utils                    qw(wwRound getSectionRecitationFilters filterBySectionRecitation);
-use WeBWorK::Utils::AnswerFlags       qw(answer_types_from_flags flag_past_answers);
+use WeBWorK::Utils::AnswerFlags       qw(flag_past_answers);
 use WeBWorK::Utils::DateTime          qw(after);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
 use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
@@ -96,15 +96,6 @@ sub flaggedSubmissionCounts ($c, $userID = undef) {
 		}
 		next unless %pastAnswers;
 
-		my %answerTypes;
-		if ($isTest) {
-			$answerTypes{ $_->user_id }{ $_->version_id }{ $_->problem_id } = [ answer_types_from_flags($_->flags) ]
-				for $db->getProblemVersionsWhere({ set_id => $setID, %userWhere });
-		} else {
-			$answerTypes{ $_->user_id }{0}{ $_->problem_id } = [ answer_types_from_flags($_->flags) ]
-				for $db->getUserProblemsWhere({ set_id => $setID, %userWhere });
-		}
-
 		# All problems are selected on the past answers page linked to from the flagged submission counts.
 		$problemIDs{$setID} = [ map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setID }, 'problem_id') ];
 		$problemIDs{$setID} = [ map { join('.', jitar_id_to_seq($_)) } @{ $problemIDs{$setID} } ]
@@ -112,13 +103,7 @@ sub flaggedSubmissionCounts ($c, $userID = undef) {
 
 		for my $user (keys %pastAnswers) {
 			for my $versionID (keys %{ $pastAnswers{$user} }) {
-				my $count = keys %{
-					flag_past_answers(
-						$ce, $pastAnswers{$user}{$versionID},
-						timing      => !$isTest,
-						answerTypes => $answerTypes{$user}{$versionID}
-					)
-				};
+				my $count = keys %{ flag_past_answers($ce, $pastAnswers{$user}{$versionID}, timing => !$isTest) };
 				$counts{$user}{$setID}{$versionID} = $count if $count;
 			}
 		}
@@ -223,13 +208,9 @@ sub displaySets ($c) {
 	my $showFlags    = $flagsEnabled                      && $c->param('show_flags');
 	my %flagCounts;
 	if ($showFlags) {
-		my (%pastAnswers, %answerTypes);
+		my %pastAnswers;
 		push(@{ $pastAnswers{ $_->user_id } }, $_) for $db->getPastAnswersWhere({ set_id => $setName });
-		$answerTypes{ $_->user_id }{ $_->problem_id } = [ answer_types_from_flags($_->flags) ]
-			for $db->getUserProblemsWhere({ set_id => $setName });
-		$flagCounts{$_} =
-			keys %{ flag_past_answers($ce, $pastAnswers{$_}, timing => 1, answerTypes => $answerTypes{$_}) }
-			for keys %pastAnswers;
+		$flagCounts{$_} = keys %{ flag_past_answers($ce, $pastAnswers{$_}, timing => 1) } for keys %pastAnswers;
 	}
 
 	for my $studentRecord (@student_records) {

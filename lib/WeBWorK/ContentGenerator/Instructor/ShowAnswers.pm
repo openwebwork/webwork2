@@ -92,8 +92,6 @@ async sub initialize ($c) {
 
 			next unless @problemNumbers;
 
-			my %answerTypesByProblem;
-
 			for my $problemNumber (@problemNumbers) {
 				my @pastAnswers = $db->getPastAnswersWhere(
 					{
@@ -158,8 +156,6 @@ async sub initialize ($c) {
 						if defined $fallbackAnswerTypes{$displaySetName}{$problemNumber};
 				}
 
-				$answerTypesByProblem{$problemNumber} = \@answerTypes;
-
 				for my $pastAnswer (@pastAnswers) {
 					$records{$studentUser}{$displaySetName}{$problemNumber}{ $pastAnswer->answer_id } = {
 						time        => $pastAnswer->timestamp,
@@ -181,8 +177,7 @@ async sub initialize ($c) {
 							{ user_id => $studentUser, set_id => $setName, version_id => $setVersion }
 						)
 					],
-					timing      => ($setRecord->assignment_type // '') !~ /gateway/,
-					answerTypes => \%answerTypesByProblem
+					timing => ($setRecord->assignment_type // '') !~ /gateway/
 				);
 				for my $problemRecords (values %{ $records{$studentUser}{$displaySetName} }) {
 					for my $answerID (keys %$problemRecords) {
