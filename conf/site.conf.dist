@@ -294,6 +294,16 @@ $mail{tls_allowed} = 0;
 
 $mail{maxAttachmentSize} = 10;
 
+# Set feedbackScreenshot to 1 to allow a screenshot of the rendered problem to be
+# included in feedback emails sent with the "Email Instructor" button on a problem page.
+# The screenshot is taken in the student's browser when the button is clicked, and it is
+# shown on the feedback form where the student can choose to include it.  The
+# screenshot is embedded in the HTML version of the email, and attached as an image
+# file to the plain text version.  Screenshots larger than maxAttachmentSize above are
+# not included.
+
+$mail{feedbackScreenshot} = 0;
+
 ################################################################################
 # Minion job queue options
 ################################################################################
