@@ -33,6 +33,7 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use Encode;
 use Mojo::JSON qw(encode_json true);
+use Mojo::Util qw(xml_escape);
 
 use WeBWorK::File::Scoring qw(parse_scoring_file);
 use WeBWorK::Localize;
@@ -621,7 +622,7 @@ sub page_title ($c) {
 	# If the current route name is 'set_list' and the course has a course title then display that.
 	if ($c->current_route eq 'set_list') {
 		my $courseTitle = $db->getSettingValue('courseTitle');
-		return $courseTitle if defined $courseTitle && $courseTitle ne '';
+		return xml_escape($courseTitle) if defined $courseTitle && $courseTitle ne '';
 	}
 
 	# Display the route name
