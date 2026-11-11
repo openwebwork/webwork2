@@ -12,6 +12,7 @@ use Mojo::Promise;
 use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Utils                    qw(encodeAnswers decodeAnswers max wwRound);
+use WeBWorK::Utils::AnswerFlags       qw(submission_input_flags);
 use WeBWorK::Utils::DateTime          qw(before between after);
 use WeBWorK::Utils::Files             qw(path_is_subdir);
 use WeBWorK::Utils::Instructor        qw(assignSetVersionToUser);
@@ -1190,6 +1191,8 @@ async sub initialize ($c) {
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problem->source_file);
 				$pastAnswer->problem_seed($problem->problem_seed);
+				$pastAnswer->input_flags(submission_input_flags($ce, $pg_results[ $probOrder[$i] ], $c->{formFields}))
+					if $ce->{options}{flagUnusualAnswers};
 				$db->addPastAnswer($pastAnswer);
 			}
 		}
