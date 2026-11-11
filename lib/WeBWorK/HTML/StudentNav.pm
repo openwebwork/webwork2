@@ -57,7 +57,7 @@ sub studentNav ($c, $setID) {
 		push @userRecords, $_;
 
 		# Construct a display name.
-		$_->{displayName} = ($_->last_name || $_->first_name ? $_->last_name . ', ' . $_->first_name : $_->user_id);
+		$_->{displayName} = $_->sortable_name || $_->user_id;
 	}
 	my $prevUser = $currentUserIndex > 0             ? $userRecords[ $currentUserIndex - 1 ] : 0;
 	my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[ $currentUserIndex + 1 ] : 0;

@@ -18,7 +18,7 @@
 							class => 'nav-link'
 						),
 						begin =%>
-						<%= $_->last_name =%>, <%= $_->first_name %> (<%= $_->user_id %>)
+						<%= join(' ', $_->sortable_name || (), '(' . $_->user_id . ')') %>
 					<% end =%>
 				</li>
 			% }

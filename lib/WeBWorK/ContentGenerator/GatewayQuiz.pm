@@ -1365,9 +1365,8 @@ sub nav ($c, $args) {
 
 			push @userRecords, $user;
 
-			$user->{displayName} =
-				($user->last_name || $user->first_name ? $user->last_name . ', ' . $user->first_name : $user->user_id);
-			$user->{setVersion} = $_->[2];
+			$user->{displayName} = $user->sortable_name || $user->user_id;
+			$user->{setVersion}  = $_->[2];
 		}
 
 		# Sort by last name, then first name, then user_id, then set version.
