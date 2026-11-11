@@ -63,6 +63,12 @@ sub errors ($self) {
 	return @{ $self->{errors} // [] };
 }
 
+# Returns an error message if the value fails the validation method
+# given in the configuration value data, and undefined otherwise.
+sub validate ($self, $value) {
+	return $self->{validate} ? $self->{validate}->($self->{c}, $value) : undef;
+}
+
 # Record that the submitted value is invalid, and save the current course environment value instead.
 sub reject ($self, $oldval, $use_current, $message) {
 	return '' if $use_current;
@@ -75,6 +81,11 @@ sub reject ($self, $oldval, $use_current, $message) {
 sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval || ($self->{secret} && $newval eq SECRET_STRING);
+
+	if (!$use_current) {
+		my $error = $self->validate($newval);
+		return $self->reject($oldval, $use_current, $error) if $error;
+	}
 
 	return "\$$self->{var} = " . $self->quote($newval) . ";\n";
 }

@@ -7,6 +7,8 @@ WeBWorK::ContentGenerator::Instructor::Config - Config
 
 =cut
 
+use Mojo::Util qw(xml_escape);
+
 use WeBWorK::ConfigValues qw(getConfigValues);
 use WeBWorK::CourseConfig qw(configObject buildSimpleConfig writeSimpleConfig);
 
@@ -28,7 +30,7 @@ sub initialize ($c) {
 
 	if ($c->param('make_changes')) {
 		my ($fileOutput, $errors) = buildSimpleConfig($c);
-		$c->addbadmessage($_) for @$errors;
+		$c->addbadmessage(xml_escape($_)) for @$errors;
 
 		if (writeSimpleConfig($ce, $fileOutput)) {
 			$c->addgoodmessage($c->maketext('Changes saved.'));
