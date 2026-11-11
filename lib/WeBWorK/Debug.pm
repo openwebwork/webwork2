@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Date::Format;
+use Encode         qw(encode_utf8);
 use Time::HiRes    qw/gettimeofday/;
 use WeBWorK::Utils qw/undefstr/;
 
@@ -98,10 +99,10 @@ sub debug {
 				close $fh;
 			} else {
 				warn "Failed to open debug log '$Logfile' in append mode: $!";
-				print STDERR $finalMessage;
+				print STDERR encode_utf8($finalMessage);
 			}
 		} else {
-			print STDERR $finalMessage;
+			print STDERR encode_utf8($finalMessage);
 		}
 	}
 
