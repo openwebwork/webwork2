@@ -1,0 +1,152 @@
+% my $wasVerified = $authen && $authen->was_verified;
+% my ($userID, $userName, $effectiveUserID, $effectiveUserName, $isActing);
+% if ($wasVerified) {
+	% $userID            = $authen->{user_id};
+	% $userName          = $authen->{user}->full_name;
+	% $effectiveUserID   = ($c->param('effectiveUser') // '') ne $userID ? $c->param('effectiveUser')           : '';
+	% $effectiveUserName = $effectiveUserID                              ? $authen->{effective_user}->full_name : '';
+%
+	% # A user is considered acting as another user if the effective user is different and they are viewing a
+	% # page whose output depends on the effective user (excludes instructor tools, options, course admin).
+	% $isActing = $effectiveUserID
+		% && ref($c) !~ /^WeBWorK::ContentGenerator::(Instructor::|Options$|CourseAdmin$)/;
+% }
+%
+<div class="d-flex flex-column align-items-end flex-shrink-0<%= $wasVerified ? ' h-100 my-1' : '' %> me-2">
+	% if ($wasVerified) {
+		<div class="login-name text-nowrap mb-2">
+			<%= $isActing ? $effectiveUserName || $effectiveUserID : $userName || $userID %>
+		</div>
+	% }
+	<div class="d-flex align-items-center gap-3">
+		<div class="dropdown">
+			<button
+				class="btn btn-link p-0 dropdown-toggle d-flex align-items-center masthead-menu-button"
+				id="color-scheme-chooser"
+				type="button"
+				aria-expanded="false"
+				data-bs-toggle="dropdown"
+				title="<%= maketext('Choose Color Scheme') %>"
+				aria-label="<%= maketext('Choose Color Scheme') %>"
+				data-light-text="<%= maketext('light') %>"
+				data-dark-text="<%= maketext('dark') %>"
+				data-auto-text="<%= maketext('auto') %>"
+			>
+				<i class="fa-solid fa-circle-half-stroke my-1 theme-icon-active" aria-hidden="true"></i>
+				<span class="visually-hidden" id="color-scheme-chooser-text">
+					<%= maketext('Choose Color Scheme') %>
+				</span>
+			</button>
+			<ul class="dropdown-menu" aria-labelledby="color-scheme-chooser-text">
+				<li>
+					<button
+						type="button"
+						class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="light"
+						aria-pressed="false"
+					>
+						<i class="fa-solid fa-sun me-2 opacity-50" aria-hidden="true"></i>
+						<%= maketext('Light') %>
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+				<li>
+					<button
+						type="button"
+						class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="dark"
+						aria-pressed="true"
+					>
+						<i class="fa-solid fa-moon me-2 opacity-50" aria-hidden="true"></i>
+						<%= maketext('Dark') %>
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+				<li>
+					<button
+						type="button"
+						class="dropdown-item d-flex align-items-center"
+						data-bs-theme-value="auto"
+						aria-pressed="false"
+					>
+						<i class="fa-solid fa-circle-half-stroke me-2 opacity-50" aria-hidden="true"></i>
+						<%= maketext('Auto') %>
+						<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
+					</button>
+				</li>
+			</ul>
+		</div>
+		% if ($wasVerified) {
+			% my $userHeader = begin
+				% my ($name, $id) = @_;
+				% if ($name) {
+					<div class="fw-bold text-body"><%= $name %></div>
+					<div class="text-body" dir="ltr">(<%= $id %>)</div>
+				% } else {
+					<div class="fw-bold text-body" dir="ltr"><%= $id %></div>
+				% }
+			% end
+			%
+			<div class="dropdown">
+				<button
+					class="btn btn-link p-0 dropdown-toggle d-flex align-items-center masthead-menu-button"
+					id="user-menu-button"
+					type="button"
+					aria-expanded="false"
+					data-bs-toggle="dropdown"
+					title="<%= maketext('User Menu') %>"
+					aria-label="<%= maketext('User Menu') %>"
+				>
+					<i
+						class="fa-solid <%= $isActing ? 'fa-user-graduate' : 'fa-user' %> fa-2xl my-1"
+						aria-hidden="true"
+					></i>
+					<span class="visually-hidden" id="user-menu-button-text"><%= maketext('User Menu') %></span>
+				</button>
+				<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="user-menu-button-text">
+					<li><div class="dropdown-header"><%= $userHeader->($userName, $userID) %></div></li>
+					% if ($effectiveUserID) {
+						<li><hr class="dropdown-divider"></li>
+						<li>
+							<div class="dropdown-header">
+								<div><%= maketext('Acting as:') %></div>
+								<%= $userHeader->($effectiveUserName, $effectiveUserID) %>
+							</div>
+						</li>
+						<li>
+							<%= link_to $c->systemLink(url_for, params => { effectiveUser => $userID }),
+								class => 'dropdown-item d-flex align-items-center',
+								begin %>
+								<i class="fa-solid fa-user-xmark me-2 opacity-50" aria-hidden="true"></i>
+								<%= maketext('Stop Acting') %>
+							<% end %>
+						</li>
+					% }
+					<li><hr class="dropdown-divider"></li>
+					% if ($authz->hasPermissions($userID, 'change_password')
+						% || $authz->hasPermissions($userID, 'change_name')
+						% || $authz->hasPermissions($userID, 'change_email_address')
+						% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
+					% {
+						<li>
+							<%= link_to $c->systemLink(url_for 'options'),
+								class => 'dropdown-item d-flex align-items-center',
+								begin %>
+								<i class="fa-solid fa-gear me-2 opacity-50" aria-hidden="true"></i>
+								<%= maketext('Account Settings') %>
+							<% end %>
+						</li>
+					% }
+					<li>
+						<%= link_to $c->systemLink(url_for 'logout'),
+							class => 'dropdown-item d-flex align-items-center',
+							begin %>
+							<i class="fa-solid fa-sign-out-alt me-2 opacity-50" aria-hidden="true"></i>
+							<%= maketext('Log Out') %>
+						<% end %>
+					</li>
+				</ul>
+			</div>
+		% }
+	</div>
+</div>

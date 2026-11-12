@@ -56,12 +56,8 @@
 
 .masthead {
 	.institution-logo {
-		a:not(.btn):focus {
+		a:not(.btn):not(.dropdown-item):focus {
 			outline-color: #{shade-color($link-hover-color-dark, 70%)};
 		}
-	}
-
-	.login-status .btn.btn-light {
-		--bs-btn-focus-shadow-rgb: 100, 100, 100;
 	}
 }

@@ -1,9 +1,18 @@
 % require WeBWorK::PG;
 %
-% my $userID    = $c->{user}->user_id;
-% my $eUserName = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
+% my $user   = $authen->{user};
+% my $userID = $user->user_id;
 %
 % $c->stash->{footerWidthClass} = 'col-lg-8 col-md-10';
+%
+% unless ($authz->hasPermissions($userID, 'change_password')
+	% || $authz->hasPermissions($userID, 'change_name')
+	% || $authz->hasPermissions($userID, 'change_email_address')
+	% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
+% {
+	<div class="alert alert-info p-2"><%= maketext('There are no settings to configure.') %></div>
+	% last;
+% }
 %
 %= form_for current_route, method => 'POST', begin
 	<%= $c->hidden_authen_fields =%>
@@ -14,11 +23,11 @@
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for
-						currFirstName => maketext("Current First Name"),
+						currFirstName => maketext('Current First Name'),
 						class         => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field
-							currFirstName => $c->{effectiveUser}->first_name,
+							currFirstName => $user->first_name,
 							readonly      => undef,
 							id            => 'currFirstName',
 							class         => 'form-control bg-light',
@@ -27,11 +36,11 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						currLastName => maketext("Current Last Name"),
+						currLastName => maketext('Current Last Name'),
 						class        => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field
-							currLastName => $c->{effectiveUser}->last_name,
+							currLastName => $user->last_name,
 							readonly     => undef,
 							id           => 'currLastName',
 							class        => 'form-control bg-light',
@@ -40,7 +49,7 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						newFirstName => maketext("New First Name"),
+						newFirstName => maketext('New First Name'),
 						class        => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%=
@@ -50,7 +59,7 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						newLastName => maketext("New Last Name"),
+						newLastName => maketext('New Last Name'),
 						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field newLastName => '', id => 'newLastName', class => 'form-control', dir => 'ltr' =%>
@@ -66,7 +75,7 @@
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for 'currPassword', class => 'col-form-label col-sm-6', begin =%>
-						<%= maketext(q{[_1]'s Current Password}, $eUserName) =%>
+						<%= maketext('Current Password') =%>
 					<% end =%>
 					<div class="col-sm-6">
 						<%= text_field dummyUsername => '', class => 'd-none' =%>
@@ -79,7 +88,7 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						newPassword => maketext("[_1]'s New Password", $eUserName),
+						newPassword => maketext('New Password'),
 						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= password_field 'newPassword',
@@ -91,7 +100,7 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						confirmPassword => maketext("Confirm [_1]'s New Password", $eUserName),
+						confirmPassword => maketext('Confirm New Password'),
 						class           => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= password_field 'confirmPassword',
@@ -111,11 +120,11 @@
 			<div class="col-lg-8 col-md-10">
 				<div class="row mb-2">
 					<%= label_for
-						currAddress => maketext("[_1]'s Current Address", $eUserName),
+						currAddress => maketext('Current Address'),
 						class       => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field
-							currAddress => $c->{effectiveUser}->email_address,
+							currAddress => $user->email_address,
 							readonly    => undef,
 							id          => 'currAddress',
 							class       => 'form-control bg-light',
@@ -124,7 +133,7 @@
 				</div>
 				<div class="row mb-2">
 					<%= label_for
-						newAddress => maketext("[_1]'s New Address", $eUserName),
+						newAddress => maketext('New Address'),
 						class      => 'col-form-label col-sm-6' =%>
 					<div class="col-sm-6">
 						<%= text_field newAddress => '', id => 'newAddress', class => 'form-control', dir => 'ltr' =%>
@@ -140,9 +149,7 @@
 		% my $display_settings_block = begin
 			% if ($authz->hasPermissions($userID, 'can_show_old_answers')) {
 				% my $curr_showOldAnswers =
-					% $c->{effectiveUser}->showOldAnswers ne ''
-					% ? $c->{effectiveUser}->showOldAnswers
-					% : $ce->{pg}{options}{showOldAnswers};
+					% $user->showOldAnswers ne '' ? $user->showOldAnswers : $ce->{pg}{options}{showOldAnswers};
 				<div class="mb-3">
 					<fieldset>
 						<legend class="lead"><%= maketext('Show saved answers?') =%></legend>
@@ -165,9 +172,7 @@
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useMathView =
-					% $c->{effectiveUser}->useMathView ne ''
-					% ? $c->{effectiveUser}->useMathView
-					% : $ce->{pg}{options}{useMathView};
+					% $user->useMathView ne '' ? $user->useMathView : $ce->{pg}{options}{useMathView};
 				<div class="mb-3">
 					<fieldset>
 						<legend class="lead"><%= maketext('Use Equation Editor?') %></legend>
@@ -190,9 +195,7 @@
 			% if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 				% # Note, 0 is a legal value, so we can't use || in setting this
 				% my $curr_useMathQuill =
-					% $c->{effectiveUser}->useMathQuill ne ''
-					% ? $c->{effectiveUser}->useMathQuill
-					% : $ce->{pg}{options}{useMathQuill};
+					% $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}{options}{useMathQuill};
 				<div class="mb-3">
 					<fieldset>
 						<legend class="lead"><%= maketext('Use live equation rendering?') %></legend>

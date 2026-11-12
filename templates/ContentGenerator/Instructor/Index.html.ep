@@ -140,15 +140,6 @@
 						</span>
 					</div>
 					<div class="input-group input-group-sm mb-2">
-						<%= submit_button maketext('Edit'),
-							name  => 'user_options',
-							class => 'btn btn-sm btn-secondary',
-							data  => { users_needed => 'exactly one', error_users => maketext($E_ONE_USER) } =%>
-						<span class="input-group-text flex-grow-1">\
-							<%== maketext('account settings for <strong>one</strong> user') =%>\
-						</span>
-					</div>
-					<div class="input-group input-group-sm mb-2">
 						<%= submit_button maketext('View'),
 							name  => 'user_progress',
 							class => 'btn btn-sm btn-secondary',

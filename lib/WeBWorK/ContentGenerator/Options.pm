@@ -7,13 +7,13 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 =cut
 
-use Mojo::Util qw(xml_escape);
+use Mojo::Util qw(trim);
 
 use WeBWorK::Utils qw(cryptPassword utf8Crypt isValidEmailAddress);
 use WeBWorK::Localize;
 
 sub page_title ($c) {
-	return $c->maketext("Account settings for [_1]", $c->param('effectiveUser'));
+	return $c->maketext('Account settings');
 }
 
 sub initialize ($c) {
@@ -21,9 +21,7 @@ sub initialize ($c) {
 	my $authz = $c->authz;
 
 	my $userID = $c->authen->{user_id};
-	$c->{user}          = $c->authen->{user};
-	$c->{effectiveUser} = $c->authen->{effective_user};
-	my $effectiveUserID = $c->param('effectiveUser');
+	my $user   = $c->authen->{user};
 
 	my $changeOptions = $c->param('changeOptions');
 
@@ -33,115 +31,86 @@ sub initialize ($c) {
 		my $confirmP = $c->param('confirmPassword');
 
 		# Note that it is ok if the password doesn't exist because students might be setting it for the first time.
-		my $password = eval { $db->getPassword($c->{user}->user_id) };
+		my $password = eval { $db->getPassword($userID) };
 
 		if ($changeOptions && ($newP || $confirmP)) {
-			my $effectiveUserPassword =
-				$userID ne $effectiveUserID ? eval { $db->getPassword($c->{effectiveUser}->user_id) } : $password;
-
 			# Check that either password is not defined or if it is defined then we have the right one.
 			if (!defined $password || utf8Crypt($currP // '', $password->password) eq $password->password) {
-				my $e_user_name = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 				if ($newP eq $confirmP) {
-					if (!defined $effectiveUserPassword) {
-						$effectiveUserPassword = $db->newPassword();
-						$effectiveUserPassword->user_id($c->{effectiveUser}->user_id);
-						$effectiveUserPassword->password(cryptPassword($newP));
-						eval { $db->addPassword($effectiveUserPassword) };
-						$password = $password // $effectiveUserPassword;
-						if ($@) {
-							$c->log->error("Error changing ${e_user_name}'s password: $@");
-							$c->addbadmessage($c->maketext(
-								"[_1]'s password was not changed due to an internal error.",
-								xml_escape($e_user_name)
-							));
-						} else {
-							$c->addgoodmessage(
-								$c->maketext("[_1]'s password has been changed.", xml_escape($e_user_name)));
-						}
+					my $newPassword = $password // $db->newPassword(user_id => $userID);
+					$newPassword->password(cryptPassword($newP));
+					eval { defined $password ? $db->putPassword($newPassword) : $db->addPassword($newPassword) };
+					if ($@) {
+						$c->log->error("Error changing password for $userID: $@");
+						$c->addbadmessage($c->maketext('Your password was not changed due to an internal error.'));
 					} else {
-						$effectiveUserPassword->password(cryptPassword($newP));
-						eval { $db->putPassword($effectiveUserPassword) };
-						$password = $password // $effectiveUserPassword;
-						if ($@) {
-							$c->log->error("Error changing ${e_user_name}'s password: $@");
-							$c->addbadmessage($c->maketext(
-								"[_1]'s password was not changed due to an internal error.",
-								xml_escape($e_user_name)
-							));
-						} else {
-							$c->addgoodmessage(
-								$c->maketext("[_1]'s password has been changed.", xml_escape($e_user_name)));
-						}
+						$password = $newPassword;
+						$c->addgoodmessage($c->maketext('Your password has been changed.'));
 					}
 				} else {
-					my $newPasswordText        = $c->maketext("[_1]'s New Password",         $e_user_name);
-					my $confirmNewPasswordText = $c->maketext("Confirm [_1]'s New Password", $e_user_name);
 					$c->addbadmessage($c->maketext(
-						"The passwords you entered in the [_1] and [_2] fields don't match. "
+						q{The passwords you entered in the "[_1]" and "[_2]" fields don't match. }
 							. 'Please retype your new password and try again.',
-						$c->tag('b', $newPasswordText),
-						$c->tag('b', $confirmNewPasswordText)
+						$c->tag('b', $c->maketext('New Password')),
+						$c->tag('b', $c->maketext('Confirm New Password'))
 					));
 				}
 			} else {
-				my $fieldText =
-					$c->maketext("[_1]'s Current Password", $c->{user}->first_name . ' ' . $c->{user}->last_name);
 				$c->addbadmessage($c->maketext(
-					'The password you entered in the [_1] field does not match your current password. '
+					'The password you entered in the "[_1]" field does not match your current password. '
 						. 'Please retype your current password and try again.',
-					$c->tag('b', $fieldText)
+					$c->tag('b', $c->maketext('Current Password'))
 				));
 			}
 		}
 		$c->{has_password} = defined $password;
 	}
 
-	my $newFN = $c->param('newFirstName');
-	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newFN) {
-		my $oldFN = $c->{effectiveUser}->first_name;
-		$c->{effectiveUser}->first_name($newFN);
-		eval { $db->putUser($c->{effectiveUser}) };
+	my $newFN = trim($c->param('newFirstName') // '');
+	if ($newFN && $changeOptions && $authz->hasPermissions($userID, 'change_name')) {
+		my $oldFN = $user->first_name;
+		$user->first_name($newFN);
+		eval { $db->putUser($user) };
 		if ($@) {
-			$c->{effectiveUser}->first_name($oldFN);
+			$user->first_name($oldFN);
 			$c->log->error("Unable to save new first name for $userID: $@");
 			$c->addbadmessage($c->maketext('Your first name has not been changed due to an internal error.'));
 		} else {
-			$c->param('currFirstName', $c->param('newFirstName'));
+			$c->param('currFirstName', $newFN);
 			$c->param('newFirstName',  undef);
 			$c->addgoodmessage($c->maketext('Your first name has been changed.'));
 		}
 	}
 
-	my $newLN = $c->param('newLastName');
-	if ($changeOptions && $authz->hasPermissions($userID, 'change_name') && $newLN) {
-		my $oldLN = $c->{effectiveUser}->last_name;
-		$c->{effectiveUser}->last_name($newLN);
-		eval { $db->putUser($c->{effectiveUser}) };
+	my $newLN = trim($c->param('newLastName') // '');
+	if ($newLN && $changeOptions && $authz->hasPermissions($userID, 'change_name')) {
+		my $oldLN = $user->last_name;
+		$user->last_name($newLN);
+		eval { $db->putUser($user) };
 		if ($@) {
-			$c->{effectiveUser}->last_name($oldLN);
+			$user->last_name($oldLN);
 			$c->log->error("Unable to save new last name for $userID: $@");
 			$c->addbadmessage($c->maketext('Your last name has not been changed due to an internal error.'));
 		} else {
-			$c->param('currLastName', $c->param('newLastName'));
+			$c->param('currLastName', $newLN);
 			$c->param('newLastName',  undef);
 			$c->addgoodmessage($c->maketext('Your last name has been changed.'));
 		}
 	}
 
-	my $newA = $c->param('newAddress');
-	if ($changeOptions && $authz->hasPermissions($userID, 'change_email_address') && $newA) {
+	my $newA = trim($c->param('newAddress') // '');
+	if ($newA && $changeOptions && $authz->hasPermissions($userID, 'change_email_address')) {
 		if (!isValidEmailAddress($newA)) {
 			$c->addbadmessage(
 				$c->maketext(
 					'Your email address has not been changed. The new email address you entered is not valid.')
 			);
 		} else {
-			my $oldA = $c->{effectiveUser}->email_address;
-			$c->{effectiveUser}->email_address($newA);
-			eval { $db->putUser($c->{effectiveUser}) };
+			my $oldA = $user->email_address;
+			$user->email_address($newA);
+			eval { $db->putUser($user) };
 			if ($@) {
-				$c->{effectiveUser}->email_address($oldA);
+				$user->email_address($oldA);
 				$c->log->error("Unable to save new email address for $userID: $@");
 				$c->addbadmessage($c->maketext('Your email address has not been changed due to an internal error.'));
 			} else {
@@ -154,21 +123,18 @@ sub initialize ($c) {
 
 	if ($changeOptions && $authz->hasPermissions($userID, 'change_pg_display_settings')) {
 		if (
-			(
-				defined($c->param('showOldAnswers'))
-				&& $c->{effectiveUser}->showOldAnswers() ne $c->param('showOldAnswers')
-			)
+			(defined($c->param('showOldAnswers')) && $user->showOldAnswers() ne $c->param('showOldAnswers'))
 			|| (defined($c->param('useMathQuill'))
-				&& $c->{effectiveUser}->useMathQuill() ne $c->param('useMathQuill'))
+				&& $user->useMathQuill() ne $c->param('useMathQuill'))
 			|| (defined($c->param('useMathView'))
-				&& $c->{effectiveUser}->useMathView() ne $c->param('useMathView'))
+				&& $user->useMathView() ne $c->param('useMathView'))
 			)
 		{
-			$c->{effectiveUser}->showOldAnswers($c->param('showOldAnswers'));
-			$c->{effectiveUser}->useMathQuill($c->param('useMathQuill'));
-			$c->{effectiveUser}->useMathView($c->param('useMathView'));
+			$user->showOldAnswers($c->param('showOldAnswers'));
+			$user->useMathQuill($c->param('useMathQuill'));
+			$user->useMathView($c->param('useMathView'));
 
-			eval { $db->putUser($c->{effectiveUser}) };
+			eval { $db->putUser($user) };
 			if ($@) {
 				$c->log->error("Unable to save display options for $userID: $@");
 				$c->addbadmessage($c->maketext('Your display options were not saved due to an internal error.'));
