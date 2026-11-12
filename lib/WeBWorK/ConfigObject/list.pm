@@ -13,19 +13,25 @@ sub comparison_value ($self, $val) {
 }
 
 sub save_string ($self, $oldval, $use_current = 0) {
-	my $newval = $self->convert_newval_source($use_current);
-	$oldval = $self->comparison_value($oldval);
+	my $newval    = $self->convert_newval_source($use_current);
+	my $oldString = $self->comparison_value($oldval);
 
-	return '' if $oldval eq $newval;
+	return '' if $oldString eq $newval;
 
-	$oldval =~ s/^\s*|\s*$//g;
-	$newval =~ s/^\s*|\s*$//g;
-	$oldval =~ s/[\s,]+/,/sg;
-	$newval =~ s/[\s,]+/,/sg;
-	return '' if $newval eq $oldval;
+	$oldString =~ s/^\s*|\s*$//g;
+	$newval    =~ s/^\s*|\s*$//g;
+	$oldString =~ s/[\s,]+/,/sg;
+	$newval    =~ s/[\s,]+/,/sg;
+	return '' if $newval eq $oldString;
 
-	# This is a new value.  Turn it back into a string and return it.
-	return "\$$self->{var} = [" . join(',', map {"'$_'"} map { $_ =~ s/['"`]//gr } split(',', $newval)) . "];\n";
+	my @newvals = split(',', $newval);
+
+	if (!$use_current) {
+		my $error = $self->validate(\@newvals);
+		return $self->reject($oldval, $use_current, $error) if $error;
+	}
+
+	return "\$$self->{var} = [" . join(',', map { $self->quote($_) } @newvals) . "];\n";
 }
 
 sub entry_widget ($self, $default, $is_secret = 0) {

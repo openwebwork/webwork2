@@ -9,13 +9,11 @@ sub save_string ($self, $oldval, $use_current = 0) {
 	my $newval = $self->convert_newval_source($use_current);
 	return '' if $self->comparison_value($oldval) eq $newval;
 
-	if (not DateTime::TimeZone->is_valid_name($newval)) {
-		$self->{c}->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
-		return '';
-	}
+	return $self->reject($oldval, $use_current,
+		$self->{c}->maketext('String "[_1]" is not a valid time zone.', $newval))
+		unless DateTime::TimeZone->is_valid_name($newval);
 
-	$newval =~ s/['"`]//g;
-	return "\$$self->{var} = '$newval';\n";
+	return "\$$self->{var} = " . $self->quote($newval) . ";\n";
 }
 
 1;

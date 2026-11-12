@@ -14,7 +14,7 @@ allowed.
 
 =item text
 
-A text string (no quotes allowed).
+A text string.
 
 =item number
 
@@ -59,11 +59,20 @@ This is specifically for The LMS context id used for content selection.
 
 =back
 
+A configuration value of the C<text> or C<list> type may also have a C<validate>
+key whose value is a subroutine that validates a new value for the variable.
+The subroutine is passed the controller object and the new value (a reference
+to an array of the values for the C<list> type). It should return an error
+message if the new value is not valid, and undefined otherwise.
+
 =cut
 
 use Mojo::File qw(path);
+use XML::LibXML;
 
-use WeBWorK::Utils qw(x);
+use Email::Address::XS;
+
+use WeBWorK::Utils qw(x isValidEmailAddress);
 
 our @EXPORT_OK = qw(getConfigValues);
 
@@ -353,8 +362,14 @@ sub getConfigValues ($ce) {
 					'This email address will be used as the sender for achievement notifications. '
 						. 'Achievement notifications will not be sent unless this is set.'
 				),
-				width => 45,
-				type  => 'text'
+				width    => 45,
+				type     => 'text',
+				validate => sub ($c, $value) {
+					return if $value eq '';
+					my @addresses = Email::Address::XS->parse($value);
+					return if @addresses == 1 && $addresses[0]->is_valid;
+					return $c->maketext('"[_1]" is not a valid email address.', $value);
+				}
 			},
 			{
 				var  => 'options{enableConditionalRelease}',
@@ -902,7 +917,12 @@ sub getConfigValues ($ce) {
 					'By default, feedback is sent to all users above who have permission to receive feedback. Feedback '
 						. 'is also sent to any addresses specified here. Separate email address entries with commas.'
 				),
-				type => 'list'
+				type     => 'list',
+				validate => sub ($c, $addresses) {
+					my @invalid = grep { !isValidEmailAddress($_) } @$addresses;
+					return unless @invalid;
+					return $c->maketext('The following email addresses are not valid: [_1]', join(', ', @invalid));
+				}
 			},
 			{
 				var  => 'feedback_by_section',
