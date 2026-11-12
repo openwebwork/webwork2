@@ -916,10 +916,13 @@ sub page_title ($c) {
 							setID     => $c->{set}->set_id,
 							problemID => $c->{problem}->problem_id
 						),
-						# If we are here without a real homework set, carry that through.
-						$c->{set}->set_id eq 'Undefined_Set'
-						? (params => [ 'sourceFilePath' => $c->param('sourceFilePath') ])
-						: ()
+						params => {
+							problemSeed => $c->{problem}->problem_seed,
+							# If we are here without a real homework set, carry that through.
+							$c->{set}->set_id eq 'Undefined_Set'
+							? (sourceFilePath => $c->param('sourceFilePath'))
+							: ()
+						}
 					),
 					target => 'WW_Editor',
 					class  => 'btn btn-sm btn-secondary'

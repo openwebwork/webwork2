@@ -560,11 +560,16 @@
 											<i class="icon far fa-image" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Render') %></span>
 										</button>
-										<%= link_to $c->systemLink(url_for(
-											'instructor_problem_editor_withset_withproblem',
-											setID     => $setID,
-											problemID => $problemID
-											)),
+										<%= link_to $c->systemLink(
+											url_for(
+												'instructor_problem_editor_withset_withproblem',
+												setID     => $setID,
+												problemID => $problemID
+											),
+											@editForUser == 1 && $problemToShow
+											? (params => { problemSeed => $problemToShow->problem_seed })
+											: ()
+											),
 											class => 'psd_edit btn btn-secondary btn-sm'
 											. (@editForUser ? '' : ' px-1 px-sm-2'),
 											target => 'WW_Editor',
