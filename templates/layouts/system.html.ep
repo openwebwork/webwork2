@@ -128,7 +128,7 @@
 				</div>
 			</div>
 			<div class="login-status d-flex flex-column justify-content-center gap-1">
-				<%= include 'ContentGenerator/Base/login_status' %>
+				<%= include 'ContentGenerator/Base/masthead_menus' %>
 			</div>
 		</div>
 		% # Navigation
