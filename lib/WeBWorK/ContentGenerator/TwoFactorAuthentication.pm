@@ -44,8 +44,7 @@ sub initialize ($c) {
 			GD::Barcode::QRcode->new($otp_link, { Ecc => 'L', ModuleSize => 4, Version => 0 })->plot->png;
 		};
 
-		# Note that this user has already authenticated so the user record should exist.
-		my $user = $c->db->getUser($c->authen->{user_id});
+		my $user = $c->authen->{user};
 
 		if ($ce->{twoFA}{email_sender} && (my $recipient = $user->email_address)) {
 			return if $c->authen->session->{otp_setup_email_sent};

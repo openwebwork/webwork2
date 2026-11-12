@@ -882,7 +882,7 @@ sub feedbackMacro ($c, %params) {
 		);
 	} elsif ($c->ce->{courseURLs}{feedbackFormURL}) {
 		$params{notifyAddresses} =
-			join(';', $c->fetchEmailRecipients('receive_feedback', $c->db->getUser($c->authen->{user_id})));
+			join(';', $c->fetchEmailRecipients('receive_feedback', $c->authen->{user}));
 		return $c->include(
 			'ContentGenerator/Base/feedback_macro_form',
 			params          => \%params,

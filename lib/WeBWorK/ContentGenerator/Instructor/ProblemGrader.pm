@@ -170,9 +170,6 @@ async sub initialize ($c) {
 	# These should always be defined except for some odd edge cases.
 	return unless $set && $problem;
 
-	# Get the current user.
-	my $user = $db->getUser($userID);
-
 	# Render the problem text.
 	$c->stash->{pg} = await renderPG(
 		$c,

@@ -14,10 +14,9 @@ async sub initialize ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
-	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser') || '';
 
-	$c->{effectiveUser} = $c->db->getUser($effectiveUserID);
+	$c->{effectiveUser} = $c->authen->{effective_user};
 
 	# The user set is needed to check for a set-restricted login proctor, and to show and possibly save the submission
 	# time.  To get the user set, the set name and version number are needed.  Attempt to obtain those from the url path
@@ -54,9 +53,8 @@ async sub initialize ($c) {
 			my $problem = $db->getMergedProblemVersion($effectiveUserID, $c->stash->{setID},
 				$versionNum, ($db->listProblemVersions($effectiveUserID, $c->stash->{setID}, $versionNum))[0]);
 			if (WeBWorK::ContentGenerator::GatewayQuiz::can_recordAnswers(
-				$c,                               $db->getUser($userID),
-				$db->getPermissionLevel($userID), $c->{effectiveUser},
-				$c->stash->{userSet},             $problem
+				$c, $c->authen->{user},
+				$c->{effectiveUser}, $c->stash->{userSet}, $problem
 			))
 			{
 				WeBWorK::ContentGenerator::GatewayQuiz::recordSubmissionTime($c, $c->stash->{userSet}, $problem);

@@ -40,11 +40,9 @@ sub nav ($c, $args) {
 }
 
 sub scoring_info ($c) {
-	my $db = $c->db;
 	my $ce = $c->ce;
 
-	my $user = $db->getUser($c->{studentID});
-	return '' unless $user;
+	my $user = $c->authen->{effective_user};
 
 	my $message_file = 'report_grades.msg';
 	my $filePath     = "$ce->{courseDirs}{email}/$message_file";
@@ -138,11 +136,7 @@ sub displayStudentGrades ($c) {
 	my $authz = $c->authz;
 
 	my $studentID     = $c->{studentID};
-	my $studentRecord = $db->getUser($studentID);
-	unless ($studentRecord) {
-		$c->addbadmessage($c->maketext('Record for user [_1] not found.', $studentID));
-		return '';
-	}
+	my $studentRecord = $c->authen->{effective_user};
 	my $effectiveUser = $studentRecord->user_id;
 
 	# First get all merged sets for this user ordered by set_id.

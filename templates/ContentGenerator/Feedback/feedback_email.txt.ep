@@ -79,7 +79,7 @@
 <%= maketext('Show Hints:') %>           <%== param('showHints') ? 'yes' : 'no' %>
 <%= maketext('Show Solutions:') %>       <%== param('showSolutions') ? 'yes' : 'no' %>
 % }
-% if ($user && $verbosity >= 1) {
+% if ($verbosity >= 1) {
 
 ***** <%= maketext('Data about the user:') %> *****
 

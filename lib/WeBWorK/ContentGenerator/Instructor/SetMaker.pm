@@ -396,10 +396,7 @@ sub initialize ($c) {
 	$c->{problibs} = $ce->{courseFiles}{problibs} // {};
 
 	my $userName = $c->authen->{user_id};
-	my $user     = $db->getUser($userName);          # checked
-	die "record for user $userName (real user) does not exist."
-		unless defined $user;
-	my $authz = $c->authz;
+	my $authz    = $c->authz;
 
 	return unless ($authz->hasPermissions($userName, "modify_problem_sets"));
 

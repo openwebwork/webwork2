@@ -182,7 +182,7 @@
 			</table>
 		% }
 		%
-		% if ($user && $verbosity >= 1) {
+		% if ($verbosity >= 1) {
 			<table style="border-collapse: collapse; margin-bottom: 1rem">
 				<thead>
 					<tr>

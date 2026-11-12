@@ -1,15 +1,5 @@
 % require WeBWorK::PG;
 %
-% unless (defined $c->{user}) {
-	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', $authen->{user_id}) %></div>
-	% last;
-% }
-%
-% unless (defined $c->{effectiveUser}) {
-	<div class="alert alert-danger p-1 my-2"><%= maketext('User "[_1]" not found.', param('effectiveUser')) %></div>
-	% last;
-% }
-%
 % my $userID    = $c->{user}->user_id;
 % my $eUserName = $c->{effectiveUser}->first_name . ' ' . $c->{effectiveUser}->last_name;
 %

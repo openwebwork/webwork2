@@ -42,7 +42,7 @@ sub client ($c, $session_key_hash) {
 sub membership ($c, $actor, $user_id) {
 	my $resource_iri = Caliper::ResourceIri->new($c->ce);
 
-	my $user       = $c->db->getUser($user_id);
+	my $user       = $user_id eq $c->authen->{user_id} ? $c->authen->{user} : $c->db->getUser($user_id);
 	my $permission = $c->db->getPermissionLevel($user_id);
 
 	my $roles = [];
