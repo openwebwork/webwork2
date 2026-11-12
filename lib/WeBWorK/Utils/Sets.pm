@@ -292,29 +292,16 @@ sub restricted_set_message($c, $set, $status) {
 }
 
 sub test_version_is_complete ($c, $setVersion, $problem = undef) {
-	return 0 unless $setVersion->version_last_attempt_time;
-
 	my $authz  = $c->authz;
 	my $userID = $setVersion->user_id;
 
-	# All problems in a test version have the same number of attempts, so the attempts for the first problem are used.
-	# This is determined in a closure so that the database queries are only made if this information is needed below.
-	my $attemptsUsed = sub {
-		unless ($problem) {
-			my ($problemID) = $c->db->listProblemVersions($userID, $setVersion->set_id, $setVersion->version_id);
-			return 0 unless defined $problemID;
-			$problem = $c->db->getProblemVersion($userID, $setVersion->set_id, $setVersion->version_id, $problemID);
-			return 0 unless $problem;
-		}
-		return ($problem->num_correct // 0) + ($problem->num_incorrect // 0);
-	};
-
+	# A version that has timed out is complete regardless of whether it was ever submitted.
 	if (after($setVersion->due_date + $c->ce->{gatewayGracePeriod})) {
-		return 0
-			if $authz->hasPermissions($userID,
-				after($setVersion->answer_date) ? 'record_answers_after_answer_date' : 'record_answers_after_due_date');
-		return $attemptsUsed->() > 0;
+		return !$authz->hasPermissions($userID,
+			after($setVersion->answer_date) ? 'record_answers_after_answer_date' : 'record_answers_after_due_date');
 	}
+
+	return 0 unless $setVersion->version_last_attempt_time;
 
 	my $attemptsPerVersion    = $setVersion->attempts_per_version || 0;
 	my $canRecordWithAttempts = $authz->hasPermissions($userID, 'record_answers_after_open_date_with_attempts');
@@ -324,7 +311,14 @@ sub test_version_is_complete ($c, $setVersion, $problem = undef) {
 		: $canRecordWithAttempts;
 	return 0 if $canRecordWithAttempts && $canRecordWithoutAttempts;
 
-	my $attempts = $attemptsUsed->();
+	# All problems in a test version have the same number of attempts, so the attempts for the first problem are used.
+	unless ($problem) {
+		my ($problemID) = $c->db->listProblemVersions($userID, $setVersion->set_id, $setVersion->version_id);
+		$problem = $c->db->getProblemVersion($userID, $setVersion->set_id, $setVersion->version_id, $problemID)
+			if defined $problemID;
+	}
+	my $attempts = $problem ? ($problem->num_correct // 0) + ($problem->num_incorrect // 0) : 0;
+
 	return 0 unless $attempts;
 	my $hasAttemptsLeft = !$attemptsPerVersion || $attempts < $attemptsPerVersion;
 	return !($hasAttemptsLeft ? $canRecordWithAttempts : $canRecordWithoutAttempts);
@@ -433,22 +427,22 @@ check for lis_source_did when using homework grade passback.
 
 Usage: C<test_version_is_complete($c, $setVersion, $problem)>
 
-Returns true if at least one submission has been recorded for the test version
-C<$setVersion> (a merged set version), and the user the version belongs to can
-no longer record answers for it, either because all attempts for the version
-have been used or because time has expired.  This is determined from the
-permissions of that user in the same way that it is determined when the test is
-submitted.
+Returns true if the user the test version C<$setVersion> (a merged set version)
+belongs to can no longer record answers for it.  That is the case if time has
+expired for the version, whether or not it was ever submitted, or if at least
+one submission has been recorded and all attempts for the version have been
+used.  This is determined from the permissions of that user in the same way that
+it is determined when the test is submitted.
 
 The optional C<$problem> should be a problem version from C<$setVersion>.  If it
 is given, then the number of recorded attempts is taken from it.  Otherwise the
 first problem of the version is obtained from the database to find the number of
-recorded attempts.
+recorded attempts if needed.
 
 This is used to determine if a proctored test version can be viewed without
 proctor authorization.  Since this is determined from the current data for the
 version, a version that is complete is no longer complete if more attempts are
 allowed or its close date is extended, and then proctor authorization is
-required again.  A version with no recorded submissions is never complete.
+required again.
 
 =cut
