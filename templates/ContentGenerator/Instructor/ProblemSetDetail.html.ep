@@ -579,8 +579,7 @@
 										<% end =%>
 										% my $problemLink;
 										% if ($isGatewaySet) {
-											% # If editing a set version, then open the actual set version.
-											% # Otherwise, the best that can be done is to use an undefined set.
+											% # Only link to a test when editing a test version.
 											% if ($editingSetVersion) {
 												% my ($problemNumber, $pageNumber) =
 													% get_test_problem_position($db, $problemToShow);
@@ -596,25 +595,6 @@
 														% currentPage   => $pageNumber
 													% }
 												% )->fragment("prob$problemNumber");
-											% } else {
-												% $problemLink = $c->systemLink(
-													% url_for(
-														% 'gateway_quiz',
-														% setID     => 'Undefined_Set',
-														% problemID => '1'
-													% ),
-													% params => {
-														% effectiveUser => @editForUser == 1 ? $editForUser[0]
-														% : $authen->{user_id},
-														% problemSeed => $problemToShow
-														% ? $problemToShow->problem_seed
-														% : '',
-														% sourceFilePath => $problemToShow
-															% && $problemToShow->source_file
-														% ? $problemToShow->source_file
-														% : $globalProblems->{$problemID}->source_file
-													% }
-												% );
 											% }
 										% } else {
 											% $problemLink = $c->systemLink(
@@ -630,19 +610,21 @@
 												% }
 											% );
 										% }
-										<%= link_to $problemLink,
-											class => 'psd_view btn btn-secondary btn-sm'
-											. (@editForUser ? '' : ' px-1 px-sm-2'),
-											target => 'WW_View',
-											data   => {
-												bs_toggle    => 'tooltip',
-												bs_placement => 'top',
-												bs_title     => maketext('Open in New Window')
-											},
-											begin =%>
-											<i class="icon far fa-eye" aria-hidden="true"></i>
-											<span class="visually-hidden"><%= maketext('View') =%></span>
-										<% end =%>
+										% if ($problemLink) {
+											<%= link_to $problemLink,
+												class => 'psd_view btn btn-secondary btn-sm'
+												. (@editForUser ? '' : ' px-1 px-sm-2'),
+												target => 'WW_View',
+												data   => {
+													bs_toggle    => 'tooltip',
+													bs_placement => 'top',
+													bs_title     => maketext('Open in New Window')
+												},
+												begin =%>
+												<i class="icon far fa-eye" aria-hidden="true"></i>
+												<span class="visually-hidden"><%= maketext('View') =%></span>
+											<% end =%>
+										% }
 									% }
 									% if ($authz->hasPermissions($authen->{user_id}, 'problem_grader')) {
 										<%= link_to $c->systemLink(url_for(

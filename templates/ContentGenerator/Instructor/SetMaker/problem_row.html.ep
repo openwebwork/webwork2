@@ -8,11 +8,6 @@
 	% ($isMO, $isstatic) = $c->getDBextras($sourceFileName);
 % }
 %
-% # Determine if the target set is a gateway assignment.
-% my $setRecord =
-	% (defined param('local_sets') && param('local_sets') ne '') ? $db->getGlobalSet(param('local_sets')) : undef;
-% my $isGatewaySet = defined $setRecord && $setRecord->assignment_type =~ /gateway/;
-%
 % my $noshowclass = $sourceFileData->{morelt} ? "MLT$sourceFileData->{morelt}" : "NS$cnt";
 % if ($sourceFileData->{children}) {
 	% my $numchild = @{ $sourceFileData->{children} };
@@ -278,11 +273,7 @@
 					</span>
 				% }
 				<%= link_to $c->systemLink(
-					url_for(
-						'instructor_problem_editor_withset_withproblem',
-						setID     => 'Undefined_Set',
-						problemID => '1'
-					),
+					url_for('instructor_problem_editor'),
 					params => {
 						sourceFilePath => $sourceFileName,
 						problemSeed    => $c->{problem_seed}
@@ -299,30 +290,6 @@
 					begin =%>
 					<i class="icon fas fa-pencil-alt" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Edit') =%></span>
-				<% end =%>
-				<%= link_to $c->systemLink(
-					url_for(
-						$isGatewaySet ? 'gateway_quiz' : 'problem_detail',
-						setID => 'Undefined_Set',
-						$isGatewaySet ? () : (problemID => '1')
-					),
-					params => {
-						effectiveUser  => $authen->{user_id},
-						editMode       => 'SetMaker',
-						problemSeed    => $c->{problem_seed},
-						sourceFilePath => $sourceFileName,
-					}
-					),
-					id     => "tryit$cnt",
-					class  => 'text-decoration-none btn btn-sm btn-secondary',
-					target => 'WW_View',
-					data   => {
-						bs_title     => maketext('Try it'),
-						bs_toggle    => 'tooltip',
-						bs_placement => 'top'
-					},
-					begin =%>
-					<i class="far fa-eye"></i>
 				<% end =%>
 				<span
 					class="dont-show btn btn-sm btn-secondary"

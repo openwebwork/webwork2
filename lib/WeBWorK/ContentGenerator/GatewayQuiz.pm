@@ -13,13 +13,12 @@ use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Utils                    qw(encodeAnswers decodeAnswers max wwRound);
 use WeBWorK::Utils::DateTime          qw(before between after);
-use WeBWorK::Utils::Files             qw(path_is_subdir);
 use WeBWorK::Utils::Instructor        qw(assignSetVersionToUser);
 use WeBWorK::Utils::Logs              qw(writeLog writeCourseLog);
 use WeBWorK::Utils::ProblemProcessing qw(create_ans_str_from_responses compute_reduced_score);
 use WeBWorK::Utils::Rendering         qw(getTranslatorDebuggingOptions renderPG);
 use WeBWorK::Utils::Sets              qw(is_restricted);
-use WeBWorK::DB::Utils                qw(global2user fake_set fake_set_version fake_problem);
+use WeBWorK::DB::Utils                qw(global2user);
 use WeBWorK::Debug                    qw(debug);
 use PGrandom;
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
@@ -101,7 +100,6 @@ sub can_showProblemGrader ($c, $user, $effectiveUser, $set, $problem, $tmplSet) 
 
 	return ($authz->hasPermissions($user->user_id, 'access_instructor_tools')
 			&& $authz->hasPermissions($user->user_id, 'problem_grader')
-			&& $set->set_id ne 'Undefined_Set'
 			&& !$c->{invalidSet});
 }
 
@@ -123,9 +121,6 @@ sub can_showSolutions ($c, $user, $effectiveUser, $set, $problem, $tmplSet) {
 # the conditions of the can_gradeUnsubmittedTest method.
 sub can_recordAnswers ($c, $user, $effectiveUser, $set, $problem, $tmplSet = 0, $submitAnswers = 0) {
 	my $authz = $c->authz;
-
-	# Never record answers for undefined sets
-	return 0 if $set->set_id eq 'Undefined_Set';
 
 	if ($user->user_id ne $effectiveUser->user_id) {
 		# If the user is not allowed to record answers as another user, return that permission.  If the user is allowed
@@ -331,7 +326,6 @@ async sub initialize ($c) {
 	my $setID           = $c->stash('setID');
 	my $userID          = $c->authen->{user_id};
 	my $effectiveUserID = $c->param('effectiveUser');
-	my $isFakeSet       = 0;
 
 	my $user          = $c->authen->{user};
 	my $effectiveUser = $c->authen->{effective_user};
@@ -344,151 +338,81 @@ async sub initialize ($c) {
 
 	# We need the template (user) set, the merged set version, and a problem from the set to be able to test whether
 	# we're creating a new set version.
-	my ($tmplSet, $set, $problem) = (0, 0, 0);
+	my ($tmplSet, $set, $problem);
 
-	# If the set comes in as "Undefined_Set", then we're trying/editing a single problem in a set, and so create a fake
-	# set with which to work if the user has the authorization to do that.
-	if ($setID eq 'Undefined_Set') {
-		$isFakeSet = 1;
-		# Make sure these are defined
-		$requestedVersion = 1;
-		$c->{assignment_type} = 'gateway';
-
-		if (!$authz->hasPermissions($userID, 'modify_problem_sets')) {
-			$c->{invalidSet} =
-				$c->maketext('You do not have the authorization level required to view/edit undefined sets.');
-
-			# Define these so that we can drop through to report the error in body.
-			$tmplSet = fake_set($db);
-			$set     = fake_set_version($db);
-			$problem = fake_problem($db);
-		} else {
-			# In this case we're creating a fake set from the input, so the input must include a source file.
-			if (!$c->param('sourceFilePath')) {
-				$c->{invalidSet} = $c->maketext(
-					'An Undefined_Set was requested, but no source file for the contained problem was provided.');
-
-				# Define these so that we can drop through to report the error in body.
-				$tmplSet = fake_set($db);
-				$set     = fake_set_version($db);
-				$problem = fake_problem($db);
-
-			} else {
-				my $sourceFPath = $c->param('sourceFilePath');
-				die('sourceFilePath is unsafe!')
-					unless path_is_subdir($sourceFPath, $ce->{courseDirs}{templates}, 1);
-
-				$tmplSet = fake_set($db);
-				$set     = fake_set_version($db);
-				$problem = fake_problem($db);
-
-				my $creation_time = time;
-
-				$tmplSet->assignment_type('gateway');
-				$tmplSet->attempts_per_version(0);
-				$tmplSet->time_interval(0);
-				$tmplSet->versions_per_interval(1);
-				$tmplSet->version_time_limit(0);
-				$tmplSet->version_creation_time($creation_time);
-				$tmplSet->problem_randorder(0);
-				$tmplSet->problems_per_page(1);
-				$tmplSet->hide_score('N');
-				$tmplSet->hide_score_by_problem('N');
-				$tmplSet->hide_work('N');
-				$tmplSet->time_limit_cap('0');
-				$tmplSet->restrict_ip('No');
-
-				$set->assignment_type('gateway');
-				$set->time_interval(0);
-				$set->versions_per_interval(1);
-				$set->version_time_limit(0);
-				$set->version_creation_time($creation_time);
-				$set->time_limit_cap('0');
-
-				$problem->problem_id(1);
-				$problem->source_file($sourceFPath);
-				$problem->user_id($effectiveUserID);
-				$problem->value(1);
-				$problem->problem_seed($c->param('problemSeed')) if ($c->param('problemSeed'));
-			}
-		}
-	} else {
-		# If there is a cap on problems per page, make sure that is respected in the global set in
-		# case something higher snuck in.
-		if ($ce->{test}{maxProblemsPerPage}) {
-			my $globalSet = $db->getGlobalSet($setID);
-			if (
-				$ce->{test}{maxProblemsPerPage}
-				&& ($globalSet->problems_per_page == 0
-					|| $globalSet->problems_per_page > $ce->{test}{maxProblemsPerPage})
-				)
-			{
-				$globalSet->problems_per_page($ce->{test}{maxProblemsPerPage});
-				$db->putGlobalSet($globalSet);
-			}
-		}
-
-		# Get the template set, i.e., the non-versioned set that's assigned to the user.
-		# If this failed in authz->checkSet, then $c->{invalidSet} is set.
-		$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
-
-		# Now that is has been validated that this is a gateway test, save the assignment test for the processing of
-		# graded proctored tests.  If a set was not obtained from the database, store a fake value here
-		# to be able to continue.
-		$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
-
-		# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
-		if ($ce->{test}{maxProblemsPerPage}
-			&& ($tmplSet->problems_per_page == 0 || $tmplSet->problems_per_page > $ce->{test}{maxProblemsPerPage}))
+	# If there is a cap on problems per page, make sure that is respected in the global set in
+	# case something higher snuck in.
+	if ($ce->{test}{maxProblemsPerPage}) {
+		my $globalSet = $db->getGlobalSet($setID);
+		if (
+			$ce->{test}{maxProblemsPerPage}
+			&& ($globalSet->problems_per_page == 0
+				|| $globalSet->problems_per_page > $ce->{test}{maxProblemsPerPage})
+			)
 		{
-			$tmplSet->problems_per_page($ce->{test}{maxProblemsPerPage});
-		}
-
-		# next, get the latest (current) version of the set if we don't have a
-		#     requested version number
-		my @allVersionIds = $db->listSetVersions($effectiveUserID, $setID);
-		my $latestVersion = (@allVersionIds ? $allVersionIds[-1] : 0);
-
-		# Double check that the requested version makes sense.
-		$requestedVersion = $latestVersion
-			if ($requestedVersion !~ /^\d+$/
-				|| $requestedVersion > $latestVersion
-				|| $requestedVersion < 0);
-
-		die('No requested version when returning to problem?!')
-			if (
-				(
-					$c->param('previewAnswers')
-					|| $c->param('checkAnswers')
-					|| $c->param('submitAnswers')
-					|| $c->param('newPage')
-				)
-				&& !$requestedVersion
-			);
-
-		# To check for a proctored test, the set version is needed, not the template.  So get that.
-		if ($requestedVersion) {
-			$set = $db->getMergedSetVersion($effectiveUserID, $setID, $requestedVersion);
-		} elsif ($latestVersion) {
-			$set = $db->getMergedSetVersion($effectiveUserID, $setID, $latestVersion);
-		} else {
-			# If there is not a requested version or a latest version, then create dummy set to proceed.
-			# FIXME RETURN TO: should this be global2version?
-			$set = global2user($db->{set_version}{record}, $db->getGlobalSet($setID));
-			$set->user_id($effectiveUserID);
-			$set->psvn('000');
-			$set->set_id($setID);    # redundant?
-			$set->version_id(0);
-		}
-
-		# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
-		if ($ce->{test}{maxProblemsPerPage}
-			&& ($set->problems_per_page == 0 || $set->problems_per_page > $ce->{test}{maxProblemsPerPage}))
-		{
-			$set->problems_per_page($ce->{test}{maxProblemsPerPage});
+			$globalSet->problems_per_page($ce->{test}{maxProblemsPerPage});
+			$db->putGlobalSet($globalSet);
 		}
 	}
-	my $setVersionNumber = $set ? $set->version_id : 0;
+
+	# Get the template set, i.e., the non-versioned set that's assigned to the user.
+	$tmplSet = $db->getMergedSet($effectiveUserID, $setID);
+
+	# Now that is has been validated that this is a gateway test, save the assignment type for the processing of
+	# graded proctored tests.  Fallback to 'gateway' in case assignment_type was empty.
+	$c->{assignment_type} = $tmplSet->assignment_type || 'gateway';
+
+	# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+	if ($ce->{test}{maxProblemsPerPage}
+		&& ($tmplSet->problems_per_page == 0 || $tmplSet->problems_per_page > $ce->{test}{maxProblemsPerPage}))
+	{
+		$tmplSet->problems_per_page($ce->{test}{maxProblemsPerPage});
+	}
+
+	# next, get the latest (current) version of the set if we don't have a
+	#     requested version number
+	my @allVersionIds = $db->listSetVersions($effectiveUserID, $setID);
+	my $latestVersion = (@allVersionIds ? $allVersionIds[-1] : 0);
+
+	# Double check that the requested version makes sense.
+	$requestedVersion = $latestVersion
+		if ($requestedVersion !~ /^\d+$/
+			|| $requestedVersion > $latestVersion
+			|| $requestedVersion < 0);
+
+	die('No requested version when returning to problem?!')
+		if (
+			(
+				$c->param('previewAnswers')
+				|| $c->param('checkAnswers')
+				|| $c->param('submitAnswers')
+				|| $c->param('newPage')
+			)
+			&& !$requestedVersion
+		);
+
+	# To check for a proctored test, the set version is needed, not the template.  So get that.
+	if ($requestedVersion) {
+		$set = $db->getMergedSetVersion($effectiveUserID, $setID, $requestedVersion);
+	} elsif ($latestVersion) {
+		$set = $db->getMergedSetVersion($effectiveUserID, $setID, $latestVersion);
+	} else {
+		# If there is not a requested version or a latest version, then create dummy set to proceed.
+		# FIXME RETURN TO: should this be global2version?
+		$set = global2user($db->{set_version}{record}, $db->getGlobalSet($setID));
+		$set->user_id($effectiveUserID);
+		$set->psvn('000');
+		$set->set_id($setID);    # redundant?
+		$set->version_id(0);
+	}
+
+	# If there is a cap on problems per page, make sure that is respected in case something higher snuck in.
+	if ($ce->{test}{maxProblemsPerPage}
+		&& ($set->problems_per_page == 0 || $set->problems_per_page > $ce->{test}{maxProblemsPerPage}))
+	{
+		$set->problems_per_page($ce->{test}{maxProblemsPerPage});
+	}
+	my $setVersionNumber = $set->version_id;
 
 	# Assemble gateway parameters
 
@@ -498,16 +422,14 @@ async sub initialize ($c) {
 	# date.  If a specific version has not been requested and conditional release is enabled, then this also checks to
 	# see if the conditions have been met for a conditional release.
 	my $isOpen = (
-		$requestedVersion ? ($set && $set->open_date && after($set->open_date, $c->submitTime)) : ($tmplSet
-				&& $tmplSet->open_date
+		$requestedVersion ? ($set->open_date && after($set->open_date, $c->submitTime)) : ($tmplSet->open_date
 				&& after($tmplSet->open_date, $c->submitTime)
 				&& !($ce->{options}{enableConditionalRelease} && is_restricted($db, $tmplSet, $effectiveUserID)))
 		)
 		|| $authz->hasPermissions($userID, 'view_unopened_sets');
 
 	my $isClosed =
-		$tmplSet
-		&& $tmplSet->due_date
+		$tmplSet->due_date
 		&& after($tmplSet->due_date, $c->submitTime)
 		&& !$authz->hasPermissions($userID, 'record_answers_after_due_date');
 
@@ -515,17 +437,14 @@ async sub initialize ($c) {
 	# version.  Among other things, the number of attempts is a property of the problem, so get a problem to check that.
 	# Note that for a gateway quiz all problems will have the same number of attempts.  This means that if the set
 	# doesn't have any problems we're up a creek, so check for that here and bail if that is the case.
-	my @setPNum = $setID eq 'Undefined_Set' ? (1) : $db->listUserProblems($effectiveUser->user_id, $setID);
-	die("Set $setID contains no problems.") if (!@setPNum);
+	my @setPNum = $db->listUserProblems($effectiveUser->user_id, $setID);
+	die("Set $setID contains no problems.") if !@setPNum;
 
-	# If we assigned a fake problem above, $problem is already defined.  Otherwise, get the problem, or define it to be
-	# undefined if the set hasn't been versioned to the user yet.  This is fixed when we assign the setVersion.
-	if (!$problem) {
-		$problem =
-			$setVersionNumber
-			? $db->getMergedProblemVersion($effectiveUser->user_id, $setID, $setVersionNumber, $setPNum[0])
-			: undef;
-	}
+	# Get the problem if there is a versioned set, otherwise a problem will be defined when creating a versioned test.
+	$problem =
+		$setVersionNumber
+		? $db->getMergedProblemVersion($effectiveUser->user_id, $setID, $setVersionNumber, $setPNum[0])
+		: undef;
 
 	my $maxAttemptsPerVersion = $tmplSet->attempts_per_version  || 0;
 	my $timeInterval          = $tmplSet->time_interval         || 0;
@@ -549,7 +468,7 @@ async sub initialize ($c) {
 	my $currentNumVersions = 0;    # this is the number of versions in the time interval
 	my $totalNumVersions   = 0;
 
-	if ($setVersionNumber && !$c->{invalidSet} && $setID ne 'Undefined_Set') {
+	if ($setVersionNumber) {
 		my @setVersionIDs = $db->listSetVersions($effectiveUserID, $setID);
 		my @setVersions   = $db->getSetVersions(map { [ $effectiveUserID, $setID, $_ ] } @setVersionIDs);
 		for (@setVersions) {
@@ -563,7 +482,7 @@ async sub initialize ($c) {
 
 	my $versionIsOpen = 0;
 
-	if ($isOpen && !$isClosed && !$c->{invalidSet}) {
+	if ($isOpen && !$isClosed) {
 		# If specific version was not requested, then create a new one if needed.
 		if (!$requestedVersion) {
 			if (
@@ -741,7 +660,7 @@ async sub initialize ($c) {
 			}
 		}
 
-	} elsif (!$c->{invalidSet} && !$requestedVersion) {
+	} elsif (!$requestedVersion) {
 		$c->{invalidSet} = $c->maketext('This test is closed.  No new test versions may be taken.');
 	}
 
@@ -867,12 +786,7 @@ async sub initialize ($c) {
 
 	# Set up problem numbering and multipage variables.
 
-	my @problemNumbers;
-	if ($setID eq 'Undefined_Set') {
-		@problemNumbers = (1);
-	} else {
-		@problemNumbers = $db->listProblemVersions($effectiveUserID, $setID, $setVersionNumber);
-	}
+	my @problemNumbers = $db->listProblemVersions($effectiveUserID, $setID, $setVersionNumber);
 
 	# To speed up processing of long (multi-page) tests, we want to only translate those problems that are being
 	# submitted or are currently being displayed.  So determine which problems are on the current page.
@@ -924,12 +838,7 @@ async sub initialize ($c) {
 	my @pg_results;
 
 	# Process the problems as needed.
-	my @mergedProblems;
-	if ($setID eq 'Undefined_Set') {
-		@mergedProblems = ($problem);
-	} else {
-		@mergedProblems = $db->getAllMergedProblemVersions($effectiveUserID, $setID, $setVersionNumber);
-	}
+	my @mergedProblems = $db->getAllMergedProblemVersions($effectiveUserID, $setID, $setVersionNumber);
 
 	my @renderPromises;
 
@@ -1299,8 +1208,7 @@ sub path ($c, $args) {
 		$args,
 		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
 		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
-		$setID eq 'Undefined_Set'
-			|| $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
+		$c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
 		? (
 			defined $c->stash('versionID')
 			? ($setID => $c->url_for('problem_list', setID => $setID), 'v' . $c->stash('versionID') => '')
@@ -1321,10 +1229,7 @@ sub nav ($c, $args) {
 
 	# Set up and display a student navigation for those that have permission to act as a student.
 	if ($c->authz->hasPermissions($userID, 'become_student')) {
-		my $setID = $c->{set}->set_id;
-
-		return '' if $setID eq 'Undefined_Set';
-
+		my $setID      = $c->{set}->set_id;
 		my $setVersion = $c->{set}->version_id;
 
 		# Find all versions of this set that have been taken (excluding those taken by the current user).

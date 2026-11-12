@@ -366,7 +366,7 @@
 		</div>
 	% }
 	%
-	% if ($c->{can}{showWork} && $setID ne 'Undefined_Set') {
+	% if ($c->{can}{showWork}) {
 		<div class="row">
 			<div class="col-md-10 mb-1">
 				<div class="alert alert-info p-1 mb-0">
@@ -853,6 +853,6 @@
 %
 % # If achievements enabled, check to see if there are new ones and output them.  Use the first
 % # problem to seed the data. However, all of the problems will be provided to the achievement evaluator.
-% if ($ce->{achievementsEnabled} && $c->{will}{recordAnswers} && $c->{submitAnswers} && $setID ne 'Undefined_Set') {
+% if ($ce->{achievementsEnabled} && $c->{will}{recordAnswers} && $c->{submitAnswers}) {
 	<%= checkForAchievements($problems->[0], $c, setVersion => $setVersionID) =%>
 % }
