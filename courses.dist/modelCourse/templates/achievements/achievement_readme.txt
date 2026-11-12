@@ -70,7 +70,9 @@ $userAchievements:
 $localData:
     This is a hash which stores data for this user and achievement
     (changes to this variable *will* be saved).  This hash will persist
-    from evaluation to evaluation.  You can store whatever you like in here
+    from evaluation to evaluation.  You can store numbers, strings, and array
+    or hash references containing those in here (the data is saved as JSON,
+    so other values such as objects or code references will not be saved),
     and it can be accessed next time this evaluator is run. Two things to
     keep in mind. First, The data in this hash will *not* be accessible by
     other achievements.  Second, the first time a variable is accessed it
@@ -79,10 +81,11 @@ $localData:
 $globalData:
     This is a hash which stores data for all achievements (changes to this
     variable *will* be saved).  This hash will persist from evaluation to
-    evaluation and, like $localData, you can store whatever you like in here.
-    This data will be accessible from *every* achievement and is unique to
-    the user.  There are three variables stored in this hash that are
-    maintained by the system and should not be modified.
+    evaluation and, like $localData, you can store numbers, strings, and array
+    or hash references containing those in here.  This data will be accessible
+    from *every* achievement and is unique to the user.  There are three
+    variables stored in this hash that are maintained by the system and should
+    not be modified.
     - $globalData->{completeSets}:
         This is the number of sets which the student has earned 100% on.
     - $globalData->{completedSetIds}:
