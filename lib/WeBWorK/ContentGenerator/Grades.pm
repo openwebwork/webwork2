@@ -366,7 +366,7 @@ sub displayStudentGrades ($c) {
 	return $c->include(
 		'ContentGenerator/Grades/student_grades',
 		effectiveUser => $effectiveUser,
-		fullName      => join(' ', $studentRecord->first_name, $studentRecord->last_name),
+		fullName      => $studentRecord->full_name,
 		notOpen       => \@notOpen,
 		open          => \@open,
 		reduced       => \@reduced,

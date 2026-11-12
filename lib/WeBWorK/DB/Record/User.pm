@@ -35,15 +35,22 @@ sub full_name {
 	my $first = $self->first_name;
 	my $last  = $self->last_name;
 
-	if (defined $first and $first ne "" and defined $last and $last ne "") {
-		return "$first $last";
-	} elsif (defined $first and $first ne "") {
-		return $first;
-	} elsif (defined $last and $last ne "") {
-		return $last;
-	} else {
-		return "";
-	}
+	return "$first $last" if defined $first && $first =~ /\S/ && defined $last && $last =~ /\S/;
+	return $first         if defined $first && $first =~ /\S/;
+	return $last          if defined $last  && $last  =~ /\S/;
+	return '';
+}
+
+sub sortable_name {
+	my ($self) = @_;
+
+	my $first = $self->first_name;
+	my $last  = $self->last_name;
+
+	return "$last, $first" if defined $first && $first =~ /\S/ && defined $last && $last =~ /\S/;
+	return $last           if defined $last  && $last  =~ /\S/;
+	return $first          if defined $first && $first =~ /\S/;
+	return '';
 }
 
 # Do not base64 encode the names in the address.
@@ -54,14 +61,14 @@ sub rfc822_mailbox {
 	my $full_name = $self->full_name;
 	my $address   = $self->email_address;
 
-	if (defined $address and $address ne "") {
-		if (defined $full_name and $full_name ne "") {
+	if (defined $address && $address ne '') {
+		if (defined $full_name && $full_name ne '') {
 			return "$full_name <$address>";
 		} else {
 			return $address;
 		}
 	} else {
-		return "";
+		return '';
 	}
 }
 

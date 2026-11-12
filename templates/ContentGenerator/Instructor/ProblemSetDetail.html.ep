@@ -88,7 +88,7 @@
 		% my $user = $db->getUser($userID);
 		% my $line = begin
 			<span>
-				<%= $user->last_name %>, <%= $user->first_name %>
+				<%= $user->sortable_name %>
 				(<%= link_to $user->user_id => 'mailto:' . $user->email_address %>).
 			</span>
 			% if (!$editingSetVersion) {

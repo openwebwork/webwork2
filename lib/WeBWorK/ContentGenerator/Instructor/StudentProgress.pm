@@ -328,7 +328,7 @@ sub displayStudentStats ($c) {
 		}
 	}
 
-	my $fullName      = join(' ', $studentRecord->first_name, $studentRecord->last_name);
+	my $fullName      = $studentRecord->full_name;
 	my $effectiveUser = $studentRecord->user_id();
 
 	my $max_problems     = 0;

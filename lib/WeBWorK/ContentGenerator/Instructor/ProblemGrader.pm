@@ -67,8 +67,7 @@ async sub initialize ($c) {
 	# First process student problems and answers and cache relevant data used both for
 	# saving grades and displaying the grader table.
 	for my $user (@{ $c->stash->{users} }) {
-		$user->{displayName} =
-			$user->last_name || $user->first_name ? $user->last_name . ', ' . $user->first_name : $user->user_id;
+		$user->{displayName} = $user->sortable_name || $user->user_id;
 		$c->stash->{haveSections} = 1 if $user->section;
 
 		if ($c->stash->{set}->assignment_type =~ /gateway/) {
