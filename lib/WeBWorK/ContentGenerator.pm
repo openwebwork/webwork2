@@ -787,7 +787,7 @@ sub pathMacro ($c, $args, @path) {
 			if ($args{style} eq 'bootstrap') {
 				push @$result, $c->tag('li', class => 'breadcrumb-item', $c->link_to($name => $url->query(\%auth)));
 			} else {
-				push @$result, $c->link_to($name => $url->querylu(%auth));
+				push @$result, $c->link_to($name => $url->query(\%auth));
 			}
 		} else {
 			if ($args{style} eq 'bootstrap') {
@@ -831,7 +831,7 @@ sub navMacro ($c, $args, $tail, @links) {
 		my $html      = ($direction && $args{style} eq "buttons") ? $direction : $name;
 		push @$result,
 			$url
-			? $c->link_to($html => $url->query(%auth, %$tail), class => 'btn btn-primary')
+			? $c->link_to($html => $url->query({ %auth, %$tail }), class => 'btn btn-primary')
 			: $c->tag('span', class => 'btn btn-primary disabled', $html);
 	}
 
