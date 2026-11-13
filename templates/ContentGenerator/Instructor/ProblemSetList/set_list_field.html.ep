@@ -25,7 +25,7 @@
 				tabindex="0"
 				aria-label="<%= maketext('Pick date and time') %>"
 			>
-				<i class="fas fa-calendar-alt"></i>
+				<i class="fa-solid fa-calendar-alt"></i>
 			</a>
 		</div>
 	% } else {

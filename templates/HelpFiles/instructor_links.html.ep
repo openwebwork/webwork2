@@ -1,7 +1,7 @@
 % layout 'help_macro';
 % title maketext('Instructor Links Help');
 %
-<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fas fa-question-circle"></i>') =%>
+<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fa-solid fa-question-circle"></i>') =%>
 <hr>
 <%== maketext(
 	'The main page for WeBWorK documentation is the <a [_1]>webwork wiki</a> while specific help for '
@@ -73,4 +73,4 @@
 	</dd>
 </dl>
 
-<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fas fa-question-circle"></i>') %>
+<%== maketext('Click the [_1] icon for page and item specific help.', '<i class="fa-solid fa-question-circle"></i>') %>

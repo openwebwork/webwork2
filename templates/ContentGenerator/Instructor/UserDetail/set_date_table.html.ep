@@ -86,7 +86,7 @@
 							role="button"
 							aria-label="<%= $c->maketext('Pick date and time') %>"
 						>
-							<i class="fas fa-calendar-alt"></i>
+							<i class="fa-solid fa-calendar-alt"></i>
 						</a>
 					</div>
 				</td>

@@ -168,7 +168,7 @@
 						<th scope="col"><%= maketext('End') %></th>
 						<th scope="col" class="hardcopy">
 							<i
-								class="icon far fa-lg fa-arrow-alt-circle-down"
+								class="icon fa-regular fa-lg fa-arrow-alt-circle-down"
 								aria-hidden="true"
 								title="<%= maketext('Generate Hardcopy') %>"
 							></i>
@@ -210,7 +210,7 @@
 								class => 'hardcopy-link',
 								begin =%>
 								<i
-									class="icon far fa-arrow-alt-circle-down fa-lg"
+									class="icon fa-regular fa-arrow-alt-circle-down fa-lg"
 									aria-hidden="true"
 									title="<%= maketext('Download [_1]', $ver->{id} =~ s/_/ /gr) %>"
 								></i>

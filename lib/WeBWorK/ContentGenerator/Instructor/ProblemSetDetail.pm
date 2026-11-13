@@ -910,7 +910,7 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 							role         => 'button',
 							tabindex     => 0,
 							'aria-label' => $c->maketext('Pick date and time'),
-							$c->tag('i', class => 'fas fa-calendar-alt', 'aria-hidden' => 'true', '')
+							$c->tag('i', class => 'fa-solid fa-calendar-alt', 'aria-hidden' => 'true', '')
 						)
 					)->join('')
 				);
@@ -1061,8 +1061,8 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 				bs_toggle    => 'popover'
 			},
 			$c->c(
-				$c->tag('i',    class => 'icon fas fa-question-circle', 'aria-hidden' => 'true'),
-				$c->tag('span', class => 'visually-hidden',             $c->maketext('[_1] Help', $properties{name}))
+				$c->tag('i',    class => 'icon fa-solid fa-question-circle', 'aria-hidden' => 'true'),
+				$c->tag('span', class => 'visually-hidden', $c->maketext('[_1] Help', $properties{name}))
 			)->join('')
 		)
 		: '';

@@ -23,7 +23,7 @@
 					data-bs-content="<%= maketext('This gives the status and dates of the main set. '
 							. 'Individual students may have different settings.') %>"
 				>
-					<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+					<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 					<span class="visually-hidden"><%= maketext('Set Status Help') =%></span>
 				</a>
 			</th>
@@ -56,7 +56,7 @@
 							'Answer availability for tests depends on multiple settings.  This only indicates the '
 								. 'template answer date has passed.  See Set Detail page for actual availability.') =%>"
 					>
-						<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+						<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 						<span class="visually-hidden"><%= maketext('Answer Availability Help') =%></span>
 					</a>
 				% }
@@ -123,7 +123,7 @@
 			maketext('Success index is the square of the average score divided by the average number of attempts.')
 		%>"
 	>
-		<i class="icon fas fa-question-circle" aria-hidden="true"></i>
+		<i class="icon fa-solid fa-question-circle" aria-hidden="true"></i>
 		<span class="visually-hidden"><%= maketext('Success Index Help') =%></span>
 	</a>
 % end

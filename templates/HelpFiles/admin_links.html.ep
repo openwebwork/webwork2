@@ -3,7 +3,7 @@
 %
 <%== maketext(
 	'Click the icon [_1] for page and item specific help.',
-	'<a href="#"><i class="fas fa-question-circle"></i></a>'
+	'<a href="#"><i class="fa-solid fa-question-circle"></i></a>'
 ) =%>
 <hr>
 <p>
