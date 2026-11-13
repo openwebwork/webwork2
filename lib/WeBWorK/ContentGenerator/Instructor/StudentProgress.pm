@@ -8,6 +8,7 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 =cut
 
 use WeBWorK::Utils                    qw(wwRound getSectionRecitationFilters filterBySectionRecitation);
+use WeBWorK::Utils::AnswerFlags       qw(flag_past_answers);
 use WeBWorK::Utils::DateTime          qw(after);
 use WeBWorK::Utils::JITAR             qw(jitar_id_to_seq);
 use WeBWorK::Utils::Sets              qw(grade_set format_set_name_display);
@@ -72,6 +73,92 @@ sub siblings ($c) {
 	return $c->include('ContentGenerator/Instructor/StudentProgress/siblings');
 }
 
+# Count the flagged submissions for each student (or only the given student) in each set or test version.  Returns a
+# reference to a hash of the nonzero counts keyed by user id, set id, and version id (0 for homework sets), and a
+# reference to a hash of the problem ids in each set keyed by set id.  Each set is processed separately to limit
+# memory use.
+sub flaggedSubmissionCounts ($c, $userID = undef) {
+	my $db = $c->db;
+	my $ce = $c->ce;
+
+	my %students  = map { $_->user_id => 1 } @{ $c->{student_records} };
+	my %userWhere = defined $userID ? (user_id => $userID) : ();
+
+	my (%counts, %problemIDs);
+
+	for my $set ($db->getGlobalSetsWhere({}, 'set_id')) {
+		my $setID  = $set->set_id;
+		my $isTest = ($set->assignment_type // '') =~ /gateway/;
+
+		my %pastAnswers;
+		for ($db->getPastAnswersWhere({ set_id => $setID, %userWhere })) {
+			push(@{ $pastAnswers{ $_->user_id }{ $_->version_id // 0 } }, $_) if $students{ $_->user_id };
+		}
+		next unless %pastAnswers;
+
+		# All problems are selected on the past answers page linked to from the flagged submission counts.
+		$problemIDs{$setID} = [ map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setID }, 'problem_id') ];
+		$problemIDs{$setID} = [ map { join('.', jitar_id_to_seq($_)) } @{ $problemIDs{$setID} } ]
+			if ($set->assignment_type // '') eq 'jitar';
+
+		for my $user (keys %pastAnswers) {
+			for my $versionID (keys %{ $pastAnswers{$user} }) {
+				my $count = keys %{ flag_past_answers($ce, $pastAnswers{$user}{$versionID}, timing => !$isTest) };
+				$counts{$user}{$setID}{$versionID} = $count if $count;
+			}
+		}
+	}
+
+	return (\%counts, \%problemIDs);
+}
+
+# Return the number of flagged submissions of a student in a set, linked to the student's past answers for the set.
+sub flagCountLink ($c, $userID, $set, $count, $problemIDs) {
+	return 0 unless $count;
+	return $c->link_to(
+		$count => $c->systemLink(
+			$c->url_for('answer_log'),
+			params => {
+				selected_users    => $userID,
+				selected_sets     => $set->version_id ? $set->set_id . ',v' . $set->version_id : $set->set_id,
+				selected_problems => $problemIDs
+			}
+		)
+	);
+}
+
+# Display the number of flagged submissions for each student in each set (or test version) with any.
+sub displayFlaggedSubmissions ($c) {
+	my ($counts, $problemIDs) = $c->flaggedSubmissionCounts;
+	my %students = map { $_->user_id => $_ } @{ $c->{student_records} };
+
+	my @rows;
+	for my $userID (keys %$counts) {
+		for my $setID (keys %{ $counts->{$userID} }) {
+			push(
+				@rows,
+				{
+					user       => $students{$userID},
+					setID      => $setID,
+					versionID  => $_,
+					count      => $counts->{$userID}{$setID}{$_},
+					problemIDs => $problemIDs->{$setID}
+				}
+			) for keys %{ $counts->{$userID}{$setID} };
+		}
+	}
+
+	@rows = sort {
+		lc($a->{user}->last_name) cmp lc($b->{user}->last_name)
+			|| lc($a->{user}->first_name) cmp lc($b->{user}->first_name)
+			|| $a->{user}->user_id cmp $b->{user}->user_id
+			|| $a->{setID} cmp $b->{setID}
+			|| $a->{versionID} <=> $b->{versionID}
+	} @rows;
+
+	return $c->include('ContentGenerator/Instructor/StudentProgress/flagged_submissions', rows => \@rows);
+}
+
 # Display student progress table
 sub displaySets ($c) {
 	my $db = $c->db;
@@ -114,6 +201,17 @@ sub displaySets ($c) {
 	my @user_set_list;
 
 	my $setName = $c->stash('setID');
+
+	# Count the flagged submissions for each student.  The timing checks are not done for tests, so only homework
+	# submissions are counted.  This can be slow for large courses, so it is only done when requested.
+	my $flagsEnabled = $ce->{options}{flagUnusualAnswers} && !$setIsVersioned;
+	my $showFlags    = $flagsEnabled                      && $c->param('show_flags');
+	my %flagCounts;
+	if ($showFlags) {
+		my %pastAnswers;
+		push(@{ $pastAnswers{ $_->user_id } }, $_) for $db->getPastAnswersWhere({ set_id => $setName });
+		$flagCounts{$_} = keys %{ flag_past_answers($ce, $pastAnswers{$_}, timing => 1) } for keys %pastAnswers;
+	}
 
 	for my $studentRecord (@student_records) {
 		my $studentName = $studentRecord->user_id;
@@ -178,7 +276,8 @@ sub displaySets ($c) {
 				testtime                   => $testTime,
 				timeleft                   => $timeLeft,
 				problem_scores             => $problem_scores,
-				problem_incorrect_attempts => $problem_incorrect_attempts
+				problem_incorrect_attempts => $problem_incorrect_attempts,
+				flagged                    => $flagCounts{$studentName} // 0
 			};
 
 			if ($showBestOnly) {
@@ -228,7 +327,8 @@ sub displaySets ($c) {
 		return lc($m->{record}{first_name}) cmp lc($n->{record}{first_name}) if $sort_method_name eq 'first_name';
 		return lc($m->{record}{email_address}) cmp lc($n->{record}{email_address})
 			if $sort_method_name eq 'email_address';
-		return $n->{score} <=> $m->{score}                                   if $sort_method_name eq 'score';
+		return $n->{score}          <=> $m->{score}          if $sort_method_name eq 'score';
+		return ($n->{flagged} // 0) <=> ($m->{flagged} // 0) if $sort_method_name eq 'flagged';
 		return lc($m->{record}{section}) cmp lc($n->{record}{section})       if $sort_method_name eq 'section';
 		return lc($m->{record}{recitation}) cmp lc($n->{record}{recitation}) if $sort_method_name eq 'recitation';
 		return lc($m->{record}{user_id}) cmp lc($n->{record}{user_id})       if $sort_method_name eq 'user_id';
@@ -245,6 +345,11 @@ sub displaySets ($c) {
 
 	# Construct header
 	my @problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $c->stash('setID') }, 'problem_id');
+
+	# All problems are selected on the past answers page linked to from the flagged submission counts.
+	my @pastAnswerProblems =
+		$c->{setRecord}->assignment_type eq 'jitar' ? map { join('.', jitar_id_to_seq($_)) } @problems : @problems;
+
 	@problems = ($c->maketext('None')) unless @problems;
 
 	# For a jitar set we only get the top level problems
@@ -273,6 +378,9 @@ sub displaySets ($c) {
 		secondary_sort_method => $secondary_sort_method,
 		ternary_sort_method   => $ternary_sort_method,
 		problems              => \@problems,
+		flagsEnabled          => $flagsEnabled,
+		showFlags             => $showFlags,
+		pastAnswerProblems    => \@pastAnswerProblems,
 		user_set_list         => \@user_set_list,
 		filters               => $filters,
 		filter                => $filter,
@@ -330,6 +438,12 @@ sub displayStudentStats ($c) {
 
 	my $fullName      = join(' ', $studentRecord->first_name, $studentRecord->last_name);
 	my $effectiveUser = $studentRecord->user_id();
+
+	# Count the student's flagged submissions in each set if requested.
+	my $flagsEnabled = $ce->{options}{flagUnusualAnswers};
+	my $showFlags    = $flagsEnabled && $c->param('show_flags');
+	my ($flagCounts, $flagProblemIDs) = $showFlags ? $c->flaggedSubmissionCounts($studentID) : ({}, {});
+	my $extraColumns = $showFlags ? 4 : 3;
 
 	my $max_problems     = 0;
 	my $courseTotal      = 0;
@@ -401,7 +515,7 @@ sub displayStudentStats ($c) {
 						),
 						$c->tag(
 							'td',
-							colspan => $max_problems + 3,
+							colspan => $max_problems + $extraColumns,
 							$c->tag(
 								'em',
 								after($set->open_date)
@@ -452,7 +566,7 @@ sub displayStudentStats ($c) {
 						),
 						$c->tag(
 							'td',
-							colspan => $max_problems + 3,
+							colspan => $max_problems + $extraColumns,
 							$c->tag('em', $c->maketext('Display of scores for this test is not allowed.'))
 						)
 					)->join('')
@@ -566,6 +680,16 @@ sub displayStudentStats ($c) {
 					$c->tag('td', $c->tag('span', class => $class, $totalRightPercent . '%')),
 					$c->tag('td', sprintf('%0.2f', $totalRight)),                                # score
 					$c->tag('td', $total),                                                       # out of
+					$showFlags
+					? $c->tag(
+						'td',
+						$c->flagCountLink(
+							$studentID, $set,
+							$flagCounts->{$studentID}{ $set->set_id }{ $setIsVersioned ? $set->version_id : 0 },
+							$flagProblemIDs->{ $set->set_id }
+						)
+						)
+					: (),
 					@html_prob_scores                                                            # problems
 				)->join('')
 			);
@@ -581,7 +705,7 @@ sub displayStudentStats ($c) {
 						),
 						$c->tag(
 							'td',
-							colspan => $max_problems + 3,
+							colspan => $max_problems + $extraColumns,
 							$c->tag(
 								'em',
 								$c->maketext(
@@ -599,6 +723,8 @@ sub displayStudentStats ($c) {
 		'ContentGenerator/Instructor/StudentProgress/student_stats',
 		fullName         => $fullName,
 		max_problems     => $max_problems,
+		flagsEnabled     => $flagsEnabled,
+		showFlags        => $showFlags,
 		rows             => $rows->join(''),
 		courseTotal      => $courseTotal,
 		courseTotalRight => $courseTotalRight

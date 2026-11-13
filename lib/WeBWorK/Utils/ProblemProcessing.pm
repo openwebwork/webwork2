@@ -14,6 +14,7 @@ use Mojo::JSON qw(encode_json decode_json);
 
 use WeBWorK::Debug                      qw(debug);
 use WeBWorK::Utils                      qw(encodeAnswers createEmailSenderTransportSMTP formatEmailSubject);
+use WeBWorK::Utils::AnswerFlags         qw(submission_input_flags);
 use WeBWorK::Utils::DateTime            qw(before after);
 use WeBWorK::Utils::JITAR               qw(jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Utils::Logs                qw(writeLog writeCourseLog);
@@ -86,6 +87,8 @@ async sub process_and_log_answer ($c) {
 			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
 			$pastAnswer->problem_seed($problem->problem_seed);
+			$pastAnswer->input_flags(submission_input_flags($ce, $pg, $c->{formFields}, $c->param('inputFlags')))
+				if $ce->{options}{flagUnusualAnswers};
 			$db->addPastAnswer($pastAnswer);
 		}
 	}

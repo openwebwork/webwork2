@@ -1,9 +1,20 @@
-% use WeBWorK::Utils::Sets qw(format_set_name_display);
+% use WeBWorK::Utils::AnswerFlags qw(answer_flag_description);
+% use WeBWorK::Utils::Sets        qw(format_set_name_display);
 %
 % my $records      = stash->{records};
 % my $foundMatches = 0;
 %
 % for my $studentUser (sort keys %$records) {
+	% if (my $noticeDismissed = stash->{noticeDismissed}) {
+		<p class="mb-2">
+			<small>
+				<%= $noticeDismissed->{$studentUser}
+					? maketext('[_1] dismissed the notice about in-browser answer checks on [_2].',
+						$studentUser, $c->formatDateTime($noticeDismissed->{$studentUser}))
+					: maketext('[_1] has not dismissed the notice about in-browser answer checks.', $studentUser) =%>
+			</small>
+		</p>
+	% }
 	% for my $setName (sort keys %{ $records->{$studentUser} }) {
 		% for my $problemNumber (sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName} }) {
 			% my @pastAnswerIDs       = sort { $a <=> $b } keys %{ $records->{$studentUser}{$setName}{$problemNumber} };
@@ -64,6 +75,18 @@
 											<%= $parts[$_] =%>&#9070;\
 										% }
 										<%= $parts[-1] =%>
+									% }
+								</td>
+							% }
+							% if (stash->{showFlags}) {
+								<td class="px-3">
+									% if ($record{flags}) {
+										<small class="text-danger">
+											<%= maketext('Flagged:') %>
+											<%=
+												join(' ', map { answer_flag_description($c, $_) } @{ $record{flags} })
+											%>
+										</small>
 									% }
 								</td>
 							% }

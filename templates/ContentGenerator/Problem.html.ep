@@ -1,4 +1,5 @@
-% use WeBWorK::Utils qw(getAssetURL);
+% use WeBWorK::Utils              qw(getAssetURL);
+% use WeBWorK::Utils::AnswerFlags qw(browser_checks_enabled);
 %
 % content_for css => begin
 	% # Output css for jquery-ui for problems to use.
@@ -42,6 +43,11 @@
 	%
 	% # This is for any page specific js.  Right now its just used for achievement popups
 	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
+	%
+	% # In-browser checks for flagging unusual answer submissions.
+	% if (browser_checks_enabled($ce)) {
+		<%= javascript getAssetURL($ce, 'js/Problem/browser-checks.js'), defer => undef =%>
+	% }
 	%
 	% # Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	% if (ref($c->{pg}{flags}{extra_js_files}) eq 'ARRAY') {
@@ -94,6 +100,24 @@
 						. 'syntax error. The translator died prematurely and no PG warning messages were transmitted.'
 				) %>
 			</p>
+		</div>
+	</div>
+% }
+% if (browser_checks_enabled($ce) && $c->{user} && !$c->{user}->browser_checks_notice_dismissed) {
+	<div class="row">
+		<div class="col-lg-10">
+			<div id="browser-checks-notice" class="alert alert-info alert-dismissible fade show" role="alert">
+				<%= maketext('Your instructor has turned on checks for signs that answers may not have been '
+						. 'entered by you. When you submit answers, this course records whether the answers were '
+						. 'changed without any keyboard, mouse, or touch input, and whether your browser reports that '
+						. 'it is controlled by automation software. The keys you press are not recorded.') =%>
+				<button
+					type="button"
+					class="btn-close"
+					data-bs-dismiss="alert"
+					aria-label="<%= maketext('Close') %>"
+				></button>
+			</div>
 		</div>
 	</div>
 % }
