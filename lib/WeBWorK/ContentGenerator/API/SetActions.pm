@@ -115,7 +115,7 @@ sub updateSetProperties ($c) {
 	$set->time_limit_cap($c->req->param('time_limit_cap'));
 	$set->restrict_ip($c->req->param('restrict_ip'));
 	$set->relax_restrict_ip($c->req->param('relax_restrict_ip'));
-	$set->restricted_login_proctor($c->req->param('restricted_login_proctor'));
+	$set->restricted_login_password($c->req->param('restricted_login_password'));
 
 	$db->putGlobalSet($set);
 

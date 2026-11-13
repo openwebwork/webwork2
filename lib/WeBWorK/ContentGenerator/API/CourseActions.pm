@@ -81,7 +81,7 @@ sub listUsers ($c) {
 	my $db = $c->db;
 	my $ce = $c->ce;
 
-	my @userInfo      = map { unbless($_) } $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	my @userInfo      = map { unbless($_) } $db->getUsersWhere;
 	my $numGlobalSets = $db->countGlobalSets;
 
 	for my $user (@userInfo) {

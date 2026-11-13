@@ -356,7 +356,7 @@ sub display_form ($c) {
 
 	if ($perm_multiuser && $perm_multiset) {
 		# Get all users for selection.
-		@users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+		@users = $db->getUsersWhere;
 
 		# Get sets for selection.
 		# Note that we are getting GlobalSets instead of using the list of UserSets assigned to the

@@ -353,8 +353,7 @@ sub addCourse {
 		# as the role might be customized in that file.
 		my @non_student_ids =
 			map {@$_} ($db0->listPermissionLevelsWhere({
-				permission => { '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} },
-				user_id    => { not_like => 'set_id:%' }
+				permission => { '!=' => $options{copyConfig} ? $ce0->{userRoles}{student} : $ce->{userRoles}{student} }
 			}));
 
 		for my $user_id (@non_student_ids) {
@@ -394,20 +393,6 @@ sub addCourse {
 			for my $location (@Location) {
 				eval { $db->addGlobalSetLocation($location) };
 				warn $@ if $@;
-			}
-
-			# Copy the set level proctor user for this set if there is one (despite the for loop there can only be one).
-			for my $setProctor ($db0->getUsersWhere({ user_id => 'set_id:' . $set->set_id })) {
-				eval { $db->addUser($setProctor) };
-				warn $@ if $@;
-
-				my $password = $db0->getPassword($setProctor->user_id);
-				eval { $db->addPassword($password) } if $password;
-				warn $@                              if $@;
-
-				my $permission = $db0->getPermissionLevel($setProctor->user_id);
-				eval { $db->addPermissionLevel($permission) } if $permission;
-				warn $@                                       if $@;
 			}
 		}
 		if ($options{copyNonStudents}) {

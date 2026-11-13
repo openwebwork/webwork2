@@ -144,7 +144,7 @@ sub write_past_answers_csv {
 
 		$row[1] = $courseID;
 
-		my @users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+		my @users = $db->getUsersWhere;
 
 		for my $user (@users) {
 			my $userID = $user->user_id;
