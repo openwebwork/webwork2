@@ -12,7 +12,7 @@ use Mojo::File;
 use WeBWorK::Debug             qw(debug);
 use WeBWorK::Utils             qw(sortByName x);
 use WeBWorK::Utils::DateTime   qw(getDefaultSetDueDate);
-use WeBWorK::Utils::Instructor qw(assignSetToUser assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::Instructor qw(assignSetToUser);
 use WeBWorK::Utils::LibraryStats;
 use WeBWorK::Utils::ListingDB qw(getDBListings getMLTleader);
 use WeBWorK::Utils::Sets      qw(format_set_name_internal);
@@ -23,9 +23,8 @@ use constant MY_PROBLEMS   => x('My Problems');
 use constant MAIN_PROBLEMS => x('Unclassified Problems');
 
 # Flags for operations on files
-use constant ADDED   => 1;
-use constant HIDDEN  => (1 << 1);
-use constant SUCCESS => (1 << 2);
+use constant ADDED  => 1;
+use constant HIDDEN => (1 << 1);
 
 my %ignoredir = (
 	'tmpEdit'      => 1,
@@ -253,32 +252,6 @@ sub get_past_problem_files ($c) {
 		$count++;
 	}
 	return (\@found);
-}
-
-#### For adding new problems
-
-sub add_selected ($c, $db, $setName) {
-	my @past_problems = @{ $c->{past_problems} };
-	my @selected      = @past_problems;
-	my $freeProblemID;
-
-	my $addedcount = 0;
-
-	for my $selected (@selected) {
-		if ($selected->[1] & ADDED) {
-			my $file          = $selected->[0];
-			my $problemRecord = addProblemToSet(
-				$db, $c->ce->{problemDefaults},
-				setName    => $setName,
-				sourceFile => $file
-			);
-			$freeProblemID++;
-			assignProblemToAllSetUsers($db, $problemRecord);
-			$selected->[1] |= SUCCESS;
-			$addedcount++;
-		}
-	}
-	return ($addedcount);
 }
 
 ############# List of sets of problems in templates directory
