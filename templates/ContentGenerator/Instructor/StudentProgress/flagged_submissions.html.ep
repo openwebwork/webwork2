@@ -16,7 +16,7 @@
 	<p><%= maketext('No flagged submissions were found.') %></p>
 % }
 <p>
-	<%= maketext('A flag is evidence to investigate, not proof. Tests are only checked for LaTeX in answers, '
+	<%= maketext('A flag is evidence to investigate, not proof. The timing checks are not done for tests, '
 			. 'so submissions in tests are flagged less often.') =%>
 </p>
 % if (@$rows) {

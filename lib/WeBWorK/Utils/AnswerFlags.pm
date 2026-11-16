@@ -15,9 +15,9 @@ be shown to students.
 
 Flagging is configured by C<$options{flagUnusualAnswers}>.  If it is 0, then
 nothing is flagged.  If it is 1, then only the server-side checks are used.  The
-timing checks are done on the stored submission data, and the LaTeX check is
-done when a submission is recorded.  If it is 2, then the in-browser checks done
-by the problem page javascript are also used.
+timing checks are done on the stored submission data, and the LaTeX and
+MathQuill checks are done when a submission is recorded.  If it is 2, then the
+in-browser checks done by the problem page javascript are also used.
 
 =cut
 
@@ -31,7 +31,7 @@ use constant BROWSER_FLAGS => { no_interaction => 1, webdriver => 1 };
 use constant NO_BROWSER_CHECKS_FLAG => 'no_browser_checks';
 
 # Flags that are determined by the server when a submission is recorded.
-use constant SERVER_FLAGS => { latex => 1 };
+use constant SERVER_FLAGS => { latex => 1, mathquill_blank => 1 };
 
 # Length, minimum number of distinct problems, and maximum interval variation of a flagged run of regular submissions.
 use constant REGULAR_RUN_LENGTH        => 10;
@@ -63,7 +63,8 @@ separated string of flags sent by the javascript of the page.  If the in-browser
 checks are enabled, then this contains the known flags in that string, or the
 C<no_browser_checks> flag if the option is given but undefined.  It also contains
 the C<latex> flag if any answer typed into a text field of the problem contains
-LaTeX.
+LaTeX, and the C<mathquill_blank> flag if an answer that is entered with
+MathQuill was submitted without a MathQuill value.
 
 =cut
 
@@ -75,36 +76,49 @@ sub submission_input_flags ($ce, $pg, $formFields, %options) {
 			? grep { BROWSER_FLAGS->{$_} } split(/,/, $options{browserFlags})
 			: (NO_BROWSER_CHECKS_FLAG);
 	}
-	push(@flags, 'latex') if typed_latex($pg, $formFields);
+	push(@flags, typed_answer_flags($pg, $formFields));
 	return join(',', @flags);
 }
 
-# Returns true if a response to a non-essay answer that was typed into a text input or textarea contains LaTeX.  LaTeX
-# is legitimately submitted by radio buttons, checkboxes, and drop down menus whose options contain LaTeX.
-sub typed_latex ($pg, $formFields) {
+# Returns the latex and mathquill_blank flags for the answers typed into the text fields of a problem.
+sub typed_answer_flags ($pg, $formFields) {
 	my %pgAnswers = %{ $pg->{PG_ANSWERS_HASH} // {} };
 
-	my @candidates;
+	my %candidates;
 	for my $answerID (@{ $pg->{flags}{ANSWER_ENTRY_ORDER} // [] }) {
-		next if ($pgAnswers{$answerID}{rh_ans}{type} // '') eq 'essay';
+		my $isEssay   = ($pgAnswers{$answerID}{rh_ans}{type} // '') eq 'essay';
 		my $responses = $pgAnswers{$answerID}{response_obj}{responses} // {};
 		for my $responseID (@{ $pgAnswers{$answerID}{response_obj}{response_order} // [] }) {
 			# Radio button and checkbox responses are recorded as a list of the choices.
 			next if ref($responses->{$responseID});
-			push(@candidates, $responseID)
-				if defined $formFields->{$responseID}
-				&& !ref($formFields->{$responseID})
-				&& $formFields->{$responseID} =~ /\\[a-zA-Z]{2,}/;
+			my $answer = $formFields->{$responseID};
+			next if !defined $answer || ref $answer || $answer !~ /\S/;
+
+			push(@{ $candidates{latex} }, $responseID) if !$isEssay && $answer =~ /\\[a-zA-Z]{2,}/;
+
+			my $latex = $formFields->{"MaThQuIlL_$responseID"};
+			push(@{ $candidates{mathquill_blank} }, $responseID) if !defined $latex || ref $latex || $latex !~ /\S/;
 		}
 	}
-	return 0 unless @candidates;
+	return () unless %candidates;
 
-	# Only parse the problem HTML if needed.  Drop down menus are select elements or hidden inputs.
-	my %textFields;
-	for (Mojo::DOM->new($pg->{body_text} // '')->find('input[name], textarea[name]')->each) {
+	# Only parse the problem HTML if needed.  MathQuill is only used for codeshard inputs that have a MathQuill field.
+	my $dom = Mojo::DOM->new($pg->{body_text} // '');
+	my (%textFields, %mathQuillFields);
+	for ($dom->find('input[name], textarea[name]')->each) {
 		$textFields{ $_->attr('name') } = 1 if $_->tag eq 'textarea' || lc($_->attr('type') // 'text') eq 'text';
 	}
-	return scalar grep { $textFields{$_} } @candidates;
+	my %hasMathQuillField =
+		map { $_->attr('name') =~ s/^MaThQuIlL_//r => 1 } $dom->find('input[name^="MaThQuIlL_"]')->each;
+	for ($dom->find('input.codeshard[name]')->each) {
+		$mathQuillFields{ $_->attr('name') } = 1
+			if lc($_->attr('type') // 'text') eq 'text' && $hasMathQuillField{ $_->attr('name') };
+	}
+
+	return grep {
+		my $fields = $_ eq 'latex' ? \%textFields : \%mathQuillFields;
+		grep { $fields->{$_} } @{ $candidates{$_} // [] }
+	} qw(latex mathquill_blank);
 }
 
 =head2 answer_types_from_flags
@@ -225,6 +239,8 @@ sub answer_flag_description ($c, $flag) {
 	return $c->maketext('Part of a run of submissions on several problems at very regular intervals.')
 		if $flag->{type} eq 'regular';
 	return $c->maketext('An answer contains LaTeX.') if $flag->{type} eq 'latex';
+	return $c->maketext('An answer was submitted without anything entered in its MathQuill answer box.')
+		if $flag->{type} eq 'mathquill_blank';
 	return $c->maketext('The answers were changed without any keyboard, mouse, or touch input.')
 		if $flag->{type} eq 'no_interaction';
 	return $c->maketext('The browser reported that it is controlled by automation software.')
