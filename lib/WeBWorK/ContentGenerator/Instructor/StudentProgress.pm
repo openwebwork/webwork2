@@ -93,10 +93,8 @@ sub flaggedSubmissionCounts ($c, $userID = undef) {
 		}
 		next unless %pastAnswers;
 
-		# All problems are selected on the past answers page linked to from the flagged submission counts.
-		$problemIDs{$setID} = [ map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setID }, 'problem_id') ];
-		$problemIDs{$setID} = [ map { join('.', jitar_id_to_seq($_)) } @{ $problemIDs{$setID} } ]
-			if $set->assignment_type eq 'jitar';
+		$problemIDs{$setID} = $c->pastAnswerProblemIDs($set,
+			map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setID }, 'problem_id'));
 
 		for my $user (keys %pastAnswers) {
 			for my $versionID (keys %{ $pastAnswers{$user} }) {
@@ -109,15 +107,20 @@ sub flaggedSubmissionCounts ($c, $userID = undef) {
 	return (\%counts, \%problemIDs);
 }
 
-# Return the number of flagged submissions of a student in a set, linked to the student's past answers for the set.
-sub flagCountLink ($c, $userID, $set, $count, $problemIDs) {
+# Return the problem ids of a set in the form used by the past answers page.
+sub pastAnswerProblemIDs ($c, $set, @problemIDs) {
+	return [ $set->assignment_type eq 'jitar' ? map { join('.', jitar_id_to_seq($_)) } @problemIDs : @problemIDs ];
+}
+
+# Return a student's flagged submission count linked to the student's past answers for the set.
+sub flagCountLink ($c, $userID, $setID, $versionID, $count, $problemIDs) {
 	return 0 unless $count;
 	return $c->link_to(
 		$count => $c->systemLink(
 			$c->url_for('answer_log'),
 			params => {
 				selected_users    => $userID,
-				selected_sets     => $set->version_id ? $set->set_id . ',v' . $set->version_id : $set->set_id,
+				selected_sets     => $versionID ? "$setID,v$versionID" : $setID,
 				selected_problems => $problemIDs
 			}
 		)
@@ -342,9 +345,7 @@ sub displaySets ($c) {
 	# Construct header
 	my @problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $c->stash('setID') }, 'problem_id');
 
-	# All problems are selected on the past answers page linked to from the flagged submission counts.
-	my @pastAnswerProblems =
-		$c->{setRecord}->assignment_type eq 'jitar' ? map { join('.', jitar_id_to_seq($_)) } @problems : @problems;
+	my $pastAnswerProblems = $c->pastAnswerProblemIDs($c->{setRecord}, @problems);
 
 	@problems = ($c->maketext('None')) unless @problems;
 
@@ -376,7 +377,7 @@ sub displaySets ($c) {
 		problems              => \@problems,
 		flagsEnabled          => $flagsEnabled,
 		showFlags             => $showFlags,
-		pastAnswerProblems    => \@pastAnswerProblems,
+		pastAnswerProblems    => $pastAnswerProblems,
 		user_set_list         => \@user_set_list,
 		filters               => $filters,
 		filter                => $filter,
@@ -650,6 +651,8 @@ sub displayStudentStats ($c) {
 
 		# Only show scores for open sets, and don't link to non open sets.
 		if (after($set->open_date) || $authz->hasPermissions($c->authen->{user_id}, 'view_unopened_sets')) {
+			my $versionID = $setIsVersioned ? $set->version_id : 0;
+
 			# Set the set name and link. If a test, don't link to the version unless the problems can be seen.
 			my $thisSetName = $setIsVersioned
 				? $c->link_to($setName => $act_as_student_set_url) . ' ('
@@ -680,8 +683,8 @@ sub displayStudentStats ($c) {
 					? $c->tag(
 						'td',
 						$c->flagCountLink(
-							$studentID, $set,
-							$flagCounts->{$studentID}{ $set->set_id }{ $setIsVersioned ? $set->version_id : 0 },
+							$studentID, $set->set_id, $versionID,
+							$flagCounts->{$studentID}{ $set->set_id }{$versionID},
 							$flagProblemIDs->{ $set->set_id }
 						)
 						)

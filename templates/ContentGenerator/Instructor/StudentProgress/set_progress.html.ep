@@ -371,18 +371,8 @@
 						<td><%= $rec->{total} %></td>
 						% if ($showFlags) {
 							<td>
-								% if ($rec->{flagged}) {
-									<%= link_to $rec->{flagged} => $c->systemLink(
-										url_for('answer_log'),
-										params => {
-											selected_users    => $rec->{record}{user_id},
-											selected_sets     => $setID,
-											selected_problems => $pastAnswerProblems
-										}
-									) =%>
-								% } else {
-									0
-								% }
+								<%= $c->flagCountLink($rec->{record}{user_id},
+									$setID, 0, $rec->{flagged}, $pastAnswerProblems) =%>
 							</td>
 						% }
 						% if (@{ $rec->{problem_scores} }) {

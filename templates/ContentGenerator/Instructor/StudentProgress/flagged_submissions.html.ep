@@ -42,15 +42,9 @@
 							% }
 						</td>
 						<td>
-							<%= link_to $row->{count} => $c->systemLink(
-								url_for('answer_log'),
-								params => {
-									selected_users => $row->{user}->user_id,
-									selected_sets  => $row->{versionID}
-									? "$row->{setID},v$row->{versionID}"
-									: $row->{setID},
-									selected_problems => $row->{problemIDs}
-								}
+							<%= $c->flagCountLink(
+								$row->{user}->user_id, $row->{setID}, $row->{versionID},
+								$row->{count},         $row->{problemIDs}
 							) =%>
 						</td>
 					</tr>
