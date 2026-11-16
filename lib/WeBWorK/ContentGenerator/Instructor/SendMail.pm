@@ -343,11 +343,9 @@ sub print_preview ($c) {
 
 	if ($merge_file && !defined $rh_merge_data->{ $c->{preview_user}->student_id }) {
 		$c->addbadmessage($c->maketext(
-			'No merge data for student id: [_1]; name: [_2] [_3]; login: [_4]',
-			map { xml_escape($_) } (
-				$c->{preview_user}->student_id, $c->{preview_user}->first_name,
-				$c->{preview_user}->last_name,  $c->{preview_user}->user_id
-			)
+			'No merge data for student id: [_1]; name: [_2]; login: [_3]',
+			map { xml_escape($_) }
+				($c->{preview_user}->student_id, $c->{preview_user}->full_name, $c->{preview_user}->user_id)
 		));
 	}
 

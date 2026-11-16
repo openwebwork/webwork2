@@ -82,13 +82,13 @@
 								<strong><%= maketext('for') %></strong>&nbsp;
 								<span
 									id="preview-user"
-									data-default="<%= $c->{defaultPreviewUser}->last_name . ', '
-										. $c->{defaultPreviewUser}->first_name . ' ('
-										. $c->{defaultPreviewUser}->user_id . ')' %>"
+									data-default="<%= join(' ',
+										$c->{defaultPreviewUser}->sortable_name || (),
+										'(' . $c->{defaultPreviewUser}->user_id . ')') %>"
 								>
-									<%= $c->{preview_user}->last_name . ', '
-										. $c->{preview_user}->first_name . ' ('
-										. $c->{preview_user}->user_id . ')' =%>
+									<%= join(' ',
+										$c->{preview_user}->sortable_name || (),
+										'(' . $c->{preview_user}->user_id . ')') =%>
 								</span>
 							</span>
 						</div>

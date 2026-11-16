@@ -241,7 +241,7 @@
 			% my $prevUserID = '';
 			%
 			% for my $rec (@$user_set_list) {
-				% my $fullName = join('', $rec->{record}{first_name}, " ", $rec->{record}{last_name});
+				% my $fullName = $rec->{record}->full_name;
 				% my $email    = $rec->{record}{email_address};
 				%
 				% if ($setIsVersioned) {

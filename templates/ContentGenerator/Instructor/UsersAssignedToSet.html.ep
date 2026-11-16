@@ -77,9 +77,9 @@
 			<tbody class="table-group-divider">
 				% param('selected', []);
 				% for my $user (@$user_records) {
-					% my $userID   = $user->user_id;
-					% my $userSet  = $set_records->{$userID};
-					% my $username = $user->last_name . ', ' . $user->first_name;
+					% my $userID  = $user->user_id;
+					% my $userSet = $set_records->{$userID};
+					% my $name    = $user->sortable_name;
 					%
 					<tr>
 						<td class="text-center">
@@ -88,7 +88,7 @@
 								id         => "selected_$userID",
 								class      => 'form-check-input',
 								data       => {
-									username => "$username ($userID)",
+									username => join(' ', $name || (), "($userID)"),
 									defined $userSet          ? (is_assigned => 1) : (),
 									$current_users->{$userID} ? (is_current  => 1) : ()
 								},
@@ -100,7 +100,7 @@
 							</div>
 						</td>
 						<td>
-							<%= $username =%>
+							<%= $name || $userID =%>
 						</td>
 						<td class="text-center"><%= $user->section %></td>
 						% if (defined $userSet) {

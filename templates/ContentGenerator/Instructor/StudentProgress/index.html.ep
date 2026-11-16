@@ -25,10 +25,8 @@
 				<ul>
 					% for (@{ $c->{student_records} }) {
 						<li>
-							<%= link_to $_->last_name . ', '
-								. $_->first_name . ' ('
-								. $_->user_id
-								. ')' => $c->systemLink(url_for("instructor_user_progress", userID => $_->user_id)) =%>
+							<%= link_to join(' ', $_->sortable_name || (), '(' . $_->user_id . ')') =>
+								$c->systemLink(url_for("instructor_user_progress", userID => $_->user_id)) =%>
 						</li>
 					% }
 				</ul>

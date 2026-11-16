@@ -60,7 +60,7 @@
 					dir => 'ltr',
 					format_set_name_display($selected_set_id =~ s/,v(\d+)$/ (version $1)/r)
 				),
-				xml_escape(join(' ', $user->first_name, $user->last_name))
+				xml_escape($user->full_name)
 			) =%>
 		</p>
 	% }

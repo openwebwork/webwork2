@@ -39,7 +39,7 @@
 				% for my $userRecord (@$userRecords) {
 					% my $user            = $userRecord->user_id;
 					% my $userAchievement = $userAchievementRecords->{$user};
-					% my $prettyName      = $userRecord->last_name . ', ' . $userRecord->first_name;
+					% my $prettyName      = $userRecord->sortable_name || $user;
 					%
 					<tr>
 						<td class="text-center">

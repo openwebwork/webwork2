@@ -42,7 +42,7 @@
 %
 % my @editForSets = param('editForSets');
 %
-% my $userName = $c->{userRecord}->first_name . ' ' . $c->{userRecord}->last_name;
+% my $userName = $c->{userRecord}->full_name;
 %
 % # Display a message about how many sets have been assigned to this user.
 % my $numberSets         = scalar(@{ $c->{setRecords} });

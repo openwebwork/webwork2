@@ -2,7 +2,9 @@
 	<span class="input-group-text">
 		<b><%= $addError ? maketext('Failed to add user:') : maketext('Added user:') %></b>
 	</span>
-	<span class="input-group-text"><%= $newUser->last_name %>, <%= $newUser->first_name %></span>
+	% if ($newUser->sortable_name) {
+		<span class="input-group-text"><%= $newUser->sortable_name %></span>
+	% }
 	<span class="input-group-text"><b><%= maketext('Login:') %></b></span>
 	<span class="input-group-text"><%= $newUser->user_id %></span>
 	% if ($newUser->student_id) {
