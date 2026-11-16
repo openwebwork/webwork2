@@ -101,7 +101,7 @@ async sub process_and_log_answer ($c) {
 			$pureProblem->last_answer($encoded_last_answer_string);
 
 			# Also store persistent problem data.
-			$pureProblem->problem_data(encode_json($pg->{PERSISTENCE_HASH} || '{}'));
+			$pureProblem->problem_data(encode_json($pg->{PERSISTENCE_HASH} || {}));
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
@@ -173,7 +173,7 @@ async sub process_and_log_answer ($c) {
 
 	# If the user can check answers and either this is not an answer submission or the problem_data form parameter was
 	# previously set, then set or update the problem_data form parameter.
-	$c->param(problem_data => encode_json($pg->{PERSISTENCE_HASH} || '{}'))
+	$c->param(problem_data => encode_json($pg->{PERSISTENCE_HASH} || {}))
 		if $c->{can}{checkAnswers} && (!$submitAnswers || defined $c->param('problem_data'));
 
 	$c->{scoreRecordedMessage} = $scoreRecordedMessage;
