@@ -176,16 +176,13 @@ async sub dispatch ($c) {
 				debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
 				if ($authz->hasPermissions($userID, 'become_student')) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
+					$effectiveUser = $db->getUser($eUserID);
+					unless ($effectiveUser) {
+						debug("There is no user $eUserID in this course. Not acting.\n");
+						$eUserID = $userID;
+					}
 				} else {
-					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-					return (0,
-						"You do not have permission to act as another user.\n"
-							. 'Close down your browser (this clears temporary cookies), restart and try again.');
-				}
-
-				$effectiveUser = $db->getUser($eUserID);
-				unless ($effectiveUser) {
-					debug("There is no user $eUserID in this course. Not acting.\n");
+					debug("User is not allowed to become $eUserID. Not acting.\n");
 					$eUserID = $userID;
 				}
 			}
