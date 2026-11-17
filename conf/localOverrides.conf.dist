@@ -772,7 +772,7 @@ $caliper{enabled} = 0;
 #	return {
 #		id   => $caliper_id,
 #		type => 'Person',
-#		name => $user->first_name . ' ' . $user->last_name,
+#		name => $user->full_name
 #	};
 #};
 
