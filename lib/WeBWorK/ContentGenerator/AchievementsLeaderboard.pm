@@ -13,7 +13,7 @@ users with the 'view_leaderboard_usernames' permission can see user names.
 
 =cut
 
-use WeBWorK::Utils qw(sortAchievements);
+use WeBWorK::Utils::Achievements qw(sortAchievements);
 
 sub initialize ($c) {
 	my $db = $c->db;

@@ -10,13 +10,15 @@ WeBWorK::ContentGenerator::Instructor::AchievementEditor - edit an achievement e
 use HTML::Entities;
 use File::Copy;
 
-use WeBWorK::Utils        qw(fix_newlines not_blank x);
-use WeBWorK::Utils::Files qw(surePathToFile readFile path_is_subdir);
+use WeBWorK::Utils               qw(fix_newlines x);
+use WeBWorK::Utils::Files        qw(surePathToFile readFile);
+use WeBWorK::Utils::Achievements qw(getAchievementAssetPaths isAchievementAssetSafe);
 
-use constant ACTION_FORMS => [qw(save save_as)];
+use constant ACTION_FORMS => [qw(save save_as revert)];
 use constant ACTION_FORM_TITLES => {
 	save    => x('Save'),
 	save_as => x('Save As'),
+	revert  => x('Revert')
 };
 
 use constant DEFAULT_ICON => 'defaulticon.png';
@@ -32,13 +34,24 @@ sub initialize ($c) {
 	$c->addmessage($c->authen->flash('status_message') || '');    # Record status messages carried over from a redirect.
 
 	$c->{achievement} = $c->db->getAchievement($c->stash('achievementID'));
-
 	unless ($c->{achievement}) {
-		$c->addbadmessage($c->maketext("Achievement [_1] not found!", $c->stash('achievementID')));
+		$c->addbadmessage($c->maketext('Achievement "[_1]" not found!', $c->stash('achievementID')));
 		return;
 	}
 
-	$c->{sourceFilePath} = $c->ce->{courseDirs}{achievements} . '/' . $c->{achievement}->test;
+	my $sourceFile = $c->{achievement}->test;
+	my ($courseFilePath, $systemFilePath) = getAchievementAssetPaths($c->ce, 'test', $sourceFile);
+	if ($courseFilePath) {
+		$c->{sourceFilePath} = $courseFilePath;
+	} elsif ($systemFilePath) {
+		$c->{sourceFilePath}        = $systemFilePath;
+		$c->{sourceFileIsProtected} = 1;
+	} else {
+		$c->addbadmessage($c->maketext('The achievement evaluator "[_1]" cannot be found.', $sourceFile));
+		return;
+	}
+
+	$c->{sourceFile} = $sourceFile;
 
 	my $actionID = $c->param('action');
 	if ($actionID) {
@@ -51,17 +64,7 @@ sub initialize ($c) {
 		$c->$actionHandler;
 	}
 
-	unless (-e $c->{sourceFilePath}) {
-		$c->addbadmessage('The file "' . $c->shortPath($c->{sourceFilePath}) . '" cannot be found.');
-		return;
-	}
-
 	unless ($c->stash->{achievementContents} =~ /\S/) {
-		unless (path_is_subdir($c->{sourceFilePath}, $c->ce->{courseDirs}{achievements}, 1)) {
-			$c->addbadmessage('Path is Unsafe!');
-			return;
-		}
-
 		eval { $c->stash->{achievementContents} = readFile($c->{sourceFilePath}) };
 		$c->stash->{achievementContents} = $@ if $@;
 	}
@@ -69,184 +72,128 @@ sub initialize ($c) {
 	return;
 }
 
-# Convert long paths to [ACHEVDIR]
-sub shortPath ($c, $file) {
-	my $ache = $c->ce->{courseDirs}{achievements};
-	$file =~ s|^$ache|[ACHEVDIR]|;
-	return $file;
+# Prepend [ACHEVDIR] to filename.
+sub addBasePath ($c, $file) {
+	return "[ACHEVDIR]/$file";
 }
 
-sub getRelativeSourceFilePath ($c, $sourceFilePath) {
-	my $achievementsDir = $c->ce->{courseDirs}{achievements};
-	$sourceFilePath =~ s|^${achievementsDir}/*||;    # remove templates path and any slashes that follow
-	return $sourceFilePath;
-}
+# saveFileChanges does the work of saving the file for both the save_handler and the save_as_handler.
+# Validate $outputFile before calling this method to produce error messages.
+sub saveFileChanges ($c, $outputFile) {
+	my $achievementDir = $c->ce->{courseDirs}{achievements};
 
-sub saveFileChanges ($c, $outputFilePath, $achievementContents = undef) {
-	my $ce = $c->ce;
+	my $outputFilePath = "$achievementDir/$outputFile";
+	surePathToFile($achievementDir, $outputFilePath);
+	eval {
+		open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
+		print $OUTPUTFILE $c->stash->{achievementContents};
+		close $OUTPUTFILE;
+	};
 
-	if (defined($achievementContents) and ref($achievementContents)) {
-		$achievementContents = ${$achievementContents};
-	} elsif (!not_blank($achievementContents)) {     # if the AchievementContents is undefined or empty
-		$achievementContents = $c->stash->{achievementContents};
-	}
-
-	unless (not_blank($outputFilePath)) {
-		$c->addbadmessage($c->maketext('You must specify an file name in order to save a new file.'));
-		return '';
-	}
-	my $do_not_save = 0;                             # flag to prevent saving of file
-	my $editErrors  = '';
-
-	# write changes to the appropriate files
-	# FIXME  make sure that the permissions are set correctly!!!
-	# Make sure that the warning is being transmitted properly.
-
-	my $writeFileErrors;
-	if (not_blank($outputFilePath)) {    # save file
-
-		# make sure any missing directories are created
-		surePathToFile($ce->{courseDirs}{achievements}, $outputFilePath);
-		die 'outputFilePath is unsafe!'
-			unless path_is_subdir($outputFilePath, $ce->{courseDirs}{achievements}, 1);
-
-		eval {
-			open my $OUTPUTFILE, '>', $outputFilePath or die "Failed to open $outputFilePath";
-			print $OUTPUTFILE $achievementContents;
-			close $OUTPUTFILE;
-		};
-
-		$writeFileErrors = $@ if $@;
-	}
-
-	# Catch errors in saving files,
-	$c->{saveError} = $do_not_save;    # Don't do redirects if the file was not saved.
-									   # Don't unlink files or send success messages
-
+	my $writeFileErrors = $@;
 	if ($writeFileErrors) {
-		# Get the current directory from the outputFilePath
-		$outputFilePath =~ m|^(/.*?/)[^/]+$|;
-		my $currentDirectory = $1;
-
 		my $errorMessage;
-		# Check why we failed to give better error messages
-		if (not -w $ce->{courseDirs}{achievements}) {
+		# Check why we failed to give better error messages.
+		if (not -d $achievementDir) {
+			$errorMessage = $c->maketext('Course achievements directory does not exist.  File not saved.');
+		} elsif (not -w $achievementDir) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled in the templates directory.  No changes can be made.');
-		} elsif (not -w $currentDirectory) {
-			$errorMessage = $c->maketext(
-				'Write permissions have not been enabled in "[_1]".  '
-					. 'Changes must be saved to a different directory for viewing.',
-				$c->shortPath($currentDirectory)
-			);
-		} elsif (-e $outputFilePath and not -w $outputFilePath) {
+		} elsif (-f $outputFilePath and not -w $outputFilePath) {
 			$errorMessage = $c->maketext(
 				'Write permissions have not been enabled for "[_1]".  '
 					. 'Changes must be saved to another file for viewing.',
-				$c->shortPath($outputFilePath)
+				$c->addBasePath($outputFile)
 			);
 		} else {
 			$errorMessage =
-				$c->maketext('Unable to write to "[_1]": [_2]', $c->shortPath($outputFilePath), $writeFileErrors);
+				$c->maketext('Unable to write to "[_1]": [_2]', $c->addBasePath($outputFile), $writeFileErrors);
 		}
-
-		$c->{failure} = 1;
 		$c->addbadmessage($errorMessage);
+	} else {
+		$c->addgoodmessage($c->maketext('Saved to file "[_1]".', $c->addBasePath($outputFile)));
 	}
 
-	if (!$writeFileErrors && !$do_not_save && defined $outputFilePath && !$c->{failure}) {
-		$c->addgoodmessage($c->maketext('Saved to file "[_1]"', $c->shortPath($outputFilePath)));
-	}
-
-	return;
+	return $writeFileErrors ? 0 : 1;
 }
 
+# This is only called after $c->{sourceFile} has been validated and no additional validation is needed.
 sub save_handler ($c) {
-	my $courseName      = $c->stash('courseID');
-	my $achievementName = $c->stash('achievementID');
+	my $ce = $c->ce;
 
-	# Grab the achievementContents from the form in order to save it to the source path
 	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
-
-	# Construct the output file path
-	$c->saveFileChanges($c->{sourceFilePath});
-
+	# Update source file if file is successfully saved.
+	if ($c->saveFileChanges($c->{sourceFile})) {
+		$c->{sourceFilePath}        = "$ce->{courseDirs}{achievements}/$c->{sourceFile}";
+		$c->{sourceFileIsProtected} = 0;
+	}
 	return;
 }
 
 sub save_as_handler ($c) {
 	my $db = $c->db;
-	$c->{status_message} = $c->c;    ## DPVC -- remove bogus old messages
+	my $ce = $c->ce;
+
 	my $courseName        = $c->stash('courseID');
 	my $achievementName   = $c->stash('achievementID');
 	my $effectiveUserName = $c->param('effectiveUser');
 
-	my $do_not_save         = 0;
 	my $saveMode            = $c->param('action.save_as.saveMode')    || 'no_save_mode_selected';
 	my $new_file_name       = $c->param('action.save_as.target_file') || '';
-	my $sourceFilePath      = $c->param('action.save_as.source_file') || '';
 	my $targetAchievementID = $c->param('action.save_as.id')          || '';
 
-	$c->{sourceFilePath} = $sourceFilePath;    # store for use in saveFileChanges
-	$new_file_name =~ s/^\s*//;                #remove initial and final white space
+	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
+
+	# Trim white space and validate filename.
+	$new_file_name =~ s/^\s*//;
 	$new_file_name =~ s/\s*$//;
-	if ($new_file_name !~ /\S/) {              # need a non-blank file name
-											   # setting $c->{failure} stops saving and any redirects
-		$do_not_save = 1;
+	if ($new_file_name !~ /\S/) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
+		return;
+	}
+	unless (isAchievementAssetSafe($new_file_name)) {
+		$c->addbadmessage(
+			$c->maketext('Achievement evaluator "[_1]" not saved because filename is unsafe.', $new_file_name));
+		return;
 	}
 
-	# Grab the achievementContents from the form in order to save it to a new permanent file
-	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
-	warn 'achievement contents is empty' unless $c->stash->{achievementContents};
+	# Rescue the user in case they forgot to end the file name with .at.
+	$new_file_name .= '.at' unless $new_file_name =~ /\.at$/;
 
-	# Rescue the user in case they forgot to end the file name with .at
-	$new_file_name =~ s/\.at$//;    # remove it if it is there
-	$new_file_name .= '.at';        # put it there
-
-	# Construct the output file path
-	my $outputFilePath = $c->ce->{courseDirs}{achievements} . '/' . $new_file_name;
-	if (defined $outputFilePath and -e $outputFilePath) {
-		# setting $do_not_save stops saving and any redirects
-		$do_not_save = 1;
+	my $outputFilePath = "$ce->{courseDirs}{achievements}/$new_file_name";
+	if (-f $outputFilePath) {
 		$c->addbadmessage($c->maketext(
 			'File "[_1]" exists.  File not saved.  No changes have been made.',
-			$c->shortPath($outputFilePath)
+			$c->addBasePath($new_file_name)
 		));
+		return;
 	} elsif ($saveMode eq 'use_in_new' && !$targetAchievementID) {
 		$c->addbadmessage(
 			$c->maketext('No new Achievement ID specified.  No new achievement created.  File not saved.'));
-		$do_not_save = 1;
-
+		return;
 	} elsif ($saveMode eq 'use_in_new' && $db->existsAchievement($targetAchievementID)) {
 		$c->addbadmessage($c->maketext('Achievement ID exists!  No new achievement created.  File not saved.'));
-		$do_not_save = 1;
-	} else {
-		$c->{editFilePath}  = $outputFilePath;
-		$c->{inputFilePath} = '';
+		return;
+	}
+	return unless $c->saveFileChanges($new_file_name);
+	unless ($saveMode eq 'dont_use') {
+		$c->{sourceFile}     = $new_file_name;
+		$c->{sourceFilePath} = $outputFilePath;
 	}
 
-	return '' if $do_not_save;
-
-	#Save changes
-	$c->saveFileChanges($outputFilePath);
-
 	if ($saveMode eq 'use_in_current' and -r $outputFilePath) {
-		# Modify evaluator path in current achievement
-		my $achievement = $c->db->getAchievement($achievementName);
+		my $achievement = $c->{achievement};
 		$achievement->test($new_file_name);
 		if ($c->db->putAchievement($achievement)) {
 			$c->addgoodmessage($c->maketext(
 				'The evaluator for [_1] has been renamed to "[_2]".', $achievementName,
-				$c->shortPath($outputFilePath)
+				$c->addBasePath($new_file_name)
 			));
 		} else {
 			$c->addbadmessage(
 				$c->maketext('Unable to change the evaluator for set [_1]. Unknown error.', $achievementName));
 		}
-
 	} elsif ($saveMode eq 'use_in_new') {
-		# Create a new achievement to use the evaluator in
 		my $achievement = $c->db->newAchievement();
 		$achievement->achievement_id($targetAchievementID);
 		$achievement->test($new_file_name);
@@ -255,27 +202,65 @@ sub save_as_handler ($c) {
 		$c->db->addAchievement($achievement);
 		$c->addgoodmessage($c->maketext(
 			'Achievement [_1] created with evaluator "[_2]".', $targetAchievementID,
-			$c->shortPath($outputFilePath)
+			$c->addBasePath($new_file_name)
 		));
 
+		# Need to redirect to edit the newly created achievement's evaluator.
+		$c->authen->flash(status_message => $c->{status_message}->join(''));
+		$c->reply_with_redirect($c->systemLink(
+			$c->url_for('instructor_achievement_editor', achievementID => $targetAchievementID)));
 	} elsif ($saveMode eq 'dont_use') {
-		# Don't change any achievements - just report
-		$c->addgoodmessage($c->maketext('A new file has been created at "[_1]"', $c->shortPath($outputFilePath)));
+		# Don't change any achievements - just report.
+		$c->addgoodmessage($c->maketext(
+			'A new file has been created at "[_1]". Editing original achievement evaluator "[_2]".',
+			$c->addBasePath($new_file_name),
+			$c->{sourceFile}
+		));
+		# FIXME: Currently editor cannot edit a file not associated with an achievement.
+		# Update saved data so the editor correctly shows/edits the original achievement evaluator.
+		$c->stash->{achievementContents} = '';
 	} else {
 		$c->addbadmessage($c->maketext(q{Don't recognize saveMode: |[_1]|. Unknown error.}, $saveMode));
 	}
 
-	# Set up redirect
-	# The redirect gives the server time to detect that the new file exists.
-	$c->authen->flash(status_message => $c->{status_message}->join(''));
-	$c->reply_with_redirect($c->systemLink(
-		$c->url_for(
-			'instructor_achievement_editor',
-			achievementID => $saveMode eq 'use_in_new' ? $targetAchievementID : $achievementName
-		),
-		params => { sourceFilePath => $c->getRelativeSourceFilePath($outputFilePath) }
+	return;
+}
 
+sub revert_handler ($c) {
+	my $ce            = $c->ce;
+	my $sourceFile    = $c->{sourceFile};
+	my $confirmDelete = $c->param('action.delete.confirm') // '';
+	my $deletePath    = "$ce->{courseDirs}{achievements}/$sourceFile";
+	my $systemPath    = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
+
+	# Use form contents in case there is a validation error.
+	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
+
+	unless ($confirmDelete eq 'yes') {
+		$c->addbadmessage($c->maketext('Missing delete confirmation of course override. Not deleting.'));
+		return;
+	}
+	unless ($sourceFile !~ /\// && -f $systemPath) {
+		$c->addbadmessage(
+			$c->maketext('Achievement evaluator "[_1]" is not a course override. Not deleting.', $sourceFile));
+		return;
+	}
+	unless (-f $deletePath) {
+		$c->addbadmessage($c->maketext(
+			'Achievement evaluator course override "[_1]" does not exist. Not deleting.',
+			$c->addBasePath($sourceFile)
+		));
+		return;
+	}
+
+	unlink($deletePath);
+	$c->addgoodmessage($c->maketext(
+		'Course override "[_1]" deleted. Reverted to using system achievement.',
+		$c->addBasePath($sourceFile)
 	));
+	$c->{sourceFilePath}             = $systemPath;
+	$c->{sourceFileIsProtected}      = 1;
+	$c->stash->{achievementContents} = '';            # Force loading original system achievement contents.
 	return;
 }
 
