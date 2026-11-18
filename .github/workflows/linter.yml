@@ -13,10 +13,10 @@ on:
 jobs:
   perlcritic:
     name: Lint Perl files with perlcritic
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libperl-critic-perl
       - name: Run perlcritic
