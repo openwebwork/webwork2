@@ -23,11 +23,6 @@ use WeBWorK::Debug                    qw(debug);
 use PGrandom;
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
 
-# Disable links for gateway tests.
-sub can ($c, $arg) {
-	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
-}
-
 # "can" methods
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
@@ -1197,27 +1192,11 @@ sub head ($c) {
 	return $head_text;
 }
 
-sub path ($c, $args) {
-	my $ce         = $c->ce;
-	my $setID      = $c->stash('setID');
-	my $courseName = $ce->{courseName};
-
-	my $navigation_allowed = $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
-
-	return $c->pathMacro(
-		$args,
-		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
-		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
-		$c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
-		? (
-			defined $c->stash('versionID')
-			? ($setID => $c->url_for('problem_list', setID => $setID), 'v' . $c->stash('versionID') => '')
-			: ($setID => ''))
-		: (
-			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
-			'v' . $c->{set}->version_id => ''
-		),
-	);
+sub pageTitle ($c) {
+	return $c->formatTitle('WeBWorK', $c->ce->{courseName},
+		$c->{invalidSet}
+			|| $c->{actingCreationError}
+			|| $c->stash->{actingConfirmation} ? $c->stash('setID') : ($c->{set}->set_id, 'v' . $c->{set}->version_id));
 }
 
 sub nav ($c, $args) {

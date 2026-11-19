@@ -40,12 +40,12 @@
 			<%== $c->head =%>
 		% }
 		%
-		<title><%= $c->path({ style => 'text', text => ' : ', textonly => '1' }) %></title>
+		<title><%= $c->pageTitle %></title>
 	</head>
 	%
 	<body>
 		<%= link_to
-			'Skip to main content' => '#page-title',
+			'Skip to main content' => '#page-header',
 			id                     => 'skip-to-main-content',
 			class                  => 'visually-hidden-focusable bg-light p-2 m-3 position-absolute' =%>
 		%
@@ -150,41 +150,28 @@
 			% # Main Content Area
 			<main
 				id="content"
-				class="container-fluid <%= $c->can('links')
+				class="container-fluid pt-2 <%= $c->can('links')
 					|| $c->can('siblings')
 					|| $c->can('options') ? 'flex-grow-1' : 'flex-grow-1 toggle-width' %>"
 			>
-				%
-				% # Breadcrumb
-				<div id="breadcrumb-row" class="row my-2">
-					<div class="col-12 d-flex align-items-center">
-						<nav id="breadcrumb-navigation" aria-label="breadcrumb navigation" class="w-100 bg-light">
-							<ol class="breadcrumb">
-								<%= $c->path({ style => 'bootstrap', text => '' }) =%>
-							</ol>
-						</nav>
-					</div>
-				</div>
 				% # Navigation, e.g.: Prev, Up, Next for homework
 				% if ($c->can('nav')) {
 					<%= $c->nav({ style => 'buttons', separator => '' }) =%>
 				% }
 				%
 				% # Page Title
-				% if ($c->can('page_title')) {
-					<div class="row">
-						<div class="col-12">
-							<h1 id="page-title" class="page-title">
-								<%== $c->page_title %>
-							</h1>
-							% if ($authen->{was_verified}
-								% && $authz->hasPermissions($authen->{user_id}, 'access_instructor_tools'))
-							% {
-								<%= $c->help({ label_size => 'fa-xs' }) %>
-							% }
-						</div>
+				<div class="row">
+					<div class="col-12">
+						<h1 id="page-header" class="page-header">
+							<%== $c->pageHeader %>
+						</h1>
+						% if ($authen->{was_verified}
+							% && $authz->hasPermissions($authen->{user_id}, 'access_instructor_tools'))
+						% {
+							<%= $c->help({ label_size => 'fa-xs' }) %>
+						% }
 					</div>
-				% }
+				</div>
 				%
 				% # Message for the user
 				% if ($c->can('message')) {

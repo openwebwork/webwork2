@@ -12,7 +12,7 @@ use Mojo::Util qw(xml_escape);
 use WeBWorK::Utils qw(cryptPassword utf8Crypt isValidEmailAddress);
 use WeBWorK::Localize;
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	return $c->maketext("Account settings for [_1]", $c->param('effectiveUser'));
 }
 

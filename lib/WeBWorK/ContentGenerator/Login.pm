@@ -11,8 +11,8 @@ use WeBWorK::Utils::Files qw(readFile);
 use WeBWorK::Utils::JITAR qw(jitar_id_to_seq);
 use WeBWorK::Utils::Sets  qw(format_set_name_display);
 
-sub page_title ($c) {
-	# If the url is for a problem page, then the title is the set and problem id.
+sub pageHeader ($c) {
+	# If the url is for a problem page, then the header is the set and problem id.
 	my $problemID = $c->stash('problemID');
 	if ($problemID) {
 		my $setID = $c->stash('setID');
@@ -27,7 +27,7 @@ sub page_title ($c) {
 			$c->tag('span', dir => 'ltr', format_set_name_display($setID)), $problemID);
 	}
 
-	return $c->SUPER::page_title();
+	return $c->SUPER::pageHeader;
 }
 
 sub info ($c) {

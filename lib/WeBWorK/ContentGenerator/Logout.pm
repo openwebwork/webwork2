@@ -37,10 +37,4 @@ sub can ($c, $arg) {
 	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
 }
 
-sub path ($c, $args) {
-	return $c->stash('courseID')
-		if (($c->ce->{external_auth} || $c->authen->{external_auth}) && defined $c->stash('courseID'));
-	return $c->SUPER::path($args);
-}
-
 1;
