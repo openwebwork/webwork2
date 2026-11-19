@@ -79,7 +79,6 @@
 		<div class="col-12 alert alert-info m-0"><%== maketext('Debugging information is shown below.') %></div>
 	</div>
 % }
-<div id="custom_edit_message" class="row"><div class="col-lg-10"><%= $c->output_custom_edit_message %></div></div>
 <div class="row"><div id="output_summary" class="col-lg-10"><%= $c->output_summary %></div></div>
 <div class="row">
 	<div id="output_achievement_message" class="col-lg-10"><%= $c->output_achievement_message %></div>

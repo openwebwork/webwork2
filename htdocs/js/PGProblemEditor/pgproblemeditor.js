@@ -344,51 +344,11 @@
 		}
 
 		const actionView = document.getElementById('view');
-		const editorForm = document.getElementById('editor');
-
-		// Make sure this is reset on each click so that a new window isn't always opened once that has been done once.
-		if (editorForm) editorForm.target = '_self';
 
 		if (actionView && actionView.classList.contains('active')) {
-			if (document.getElementById('newWindowView')?.checked) {
-				document.getElementById('revert-tab')?.classList.remove('disabled');
-				document.getElementById('revert-to-tmp-container')?.classList.remove('d-none');
-				const revertRadio = document.getElementById('action_revert_type_revert_id');
-				if (revertRadio && revertRadio.disabled) {
-					revertRadio.disabled = false;
-					revertRadio.checked = true;
-				}
-
-				// Add the temporary file coloring and change the current file to the saved file.
-				document.querySelectorAll('.set-file-info').forEach((nfo) => nfo.classList.add('temporaryFile'));
-				for (const currentFile of document.querySelectorAll('.current-file')) {
-					currentFile.textContent = currentFile.dataset.tmpFile;
-				}
-
-				if (editorForm) editorForm.target = 'WW_View';
-			} else {
-				e.preventDefault();
-				await render();
-
-				saveTempFile();
-			}
-		}
-
-		const actionSave = document.getElementById('save');
-		if (
-			actionSave &&
-			actionSave.classList.contains('active') &&
-			document.getElementById('newWindowSave')?.checked &&
-			editorForm
-		) {
-			if (document.getElementById('backupFile')?.checked) {
-				document.getElementById('show-backups-comment')?.classList.remove('d-none');
-				const deleteBackupCheck = document.getElementById('deleteBackup');
-				if (deleteBackupCheck) deleteBackupCheck.disabled = false;
-			}
-			document.getElementById('revert-tab')?.classList.remove('disabled');
-
-			editorForm.target = 'WW_View';
+			e.preventDefault();
+			await render();
+			saveTempFile();
 		}
 
 		const actionHardcopy = document.getElementById('hardcopy');
@@ -671,7 +631,8 @@
 			if (fileType === 'hardcopy_header') {
 				renderArea.innerHTML =
 					'<div class="alert alert-danger p-1 m-2 fw-bold">' +
-					'Hardcopy header contents can only be viewed in a new window.</div>';
+					'Hardcopy header contents cannot be viewed in the problem editor. ' +
+					'Use "Generate Hardcopy" to view the contents.</div>';
 				resolve();
 				return;
 			}

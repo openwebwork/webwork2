@@ -11,7 +11,6 @@ problem set.
 use WeBWorK::Debug            qw(debug);
 use WeBWorK::Utils            qw(wwRound);
 use WeBWorK::Utils::DateTime  qw(after);
-use WeBWorK::Utils::Files     qw(path_is_subdir);
 use WeBWorK::Utils::Rendering qw(renderPG);
 use WeBWorK::Utils::Sets      qw(is_restricted grade_set format_set_name_display test_version_is_complete);
 use WeBWorK::Localize;
@@ -115,19 +114,6 @@ async sub initialize ($c) {
 		$c->{set}->set_header eq 'defaultHeader'
 		? $ce->{webworkFiles}{screenSnippets}{setHeader}
 		: $c->{set}->set_header;
-
-	if ($authz->hasPermissions($userID, 'modify_problem_sets')) {
-		if (defined $c->param('editMode') && $c->param('editMode') eq 'temporaryFile') {
-			$screenSetHeader = $c->param('sourceFilePath');
-			$screenSetHeader = "$ce->{courseDirs}{templates}/$screenSetHeader" unless $screenSetHeader =~ m!^/!;
-			die 'sourceFilePath is unsafe!' unless path_is_subdir($screenSetHeader, $ce->{courseDirs}{templates});
-			$c->addmessage($c->tag(
-				'p',
-				class => 'temporaryFile',
-				$c->maketext('Viewing temporary file: [_1]', $screenSetHeader)
-			));
-		}
-	}
 
 	return unless $screenSetHeader;
 
