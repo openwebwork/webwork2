@@ -278,8 +278,8 @@ sub prepare_activity_entry ($c) {
 	my $location = $c->location;
 	my $string =
 		($c->req->url->path->to_string =~ s/^\Q$location\E//r)
-		. "  --->  "
-		. join("\t", (map { $_ eq 'key' || $_ eq 'passwd' ? '' : $_ . " => " . $c->param($_) } $c->param()));
+		. '  --->  '
+		. join("\t", map { $_ eq 'key' || $_ eq 'passwd' ? '' : $_ . ' => ' . ($c->param($_) // 'undef') } $c->param);
 	$string =~ s/\t+/\t/g;
 	return $string;
 }
