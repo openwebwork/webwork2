@@ -189,7 +189,7 @@ async sub initialize ($c) {
 	return;
 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	my $problemID = $c->stash('problemID');
 	if ($c->stash->{set} && $c->stash->{set}->assignment_type eq 'jitar') {
 		$problemID = join('.', jitar_id_to_seq($problemID));

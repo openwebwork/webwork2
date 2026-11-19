@@ -12,10 +12,6 @@ use Mojo::Util qw(trim);
 use WeBWorK::Utils qw(cryptPassword utf8Crypt isValidEmailAddress);
 use WeBWorK::Localize;
 
-sub page_title ($c) {
-	return $c->maketext('Account settings');
-}
-
 sub initialize ($c) {
 	my $db    = $c->db;
 	my $authz = $c->authz;

@@ -126,6 +126,23 @@ div.gwDivider {
 	margin: 0px 0px 10px 0px;
 }
 
+#siblings .gwSiblings {
+	.nav-item + .nav-item {
+		margin-top: 4px;
+	}
+
+	.nav-link.active {
+		border-radius: 4px;
+	}
+
+	.gwSiblingsSeparator hr {
+		margin: 4px 7px;
+		border: 0;
+		border-top: 1pt solid var(--bs-emphasis-color, black);
+		opacity: 1;
+	}
+}
+
 /* Override the pg style so that the problem-content is not offset in gateway quizzes. */
 .problem-content {
 	padding: unset;
