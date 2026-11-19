@@ -9,10 +9,11 @@ specific user/set information as well as problem information
 =cut
 
 use Exporter qw(import);
+use Mojo::File;
 
 use WeBWorK::Utils             qw(cryptPassword x);
-use WeBWorK::Utils::Files      qw(surePathToFile readFile);
-use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::Files      qw(surePathToFile);
+use WeBWorK::Utils::Instructor qw(assignProblemsToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
 require WeBWorK::PG;
@@ -2054,35 +2055,40 @@ sub initialize ($c) {
 
 			my $targetProblemNumber = WeBWorK::Utils::max(@ids);
 
-			if ($newBlankProblems >= 1 and $newBlankProblems <= $MAX_NEW_PROBLEMS) {
-				foreach my $newProb (1 .. $newBlankProblems) {
-					$targetProblemNumber++;
-					# Make local copy of the blankProblem
-					my $blank_file_path = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-					my $problemContents = readFile($blank_file_path);
-					my $new_file_path   = "set$setID/" . BLANKPROBLEM();
-					my $fullPath        = surePathToFile($ce->{courseDirs}{templates}, $new_file_path);
+			if ($newBlankProblems >= 1 && $newBlankProblems <= $MAX_NEW_PROBLEMS) {
+				# Make a copy of the blankProblem in the set directory.
+				my $newFilePath = "set$setID/" . BLANKPROBLEM;
+				eval {
+					Mojo::File->new($ce->{webworkFiles}{screenSnippets}{blankProblem})
+						->copy_to(surePathToFile($ce->{courseDirs}{templates}, $newFilePath));
+				};
+				$c->addbadmessage($c->maketext(
+					'Cannot write to file "~[TMPL~]/[_1]". Adding blank problems anyway. Note that the problems '
+						. 'will not render since the source file will be missing.',
+					$newFilePath
+				))
+					if $@;
 
-					open(my $TEMPFILE, '>', $fullPath) or warn $c->maketext(q{Can't write to file [_1]}, $fullPath);
-					print $TEMPFILE $problemContents;
-					close($TEMPFILE);
-
-					# Update problem record
-					my $problemRecord = addProblemToSet(
-						$db, $ce->{problemDefaults},
-						setName    => $setID,
-						sourceFile => $new_file_path,
-						problemID  => $setRecord->assignment_type eq 'jitar'
-						? seq_to_jitar_id(($targetProblemNumber))
-						: $targetProblemNumber,
+				my @problemRecords;
+				for my $newProb (1 .. $newBlankProblems) {
+					++$targetProblemNumber;
+					push(
+						@problemRecords,
+						addProblemToSet(
+							$db, $ce->{problemDefaults},
+							setName    => $setID,
+							sourceFile => $newFilePath,
+							problemID  => $setRecord->assignment_type eq 'jitar'
+							? seq_to_jitar_id(($targetProblemNumber))
+							: $targetProblemNumber,
+						)
 					);
-
-					assignProblemToAllSetUsers($db, $problemRecord);
 					$c->addgoodmessage($c->maketext(
 						"Added [_1] to [_2] as problem [_3]",
-						$new_file_path, $setID, $targetProblemNumber
+						$newFilePath, $setID, $targetProblemNumber
 					));
 				}
+				assignProblemsToAllSetUsers($db, @problemRecords);
 			} else {
 				$c->addbadmessage($c->maketext(
 					"Could not add [_1] problems to this set.  The number must be between 1 and [_2]",
