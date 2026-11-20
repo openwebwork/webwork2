@@ -13,7 +13,7 @@ use Digest::SHA          qw(sha256_hex);
 use Math::Random::Secure qw(irand);
 
 use WeBWorK::Debug       qw(debug);
-use WeBWorK::Utils       qw(createEmailSenderTransportSMTP);
+use WeBWorK::Utils       qw(createEmailSenderTransportSMTP emailMessageId);
 use WeBWorK::Utils::Logs qw(writeCourseLog);
 
 # Override the can method to disable links for the forgot password page.
@@ -77,7 +77,7 @@ sub initialize ($c) {
 					)
 				)->join('')
 			)
-		))->header('X-Remote-Host' => $c->tx->remote_address || 'UNKNOWN');
+		))->header('Message-ID' => emailMessageId($ce))->header('X-Remote-Host' => $c->tx->remote_address || 'UNKNOWN');
 
 	eval {
 		$email->send_or_die({
