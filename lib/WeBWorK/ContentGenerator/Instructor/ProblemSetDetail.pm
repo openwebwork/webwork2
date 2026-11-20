@@ -11,7 +11,6 @@ specific user/set information as well as problem information
 use Exporter qw(import);
 
 use WeBWorK::Utils             qw(cryptPassword x);
-use WeBWorK::Utils::Files      qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
@@ -90,8 +89,6 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 # user, but are shown when editing for one user (although they still can't be edited).  That doesn't make sense.  The
 # previous fields that used it were also of type "hidden", and it turns out that type "hidden" and override "none"
 # really means don't use at all, and so listing them was pointless.
-
-use constant BLANKPROBLEM => 'newProblem.pg';
 
 # Use the x function to mark strings for localization.
 use constant FIELD_PROPERTIES => {
@@ -2057,21 +2054,11 @@ sub initialize ($c) {
 			if ($newBlankProblems >= 1 and $newBlankProblems <= $MAX_NEW_PROBLEMS) {
 				foreach my $newProb (1 .. $newBlankProblems) {
 					$targetProblemNumber++;
-					# Make local copy of the blankProblem
-					my $blank_file_path = $ce->{webworkFiles}{screenSnippets}{blankProblem};
-					my $problemContents = readFile($blank_file_path);
-					my $new_file_path   = "set$setID/" . BLANKPROBLEM();
-					my $fullPath        = surePathToFile($ce->{courseDirs}{templates}, $new_file_path);
 
-					open(my $TEMPFILE, '>', $fullPath) or warn $c->maketext(q{Can't write to file [_1]}, $fullPath);
-					print $TEMPFILE $problemContents;
-					close($TEMPFILE);
-
-					# Update problem record
 					my $problemRecord = addProblemToSet(
 						$db, $ce->{problemDefaults},
 						setName    => $setID,
-						sourceFile => $new_file_path,
+						sourceFile => '',
 						problemID  => $setRecord->assignment_type eq 'jitar'
 						? seq_to_jitar_id(($targetProblemNumber))
 						: $targetProblemNumber,
@@ -2079,8 +2066,8 @@ sub initialize ($c) {
 
 					assignProblemToAllSetUsers($db, $problemRecord);
 					$c->addgoodmessage($c->maketext(
-						"Added [_1] to [_2] as problem [_3]",
-						$new_file_path, $setID, $targetProblemNumber
+						'Added a blank problem to [_1] as problem [_2].',
+						$setID, $targetProblemNumber
 					));
 				}
 			} else {

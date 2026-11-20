@@ -450,8 +450,9 @@ sub assignProblemToAllSetUsers {
 
     addProblemToSet($db, $problemDefaults, %args)
 
-Adds a problem to a set.  The parameters C<setName> and C<sourceFile>C<%args>
-must be specified in C<%args>.
+Adds a problem to a set.  The parameters C<setName> and C<sourceFile> must be
+specified in C<%args>.  The C<sourceFile> may be the empty string, which adds a
+blank problem whose source is to be set later.
 
 =cut
 
@@ -470,8 +471,7 @@ sub addProblemToSet {
 	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
 	my $setName = $args{setName};
 
-	my $sourceFile = $args{sourceFile}
-		or die "addProblemToSet called without specifying the sourceFile.";
+	my $sourceFile = $args{sourceFile} // die "addProblemToSet called without specifying the sourceFile.";
 
 	my $problemID = $args{problemID};
 

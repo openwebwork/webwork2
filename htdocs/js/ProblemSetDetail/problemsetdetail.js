@@ -57,13 +57,13 @@
 		for (const item of container.querySelectorAll('.psd_list_item')) {
 			const row = item.querySelector(':scope > .problem_detail_row');
 			const alertContainer = row?.querySelector('.pdr_repeat_file_alert');
-			if (!alertContainer) return;
+			if (!alertContainer) continue;
 
 			alertContainer.innerHTML = '';
 
 			const problemID = item.id.replace('psd_list_item_', '');
 			const sourceFile = getSourceFilePath(problemID).replace(/^\//, '').replace(/\.\./g, '');
-			if (!sourceFile || sourceFile.startsWith('group:')) return;
+			if (!sourceFile || sourceFile.startsWith('group:')) continue;
 
 			if (shownYet.has(sourceFile)) {
 				const alert = document.createElement('div');

@@ -813,7 +813,7 @@
 			<%= label_for add_blank_problem => maketext('Add'), class => 'input-group-text' =%>
 			<%= text_field add_n_problems => 1, id => 'add_n_problems', class => 'form-control flex-grow-0' =%>
 			<%= label_for
-				add_n_problems => maketext('blank problem template(s) to end of homework set'),
+				add_n_problems => maketext('blank problem(s) to end of homework set'),
 				class          => 'input-group-text' =%>
 		</div>
 	% }
