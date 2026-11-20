@@ -26,6 +26,8 @@ BEGIN {
 		useMathView               => { type => "INT" },
 		useMathQuill              => { type => "INT" },
 		lis_source_did            => { type => "TEXT" },
+		# The time the user dismissed the notice that in-browser answer checks are enabled.
+		browser_checks_notice_dismissed => { type => "BIGINT" },
 	);
 }
 

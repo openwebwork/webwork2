@@ -23,6 +23,7 @@ BEGIN {
 		answer_string  => { type => "VARCHAR(5012)" },
 		comment_string => { type => "VARCHAR(5012)" },
 		problem_seed   => { type => "INT" },
+		input_flags    => { type => "TINYTEXT" },
 	);
 }
 
