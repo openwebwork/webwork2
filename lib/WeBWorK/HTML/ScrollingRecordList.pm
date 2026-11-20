@@ -92,8 +92,7 @@ sub scrollingRecordList ($options, @records) {
 
 sub userData ($c, @users) {
 	my %permissionName = reverse %{ $c->ce->{userRoles} };
-	my %permissions    = map { $_->user_id => $permissionName{ $_->permission } }
-		$c->db->getPermissionLevelsWhere({ user_id => { not_like => 'set_id:%' } });
+	my %permissions    = map { $_->user_id => $permissionName{ $_->permission } } $c->db->getPermissionLevelsWhere;
 
 	my @records = map { {
 		value  => $_->user_id,

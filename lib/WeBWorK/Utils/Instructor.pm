@@ -259,7 +259,7 @@ sub assignSetToAllUsers {
 	my ($db, $ce, $setID) = @_;
 
 	debug("$setID: getting user list");
-	my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	my @userRecords = $db->getUsersWhere;
 	debug("$setID: (done with that)");
 
 	return assignSetToGivenUsers($db, $ce, $setID, 0, @userRecords);

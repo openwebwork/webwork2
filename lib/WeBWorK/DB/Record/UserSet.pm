@@ -42,7 +42,7 @@ BEGIN {
 		time_limit_cap            => { type => "ENUM('0','1')" },
 		restrict_ip               => { type => "ENUM('No','RestrictTo','DenyFrom')" },
 		relax_restrict_ip         => { type => "ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')" },
-		restricted_login_proctor  => { type => "ENUM('No','Yes')" },
+		restricted_login_password => { type => "TEXT" },
 		use_grade_auth_proctor    => { type => "ENUM('No','Yes')" },
 		hide_hint                 => { type => "INT" },
 		restrict_prob_progression => { type => "INT" },

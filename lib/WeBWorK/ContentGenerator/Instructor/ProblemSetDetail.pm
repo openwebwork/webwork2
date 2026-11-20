@@ -10,7 +10,7 @@ specific user/set information as well as problem information
 
 use Exporter qw(import);
 
-use WeBWorK::Utils             qw(cryptPassword x);
+use WeBWorK::Utils             qw(x isCryptedPassword);
 use WeBWorK::Utils::Files      qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
@@ -23,7 +23,8 @@ our @EXPORT_OK = qw(FIELD_PROPERTIES);
 use constant SET_FIELDS => [
 	qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description
 		enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip
-		assignment_type use_grade_auth_proctor attempts_per_version version_time_limit time_limit_cap
+		assignment_type use_grade_auth_proctor restricted_login_password attempts_per_version version_time_limit
+		time_limit_cap
 		versions_per_interval time_interval problem_randorder problems_per_page
 		hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)
 ];
@@ -435,6 +436,20 @@ use constant FIELD_PROPERTIES => {
 				. 'authorization or a password specific to this set to start and no authorization to grade.'
 		),
 	},
+	restricted_login_password => {
+		name      => x('Password'),
+		type      => 'edit',
+		size      => 10,
+		override  => 'any',
+		help_text => x(
+			'Provide a password to have a password students must enter to start a proctored test. Alternatively, '
+				. 'leave this blank if you would like to have a proctor level user enter their username and '
+				. q{password on the student's screen for authentication. When editing the set for specific }
+				. 'users, a different password can be set for those users. Note that if the password is changed '
+				. 'after students have started the test, then the new password will be needed if a student needs '
+				. 'to be authorized again to continue the test.'
+		),
+	},
 	restrict_prob_progression => {
 		name     => x('Restrict Problem Progression'),
 		type     => 'choose',
@@ -467,11 +482,8 @@ use constant FIELD_PROPERTIES => {
 		),
 	},
 
-	# In addition to the set fields above, there are a number of things
-	# that are set but aren't in this table:
-	#    any set proctor information (which is in the user tables), and
-	#    any set location restriction information (which is in the
-	#    location tables)
+	# In addition to the set fields above, any set location restriction information is set but isn't in this table
+	# (it is in the location tables).
 
 	# Problem information
 	source_file => {
@@ -637,7 +649,6 @@ sub fieldTable ($c, $userID, $setID, $problemID, $globalRecord, $userRecord = un
 	my $ipFields     = '';
 	my $numLocations = 0;
 
-	# Needed for set-level proctor
 	my $proctorFields = '';
 
 	my @fieldOrder;
@@ -859,6 +870,13 @@ sub fieldHTML ($c, $userID, $setID, $problemID, $globalRecord, $userRecord, $fie
 	$userValue   //= $blankField;
 	if ($globalValue eq '' && defined $properties{default}) {
 		$globalValue = $properties{default};
+	}
+
+	# A password migrated from an older course is a hash that should not be shown, so show ******** instead.  That is
+	# submitted back if left unchanged, and the hashed password is then kept.
+	if ($field eq 'restricted_login_password') {
+		$globalValue = '********' if isCryptedPassword($globalValue);
+		$userValue   = '********' if isCryptedPassword($userValue);
 	}
 
 	if ($properties{convertby}) {
@@ -1188,10 +1206,14 @@ sub extraSetFields ($c, $userID, $setID, $globalRecord, $userRecord, $forUsers) 
 						$c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'use_grade_auth_proctor')
 				)->join('')
 			),
-			$forUsers ? '' : $c->include(
-				'ContentGenerator/Instructor/ProblemSetDetail/restricted_login_proctor_password_row',
-				globalRecord => $globalRecord,
-				proctorClass => $proctorClass
+			# The password is never read from a set version, so don't show it when editing set versions.
+			$forUsers && $userRecord->version_id ? '' : $c->tag(
+				'tr',
+				class => $proctorClass,
+				$c->c(
+					map { $c->tag('td', $_) }
+						$c->fieldHTML($userID, $setID, undef, $globalRecord, $userRecord, 'restricted_login_password')
+				)->join('')
 			)
 		)->join('');
 	}
@@ -1481,10 +1503,6 @@ sub initialize ($c) {
 		# Save general set information (including headers)
 
 		if ($forUsers) {
-			# Note that we don't deal with the proctor user fields here, with the assumption that it can't be possible
-			# to change them for users.
-			# FIXME: This is not the most robust treatment of the problem
-
 			my @userRecords = $db->getUserSetsWhere({ user_id => [@editForUser], set_id => $setID });
 			# If editing a set version, we want to edit that instead of the userset, so get it too.
 			my $userSet    = $userRecords[0];
@@ -1503,7 +1521,14 @@ sub initialize ($c) {
 						$field eq 'restricted_release'                       ? join(',', grep {$_} @paramValues)
 						: (@paramValues > 1 && $paramValues[0] eq 'numeric') ? $paramValues[1]
 						:                                                      $paramValues[0];
-					if ($param && $param ne '') {
+
+					if ($field eq 'restricted_login_password' && defined $param) {
+						$param =~ s/^\s*|\s*$//g;
+						# ******** is shown in place of a hashed password, and in that case it is left unchanged.
+						next if $param eq '********';
+					}
+
+					if (defined $param && $param ne '') {
 						$param = $param * $properties{$field}->{convertby} if $properties{$field}{convertby};
 
 						# Special case: Does field fill in multiple values?
@@ -1589,6 +1614,12 @@ sub initialize ($c) {
 					$param = $param * $properties{$field}->{convertby};
 				}
 
+				if ($field eq 'restricted_login_password') {
+					$param =~ s/^\s*|\s*$//g;
+					# ******** is shown in place of a hashed password, and in that case it is left unchanged.
+					next if $param eq '********';
+				}
+
 				if ($field =~ /:/) {
 					my @values = split(/:/, $param);
 					my @fields = split(/:/, $field);
@@ -1612,6 +1643,8 @@ sub initialize ($c) {
 						. '"Proctored Test".'
 				));
 			}
+
+			$setRecord->restricted_login_password('') if $setRecord->assignment_type ne 'proctored_gateway';
 
 			$db->putGlobalSet($setRecord);
 
@@ -1650,71 +1683,6 @@ sub initialize ($c) {
 				my @globalSetLocations = $db->listGlobalSetLocations($setID);
 				foreach (@globalSetLocations) {
 					$db->deleteGlobalSetLocation($setID, $_);
-				}
-			}
-
-			# Save proctored problem proctor user information
-			if ($c->param("set.$setID.restricted_login_proctor_password")
-				&& $setRecord->assignment_type eq 'proctored_gateway')
-			{
-				# In this case add a set-level proctor or update the password.
-				my $procID = "set_id:$setID";
-				my $pass   = $c->param("set.$setID.restricted_login_proctor_password");
-				# Should we carefully check in this case that the user and password exist?  The code in the add stanza
-				# is pretty careful to be sure that there's a one-to-one correspondence between the existence of the
-				# user and the setting of the set restricted_login_proctor field, so we assume that just checking the
-				# latter here is sufficient.
-				if ($setRecord->restricted_login_proctor eq 'Yes') {
-					if ($pass ne '********') {
-						# A new password was submitted. So save it.
-						my $dbPass = eval { $db->getPassword($procID) };
-						if ($@) {
-							$c->addbadmessage($c->maketext(
-								'Error getting old set-proctor password from the database: [_1].  '
-									. 'No update to the password was done.',
-								$@
-							));
-						} else {
-							$dbPass->password(cryptPassword($pass));
-							$db->putPassword($dbPass);
-						}
-					}
-				} else {
-					$setRecord->restricted_login_proctor('Yes');
-					my $procUser = $db->newUser();
-					$procUser->user_id($procID);
-					$procUser->last_name("Proctor");
-					$procUser->first_name("Login");
-					$procUser->student_id("loginproctor");
-					$procUser->status($ce->status_name_to_abbrevs('Proctor'));
-					my $procPerm = $db->newPermissionLevel;
-					$procPerm->user_id($procID);
-					$procPerm->permission($ce->{userRoles}{login_proctor});
-					my $procPass = $db->newPassword;
-					$procPass->user_id($procID);
-					$procPass->password(cryptPassword($pass));
-
-					eval { $db->addUser($procUser) };
-					if ($@) {
-						$c->addbadmessage($c->maketext("Error adding set-level proctor: [_1]", $@));
-					} else {
-						$db->addPermissionLevel($procPerm);
-						$db->addPassword($procPass);
-					}
-
-					# Set the restricted_login_proctor set field
-					$db->putGlobalSet($setRecord);
-				}
-
-			} else {
-				# If the parameter isn't set, or if the assignment type is not 'proctored_gateway', then ensure that
-				# there is no set-level proctor defined.
-				if ($setRecord->restricted_login_proctor eq 'Yes') {
-
-					$setRecord->restricted_login_proctor('No');
-					$db->deleteUser("set_id:$setID");
-					$db->putGlobalSet($setRecord);
-
 				}
 			}
 		}
