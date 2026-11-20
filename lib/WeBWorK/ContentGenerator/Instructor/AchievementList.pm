@@ -363,15 +363,42 @@ sub create_handler ($c) {
 
 	# Either assign empty data or copy over existing data
 	if ($type eq 'empty') {
+		my $evaluatorFile = "$newAchievementID.at";
 		eval {
 			$db->addAchievement($db->newAchievement(
 				achievement_id  => $newAchievementID,
 				enabled         => 0,
 				assignment_type => 'default',
-				test            => 'blankachievement.at'
+				test            => $evaluatorFile
 			));
 		};
 		return (0, $c->maketext('Failed to create new achievement: [_1]', $@)) if $@;
+
+		my $evaluatorPath = surePathToFile($ce->{courseDirs}{achievements}, $evaluatorFile);
+		unless (-e $evaluatorPath) {
+			eval {
+				Mojo::File->new($evaluatorPath)->spew(<<~'END_EVALUATOR', 'UTF-8');
+					# This is the evaluator for a new empty achievement. Replace the code below to
+					# define when the achievement is earned. The evaluator should return 1 if the
+					# achievement is earned and 0 otherwise.
+					#
+					# See [templates]/achievements/achievement_readme.txt for details.
+
+					return 0;
+					END_EVALUATOR
+			};
+			if ($@) {
+				my $error = $@;
+				$db->deleteAchievement($newAchievementID);
+				return (
+					0,
+					$c->maketext(
+						'Failed to create new achievement: unable to create evaluator file "[_1]": [_2]',
+						$evaluatorFile, $error
+					)
+				);
+			}
+		}
 	} elsif ($type eq 'copy') {
 		my $oldAchievementID = $c->{selectedAchievementIDs}[0];
 		return (0, $c->maketext('Failed to duplicate achievement: no achievement selected for duplication!'))
