@@ -15,6 +15,7 @@ use WeBWorK::Utils::Files      qw(surePathToFile readFile);
 use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
 use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets       qw(format_set_name_display);
+use WeBWorK::ExternalProblem   qw(isExternalSource);
 require WeBWorK::PG;
 
 our @EXPORT_OK = qw(FIELD_PROPERTIES);
@@ -475,7 +476,7 @@ use constant FIELD_PROPERTIES => {
 
 	# Problem information
 	source_file => {
-		name     => x('Source File'),
+		name     => x('Source'),
 		type     => 'edit',
 		size     => 50,
 		override => 'any',
@@ -2186,6 +2187,7 @@ sub checkFile ($c, $filePath, $headerType) {
 
 	return $c->maketext("No source filePath specified") unless $filePath;
 	return $c->maketext("Problem source is drawn from a grouping set") if $filePath =~ /^group/;
+	return ''                                                          if isExternalSource($filePath);
 
 	if ($filePath eq "defaultHeader") {
 		if ($headerType eq 'set_header') {

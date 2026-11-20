@@ -146,10 +146,9 @@ sub problem_set ($c, $set_id) {
 sub problem ($c, $set_id, $problem_id) {
 	my $problem = $c->db->getGlobalProblem($set_id, $problem_id);
 
-	my $tags;
-
-	if ($problem->source_file !~ /^group:/) {
-		$tags = unbless(WeBWorK::Utils::Tags->new($c->ce->{courseDirs}{templates} . '/' . $problem->source_file));
+	my $tags = WeBWorK::Utils::Tags->forSource($c->ce, $problem->source_file);
+	if ($tags) {
+		unbless($tags);
 		$_ =~ s/(^[\s"']+)|([\s"']+$)//g for @{ $tags->{keywords} };
 	}
 
@@ -182,8 +181,8 @@ sub problem_user ($c, $set_id, $version_id, $problem_id, $user_id, $pg) {
 		? $c->db->getMergedProblemVersion($user_id, $set_id, $version_id, $problem_id)
 		: $c->db->getMergedProblem($user_id, $set_id, $problem_id);
 
-	my $tags = WeBWorK::Utils::Tags->new($c->ce->{courseDirs}{templates} . '/' . $problem_user->source_file);
-	$_ =~ s/(^[\s"']+)|([\s"']+$)//g for @{ $tags->{keywords} };
+	my $tags = WeBWorK::Utils::Tags->forSource($c->ce, $problem_user->source_file);
+	$_ =~ s/(^[\s"']+)|([\s"']+$)//g for @{ $tags ? $tags->{keywords} : [] };
 
 	my $correct_answers = [];
 	for my $ans_id (@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} // [] }) {
@@ -195,7 +194,7 @@ sub problem_user ($c, $set_id, $version_id, $problem_id, $user_id, $pg) {
 		type       => 'AssessmentItem',
 		name       => "Problem $problem_id",
 		isPartOf   => Caliper::Entity::problem($c, $set_id, $problem_id),
-		keywords   => $tags->{keywords},
+		keywords   => $tags ? $tags->{keywords} : undef,
 		extensions => {
 			correct_answers      => $correct_answers,
 			source_file          => $problem_user->source_file,
@@ -209,7 +208,7 @@ sub problem_user ($c, $set_id, $version_id, $problem_id, $user_id, $pg) {
 			prPeriod             => $problem_user->prPeriod,
 			prCount              => $problem_user->prCount,
 			flags                => $problem_user->flags,
-			tags                 => \%$tags,
+			tags                 => $tags,
 			problem_seed         => $problem_user->problem_seed,
 			source_text          => $problem_user->status,
 			problem_html_text    => $pg->{'body_text'},

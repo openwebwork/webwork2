@@ -294,7 +294,7 @@
 		<div id="alt-source-key" class="problem-grader-legend-key mb-3 d-none">
 			<span class="alt-source p-2"><%= maketext('Latest Answers') %></span>
 			\( = \)
-			<%= maketext('Problem has a different source file than the currently rendered problem.') =%>
+			<%= maketext('Problem has a different source than the currently rendered problem.') =%>
 		</div>
 	</div>
 	<%= $c->hidden_authen_fields =%>

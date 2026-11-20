@@ -16,6 +16,7 @@ use Encode                qw(encode_utf8);
 use WeBWorK::Utils::DateTime          qw(formatDateTime);
 use WeBWorK::Utils::ProblemProcessing qw(compute_unreduced_score);
 use WeBWorK::PG;
+use WeBWorK::ExternalProblem;
 
 our @EXPORT_OK = qw(constructPGOptions getTranslatorDebuggingOptions renderPG);
 
@@ -235,8 +236,14 @@ sub renderPG ($c, $effectiveUser, $set, $problem, $psvn, $formFields, $translati
 	$c->inactivity_timeout($WeBWorK::PG::TIMEOUT + 5);
 
 	return Mojo::IOLoop->subprocess->run_p(sub {
-		my $pg = WeBWorK::PG->new(constructPGOptions(
-			$c->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions));
+		my %options =
+			constructPGOptions($c->ce, $effectiveUser, $set, $problem, $psvn, $formFields, $translationOptions);
+
+	   # If the problem is from another online homework system (such as IMathAS), then get it from that system.  That is
+	   # done here in the subprocess since it waits for that system.
+		WeBWorK::ExternalProblem::pgOptions($c->ce, \%options);
+
+		my $pg = WeBWorK::PG->new(%options);
 
 		my $ret = {
 			body_text => $pg->{body_text},
