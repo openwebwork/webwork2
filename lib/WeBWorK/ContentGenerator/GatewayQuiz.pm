@@ -1199,6 +1199,41 @@ sub pageTitle ($c) {
 			|| $c->stash->{actingConfirmation} ? $c->stash('setID') : ($c->{set}->set_id, 'v' . $c->{set}->version_id));
 }
 
+sub siblings ($c) {
+	return '' if $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation};
+
+	my $problemNumbers = $c->stash->{problem_numbers};
+	return '' unless @$problemNumbers;
+
+	my $startProb      = $c->stash->{startProb};
+	my $endProb        = $c->stash->{endProb};
+	my $numProbPerPage = $c->{set}->problems_per_page;
+
+	my $probsPerPage = $numProbPerPage || scalar(@$problemNumbers);
+
+	my @pages;
+	for my $i (0 .. $#$problemNumbers) {
+		my $onCurrentPage = $i >= $startProb && $i <= $endProb;
+		my $pageNumber    = int($i / $probsPerPage) + 1;
+
+		push(
+			@{ $pages[ $pageNumber - 1 ] },
+			$c->tag(
+				'a',
+				href  => '#',
+				class => 'nav-link problem-jump-link' . ($onCurrentPage ? ' active' : ''),
+				data  => {
+					problem_number => $i + 1,
+					$onCurrentPage ? () : (page_number => $pageNumber)
+				},
+				$c->maketext('Problem [_1]', $i + 1)
+			)
+		);
+	}
+
+	return $c->include('ContentGenerator/GatewayQuiz/siblings', pages => \@pages, separatePages => $numProbPerPage > 1);
+}
+
 sub nav ($c, $args) {
 	my $db              = $c->db;
 	my $userID          = $c->authen->{user_id};
