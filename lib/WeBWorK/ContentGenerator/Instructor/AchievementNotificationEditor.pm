@@ -7,9 +7,8 @@ WeBWorK::ContentGenerator::Instructor::AchievementNotificationEditor - edit the 
 
 =cut
 
-use WeBWorK::Utils               qw(fix_newlines x);
-use WeBWorK::Utils::Files        qw(surePathToFile readFile);
-use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
+use WeBWorK::Utils        qw(fix_newlines x);
+use WeBWorK::Utils::Files qw(surePathToFile readFile pathIsSafe filePathIsValid filePathRequirementsMessage);
 
 use constant ACTION_FORMS => [qw(save save_as existing disable)];
 use constant ACTION_FORM_TITLES => {
@@ -34,7 +33,7 @@ sub initialize ($c) {
 	}
 
 	my $sourceFile = $c->{achievement}->email_template || 'default.txt.epl';
-	unless (isAchievementAssetSafe($sourceFile)) {
+	unless (pathIsSafe($sourceFile)) {
 		$c->addbadmessage($c->maketext(
 			'Achievement notification template path "[_1]" is unsafe and cannot be edited.', $sourceFile
 		));
@@ -138,8 +137,9 @@ sub save_as_handler ($c) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 		return;
 	}
-	unless (isAchievementAssetSafe($new_file_name)) {
-		$c->addbadmessage($c->maketext('Achievement notification template not saved because filename is unsafe.'));
+
+	unless (filePathIsValid($new_file_name)) {
+		$c->addbadmessage(filePathRequirementsMessage($c, $new_file_name));
 		return;
 	}
 
@@ -182,7 +182,7 @@ sub existing_handler ($c) {
 	my $achievementID = $c->stash('achievementID');
 	my $sourceFile    = $c->param('action.existing.target_file') || '';
 
-	unless ($sourceFile && isAchievementAssetSafe($sourceFile)) {
+	unless ($sourceFile && pathIsSafe($sourceFile)) {
 		$c->addbadmessage($c->maketext('Achievement notification template filename "[_1]" is unsafe.', $sourceFile));
 		return;
 	}

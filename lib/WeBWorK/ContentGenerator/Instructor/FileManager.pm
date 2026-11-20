@@ -18,7 +18,7 @@ use Archive::Zip::SimpleZip qw($SimpleZipError);
 
 use WeBWorK::Utils                   qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
-use WeBWorK::Utils::Files            qw(readFile path_is_subdir);
+use WeBWorK::Utils::Files            qw(readFile pathIsSafe pathIsSubdir fileNameIsValid fileNameRequirementsMessage);
 use WeBWorK::Upload;
 
 use constant HOME => 'templates';
@@ -95,8 +95,8 @@ sub initialize ($c) {
 
 # Download a given file
 sub downloadFile ($c, $file, $directory = '') {
-	if (my $invalidFilenameMessage = $c->checkName($file)) {
-		$c->addbadmessage($invalidFilenameMessage);
+	if (!$file || $file =~ m!/! || $file =~ m/^\./) {
+		$c->addbadmessage($c->maketext('You have specified an illegal file'));
 		return;
 	}
 	my $pwd = $c->checkPWD($directory || $c->param('pwd') || HOME);
@@ -230,6 +230,12 @@ sub Save ($c, $filename = '') {
 	} else {
 		$filename = $c->getFile('save');
 		return unless $filename;
+
+		# The file is new if it was started with "New File", so its name must be valid.
+		if (!-e "$c->{courseRoot}/$pwd/$filename" && (my $invalidNameMsg = $c->checkName($filename))) {
+			$c->addbadmessage($invalidNameMsg);
+			return $c->RefreshEdit($c->param('data'), $filename);
+		}
 	}
 	my $file = "$c->{courseRoot}/$pwd/$filename";
 	my $data = $c->param('data');
@@ -443,12 +449,8 @@ sub MakeArchive ($c) {
 		}
 
 		# Check filename validity.
-		if ($archive =~ m!/!) {
-			$c->addbadmessage($c->maketext('The archive filename may not contain a path component'));
-			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
-		}
-		if ($archive =~ m!^\.! || $archive =~ m![^-_.a-zA-Z0-9 ]!) {
-			$c->addbadmessage($c->maketext('The archive filename contains illegal characters'));
+		if (my $invalidArchiveNameMsg = $c->checkName($archive)) {
+			$c->addbadmessage($invalidArchiveNameMsg);
 			return $c->include('ContentGenerator/Instructor/FileManager/archive', dir => $dir, files => \@files);
 		}
 
@@ -496,6 +498,11 @@ sub MakeArchive ($c) {
 	}
 }
 
+# Archive member names may begin with "./", so "." components are not considered hidden.
+sub hasHiddenComponent ($name) {
+	return (grep { $_ ne '.' && /^\./ } split('/', $name)) ? 1 : 0;
+}
+
 # Verify that symbolic links resolve, on the real filesystem, to locations inside the course directory, and remove any
 # that do not. This must be done after the links have already been created, since `realpath` only works in that case. A
 # broken link cannot be resolved with `realpath`, and so cannot be verified to point inside the course directory. It is
@@ -504,7 +511,7 @@ sub MakeArchive ($c) {
 sub prune_unsafe_links ($c, @links) {
 	my @unsafe;
 	for (@links) {
-		next if -e $_->[1]->to_string && path_is_subdir($_->[1]->realpath->to_string, $c->{courseRoot});
+		next if -e $_->[1]->to_string && pathIsSubdir($_->[1]->realpath->to_string, $c->{courseRoot});
 		push(@unsafe, $_->[0]);
 		unlink($_->[1]->to_string);
 	}
@@ -526,7 +533,7 @@ sub UnpackArchive ($c) {
 sub unpack_archive ($c, $archive) {
 	my $dir = Mojo::File->new($c->{courseRoot}, $c->{pwd});
 
-	my (@members, @existing_files, @outside_files, @forbidden_files, @unsafe_links);
+	my (@members, @existing_files, @outside_files, @hidden_files, @forbidden_files, @unsafe_links);
 	my $num_extracted = 0;
 
 	if ($archive =~ m/\.zip$/) {
@@ -548,8 +555,13 @@ sub unpack_archive ($c, $archive) {
 		@members = $zip->members;
 		for (@members) {
 			my $out_file = $dir->child($_->fileName);
-			if (!path_is_subdir($out_file, $dir)) {
+			if (!pathIsSubdir($out_file, $dir)) {
 				push(@outside_files, $_->fileName);
+				next;
+			}
+
+			if (hasHiddenComponent($_->fileName)) {
+				push(@hidden_files, $_->fileName);
 				next;
 			}
 
@@ -596,8 +608,13 @@ sub unpack_archive ($c, $archive) {
 		@members = $tar->list_files;
 		for (@members) {
 			my $out_file = $dir->child($_);
-			if (!path_is_subdir($out_file->to_string, $dir->to_string)) {
+			if (!pathIsSubdir($out_file->to_string, $dir->to_string)) {
 				push(@outside_files, $_);
+				next;
+			}
+
+			if (hasHiddenComponent($_)) {
+				push(@hidden_files, $_);
 				next;
 			}
 
@@ -658,6 +675,34 @@ sub unpack_archive ($c, $archive) {
 								@outside_files > 30
 								? $c->tag('li',
 									$c->maketext('[quant,_1,more file,more files] not shown', @outside_files - 30))
+								: ()
+							)
+						)->join('')
+					)
+				)
+		);
+	}
+
+	if (@hidden_files) {
+		$c->addbadmessage(
+			$c->tag(
+				'p',
+				$c->maketext(
+					'The names of the following [plural,_1,file,files] in the archive start with a period or are in '
+						. 'a directory whose name starts with a period, and [plural,_1,was,were] not extracted.',
+					scalar(@hidden_files),
+				)
+				)
+				. $c->tag(
+					'div',
+					$c->tag(
+						'ul',
+						$c->c(
+							(map { $c->tag('li', $_) } @hidden_files[ 0 .. min(29, $#hidden_files) ]),
+							(
+								@hidden_files > 30
+								? $c->tag('li',
+									$c->maketext('[quant,_1,more file,more files] not shown', @hidden_files - 30))
 								: ()
 							)
 						)->join('')
@@ -731,7 +776,7 @@ sub unpack_archive ($c, $archive) {
 # That is done when the user clicks save on the edit page.
 sub NewFile ($c) {
 	return $c->RefreshEdit('', $c->param('name'))
-		if $c->param('confirmed') && $c->verifyName($c->param('name'), 'file');
+		if $c->param('confirmed') && $c->verifyName($c->param('name'));
 	return $c->Confirm($c->maketext('New file name:'), '', $c->maketext('New File'));
 }
 
@@ -739,7 +784,7 @@ sub NewFile ($c) {
 sub NewFolder ($c) {
 	if ($c->param('confirmed')) {
 		my $name = $c->param('name');
-		if (my $dir = $c->verifyName($name, 'directory')) {
+		if (my $dir = $c->verifyName($name)) {
 			if (mkdir $dir, 0750) {
 				$c->{pwd} .= "/$name";
 				return $c->Refresh;
@@ -1010,7 +1055,7 @@ sub isSymLink ($c, $file) {
 
 	# Remove /./ and dir/../ constructs
 	$link =~ s!(^|/)(\.(/|$))+!$1!g;
-	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) { }
+	while ($link =~ s{(^|/)(?!\.\.(?:/|$))[^/]+/\.\.(?:/|$)}{$1}) { }
 
 	# Look through the list of valid paths to see if this link is OK
 	my $valid = $c->{ce}{webworkDirs}{valid_symlinks};
@@ -1026,32 +1071,26 @@ sub isSymLink ($c, $file) {
 # Normalize the working directory and check if it is OK.
 sub checkPWD ($c, $pwd, $renameError = 0) {
 	$pwd =~ s!//+!/!g;                 # remove duplicate slashes
-	$pwd =~ s!(^|/)~!$1_!g;            # remove ~user references
 	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;    # remove dot directories
 
 	# remove dir/.. constructions
-	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) { }
+	while ($pwd =~ s{(^|/)(?!\.\.(?:/|$))[^/]+/\.\.(?:/|$)}{$1}) { }
 
-	$pwd =~ s!/$!!;                           # remove trailing /
-	return if ($pwd =~ m!(^|/)\.\.(/|$)!);    # Error if outside the root
+	$pwd =~ s!^/!!;                    # remove leading /
+	$pwd =~ s!/$!!;                    # remove trailing /
+	return unless pathIsSafe($pwd);    # Error if outside the root
+	return if $pwd =~ m!(^|/)\.!;      # don't enter hidden directories
 
 	# check for bad symbolic links
 	my @dirs = split('/', $pwd);
-	pop(@dirs) if $renameError;               # don't check file itself in this case
+	pop(@dirs) if $renameError;        # don't check file itself in this case
 	my @path = ($c->{ce}{courseDirs}{root});
 	for my $dir (@dirs) {
 		push @path, $dir;
 		return if ($c->isSymLink(join('/', @path)));
 	}
 
-	my $original = $pwd;
-	$pwd =~ s!(^|/)\.!$1_!g;                  # don't enter hidden directories
-	$pwd =~ s!^/!!;                           # remove leading /
-	$pwd =~ s![^-_./A-Z0-9~,() ]!_!gi;        # no illegal characters
-	return if $renameError && $original ne $pwd;
-
-	$pwd = '.' if $pwd eq '';
-	return $pwd;
+	return $pwd eq '' ? '.' : $pwd;
 }
 
 # Check that a file is uploaded to the correct directory
@@ -1077,10 +1116,9 @@ sub checkFileLocation ($c, $extension, $dir) {
 # Check a file name for bad characters, etc. This returns a message explaining what is wrong with the file name if
 # something is wrong, and undefined if all is good.
 sub checkName ($c, $file) {
-	return $c->maketext('No filename specified.') unless $file;
+	return $c->maketext('No filename specified.') unless defined $file && $file ne '';
 	return $c->maketext('"[_1]" contains a path component which is not allowed.', $file) if $file =~ /\//;
-	return $c->maketext('"[_1]" contains invalid characters.',               $file) if $file =~ m![^-_.a-zA-Z0-9 /]!;
-	return $c->maketext('"[_1]" begins with a period which is not allowed.', $file) if $file =~ m/^\./;
+	return fileNameRequirementsMessage($c, $file) unless fileNameIsValid($file);
 	return;
 }
 
@@ -1096,51 +1134,34 @@ sub uniqueName ($dir, $name) {
 }
 
 # Verify that a name can be added to the current directory.
-sub verifyName ($c, $name, $object) {
-	if ($name) {
-		unless ($name =~ m!/!) {
-			unless ($name =~ m!^\.!) {
-				unless ($name =~ m![^-_.a-zA-Z0-9 ]!) {
-					my $file = "$c->{courseRoot}/$c->{pwd}/$name";
-					return $file unless (-e $file);
-					$c->addbadmessage($c->maketext('A file with that name already exists'));
-				} else {
-					$c->addbadmessage($c->maketext('Your [_1] name contains illegal characters', $object));
-				}
-			} else {
-				$c->addbadmessage($c->maketext('Your [_1] name may not begin with a dot', $object));
-			}
-		} else {
-			$c->addbadmessage($c->maketext('Your [_1] name may not contain a path component', $object));
-		}
-	} else {
-		$c->addbadmessage($c->maketext('You must specify a [_1] name', $object));
+sub verifyName ($c, $name) {
+	if (my $invalidNameMsg = $c->checkName($name)) {
+		$c->addbadmessage($invalidNameMsg);
+		return;
 	}
+	my $file = "$c->{courseRoot}/$c->{pwd}/$name";
+	return $file unless -e $file;
+	$c->addbadmessage($c->maketext('A file with that name already exists'));
 	return;
 }
 
-# Verify that a file path is valid
+# Verify that a file path is valid. The path may contain "." and ".." components, but the path must stay within the
+# course directory.
 sub verifyPath ($c, $path, $name) {
-	if ($path) {
-		unless ($path =~ m![^-_.a-zA-Z0-9 /]!) {
-			unless ($path =~ m!^/!) {
-				$path = $c->checkPWD($c->{pwd} . '/' . $path, 1);
-				if ($path) {
-					$path = $c->{courseRoot} . '/' . $path;
-					$path .= "/$name" if -d $path && $name;
-					return $path unless (-e $path);
-					$c->addbadmessage($c->maketext('A file with that name already exists'));
-				} else {
-					$c->addbadmessage($c->maketext('You have specified an illegal path'));
-				}
-			} else {
-				$c->addbadmessage($c->maketext('You cannot specify an absolute path'));
-			}
-		} else {
-			$c->addbadmessage($c->maketext('Your file name contains illegal characters'));
-		}
-	} else {
+	if (!$path) {
 		$c->addbadmessage($c->maketext('You must specify a file name'));
+	} elsif ($path =~ m!^/!) {
+		$c->addbadmessage($c->maketext('You cannot specify an absolute path'));
+	} elsif (my ($invalidName) = grep { $_ ne '' && $_ ne '.' && $_ ne '..' && !fileNameIsValid($_) } split('/', $path))
+	{
+		$c->addbadmessage($c->checkName($invalidName));
+	} elsif (!($path = $c->checkPWD("$c->{pwd}/$path", 1))) {
+		$c->addbadmessage($c->maketext('You have specified an illegal path'));
+	} else {
+		$path = "$c->{courseRoot}/$path";
+		$path .= "/$name" if -d $path && $name;
+		return $path unless -e $path;
+		$c->addbadmessage($c->maketext('A file with that name already exists'));
 	}
 	return;
 }

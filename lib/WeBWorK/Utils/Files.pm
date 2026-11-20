@@ -9,7 +9,12 @@ our @EXPORT_OK = qw(
 	surePathToFile
 	readFile
 	listFilesRecursive
-	path_is_subdir
+	pathIsSafe
+	pathIsSubdir
+	fileNameIsValid
+	filePathIsValid
+	fileNameRequirementsMessage
+	filePathRequirementsMessage
 	getHumanReadableFileSize
 );
 
@@ -74,24 +79,43 @@ sub listFilesRecursive ($dir, $match_qr, $prune_qr = '', $match_full = 0, $prune
 	return @matches;
 }
 
-sub path_is_subdir ($path, $dir, $allow_relative = 0) {
-	unless ($path =~ /^\//) {
-		if ($allow_relative) {
-			$path = "$dir/$path";
-		} else {
-			return 0;
-		}
-	}
+sub pathIsSafe ($path) {
+	return defined $path && $path !~ m#^\.\.$|^\.\./|/\.\./|/\.\.$# ? 1 : 0;
+}
+
+sub pathIsSubdir ($path, $dir, $allow_relative = 0) {
+	return 0 unless pathIsSafe($path);
+
+	return $allow_relative ? 1 : 0 unless $path =~ /^\//;
 
 	$path = canonpath($path);
 	$path .= '/' unless $path =~ m|/$|;
-	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
 
 	$dir = canonpath($dir);
 	$dir .= '/' unless $dir =~ m|/$|;
-	return 0 unless $path =~ m|^\Q$dir\E|;
 
-	return 1;
+	return $path =~ m|^\Q$dir\E| ? 1 : 0;
+}
+
+sub fileNameIsValid ($name) {
+	return defined $name && $name =~ /^[-\w+,()~ ][-\w.+,()~ ]*\z/a ? 1 : 0;
+}
+
+sub filePathIsValid ($path) {
+	return defined $path && $path ne '' && !(grep { !fileNameIsValid($_) } split('/', $path, -1)) ? 1 : 0;
+}
+
+sub fileNameRequirementsMessage ($c, $name = undef) {
+	my $requirements = $c->maketext('Names can only contain letters, digits, spaces, and the characters '
+			. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.');
+	return defined $name ? $c->maketext('"[_1]" is not an allowed name.', $name) . " $requirements" : $requirements;
+}
+
+sub filePathRequirementsMessage ($c, $path = undef) {
+	my $requirements = $c->maketext('Each part of a file path can only contain letters, digits, spaces, and the '
+			. 'characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.');
+	return
+		defined $path ? $c->maketext('"[_1]" is not an allowed file path.', $path) . " $requirements" : $requirements;
 }
 
 sub getHumanReadableFileSize ($file) {
@@ -144,20 +168,84 @@ C<$dir>.
 
 The method returns a list of paths relative to C<$dir>.
 
-=head2 path_is_subdir
+=head2 pathIsSafe
 
-    path_is_subdir($path, $dir, $allow_relative)
+    pathIsSafe($path)
+
+Returns true if a path is "safe", and false otherwise.  This simply means that
+C<$path> is defined and does not contain any ".." path components that could
+possibly take the path to a location outside of an allowed location.
+
+This is the definition of a safe path that should be used throughout webwork2.
+Use this method (or C<pathIsSubdir> which calls this method) whenever a path
+from user input or the database is to be validated.
+
+=head2 pathIsSubdir
+
+    pathIsSubdir($path, $dir, $allow_relative)
 
 Ensures that C<$path> refers to a location "inside" C<$dir>. If
 C<$allow_relative> is true and C<$path> is not absolute, it is assumed to be
 relative to C<$dir>.
 
-The method of checking is rather rudimentary at the moment. First, upreferences
-("..") are disallowed in C<$path>, then it is checked to make sure that some
-prefix of it matches C<$dir>.
+The method of checking is rather rudimentary. First, upreferences ("..") are
+disallowed in C<$path>, then it is checked to make sure that some prefix of it
+matches C<$dir>.
 
 If either of these checks fails, a false value is returned. Otherwise, a true
 value is returned.
+
+Note that this check is based on the name of the path only, and does not check
+for symbolic links that may actually resolve elsewhere.
+
+=head2 fileNameIsValid
+
+    fileNameIsValid($name)
+
+Returns true if C<$name> is a valid name for a file or directory, and false
+otherwise.  A valid name is a single path component (it contains no slashes)
+that consists only of ASCII letters, digits, spaces, and the characters
+"-", "_", ".", "+", ",", "(", ")", and "~", and does not start with a period.
+So "a.." is valid, but hidden files such as ".a" or "..a" are not.
+
+This is the definition of a valid file name that should be used throughout
+webwork2 whenever a user provides the name of a file or directory that is to be
+created.
+
+=head2 filePathIsValid
+
+    filePathIsValid($path)
+
+Returns true if C<$path> is a valid relative path for a file or directory that
+is to be created, and false otherwise.  The path is valid if each of its slash
+separated components is a valid name in the sense of C<fileNameIsValid>.  So the
+path cannot be absolute, cannot end with a slash, and cannot contain consecutive
+slashes or components that start with a period (including "." and "..").  Note
+that a valid path is also safe in the sense of C<pathIsSafe>.
+
+=head2 fileNameRequirementsMessage
+
+    fileNameRequirementsMessage($c, $name)
+
+Returns a localized message describing the requirements for a valid file name in
+the sense of C<fileNameIsValid>.  If C<$name> is given, the message begins by
+stating that C<$name> is not an allowed name.  C<$c> must be an object with a
+C<maketext> method, usually a C<WeBWorK::Controller>.
+
+Use this method to report an invalid file name so that the description stays in
+sync with C<fileNameIsValid>.
+
+=head2 filePathRequirementsMessage
+
+    filePathRequirementsMessage($c, $path)
+
+Returns a localized message describing the requirements for a valid file path in
+the sense of C<filePathIsValid>.  If C<$path> is given, the message begins by
+stating that C<$path> is not an allowed file path.  C<$c> must be an object with
+a C<maketext> method, usually a C<WeBWorK::Controller>.
+
+Use this method to report an invalid file path so that the description stays in
+sync with C<filePathIsValid>.
 
 =head2 getHumanReadableFileSize
 
