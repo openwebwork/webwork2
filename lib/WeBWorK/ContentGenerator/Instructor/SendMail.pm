@@ -13,7 +13,7 @@ use Mojo::Util qw(xml_escape);
 use Text::Wrap qw(wrap);
 
 use WeBWorK::Utils        qw(processEmailMessage);
-use WeBWorK::Utils::Files qw(pathIsSafe fileNameIsValid);
+use WeBWorK::Utils::Files qw(pathIsSafe fileNameIsValid fileNameRequirementsMessage);
 
 sub initialize ($c) {
 	my $db     = $c->db;
@@ -173,12 +173,8 @@ sub initialize ($c) {
 
 	# Sanity check on save file name
 	if ($action eq 'saveAs' && $output_file && !fileNameIsValid($output_file)) {
-		$c->addbadmessage($c->maketext(
-			'"[_1]" is not an allowed name. Names can only contain letters, digits, spaces, and the characters '
-				. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period. '
-				. 'The message was not saved.',
-			$output_file
-		));
+		$c->addbadmessage(
+			fileNameRequirementsMessage($c, $output_file) . ' ' . $c->maketext('The message was not saved.'));
 	} elsif (!pathIsSafe($output_file)) {
 		$c->addbadmessage($c->maketext(
 			'For security reasons, you cannot specify a message file from a directory higher than the '

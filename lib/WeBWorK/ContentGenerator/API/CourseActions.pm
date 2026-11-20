@@ -11,7 +11,7 @@ use WeBWorK::DB;
 use WeBWorK::DB::Utils               qw(initializeUserProblem);
 use WeBWorK::Utils                   qw(cryptPassword isValidEmailAddress);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
-use WeBWorK::Utils::Files            qw(surePathToFile pathIsSubdir filePathIsValid);
+use WeBWorK::Utils::Files            qw(surePathToFile pathIsSubdir filePathIsValid filePathRequirementsMessage);
 use WeBWorK::ConfigValues            qw(getConfigValues);
 use WeBWorK::CourseConfig            qw(findConfigObject canChangeConfig buildSimpleConfig writeSimpleConfig);
 use WeBWorK::Debug                   qw(debug);
@@ -481,11 +481,7 @@ sub saveFile ($c) {
 		# Existing files may be overwritten, but the name of a new file must be valid.
 		unless (-e $outputFilePath) {
 			my $relativePath = Mojo::File->new($outputFilePath)->to_rel($ce->{courseDirs}{templates})->to_string;
-			return $c->renderError($c->maketext(
-				'"[_1]" is not an allowed file path. Each part of the path can only contain letters, digits, spaces, '
-					. 'and the characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
-				$relativePath
-			))
+			return $c->renderError(filePathRequirementsMessage($c, $relativePath))
 				unless filePathIsValid($relativePath);
 		}
 

@@ -1,3 +1,5 @@
+% use WeBWorK::Utils::Files qw(filePathRequirementsMessage);
+%
 % # There are three things you can do with a new achievement editor.
 % # You can replace the current achievement, use it in a new achievement, or not use it at all.
 % param('action.save_as.saveMode', 'use_in_current') unless param('action.save_as.saveMode');
@@ -58,8 +60,7 @@
 		<%= maketext('Please choose a different filename for new evaluator.') %>
 	</div>
 	<div id="invalid_filename_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
-		<%= maketext('Each part of the file path can only contain letters, digits, spaces, and the characters '
-				. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.') %>
+		<%= filePathRequirementsMessage($c) %>
 	</div>
 	<div id="blank_id_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
 		<%= maketext('Please enter a new achievement id.') %>
