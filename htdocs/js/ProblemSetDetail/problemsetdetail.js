@@ -57,13 +57,13 @@
 		for (const item of container.querySelectorAll('.psd_list_item')) {
 			const row = item.querySelector(':scope > .problem_detail_row');
 			const alertContainer = row?.querySelector('.pdr_repeat_file_alert');
-			if (!alertContainer) return;
+			if (!alertContainer) continue;
 
 			alertContainer.innerHTML = '';
 
 			const problemID = item.id.replace('psd_list_item_', '');
 			const sourceFile = getSourceFilePath(problemID).replace(/^\//, '').replace(/\.\./g, '');
-			if (!sourceFile || sourceFile.startsWith('group:')) return;
+			if (!sourceFile || sourceFile.startsWith('group:')) continue;
 
 			if (shownYet.has(sourceFile)) {
 				const alert = document.createElement('div');
@@ -395,6 +395,24 @@
 				'.psd_move_up,.psd_move_down,.psd_nest,.psd_denest'
 		)
 		.forEach((el) => new bootstrap.Tooltip(el));
+
+	// Make the edit problem links edit the source that is currently in the source field instead of the saved source.
+	for (const editLink of document.querySelectorAll('.psd_edit[data-problem-id]')) {
+		const id = editLink.dataset.problemId;
+		const sourceInput = document.getElementById(`problem.${id}.source_file_id`);
+		if (!sourceInput) continue;
+
+		const savedSource = getSourceFilePath(id);
+		const savedHref = editLink.href;
+
+		sourceInput.addEventListener('input', () => {
+			const source = getSourceFilePath(id).trim();
+			const url = new URL(savedHref);
+			if (source && source !== savedSource && !source.startsWith('group:'))
+				url.searchParams.set('sourceFilePath', source);
+			editLink.href = url.toString();
+		});
+	}
 
 	// If editing for user(s) or other users have begun working a test,
 	// then disable drag and drop re-ordering of problems.
