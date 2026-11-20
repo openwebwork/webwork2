@@ -12,6 +12,8 @@
 	% last;
 % }
 %
+% last unless $c->{sourceFilePath};
+%
 <div class="mb-2">
 	<i>
 		% if ($c->{sourceFileIsProtected}) {
