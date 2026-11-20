@@ -12,11 +12,11 @@ use Email::Stuffer;
 use Try::Tiny;
 use Mojo::JSON qw(encode_json decode_json);
 
-use WeBWorK::Debug                      qw(debug);
-use WeBWorK::Utils                      qw(encodeAnswers createEmailSenderTransportSMTP formatEmailSubject);
-use WeBWorK::Utils::DateTime            qw(before after);
-use WeBWorK::Utils::JITAR               qw(jitar_id_to_seq jitar_problem_adjusted_status);
-use WeBWorK::Utils::Logs                qw(writeLog writeCourseLog);
+use WeBWorK::Debug           qw(debug);
+use WeBWorK::Utils           qw(encodeAnswers createEmailSenderTransportSMTP emailMessageId formatEmailSubject);
+use WeBWorK::Utils::DateTime qw(before after);
+use WeBWorK::Utils::JITAR    qw(jitar_id_to_seq jitar_problem_adjusted_status);
+use WeBWorK::Utils::Logs     qw(writeLog writeCourseLog);
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
 
 our @EXPORT_OK = qw(
@@ -364,6 +364,7 @@ Comment:    $comment
 	}
 
 	# Extra headers
+	$email->header('Message-ID' => emailMessageId($ce));
 	$email->header('X-WeBWorK-Course: ', $courseID) if defined $courseID;
 	if ($user) {
 		$email->header('X-WeBWorK-User: ',       $user->user_id);

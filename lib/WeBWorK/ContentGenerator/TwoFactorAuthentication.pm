@@ -13,7 +13,7 @@ use Email::Stuffer;
 use Mojo::Util qw(b64_encode);
 
 use WeBWorK::Utils::TOTP;
-use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP emailMessageId);
 
 sub initialize ($c) {
 	my $ce = $c->ce;
@@ -93,12 +93,15 @@ sub initialize ($c) {
 					. '</body></html>'
 				)
 				->attach($img_data, filename => 'QRCode.png')
+				->header('Message-ID'    => emailMessageId($ce))
 				->header('X-Remote-Host' => $c->tx->remote_address || 'UNKNOWN')
 				->transport(createEmailSenderTransportSMTP($ce));
 
 			# In order to show the image directly in the email, the content type needs to be multipart/related.  The
-			# attached image also needs a content id.  Gmail seems to refuse to accept the email if that content id does
-			# not start with "logo".
+			# attached image also needs a content id.  The "logo_" prefix on the content id is a spam-filter workaround.
+			# An inline image whose content id does not look like a logo can score high enough that some email gateways
+			# silently drop the message.  Note that such a message is accepted at SMTP submission and only killed later
+			# by the content scan, so send_or_die cannot detect it.
 			$mail->header('Content-Type' => 'multipart/related');
 			($mail->parts)[1]->header_str_set('Content-Id' => '<logo_qrcode>');
 

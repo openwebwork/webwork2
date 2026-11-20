@@ -10,7 +10,7 @@ use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw(createEmailSenderTransportSMTP);
+use WeBWorK::Utils qw(createEmailSenderTransportSMTP emailMessageId);
 use WeBWorK::WWSafe;
 use WeBWorK::SafeTemplate;
 use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
@@ -92,6 +92,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 		->from($from)
 		->subject($mail_data->{subject})
 		->text_body($body)
+		->header('Message-ID'    => emailMessageId($ce))
 		->header('X-Remote-Host' => $mail_data->{remote_host});
 
 	$email->send_or_die({
