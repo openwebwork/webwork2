@@ -13,12 +13,16 @@ extend-ignore-re = [
     'ful\.csv',
     "'scr', 'ful'",
     'e\.g\. ful',
-    # "Does Not Exist" notation in the MathJax AsciiMath symbol table.
-    'dne: \{',
-    'Dne: \{',
-    'DNE: \{',
-    "output: 'DNE'",
+    # "use editor" setting of IMathAS as a hash key in lib/WeBWorK/ExternalProblem/IMathAS.pm
+    '\buseed\s+=>',
 ]
+
+# Words that are valid in any case and anywhere.
+[default.extend-words]
+# "Does Not Exist", the answer for an empty set or a value that does not exist.
+dne = "dne"
+# The PreTeXt element for an answer blank.
+fillin = "fillin"
 
 # Each entry below is scoped to one exact identifier/token (case-sensitive,
 # whole-match only) rather than a global word, so it won't suppress a

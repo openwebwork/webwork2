@@ -27,8 +27,8 @@
 		) =%>
 	</dd>
 
-	<dt><%= maketext('Show Problem Source File') %></dt>
-	<dd><%= maketext('If selected, the file path of the problem source will be printed in the output.') %></dd>
+	<dt><%= maketext('Show Problem Source') %></dt>
+	<dd><%= maketext('If selected, the source of each problem will be printed in the output.') %></dd>
 
 	<dt><%= maketext('Hardcopy Theme') %></dt>
 	<dd>

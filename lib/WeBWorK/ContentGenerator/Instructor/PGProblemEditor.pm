@@ -105,6 +105,7 @@ use WeBWorK::Utils::Instructor       qw(assignProblemToAllSetUsers addProblemToS
 use WeBWorK::Utils::JITAR            qw(seq_to_jitar_id jitar_id_to_seq);
 use WeBWorK::Utils::Sets             qw(format_set_name_display);
 use WeBWorK::PG::SampleProblemParser qw(getSampleProblemCode generateMetadata);
+use WeBWorK::ExternalProblem         qw(isExternalSource externalSourceType);
 
 use constant DEFAULT_SEED => 123456;
 
@@ -194,6 +195,9 @@ sub initialize ($c) {
 	#   $c->{inputFilePath}:   path to the file for input, (this is either the editFilePath or the tempFilePath)
 	#   $c->{backupBasePath}:  base path to the backup files
 	$c->getFilePaths;
+
+	# Nothing else can be done if there is no file to edit.
+	return if $c->stash('file_error');
 
 	# Default problem contents
 	$c->{r_problemContents} = \'';
@@ -466,6 +470,15 @@ sub isTempEditFilePath ($c, $path) {
 	return $path =~ /^\Q$tmpEditFileDirectory\E/ ? 1 : 0;
 }
 
+sub externalSourceMessage ($c, $sourceFile) {
+	my $type = externalSourceType($sourceFile);
+	return $c->maketext(
+		'The source of this problem is "[_1]", which is a problem from [_2]. '
+			. 'It does not have a file that can be edited here.',
+		$sourceFile, $type->{name}
+	);
+}
+
 # Determine file paths. This defines the following variables:
 #   $c->{editFilePath}    -- path to permanent file
 #   $c->{tempFilePath}    -- temporary file name to use (may not exist)
@@ -526,6 +539,10 @@ sub getFilePaths ($c) {
 		$problem_record = $db->getGlobalProblem($c->{setID}, $c->{problemID}) unless defined $problem_record;
 
 		if (defined $problem_record) {
+			if (isExternalSource($problem_record->source_file)) {
+				$c->stash->{file_error} = $c->externalSourceMessage($problem_record->source_file);
+				return;
+			}
 			$editFilePath = "$ce->{courseDirs}{templates}/" . $problem_record->source_file;
 			# Define the problem seed for later use.
 			$c->{problemSeed} = $problem_record->problem_seed if $problem_record->can('problem_seed');
@@ -542,7 +559,10 @@ sub getFilePaths ($c) {
 			$forcedSourceFile = $c->determineOriginalEditFilePath($forcedSourceFile);    # Original file path
 			$c->addgoodmessage($c->maketext('The original path to the file is [_1].', $forcedSourceFile));
 		}
-		if (not_blank($forcedSourceFile)) {
+		if (isExternalSource($forcedSourceFile)) {
+			$c->stash->{file_error} = $c->externalSourceMessage($forcedSourceFile);
+			return;
+		} elsif (not_blank($forcedSourceFile)) {
 			$c->{problemSeed} = DEFAULT_SEED();
 			$editFilePath = "$ce->{courseDirs}{templates}/$forcedSourceFile";
 		} else {

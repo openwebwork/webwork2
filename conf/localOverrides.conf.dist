@@ -188,6 +188,22 @@ $mail{feedbackRecipients}    = [
 # To disable global statistics uncomment this line.
 #$problemLibrary{showLibraryGlobalStats} = 0;
 
+################################################################################
+# IMathAS questions
+################################################################################
+
+# A problem can be a question from an IMathAS server, by giving it a source file
+# like myopenmath:1234 or imathas:1234 (see defaults.config).  MyOpenMath can be
+# used with no setup.  To use an IMathAS server of your own for imathas:1234,
+# uncomment and change these lines.  In this example, the IMathAS server is run
+# on the same machine as WeBWorK.  WeBWorK reaches it at localhost, and browsers
+# load its JavaScript and images from /imathas on this site.
+#$imathas{servers}{local} = {
+#	url       => 'http://localhost:8088',
+#	publicURL => '/imathas'
+#};
+#$imathas{defaultServer} = 'local';
+
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
 # by adding the libraries you want to the following line.  For each key=>value
 # in the list, if a directory (or link to a directory) with name 'key' appears

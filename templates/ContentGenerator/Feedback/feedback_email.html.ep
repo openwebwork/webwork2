@@ -51,9 +51,9 @@
 				</thead>
 				<tbody>
 					% my @rows = (
-						% [ maketext('Problem ID'),  $problem->problem_id ],
-						% [ maketext('Source file'), $problem->source_file ],
-						% [ maketext('Value'),       $problem->value ],
+						% [ maketext('Problem ID'), $problem->problem_id ],
+						% [ maketext('Source'),     $problem->source_file ],
+						% [ maketext('Value'),      $problem->value ],
 						% [
 							% maketext('Max attempts'),
 							% $problem->max_attempts == -1 ? 'unlimited' : $problem->max_attempts

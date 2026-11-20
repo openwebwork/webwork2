@@ -12,6 +12,8 @@ use warnings;
 use Carp;
 use IO::File;
 
+use WeBWorK::ExternalProblem qw(isExternalSource);
+
 use constant BASIC =>
 	qw(DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language Static MO Status);
 use constant NUMBERED => qw(TitleText AuthorText EditionText Section Problem);
@@ -185,6 +187,15 @@ sub tidytextinfo {
 		$self->{textinfo} = \@tmptexts;
 	}
 	return;
+}
+
+# Returns the tags of the problem with the given source file (relative to the templates directory of the course with
+# the given course environment), or undef if the source is not a file.  A problem group and a problem from another
+# online homework system do not have a file.
+sub forSource {
+	my ($class, $ce, $sourceFile) = @_;
+	return if !defined $sourceFile || $sourceFile =~ /^group:/ || isExternalSource($sourceFile);
+	return $class->new("$ce->{courseDirs}{templates}/$sourceFile");
 }
 
 # name is a path

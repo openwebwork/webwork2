@@ -48,7 +48,7 @@
 	<dt><%= maketext('Expand All Details') %></dt>
 	<dd>
 		<%= maketext('Expand problem details that have been collapsed. Note that the details of a single problem can '
-				. 'be expanded by clicking on the down arrow to the right of the problem source file.') =%>
+				. 'be expanded by clicking on the down arrow to the right of the problem source.') =%>
 	</dd>
 
 	<dt><%= maketext('Collapse All Details') %></dt>
@@ -121,7 +121,7 @@
 					. '"Proctored Test". Changing a test to "Just in Time Assessment and Review" would renumber the '
 					. 'problems, and changing a test to "Homework" would prevent students from accessing the tests '
 					. 'they have taken and potentially replace test scores with homework scores. Other changes, '
-					. 'such as changing the problem values or the source file of a problem, can still be made.') =%>
+					. 'such as changing the problem values or the source of a problem, can still be made.') =%>
 		</p>
 		<p class="mb-0">
 			<%= maketext('If you are the only one who has taken the test (for example, while creating and checking '

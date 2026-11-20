@@ -1,4 +1,5 @@
-% use WeBWorK::Utils qw(wwRound);
+% use WeBWorK::Utils           qw(wwRound);
+% use WeBWorK::ExternalProblem qw(isExternalSource);
 %
 % my $sourceFileName = $sourceFileData->{filepath} =~ s|^\./||r;
 % my $isstatic       = $sourceFileData->{static};
@@ -218,7 +219,7 @@
 				>
 					<%= maketext('Add') %>
 				</button>
-				% if ($authz->hasPermissions($authen->{user_id}, 'modify_tags')) {
+				% if (!isExternalSource($sourceFileName) && $authz->hasPermissions($authen->{user_id}, 'modify_tags')) {
 					<button
 						id="tagger<%= $cnt %>"
 						class="tag-edit-btn btn btn-secondary btn-sm ms-2"
@@ -272,25 +273,27 @@
 						<i class="fa-solid fa-random" aria-hidden="true"></i>
 					</span>
 				% }
-				<%= link_to $c->systemLink(
-					url_for('instructor_problem_editor'),
-					params => {
-						sourceFilePath => $sourceFileName,
-						problemSeed    => $c->{problem_seed}
-					}
-					),
-					id     => "editit$cnt",
-					class  => 'btn btn-sm btn-secondary',
-					target => 'WW_Editor',
-					data   => {
-						bs_title     => maketext('Edit it'),
-						bs_toggle    => 'tooltip',
-						bs_placement => 'top'
-					},
-					begin =%>
-					<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
-					<span class="visually-hidden"><%= maketext('Edit') =%></span>
-				<% end =%>
+				% unless (isExternalSource($sourceFileName)) {
+					<%= link_to $c->systemLink(
+						url_for('instructor_problem_editor'),
+						params => {
+							sourceFilePath => $sourceFileName,
+							problemSeed    => $c->{problem_seed}
+						}
+						),
+						id     => "editit$cnt",
+						class  => 'btn btn-sm btn-secondary',
+						target => 'WW_Editor',
+						data   => {
+							bs_title     => maketext('Edit it'),
+							bs_toggle    => 'tooltip',
+							bs_placement => 'top'
+						},
+						begin =%>
+						<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
+						<span class="visually-hidden"><%= maketext('Edit') =%></span>
+					<% end =%>
+				% }
 				<span
 					class="dont-show btn btn-sm btn-secondary"
 					data-bs-title="<%= maketext('Hide this problem') %>"
