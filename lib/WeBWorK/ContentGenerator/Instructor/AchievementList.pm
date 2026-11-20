@@ -192,8 +192,17 @@ sub assign_handler ($c) {
 	my $scope          = $c->param('action.assign.scope');
 	my @achievementIDs = $scope eq 'all' ? @{ $c->{allAchievementIDs} } : @{ $c->{selectedAchievementIDs} };
 
-	my @users        = $db->listUsers;
 	my @achievements = $db->getAchievements(@achievementIDs);
+
+	# Get users to assign achievement to.
+	my @users;
+	if (($c->param('action.assign.users') // '') eq 'all') {
+		@users = $db->listUsers;
+	} else {
+		my $ce = $c->ce;
+		@users = map { $ce->status_abbrev_has_behavior($_->status, 'include_in_assignment') ? $_->user_id : () }
+			$db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	}
 
 	# Enable all achievements.
 	for my $achievement (@achievements) { $achievement->enabled(1); }
