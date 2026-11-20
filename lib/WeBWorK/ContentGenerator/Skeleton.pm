@@ -71,9 +71,6 @@ the main body of the page.
 #sub nav ($c, $args) {
 #	my $output = '';
 #
-#	# See the documentation of path() and pathMacro() in
-#	# WeBWorK::ContentGenerator for more information.
-#
 #	# Make sure the return value is a Mojo::ByteStream object if it contains html.
 #	return $output;
 #}

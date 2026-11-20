@@ -304,21 +304,17 @@ sub initialize ($c) {
 	return;
 }
 
-sub path ($c, $args) {
-	# We need to build a path to the problem being edited by hand, since it is not the same as the url path for this
-	# page.  The bread crumb path leads back to the problem being edited, not to the Instructor tool.
-	return $c->pathMacro(
-		$args,
-		'WeBWorK'                         => $c->url_for('root'),
-		$c->stash('courseID')             => $c->url_for('set_list'),
-		($c->stash('setID') // '')        => $c->url_for('problem_list'),
-		($c->{prettyProblemNumber} // '') =>
-			$c->url_for('problem_detail', problemID => $c->stash('problemID') || ''),
-		$c->maketext('Editor') => ''
+sub pageTitle ($c) {
+	return $c->formatTitle(
+		'WeBWorK',
+		$c->stash('courseID'),
+		$c->stash('setID') || (),
+		$c->{prettyProblemNumber} || (),
+		$c->maketext('Editor')
 	);
 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	my $setID     = $c->stash('setID');
 	my $problemID = $c->stash('problemID');
 

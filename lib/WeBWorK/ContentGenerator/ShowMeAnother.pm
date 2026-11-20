@@ -226,7 +226,7 @@ async sub initialize ($c) {
 # Disable showOldAnswers because old answers are answers to the original question and not to this question.
 sub can_showOldAnswers ($c, $user, $effectiveUser, $set, $problem) { return 0 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	my $set = $c->db->getGlobalSet($c->stash('setID'));
 
 	my $problemID = $c->stash('problemID');

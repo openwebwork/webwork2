@@ -63,7 +63,7 @@ sub initialize ($c) {
 	return;
 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'access_instructor_tools');
 
 	my $setID = $c->stash('setID') || '';

@@ -383,19 +383,38 @@
 		});
 	});
 
-	// Scroll to a problem when the problem number link is clicked.
+	// Scroll to a problem when a problem number link is clicked. If the problem is not on the current page (which can
+	// happen for the sibling navigation links of a multi-page test), then switch to the page containing the problem and
+	// scroll to it once that page has loaded.
 	document.querySelectorAll('.problem-jump-link').forEach((jumpLink) => {
 		jumpLink.addEventListener('click', (evt) => {
 			// Prevent the link from being followed.
 			evt.preventDefault();
-			if (jumpLink.dataset.problemNumber) {
-				// Note that the anchor indexing starts at 0, not 1.
-				const problem = document.getElementById(`prob${parseInt(jumpLink.dataset.problemNumber) - 1}`);
+			if (!jumpLink.dataset.problemNumber) return;
+			// Note that the anchor indexing starts at 0, not 1.
+			const problem = document.getElementById(`prob${parseInt(jumpLink.dataset.problemNumber) - 1}`);
+			if (problem) {
 				problem.focus();
 				problem.scrollIntoView({ behavior: 'smooth' });
+			} else if (jumpLink.dataset.pageNumber) {
+				sessionStorage.setItem('gatewayScrollToProblem', jumpLink.dataset.problemNumber);
+				document.gwquiz.newPage.value = jumpLink.dataset.pageNumber;
+				document.gwquiz.requestSubmit();
 			}
 		});
 	});
+
+	// If a problem on another page was requested via a sibling navigation link, then scroll to it when the page
+	// containing it has loaded. Wait for MathJax to finish typesetting first, since that can resize the page.
+	const scrollToProblem = sessionStorage.getItem('gatewayScrollToProblem');
+	const scrollToProblemElement = scrollToProblem && document.getElementById(`prob${parseInt(scrollToProblem) - 1}`);
+	if (scrollToProblemElement) {
+		sessionStorage.removeItem('gatewayScrollToProblem');
+		(window.MathJax?.startup?.promise ?? Promise.resolve()).then(() => {
+			scrollToProblemElement.focus({ preventScroll: true });
+			scrollToProblemElement.scrollIntoView({ behavior: 'instant' });
+		});
+	}
 
 	// Change pages when a page change link is clicked.
 	document.querySelectorAll('.page-change-link').forEach((pageChangeLink) => {

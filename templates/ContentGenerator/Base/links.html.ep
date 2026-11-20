@@ -5,11 +5,13 @@
 	% last;
 % }
 %
+% my $testRestricted = current_route =~ 'gateway_quiz' && !$authz->hasPermissions($userID, 'access_instructor_tools');
+%
 <ul class="nav flex-column">
 	% if (defined $courseID && $authen->was_verified) {
 		% # Assignments or Course Administration
 		<li class="list-group-item nav-item">
-			% if ($restricted_navigation) {
+			% if ($restricted_navigation || $testRestricted) {
 				<span class="nav-link disabled"><%= maketext('Assignments') %></span>
 			% } else {
 				<%= $makelink->('set_list', text => maketext('Assignments')) %>
@@ -71,19 +73,22 @@
 			</li>
 		% }
 		%
-		% if ($authz->hasPermissions($userID, 'change_password')
-			% || $authz->hasPermissions($userID, 'change_name')
-			% || $authz->hasPermissions($userID, 'change_email_address')
-			% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
+		% if (
+			% !$testRestricted
+			% && ($authz->hasPermissions($userID, 'change_password')
+				% || $authz->hasPermissions($userID, 'change_name')
+				% || $authz->hasPermissions($userID, 'change_email_address')
+				% || $authz->hasPermissions($userID, 'change_pg_display_settings'))
+		% )
 		% {
 			<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
 		% }
 		%
-		% unless ($restricted_navigation || $courseID eq $ce->{admin_course_id}) {
+		% unless ($restricted_navigation || $testRestricted || $courseID eq $ce->{admin_course_id}) {
 			<li class="list-group-item nav-item"><%= $makelink->('grades') %></li>
 		% }
 		%
-		% if ($ce->{achievementsEnabled}) {
+		% if ($ce->{achievementsEnabled} && !$testRestricted) {
 			<li class="list-group-item nav-item"><%= $makelink->('achievements') %></li>
 			% if ($authz->hasPermissions($userID, 'view_leaderboard')) {
 				<li class="list-group-item nav-item"><%= $makelink->('achievements_leaderboard') %></li>
