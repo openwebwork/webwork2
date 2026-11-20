@@ -1320,6 +1320,7 @@ sub nav ($c, $args) {
 async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem) {
 	my $showReturningFeedback =
 		!($c->{submitAnswers} || $c->{previewAnswers} || $c->{checkAnswers})
+		&& !$c->{can}{recordAnswers}
 		&& $c->{will}{showOldAnswers}
 		&& $c->ce->{pg}{options}{automaticAnswerFeedback}
 		&& $c->{can}{showProblemScores}
