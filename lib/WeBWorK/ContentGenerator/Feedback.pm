@@ -188,50 +188,32 @@ sub initialize ($c) {
 		$email->header('X-WeBWorK-Set',     $set->set_id)         if $set;
 		$email->header('X-WeBWorK-Problem', $problem->problem_id) if $problem;
 
-		# Embed the screenshot in the html body, and attach it to the text body.
+		# Embed one copy of the screenshot in a multipart/related part that contains the text and html body.
 		if ($screenshot) {
 			my $filename = 'screenshot-' . ($set ? $set->set_id . '-' . $problem->problem_id : 'problem') . '.png';
 			$filename =~ s/[^\w.-]/_/g;
-			$email->{parts} = [
-				Email::MIME->create(
-					attributes => { content_type => 'multipart/alternative' },
-					parts      => [
-						Email::MIME->create(
-							attributes => { content_type => 'multipart/mixed' },
-							parts      => [
-								$email->{parts}[0],
-								Email::MIME->create(
-									attributes => {
-										content_type => 'image/png',
-										encoding     => 'base64',
-										disposition  => 'attachment',
-										filename     => $filename,
-										name         => $filename
-									},
-									body => $screenshot
-								)
-							]
-						),
-						Email::MIME->create(
-							attributes => { content_type => 'multipart/related' },
-							parts      => [
-								$email->{parts}[1],
-								Email::MIME->create(
-									attributes => {
-										content_type => 'image/png',
-										encoding     => 'base64',
-										disposition  => 'inline',
-										filename     => $filename,
-										name         => $filename
-									},
-									header_str => [ 'Content-ID' => "<$screenshotCID>" ],
-									body       => $screenshot
-								)
-							]
-						)
-					]
-				)
-			];
+			my $related = Email::MIME->create(
+				attributes => { content_type => 'multipart/related' },
+				parts      => [
+					Email::MIME->create(
+						attributes => { content_type => 'multipart/alternative' },
+						parts      => [ @{ $email->{parts} }[ 0, 1 ] ]
+					),
+					Email::MIME->create(
+						attributes => {
+							content_type => 'image/png',
+							encoding     => 'base64',
+							disposition  => 'inline',
+							filename     => $filename,
+							name         => $filename
+						},
+						header_str => [ 'Content-ID' => "<$screenshotCID>" ],
+						body       => $screenshot
+					)
+				]
+			);
+			$related->content_type_attribute_set(type => 'multipart/alternative');
+			$email->{parts} = [$related];
 		}
 
 		# Add the attachment if one was provided.
