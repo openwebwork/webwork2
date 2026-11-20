@@ -15,6 +15,18 @@
 	</div>
 	<div class="row mb-2">
 		<%= label_for
+			assign_user_select => maketext('Assign to which users?'),
+			class              => 'col-form-label col-form-label-sm col-sm-auto' =%>
+		<div class="col-auto">
+			<%= select_field
+				'action.assign.users' => [ [ maketext('all users') => 'all' ],
+					[ maketext('current users') => 'current', selected => undef ] ],
+				id    => 'assign_user_select',
+				class => 'form-select form-select-sm' =%>
+		</div>
+	</div>
+	<div class="row mb-2">
+		<%= label_for
 			'assign_data_select' => maketext('Choose what to do with existing data:'),
 			class                => 'col-form-label col-form-label-sm col-sm-auto' =%>
 		<div class="col-auto">

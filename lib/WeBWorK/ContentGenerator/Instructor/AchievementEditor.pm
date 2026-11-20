@@ -227,16 +227,15 @@ sub save_as_handler ($c) {
 }
 
 sub revert_handler ($c) {
-	my $ce            = $c->ce;
-	my $sourceFile    = $c->{sourceFile};
-	my $confirmDelete = $c->param('action.delete.confirm') // '';
-	my $deletePath    = "$ce->{courseDirs}{achievements}/$sourceFile";
-	my $systemPath    = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
+	my $ce         = $c->ce;
+	my $sourceFile = $c->{sourceFile};
+	my $deletePath = "$ce->{courseDirs}{achievements}/$sourceFile";
+	my $systemPath = "$ce->{webworkDirs}{achievementEvaluators}/$sourceFile";
 
 	# Use form contents in case there is a validation error.
 	$c->stash->{achievementContents} = fix_newlines($c->param('achievementContents'));
 
-	unless ($confirmDelete eq 'yes') {
+	unless ($c->param('action.revert.confirm')) {
 		$c->addbadmessage($c->maketext('Missing delete confirmation of course override. Not deleting.'));
 		return;
 	}
