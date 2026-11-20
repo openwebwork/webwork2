@@ -220,7 +220,7 @@
 	% if ($timeLeft < 86400) {
 		<div
 			id="gwTimerContainer"
-			class="alert alert-warning d-flex justify-content-center align-items-center gap-2 py-1 mb-0"
+			class="alert alert-warning d-flex justify-content-center align-items-center gap-2 py-1 mb-2"
 		>
 			<%= tag(
 				'span',
