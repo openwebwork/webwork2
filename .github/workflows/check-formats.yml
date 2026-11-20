@@ -13,10 +13,10 @@ on:
 jobs:
   perltidy:
     name: Check file formatting with perltidy and prettier
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y libmojolicious-perl cpanminus
@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: Install Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Install Dependencies
