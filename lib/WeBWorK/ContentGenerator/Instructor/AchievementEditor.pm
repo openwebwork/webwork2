@@ -11,7 +11,7 @@ use HTML::Entities;
 use File::Copy;
 
 use WeBWorK::Utils               qw(fix_newlines x);
-use WeBWorK::Utils::Files        qw(surePathToFile readFile pathIsSafe filePathIsValid);
+use WeBWorK::Utils::Files        qw(surePathToFile readFile pathIsSafe filePathIsValid filePathRequirementsMessage);
 use WeBWorK::Utils::Achievements qw(getAchievementAssetPaths);
 
 use constant ACTION_FORMS => [qw(save save_as revert)];
@@ -153,11 +153,7 @@ sub save_as_handler ($c) {
 	}
 
 	unless (filePathIsValid($new_file_name)) {
-		$c->addbadmessage($c->maketext(
-			'"[_1]" is not an allowed file path. Each part of the path can only contain letters, digits, spaces, and '
-				. 'the characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
-			$new_file_name
-		));
+		$c->addbadmessage(filePathRequirementsMessage($c, $new_file_name));
 		return;
 	}
 

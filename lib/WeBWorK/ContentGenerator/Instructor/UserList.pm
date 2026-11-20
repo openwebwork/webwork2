@@ -49,7 +49,7 @@ use Mojo::File;
 
 use WeBWorK::File::Classlist qw(parse_classlist write_classlist);
 use WeBWorK::Utils           qw(cryptPassword isValidEmailAddress x);
-use WeBWorK::Utils::Files    qw(fileNameIsValid);
+use WeBWorK::Utils::Files    qw(fileNameIsValid fileNameRequirementsMessage);
 
 use constant HIDE_USERS_THRESHOLD => 200;
 use constant EDIT_FORMS           => [qw(save_edit cancel_edit)];
@@ -503,14 +503,7 @@ sub export_handler ($c) {
 
 	my $fileName;
 	if ($target eq 'new') {
-		return (
-			0,
-			$c->maketext(
-				'"[_1]" is not an allowed name. Names can only contain letters, digits, spaces, and the characters '
-					. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
-				$new
-			)
-		) unless fileNameIsValid($new);
+		return (0, fileNameRequirementsMessage($c, $new)) unless fileNameIsValid($new);
 		$fileName = $new;
 	} else {
 		return (0, $c->maketext('The class list file "[_1]" does not exist.', $target))

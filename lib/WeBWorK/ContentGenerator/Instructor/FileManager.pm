@@ -18,7 +18,7 @@ use Archive::Zip::SimpleZip qw($SimpleZipError);
 
 use WeBWorK::Utils                   qw(sortByName min);
 use WeBWorK::Utils::CourseManagement qw(archiveCourse);
-use WeBWorK::Utils::Files            qw(readFile pathIsSafe pathIsSubdir fileNameIsValid);
+use WeBWorK::Utils::Files            qw(readFile pathIsSafe pathIsSubdir fileNameIsValid fileNameRequirementsMessage);
 use WeBWorK::Upload;
 
 use constant HOME => 'templates';
@@ -1118,11 +1118,7 @@ sub checkFileLocation ($c, $extension, $dir) {
 sub checkName ($c, $file) {
 	return $c->maketext('No filename specified.') unless defined $file && $file ne '';
 	return $c->maketext('"[_1]" contains a path component which is not allowed.', $file) if $file =~ /\//;
-	return $c->maketext(
-		'"[_1]" is not an allowed name. Names can only contain letters, digits, spaces, and the characters '
-			. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
-		$file
-	) unless fileNameIsValid($file);
+	return fileNameRequirementsMessage($c, $file) unless fileNameIsValid($file);
 	return;
 }
 

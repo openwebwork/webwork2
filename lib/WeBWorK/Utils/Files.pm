@@ -13,6 +13,8 @@ our @EXPORT_OK = qw(
 	pathIsSubdir
 	fileNameIsValid
 	filePathIsValid
+	fileNameRequirementsMessage
+	filePathRequirementsMessage
 	getHumanReadableFileSize
 );
 
@@ -101,6 +103,19 @@ sub fileNameIsValid ($name) {
 
 sub filePathIsValid ($path) {
 	return defined $path && $path ne '' && !(grep { !fileNameIsValid($_) } split('/', $path, -1)) ? 1 : 0;
+}
+
+sub fileNameRequirementsMessage ($c, $name = undef) {
+	my $requirements = $c->maketext('Names can only contain letters, digits, spaces, and the characters '
+			. '"-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.');
+	return defined $name ? $c->maketext('"[_1]" is not an allowed name.', $name) . " $requirements" : $requirements;
+}
+
+sub filePathRequirementsMessage ($c, $path = undef) {
+	my $requirements = $c->maketext('Each part of a file path can only contain letters, digits, spaces, and the '
+			. 'characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.');
+	return
+		defined $path ? $c->maketext('"[_1]" is not an allowed file path.', $path) . " $requirements" : $requirements;
 }
 
 sub getHumanReadableFileSize ($file) {
@@ -207,6 +222,30 @@ separated components is a valid name in the sense of C<fileNameIsValid>.  So the
 path cannot be absolute, cannot end with a slash, and cannot contain consecutive
 slashes or components that start with a period (including "." and "..").  Note
 that a valid path is also safe in the sense of C<pathIsSafe>.
+
+=head2 fileNameRequirementsMessage
+
+    fileNameRequirementsMessage($c, $name)
+
+Returns a localized message describing the requirements for a valid file name in
+the sense of C<fileNameIsValid>.  If C<$name> is given, the message begins by
+stating that C<$name> is not an allowed name.  C<$c> must be an object with a
+C<maketext> method, usually a C<WeBWorK::Controller>.
+
+Use this method to report an invalid file name so that the description stays in
+sync with C<fileNameIsValid>.
+
+=head2 filePathRequirementsMessage
+
+    filePathRequirementsMessage($c, $path)
+
+Returns a localized message describing the requirements for a valid file path in
+the sense of C<filePathIsValid>.  If C<$path> is given, the message begins by
+stating that C<$path> is not an allowed file path.  C<$c> must be an object with
+a C<maketext> method, usually a C<WeBWorK::Controller>.
+
+Use this method to report an invalid file path so that the description stays in
+sync with C<filePathIsValid>.
 
 =head2 getHumanReadableFileSize
 

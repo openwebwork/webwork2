@@ -99,11 +99,11 @@ not exist.  The path to the actual file being edited is stored in inputFilePath.
 use Mojo::File;
 use XML::LibXML;
 
-use WeBWorK::Utils                   qw(not_blank x max);
-use WeBWorK::Utils::Files            qw(surePathToFile readFile pathIsSubdir filePathIsValid);
-use WeBWorK::Utils::Instructor       qw(assignProblemToAllSetUsers addProblemToSet);
-use WeBWorK::Utils::JITAR            qw(seq_to_jitar_id jitar_id_to_seq);
-use WeBWorK::Utils::Sets             qw(format_set_name_display);
+use WeBWorK::Utils             qw(not_blank x max);
+use WeBWorK::Utils::Files      qw(surePathToFile readFile pathIsSubdir filePathIsValid filePathRequirementsMessage);
+use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers addProblemToSet);
+use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Sets       qw(format_set_name_display);
 use WeBWorK::PG::SampleProblemParser qw(getSampleProblemCode generateMetadata);
 
 use constant DEFAULT_SEED => 123456;
@@ -944,11 +944,7 @@ sub save_as_handler ($c) {
 
 	if ($new_file_name && !filePathIsValid($new_file_name)) {
 		$do_not_save = 1;
-		$c->addbadmessage($c->maketext(
-			'"[_1]" is not an allowed file path. Each part of the path can only contain letters, digits, spaces, and '
-				. 'the characters "-", "_", ".", "+", ",", "(", ")", and "~~", and cannot start with a period.',
-			$new_file_name
-		));
+		$c->addbadmessage(filePathRequirementsMessage($c, $new_file_name));
 	}
 
 	# Rescue the user in case they forgot to end the file name with the right extension.
