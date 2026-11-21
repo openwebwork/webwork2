@@ -1,16 +1,29 @@
 /* gateway styles */
 
-#gwTimerContainer {
+#gwInfoPanel {
 	position: sticky;
 	width: 18em;
+	max-width: 100%;
 	top: 2.75rem;
 	left: calc(100% - 18em - 0.75rem);
 	right: 0.75rem;
 	z-index: 31;
+
+	@media (max-width: 576px) {
+		display: contents;
+	}
 }
 
 #gwAnnounceTimeBtn {
 	padding: 1px 2px;
+}
+
+#gwTimerContainer {
+	@media (max-width: 576px) {
+		position: sticky;
+		top: 0.5rem;
+		z-index: 31;
+	}
 }
 
 .gwAlert {
@@ -27,25 +40,29 @@
 	color: black;
 	box-shadow: 3px 3px 0.5em darkgray;
 	font-family: Times serif;
-	z-index: 30;
 	font-size: 85%;
 	border-color: #ffeeaa;
 	border: 2px;
 	width: 15em;
-	top: 8em;
-	right: 2em;
+	max-width: 100%;
 	padding: 10px;
-	position: fixed;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
+	position: absolute;
+	top: calc(100% + 0.5rem);
+	right: 0;
 	border-radius: 4px;
+
+	@media (max-width: 576px) {
+		position: static;
+		width: 100%;
+	}
 
 	table {
 		border: 0;
 
 		td,
 		th {
-			margin-left: 0.2em;
+			text-align: center;
+			padding: 0 0.2em;
 		}
 	}
 }
