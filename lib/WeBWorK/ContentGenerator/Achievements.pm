@@ -9,6 +9,7 @@ This produces a list of earned achievements for each student.
 
 =cut
 
+use WeBWorK::HTML::StudentNav    qw(studentNav);
 use WeBWorK::Utils::Achievements qw(sortAchievements thaw_base64);
 use WeBWorK::AchievementItems;
 
@@ -26,6 +27,18 @@ sub initialize ($c) {
 		if $ce->{achievementItemsEnabled} && defined $c->{globalData};
 
 	return;
+}
+
+sub nav ($c, $args) {
+	return '' unless $c->authz->hasPermissions($c->authen->{user_id}, 'become_student');
+
+	return $c->tag(
+		'div',
+		class        => 'row sticky-nav',
+		role         => 'navigation',
+		'aria-label' => 'student navigation',
+		studentNav($c, undef)
+	);
 }
 
 sub getAchievementLevelData ($c) {

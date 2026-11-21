@@ -88,7 +88,7 @@ sub initialize ($c) {
 		unshift(@$row, $rank);
 
 		$c->{showLevels}  = 1     if $row->[2];
-		$c->{currentRank} = $rank if $c->{studentName} eq $row->[3]->user_id;
+		$c->{currentRank} = $rank if $c->{userName} eq $row->[3]->user_id;
 	}
 	$c->{maxRank}         = $rank;
 	$c->{leaderBoardRows} = \@rows;

@@ -1,6 +1,4 @@
 <ul class="nav flex-column">
-	<li class="list-group-item nav-item"><%= $makelink->('options') %></li>
-	<li><hr class="site-nav-separator"></li>
 	% if ($authz->hasPermissions($userID, 'create_and_delete_courses')) {
 		% my $admin_pattern = qr/$ce->{admin_course_id}$/;
 		<li class="list-group-item nav-item">
