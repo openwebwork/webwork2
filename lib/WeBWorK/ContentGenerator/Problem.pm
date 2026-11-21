@@ -7,6 +7,8 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
 
+use Mojo::DOM;
+
 use WeBWorK::Debug           qw(debug);
 use WeBWorK::Utils           qw(decodeAnswers wwRound);
 use WeBWorK::Utils::DateTime qw(before between after);
@@ -1327,6 +1329,12 @@ sub output_email_instructor ($c) {
 		$problemError = join("\n", @lines > 20 ? (@lines[ 0 .. 19 ], '...') : @lines);
 	}
 
+	# Include any warnings shown on the page.
+	my @warnings = map { Mojo::DOM->new($_)->all_text =~ s/^\s+|\s+$//gr }
+		(split(/\n+/, $c->{pg}{warnings} // ''), @{ $c->{pg}{warning_messages} // [] });
+	@warnings = grep {/\S/} @warnings;
+	my $problemWarnings = @warnings ? join("\n", @warnings > 20 ? (@warnings[ 0 .. 19 ], '...') : @warnings) : undef;
+
 	# FIXME: Most of what is passed here is only needed by the feedback form, and should be extracted in the
 	# feedbackMacro method and only for that case.
 	return $c->feedbackMacro(
@@ -1347,7 +1355,8 @@ sub output_email_instructor ($c) {
 		showHints          => $c->{will}{showHints},
 		showSolutions      => $c->{will}{showSolutions},
 		pg_object          => $c->{pg},
-		defined $problemError ? (problemError => $problemError) : ()
+		defined $problemError    ? (problemError    => $problemError)    : (),
+		defined $problemWarnings ? (problemWarnings => $problemWarnings) : ()
 	);
 }
 

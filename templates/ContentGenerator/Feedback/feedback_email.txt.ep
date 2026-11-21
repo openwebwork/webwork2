@@ -29,6 +29,12 @@
 <%== $problemError %>
 
 % }
+% if ($problemWarnings) {
+<%= maketext('The problem produced the following warnings:') %>
+
+<%== $problemWarnings %>
+
+% }
 % if ($screenshotCID) {
 <%= maketext('A screenshot of the problem is attached.') %>
 

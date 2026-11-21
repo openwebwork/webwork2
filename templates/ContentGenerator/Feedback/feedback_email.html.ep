@@ -45,6 +45,19 @@
 			>
 <%= $problemError %></pre>
 		% }
+		% if ($problemWarnings) {
+			<p><%= maketext('The problem produced the following warnings:') %></p>
+			<pre
+				style="
+					border: 1px solid lightgray;
+					padding: 1rem;
+					margin-bottom: 1rem;
+					border-radius: 0.375rem;
+					white-space: pre-wrap;
+				"
+			>
+<%= $problemWarnings %></pre>
+		% }
 		% if ($screenshotCID) {
 			<p><%= maketext('Screenshot of the problem:') %></p>
 			<div style="margin-bottom: 1rem">

@@ -28,6 +28,7 @@ use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients format
 # showHints (if from Problem)
 # showSolutions (if from Problem)
 # problemError (if from Problem and the problem failed to render)
+# problemWarnings (if from Problem and the problem has warnings)
 # screenshot (if from Problem and $ce->{mail}{feedbackScreenshot} is set)
 # includeScreenshot
 
@@ -143,16 +144,17 @@ sub initialize ($c) {
 		my $screenshotCID = $screenshot ? sprintf('screenshot.%d.%X@webwork', time, int rand 2**32) : undef;
 
 		my %data = (
-			user          => $user,
-			emailableURL  => $emailableURL,
-			feedback      => $feedback,
-			problem       => $problem,
-			set           => $set,
-			verbosity     => $verbosity,
-			screenshotCID => $screenshotCID,
-			problemError  => $problem ? substr($c->param('problemError') // '', 0, 5000) : '',
-			remote_host   => $c->tx->remote_address || 'UNKNOWN',
-			remote_port   => $c->tx->remote_port    || 'UNKNOWN'
+			user            => $user,
+			emailableURL    => $emailableURL,
+			feedback        => $feedback,
+			problem         => $problem,
+			set             => $set,
+			verbosity       => $verbosity,
+			screenshotCID   => $screenshotCID,
+			problemError    => $problem ? substr($c->param('problemError')    // '', 0, 5000) : '',
+			problemWarnings => $problem ? substr($c->param('problemWarnings') // '', 0, 5000) : '',
+			remote_host     => $c->tx->remote_address || 'UNKNOWN',
+			remote_port     => $c->tx->remote_port    || 'UNKNOWN'
 		);
 
 		my $email =

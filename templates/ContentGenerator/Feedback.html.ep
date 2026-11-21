@@ -26,7 +26,8 @@
 	<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data', begin =%>
 		<%= $c->hidden_authen_fields =%>
 		<%= $c->hidden_fields(
-			qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions problemError)) =%>
+			qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions problemError problemWarnings)
+		) =%>
 		%
 		<div class="mb-3">
 			<%= maketext(
@@ -34,6 +35,11 @@
 					. 'to report an error in a problem you are attempting. Along with your message, additional '
 					. 'information about the state of the system will be included.') =%>
 		</div>
+		% if (param('problemWarnings')) {
+			<div class="alert alert-info mb-3">
+				<%= maketext('The warning messages shown for the problem will be included in the email.') =%>
+			</div>
+		% }
 		<div class="row mb-3">
 			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
 			<div class="col-auto">
