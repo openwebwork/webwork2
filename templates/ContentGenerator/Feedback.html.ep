@@ -78,20 +78,28 @@
 					accept => 'image/*,application/pdf,application/zip,text/plain,text/csv' =%>
 			</div>
 		</div>
-		% # Screenshot
-		% if (my $screenshot = stash 'screenshot') {
-			<div class="mb-3">
+		% my $screenshot = stash 'screenshot';
+		% if ($screenshot) {
+			<div class="form-check mb-3">
 				<%= hidden_field screenshot => $screenshot =%>
-				<div class="form-check mb-2">
-					<%= check_box
-						includeScreenshot => 1,
-						id                => 'includeScreenshot',
-						class             => 'form-check-input' =%>
-					<%= label_for
-						includeScreenshot => maketext(
-							'Include this screenshot of the problem (only if it would help explain your message)'),
-						class => 'form-check-label' =%>
-				</div>
+				<%= check_box
+					includeScreenshot => 1,
+					id                => 'includeScreenshot',
+					class             => 'form-check-input' =%>
+				<%= label_for
+					includeScreenshot =>
+					maketext('Include the screenshot below (only if it would help explain your message)'),
+					class => 'form-check-label' =%>
+			</div>
+		% }
+		<div class="d-flex flex-wrap gap-2 mb-3">
+			<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary' =%>
+			% if ($returnURL) {
+				<%= link_to maketext('Cancel E-mail') => $returnURL, class => 'btn btn-primary' =%>
+			% }
+		</div>
+		% if ($screenshot) {
+			<div class="mb-3">
 				<img
 					src="<%= $screenshot %>"
 					class="img-fluid border rounded"
@@ -99,9 +107,5 @@
 				>
 			</div>
 		% }
-		<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary mb-1' =%>
 	<% end =%>
-	% if ($returnURL) {
-		<div><%= link_to maketext('Cancel E-mail') => $returnURL, class => 'btn btn-primary mt-2' =%></div>
-	% }
 % }
