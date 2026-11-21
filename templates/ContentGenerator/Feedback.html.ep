@@ -67,7 +67,7 @@
 			<%= text_area
 				feedback    => '',
 				id          => 'feedback',
-				rows        => '10',
+				rows        => '5',
 				class       => 'form-control',
 				placeholder => maketext('Compose Email Message'),
 				required    => undef =%>
