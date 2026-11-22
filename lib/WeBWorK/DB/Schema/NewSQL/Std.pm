@@ -979,6 +979,13 @@ sub sql_field_expression {
 	}
 }
 
+# Build the where clause term that matches a keyfield between the
+# primary table and a lower priority table when merging records.
+sub merge_keyfield_where {
+	my ($self, $field, $pri_expression, $table_expression) = @_;
+	return "$pri_expression=$table_expression";
+}
+
 sub DESTROY { }
 
 1;
