@@ -993,7 +993,7 @@ async sub initialize ($c) {
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg_result->{state}{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_result->{state}{num_of_incorrect_ans});
-				$pureProblem->problem_data(encode_json($pg_result->{PERSISTENCE_HASH} || '{}'));
+				$pureProblem->problem_data(encode_json($pg_result->{PERSISTENCE_HASH} || {}));
 
 				# Add flags which are really a comma separated list of answer types.
 				$pureProblem->flags($answer_types_string);
@@ -1371,7 +1371,7 @@ async sub getProblemHTML ($c, $effectiveUser, $set, $formFields, $mergedProblem)
 
 	# If the user can check answers and either this is not an answer submission or the problem_data form
 	# parameter was previously set, then set or update the problem_data form parameter.
-	$c->param('problem_data_' . $mergedProblem->problem_id => encode_json($pg->{PERSISTENCE_HASH} || '{}'))
+	$c->param('problem_data_' . $mergedProblem->problem_id => encode_json($pg->{PERSISTENCE_HASH} || {}))
 		if $c->{can}{checkAnswers}
 		&& (!$c->{submitAnswers} || defined $c->param('problem_data_' . $mergedProblem->problem_id));
 
