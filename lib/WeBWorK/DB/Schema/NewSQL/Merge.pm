@@ -77,9 +77,15 @@ sub merge_init {
 			# primary table to the values in all other tables that have that field
 			foreach my $table (@merge_tables[ 1 .. $#merge_tables ]) {
 				next unless exists $db->{$table}->field_data->{$field};
-				push @sql_whereprefix,
-					$db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri}) . "="
-					. $db->{$table}->sql_field_expression($field, $sql_table_aliases{$table});
+				if ($field eq 'version_id') {
+					# Merge with test template set, which is version 0.
+					push @sql_whereprefix,
+						$db->{$table}->sql_field_expression($field, $sql_table_aliases{$table}) . '=0';
+				} else {
+					push @sql_whereprefix,
+						$db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri}) . "="
+						. $db->{$table}->sql_field_expression($field, $sql_table_aliases{$table});
+				}
 			}
 		} else {
 			# if it's not a keyfield, we use the COALESCE function to select a
