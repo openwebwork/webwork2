@@ -8,7 +8,7 @@ use WeBWorK::Debug qw(debug);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Localize;
-use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP/;
+use WeBWorK::Utils qw/processEmailMessage createEmailSenderTransportSMTP emailMessageId/;
 
 # Send instructor email messages to students.
 # FIXME: This job currently allows multiple jobs to run at once.  Should it be limited?
@@ -68,6 +68,7 @@ sub mail_message_to_recipients ($job, $ce, $db, $mail_data) {
 			Email::Stuffer->to($user_record->email_address)
 			->subject($mail_data->{subject})
 			->text_body($msg)
+			->header('Message-ID'    => emailMessageId($ce))
 			->header('X-Remote-Host' => $mail_data->{remote_host});
 		if ($ce->{instructor_sender_email}) {
 			$email->from($mail_data->{from_name} . ' <' . $ce->{instructor_sender_email} . '>')

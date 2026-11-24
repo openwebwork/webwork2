@@ -12,7 +12,8 @@ use Email::Stuffer;
 use Try::Tiny;
 
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(createEmailSenderTransportSMTP fetchEmailRecipients formatEmailSubject isValidEmailAddress);
+use WeBWorK::Utils
+	qw(createEmailSenderTransportSMTP emailMessageId fetchEmailRecipients formatEmailSubject isValidEmailAddress);
 
 # request parameters used
 #
@@ -124,6 +125,7 @@ sub initialize ($c) {
 			->subject($subject)
 			->text_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', format => 'txt', %data))
 			->html_body($c->render_to_string('ContentGenerator/Feedback/feedback_email', %data))
+			->header('Message-ID'    => emailMessageId($ce))
 			->header('X-Remote-Host' => $data{remote_host});
 		if ($ce->{feedback_sender_email}) {
 			$email->from($user->full_name . " <$ce->{feedback_sender_email}>")->reply_to($sender);

@@ -165,6 +165,12 @@ my %modulesList = (
 			rhel   => 'perl-Email-Address-XS'
 		}
 	},
+	'Email::MessageID' => {
+		package => {
+			ubuntu => 'libemail-messageid-perl',
+			rhel   => 'perl-Email-MessageID'
+		}
+	},
 	'Email::Sender::Transport::SMTP' => {
 		package => {
 			ubuntu => 'libemail-sender-perl',

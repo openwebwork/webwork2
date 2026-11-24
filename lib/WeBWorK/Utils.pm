@@ -2,6 +2,7 @@ package WeBWorK::Utils;
 use Mojo::Base 'Exporter', -signatures;
 
 use Email::Address::XS;
+use Email::MessageID;
 use Email::Sender::Transport::SMTP;
 use Mojo::JSON qw(from_json to_json);
 use Mojo::Util qw(b64_encode b64_decode encode decode);
@@ -29,6 +30,7 @@ our @EXPORT_OK = qw(
 	fetchEmailRecipients
 	processEmailMessage
 	createEmailSenderTransportSMTP
+	emailMessageId
 	isValidEmailAddress
 	generateURLs
 	formatEmailSubject
@@ -320,6 +322,11 @@ sub createEmailSenderTransportSMTP ($ce) {
 		defined $ce->{mail}->{smtpSSLOptions} ? (ssl_options   => $ce->{mail}{smtpSSLOptions}) : (),
 		timeout => $ce->{mail}{smtpTimeout},
 	});
+}
+
+sub emailMessageId ($ce) {
+	my ($host) = $ce->{server_root_url} =~ m{^\w+://([^/:]+)};
+	return Email::MessageID->new(host => $host || 'localhost')->in_brackets;
 }
 
 sub isValidEmailAddress ($address) {
@@ -731,6 +738,14 @@ Usage: C<createEmailSenderTransportSMTP($ce)>
 
 This returns an C<Email::Sender::Transport::SMTP> object for use in sending
 emails. A valid C<WeBWorK::CourseEnvironment> object must be provided in C<$ce>.
+
+=head2 emailMessageId
+
+Usage: C<emailMessageId($ce)>
+
+Returns a unique C<Message-ID> header value for an outgoing email, using the
+server's domain (from C<< $ce->{server_root_url} >>) as the host part. A valid
+C<WeBWorK::CourseEnvironment> object must be provided in C<$ce>.
 
 =head2 isValidEmailAddress
 
