@@ -36,8 +36,7 @@ sub initialize ($c) {
 	return unless $c->stash->{set_record};
 
 	# Get all user records and cache them for later use.
-	my @userRecords =
-		$db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]);
+	my @userRecords = $db->getUsersWhere({}, [qw/section last_name first_name/]);
 	my %currentUsers =
 		map { $ce->status_abbrev_has_behavior($_->status, 'include_in_assignment') ? ($_->user_id => 1) : () }
 		@userRecords;

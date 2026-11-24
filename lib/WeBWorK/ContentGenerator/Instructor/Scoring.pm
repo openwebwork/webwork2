@@ -51,7 +51,7 @@ sub initialize ($c) {
 
 		# Get all users sorted by last_name, then first_name, then user_id.
 		debug("pre-fetching users");
-		my @Users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, qw/last_name first_name user_id/);
+		my @Users = $db->getUsersWhere({}, qw/last_name first_name user_id/);
 		my %Users;
 		my @sortedUserIDs;
 		for my $User (@Users) {

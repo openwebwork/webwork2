@@ -15,9 +15,7 @@ sub studentNav ($c, $setID) {
 	return '' unless $c->authz->hasPermissions($userID, 'become_student');
 
 	# Find all users (except the current user) sorted by last_name, then first_name, then user_id.
-	my @allUserRecords =
-		$c->db->getUsersWhere({ -and => { user_id => { not_like => 'set_id:%' } }, user_id => { '!=' => $userID } },
-			[qw/last_name first_name user_id/]);
+	my @allUserRecords = $c->db->getUsersWhere({ user_id => { '!=' => $userID } }, [qw/last_name first_name user_id/]);
 
 	# If $setID is provided, only show users assigned to given set.
 	if ($setID) {

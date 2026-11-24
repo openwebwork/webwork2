@@ -35,15 +35,14 @@ sub initialize ($c) {
 			$c->{problemRecord} = $problemRecord;
 		}
 
-		# Cache a list of all users except set level proctors and practice users, and restrict to the sections
-		# or recitations that are allowed for the user if such restrictions are defined.  This list is sorted by
-		# last_name, then first_name, then user_id.  This is used in multiple places in this module, and is used
-		# on every page except the main page, so it is done here to prevent extra database access.
+		# Cache a list of all users except practice users, and restrict to the sections or recitations that are allowed
+		# for the user if such restrictions are defined.  This list is sorted by last_name, then first_name, then
+		# user_id.  This is used in multiple places in this module, and is used on every page except the main page, so
+		# it is done here to prevent extra database access.
 		$c->{student_records} = [
 			$db->getUsersWhere(
 				{
-					user_id =>
-						[ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+					user_id => { not_like => "$ce->{practiceUserPrefix}\%" },
 					$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
 					? (
 						-or => [

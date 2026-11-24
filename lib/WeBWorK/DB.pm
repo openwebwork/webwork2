@@ -468,13 +468,12 @@ sub newUser {
 
 sub countUsers { return scalar shift->listUsers(@_) }
 
-# Note: This returns a list of user_ids for all users except set level proctors.
 sub listUsers {
 	my ($self) = shift->checkArgs(\@_);
 	if (wantarray) {
-		return map {@$_} $self->{user}->get_fields_where(['user_id'], { user_id => { not_like => 'set_id:%' } });
+		return map {@$_} $self->{user}->get_fields_where(['user_id']);
 	} else {
-		return $self->{user}->count_where({ user_id => { not_like => 'set_id:%' } });
+		return $self->{user}->count_where;
 	}
 }
 
@@ -2141,9 +2140,10 @@ sub getAllMergedProblemVersions {
 # utilities
 ################################################################################
 
-sub check_user_id {    #  (valid characters are [-a-zA-Z0-9_.,@])
+# Valid characters for the user_id column are [-a-zA-Z0-9_.,@].
+sub check_user_id {
 	my $value = shift;
-	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/) {
+	if ($value =~ m/^[-a-zA-Z0-9_.,@]*$/) {
 		return 1;
 	} else {
 		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,@])";
@@ -2179,7 +2179,7 @@ sub validateKeyfieldValue {
 			. "' (valid characters are [0-9])"
 			unless $value =~ m/^[0-9]*$/;
 	} elsif ($keyfield eq "user_id" || $keyfield eq 'userID') {
-		check_user_id($value);    #  (valid characters are [-a-zA-Z0-9_.,]) see above.
+		check_user_id($value);
 	} elsif ($keyfield eq "ip_mask") {
 		croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
 			unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
