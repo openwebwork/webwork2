@@ -742,7 +742,7 @@ sub nav ($c, $args) {
 	);
 }
 
-sub path ($c, $args) {
+sub pageTitle ($c) {
 	my $prettyProblemNumber = $c->stash('problemID');
 
 	my $set = $c->db->getGlobalSet($c->stash('setID'));
@@ -750,28 +750,12 @@ sub path ($c, $args) {
 		$prettyProblemNumber = join('.', jitar_id_to_seq($prettyProblemNumber));
 	}
 
-	my $navigation_allowed = $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
-
-	my @path = (
-		WeBWorK               => $navigation_allowed ? $c->url_for('root')     : '',
-		$c->stash('courseID') => $navigation_allowed ? $c->url_for('set_list') : '',
-		$c->stash('setID')    => $c->url_for('problem_list'),
-	);
-
-	if ($c->current_route eq 'show_me_another') {
-		push(
-			@path,
-			$prettyProblemNumber => $c->url_for('problem_detail'),
-			'Show Me Another'    => ''
-		);
-	} else {
-		push(@path, $prettyProblemNumber => '');
-	}
-
-	return $c->pathMacro($args, @path);
+	return $c->formatTitle('WeBWorK', $c->stash('courseID'),
+		$c->stash('setID'), $prettyProblemNumber,
+		$c->current_route eq 'show_me_another' ? $c->maketext('Show Me Another') : ());
 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	my $db = $c->db;
 
 	my $setID     = $c->stash('setID');

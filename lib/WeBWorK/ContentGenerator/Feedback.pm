@@ -214,7 +214,7 @@ sub initialize ($c) {
 	return;
 }
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	return $c->ce->{feedback_button_name} || $c->maketext('E-mail Instructor');
 }
 

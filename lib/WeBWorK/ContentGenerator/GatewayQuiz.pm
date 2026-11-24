@@ -23,11 +23,6 @@ use WeBWorK::Debug                    qw(debug);
 use PGrandom;
 use WeBWorK::Authen::LTI::GradePassback qw(passbackGradeOnSubmit);
 
-# Disable links for gateway tests.
-sub can ($c, $arg) {
-	return $arg eq 'links' ? 0 : $c->SUPER::can($arg);
-}
-
 # "can" methods
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
@@ -1197,27 +1192,46 @@ sub head ($c) {
 	return $head_text;
 }
 
-sub path ($c, $args) {
-	my $ce         = $c->ce;
-	my $setID      = $c->stash('setID');
-	my $courseName = $ce->{courseName};
+sub pageTitle ($c) {
+	return $c->formatTitle('WeBWorK', $c->ce->{courseName},
+		$c->{invalidSet}
+			|| $c->{actingCreationError}
+			|| $c->stash->{actingConfirmation} ? $c->stash('setID') : ($c->{set}->set_id, 'v' . $c->{set}->version_id));
+}
 
-	my $navigation_allowed = $c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
+sub siblings ($c) {
+	return '' if $c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation};
 
-	return $c->pathMacro(
-		$args,
-		'WeBWorK'   => $navigation_allowed ? $c->url_for('root')     : '',
-		$courseName => $navigation_allowed ? $c->url_for('set_list') : '',
-		$c->{invalidSet} || $c->{actingCreationError} || $c->stash->{actingConfirmation}
-		? (
-			defined $c->stash('versionID')
-			? ($setID => $c->url_for('problem_list', setID => $setID), 'v' . $c->stash('versionID') => '')
-			: ($setID => ''))
-		: (
-			$c->{set}->set_id           => $c->url_for('problem_list', setID => $c->{set}->set_id),
-			'v' . $c->{set}->version_id => ''
-		),
-	);
+	my $problemNumbers = $c->stash->{problem_numbers};
+	return '' unless @$problemNumbers;
+
+	my $startProb      = $c->stash->{startProb};
+	my $endProb        = $c->stash->{endProb};
+	my $numProbPerPage = $c->{set}->problems_per_page;
+
+	my $probsPerPage = $numProbPerPage || scalar(@$problemNumbers);
+
+	my @pages;
+	for my $i (0 .. $#$problemNumbers) {
+		my $onCurrentPage = $i >= $startProb && $i <= $endProb;
+		my $pageNumber    = int($i / $probsPerPage) + 1;
+
+		push(
+			@{ $pages[ $pageNumber - 1 ] },
+			$c->tag(
+				'a',
+				href  => '#',
+				class => 'nav-link problem-jump-link' . ($onCurrentPage ? ' active' : ''),
+				data  => {
+					problem_number => $i + 1,
+					$onCurrentPage ? () : (page_number => $pageNumber)
+				},
+				$c->maketext('Problem [_1]', $i + 1)
+			)
+		);
+	}
+
+	return $c->include('ContentGenerator/GatewayQuiz/siblings', pages => \@pages, separatePages => $numProbPerPage > 1);
 }
 
 sub nav ($c, $args) {

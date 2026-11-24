@@ -1,0 +1,13 @@
+<div class="info-box bg-light">
+	<h2><%= maketext('Problems') %></h2>
+	<ul class="nav flex-column problem-list gwSiblings">
+		% for my $page (0 .. $#$pages) {
+			% if ($page > 0 && $separatePages) {
+				<li class="gwSiblingsSeparator" aria-hidden="true"><hr></li>
+			% }
+			% for (@{ $pages->[$page] }) {
+				<li class="nav-item"><%= $_ %></li>
+			% }
+		% }
+	</ul>
+</div>

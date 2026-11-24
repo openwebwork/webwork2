@@ -519,52 +519,28 @@ Not defined in this package.
 
 View options related to the content displayed in the body or info areas.
 
-=item path($args)
+=item pageTitle()
 
 Defined in this package.
 
-Print "breadcrubs" from the root of the virtual hierarchy to the current page.
-$args is a reference to a hash containing the following fields:
-
- style    => type of separator: text|image
- image    => if style=image, URL of image to use as path separator
- text     => if style=text, text to use as path separator
-             if style=image, the ALT text of each separator image
- textonly => suppress all HTML, return only plain text
+Construct the page title displaying the current page path from the root of the
+virtual hierarchy to the current page.
 
 The implementation in this package gathers the route information from the
 current request.
 
 =cut
 
-sub path ($c, $args = {}) {
+sub pageTitle ($c) {
 	my $route = $c->app->routes->lookup($c->current_route);
-
-	# Determine if navigation is restricted for this user.
-	my $restrict_navigation =
-		$c->authen->was_verified && !$c->authz->hasPermissions($c->authen->{user_id}, 'navigation_allowed');
 
 	my @path;
 
 	do {
-		my $title = route_title($c, $route->name);
-		# If it is a problemID for a jitar set, then display the pretty id.
-		if ($route->name eq 'problem_detail' && $c->stash('setID')) {
-			my $set = $c->db->getGlobalSet($c->stash('setID'));
-			if ($set && $set->assignment_type eq 'jitar') {
-				$title = join('.', jitar_id_to_seq($c->stash('problemID')));
-			}
-		}
-
-		# If navigation is restricted for this user and path, then don't provide the link.
-		unshift @path, $title,
-			$restrict_navigation && route_navigation_is_restricted($route) ? '' : $c->url_for($route->name);
+		unshift @path, route_title($c, $route->name);
 	} while (($route = $route->parent) && ref($route) eq 'Mojolicious::Routes::Route');
 
-	# We don't want the last path element to be a link.
-	$path[-1] = '';
-
-	return $c->pathMacro($args, @path);
+	return $c->formatTitle(@path);
 }
 
 =item siblings()
@@ -605,17 +581,17 @@ sub message ($c) {
 	return $c->{status_message}->join('');
 }
 
-=item page_title()
+=item pageHeader()
 
 Defined in this package.
 
-Print the title of the current page.
+Print the primary header of the current page.
 
 The implementation in this package takes information from the current route.
 
 =cut
 
-sub page_title ($c) {
+sub pageHeader ($c) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
@@ -752,53 +728,17 @@ maintain a consistent style.
 
 =over
 
-=item pathMacro($args, @path)
+=item formatTitle(@path)
 
-Helper macro for the C<#path> escape sequence: $args is a hash reference
-containing the "style", "image", "text", and "textonly" arguments to the escape.
-@path consists of ordered key-value pairs of the form:
-
- "Page Name" => Mojo::URL
-
-If the page should not have a link associated with it, the URL should be the
-empty string. Authentication data is added to each URL so you don't have to. A
-fully-formed path line is returned, suitable for returning by a function
-implementing the C<#path> escape.
+C<@path> is a list of path component titles.  This is a helper macro for the
+C<pageTitle> method that just replaces underscores with spaces and joins the
+path component titles with S< : >. It is useful for packages that override the
+C<pageTitle> method.
 
 =cut
 
-sub pathMacro ($c, $args, @path) {
-	my %args = %$args;
-	$args{style} = 'text' if $args{textonly};
-
-	my %auth = $c->url_authen_args;
-
-	my $result = $c->c;
-	while (@path) {
-		my $name = shift @path;
-		my $url  = shift @path;
-
-		# Skip blank names. Blanks can happen for course header and set header files.
-		next unless $name =~ /\S/;
-
-		$name =~ s/_/ /g;
-
-		if ($url && !$args{textonly}) {
-			if ($args{style} eq 'bootstrap') {
-				push @$result, $c->tag('li', class => 'breadcrumb-item', $c->link_to($name => $url->query(\%auth)));
-			} else {
-				push @$result, $c->link_to($name => $url->query(\%auth));
-			}
-		} else {
-			if ($args{style} eq 'bootstrap') {
-				push @$result, $c->tag('li', class => 'breadcrumb-item active', $name);
-			} else {
-				push @$result, $name;
-			}
-		}
-	}
-
-	return $result->join($args{text});
+sub formatTitle ($c, @path) {
+	return join(' : ', map { $_ =~ s/_/ /gr } @path);
 }
 
 =item navMacro($args, $tail, @links)
