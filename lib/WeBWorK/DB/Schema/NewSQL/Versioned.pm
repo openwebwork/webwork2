@@ -68,4 +68,11 @@ sub keyparts_to_where {
 	return $where;
 }
 
+# When merging a versioned record, the lower priority tables hold the template for the version with a version_id of 0.
+sub merge_keyfield_where {
+	my ($self, $field, $pri_expression, $table_expression) = @_;
+	return "$table_expression=0" if $field eq 'version_id';
+	return $self->SUPER::merge_keyfield_where($field, $pri_expression, $table_expression);
+}
+
 1;

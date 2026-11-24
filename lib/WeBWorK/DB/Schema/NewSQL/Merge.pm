@@ -78,8 +78,11 @@ sub merge_init {
 			foreach my $table (@merge_tables[ 1 .. $#merge_tables ]) {
 				next unless exists $db->{$table}->field_data->{$field};
 				push @sql_whereprefix,
-					$db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri}) . "="
-					. $db->{$table}->sql_field_expression($field, $sql_table_aliases{$table});
+					$db->{$pri}->merge_keyfield_where(
+						$field,
+						$db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri}),
+						$db->{$table}->sql_field_expression($field, $sql_table_aliases{$table})
+					);
 			}
 		} else {
 			# if it's not a keyfield, we use the COALESCE function to select a
