@@ -18,7 +18,7 @@
 	%
 	% # Default explanations
 	% my $default = {
-		% preamble  => maketext('These standard macros need to be loaded.'),
+		% preamble  => maketext('The metadata declares the PG authoring version and the macros that are used.'),
 		% setup     => maketext('This perl code sets up the problem.'),
 		% statement => maketext('This is the problem statement in PGML.'),
 		% answer    => maketext('This is used for answer checking.'),
