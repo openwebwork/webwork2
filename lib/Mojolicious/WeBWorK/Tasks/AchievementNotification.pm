@@ -13,7 +13,7 @@ use WeBWorK::Localize;
 use WeBWorK::Utils qw(createEmailSenderTransportSMTP emailMessageId);
 use WeBWorK::WWSafe;
 use WeBWorK::SafeTemplate;
-use WeBWorK::Utils::Achievements qw(isAchievementAssetSafe);
+use WeBWorK::Utils::Files qw(pathIsSafe);
 
 # send student notification that they have earned an achievement
 sub run ($job, $mail_data) {
@@ -55,7 +55,7 @@ sub send_achievement_notification ($job, $ce, $db, $mail_data) {
 
 	my $email_template = $mail_data->{achievement}{email_template};
 	die "Achievement notification filename \"$email_template\" is unsafe and cannot be used.\n"
-		unless isAchievementAssetSafe($email_template);
+		unless pathIsSafe($email_template);
 
 	my $compartment = WeBWorK::WWSafe->new;
 	$compartment->share_from('main',

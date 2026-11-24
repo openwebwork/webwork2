@@ -33,8 +33,8 @@ use Mojo::File;
 use Text::CSV;
 
 use WeBWorK::Utils               qw(x);
-use WeBWorK::Utils::Files        qw(surePathToFile);
-use WeBWorK::Utils::Achievements qw(sortAchievements isAchievementAssetSafe);
+use WeBWorK::Utils::Files        qw(surePathToFile pathIsSafe);
+use WeBWorK::Utils::Achievements qw(sortAchievements);
 
 # Forms
 use constant EDIT_FORMS   => [qw(save_edit cancel_edit)];
@@ -480,10 +480,10 @@ sub import_handler ($c) {
 		$achievement->description($$data[5]);
 		$achievement->points($$data[6]);
 		$achievement->max_counter($$data[7]);
-		$achievement->test($$data[8] && isAchievementAssetSafe($$data[8])             ? $$data[8]  : '');
-		$achievement->icon($$data[9] && isAchievementAssetSafe($$data[9])             ? $$data[9]  : '');
-		$achievement->email_template($$data[10] && isAchievementAssetSafe($$data[10]) ? $$data[10] : '');
-		$achievement->enabled($assign eq "all"                                        ? 1          : 0);
+		$achievement->test($$data[8] && pathIsSafe($$data[8])             ? $$data[8]  : '');
+		$achievement->icon($$data[9] && pathIsSafe($$data[9])             ? $$data[9]  : '');
+		$achievement->email_template($$data[10] && pathIsSafe($$data[10]) ? $$data[10] : '');
+		$achievement->enabled($assign eq "all"                            ? 1          : 0);
 
 		# Add achievement
 		$db->addAchievement($achievement);
@@ -635,7 +635,7 @@ sub save_edit_handler ($c) {
 				# Filename fields test and icon must be safe paths, and test cannot be empty.
 				# Note this doesn't test the existence of any file.
 				if (FILENAME_FIELDS->{$field}
-					&& (!$value ? $field eq 'test' : !isAchievementAssetSafe($value)))
+					&& (!$value ? $field eq 'test' : ($value =~ /\/$/ || !pathIsSafe($value))))
 				{
 					# Skip filename error message for previous saved values.
 					unless ($value eq $achievement->$field) {

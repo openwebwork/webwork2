@@ -11,8 +11,8 @@ use HTML::Entities;
 use File::Copy;
 
 use WeBWorK::Utils               qw(fix_newlines x);
-use WeBWorK::Utils::Files        qw(surePathToFile readFile);
-use WeBWorK::Utils::Achievements qw(getAchievementAssetPaths isAchievementAssetSafe);
+use WeBWorK::Utils::Files        qw(surePathToFile readFile pathIsSafe filePathIsValid filePathRequirementsMessage);
+use WeBWorK::Utils::Achievements qw(getAchievementAssetPaths);
 
 use constant ACTION_FORMS => [qw(save save_as revert)];
 use constant ACTION_FORM_TITLES => {
@@ -151,9 +151,9 @@ sub save_as_handler ($c) {
 		$c->addbadmessage($c->maketext('Please specify a file to save to.'));
 		return;
 	}
-	unless (isAchievementAssetSafe($new_file_name)) {
-		$c->addbadmessage(
-			$c->maketext('Achievement evaluator "[_1]" not saved because filename is unsafe.', $new_file_name));
+
+	unless (filePathIsValid($new_file_name)) {
+		$c->addbadmessage(filePathRequirementsMessage($c, $new_file_name));
 		return;
 	}
 
