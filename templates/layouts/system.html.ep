@@ -69,66 +69,7 @@
 			</div>
 			<div class="institution-logo p-1">
 				<%= $c->institution_logo %>
-				<div class="dropdown me-2">
-					<button
-						class="btn btn-link p-0 dropdown-toggle d-flex align-items-center"
-						id="color-scheme-chooser"
-						type="button"
-						aria-expanded="false"
-						data-bs-toggle="dropdown"
-						title="<%= maketext('Choose Color Scheme') %>"
-						aria-label="<%= maketext('Choose Color Scheme') %>"
-						data-light-text="<%= maketext('light') %>"
-						data-dark-text="<%= maketext('dark') %>"
-						data-auto-text="<%= maketext('auto') %>"
-					>
-						<i class="fa-solid fa-circle-half-stroke my-1 theme-icon-active" aria-hidden="true"></i>
-						<span class="visually-hidden" id="color-scheme-chooser-text">
-							<%= maketext('Choose Color Scheme') %>
-						</span>
-					</button>
-					<ul class="dropdown-menu" aria-labelledby="color-scheme-chooser-text">
-						<li>
-							<button
-								type="button"
-								class="dropdown-item d-flex align-items-center"
-								data-bs-theme-value="light"
-								aria-pressed="false"
-							>
-								<i class="fa-solid fa-sun me-2 opacity-50" aria-hidden="true"></i>
-								Light
-								<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								class="dropdown-item d-flex align-items-center"
-								data-bs-theme-value="dark"
-								aria-pressed="true"
-							>
-								<i class="fa-solid fa-moon me-2 opacity-50" aria-hidden="true"></i>
-								Dark
-								<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								class="dropdown-item d-flex align-items-center"
-								data-bs-theme-value="auto"
-								aria-pressed="false"
-							>
-								<i class="fa-solid fa-circle-half-stroke me-2 opacity-50" aria-hidden="true"></i>
-								Auto
-								<i class="fa-solid fa-check ms-auto d-none" aria-hidden="true"></i>
-							</button>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="login-status d-flex flex-column justify-content-center gap-1">
-				<%= include 'ContentGenerator/Base/login_status' %>
+				<%= include 'ContentGenerator/Base/masthead_menus' %>
 			</div>
 		</div>
 		% # Navigation

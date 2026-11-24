@@ -36,6 +36,15 @@
 				data            => { bs_toggle => 'dropdown' },
 				'aria-expanded' => 'false' =%>
 			<ul class="dropdown-menu" role="menu" aria-labelledby="studentSelector">
+				% if ($eUserID ne $userID) {
+					<li>
+						<%= link_to $authen->{user}->sortable_name || $userID => $c->systemLink(
+							url_for,
+							params => { effectiveUser => $userID, $filter ? (studentNavFilter => $filter) : () }
+							),
+							class => 'dropdown-item' =%>
+					</li>
+				% }
 				% for (@$userRecords[ $minStudentIndex .. $maxStudentIndex ]) {
 					<li>
 						<%= link_to $_->{displayName} => $c->systemLink(

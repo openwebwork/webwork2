@@ -102,13 +102,6 @@ sub initialize ($c) {
 		} else {
 			push @error, E_ONE_SET;
 		}
-	} elsif (defined $c->param('user_options')) {
-		if ($nusers == 1) {
-			$route = 'options';
-			$params{effectiveUser} = $firstUserID;
-		} else {
-			push @error, E_ONE_USER;
-		}
 	} elsif (defined $c->param('act_as_user')) {
 		if ($nusers == 1 && $nsets <= 1) {
 			if ($nsets) {
@@ -149,9 +142,6 @@ sub initialize ($c) {
 	push @error, x('You are not allowed to assign homework sets.')
 		if ((defined $c->param('sets_assigned_to_user') || defined $c->param('users_assigned_to_set'))
 			&& !$authz->hasPermissions($userID, 'assign_problem_sets'));
-	push @error, x('You are not allowed to modify student data.')
-		if ((defined $c->param('user_options') || defined $c->param('user_options'))
-			&& !$authz->hasPermissions($userID, 'modify_student_data'));
 
 	if (@error) {
 		# Handle errors
