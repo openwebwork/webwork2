@@ -8,19 +8,48 @@
 	<div class="d-inline-block alert alert-danger p-1 mb-2">
 		<em><%= maketext('Deletion destroys course evaluator and is not undoable!') =%></em>
 	</div>
-	<div class="row mb-2">
-		<%= label_for
-			delete_select => maketext('Delete course override?'),
-			class         => 'col-form-label col-form-label-sm col-auto' =%>
-		<div class="col-auto">
-			<%= select_field
-				'action.delete.confirm' =>
-				[ [ maketext('No') => 'no', selected => undef ], [ maketext('Yes') => 'yes' ] ],
-				id    => 'delete_select',
-				class => 'form-select form-select-sm d-inline w-auto me-3' =%>
+	<%= hidden_field 'action.revert.confirm' => '' =%>
+	<div
+		class="modal fade"
+		id="revert_confirm_dialog"
+		tabindex="-1"
+		aria-labelledby="revert_confirm_dialog_title"
+		aria-hidden="true"
+	>
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="revert_confirm_dialog_title">
+						<%= maketext('Delete Course Override') =%>
+					</h1>
+					<button
+						type="button"
+						class="btn-close"
+						data-bs-dismiss="modal"
+						aria-label="<%= maketext('close') %>"
+					></button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-danger p-1 mb-2">
+						<%= maketext('Deletion destroys course evaluator and is not undoable!') =%>
+					</div>
+					<p class="mb-0">
+						<%== maketext(
+							'The course override file [_1] will be permanently deleted, and the system '
+								. 'achievement evaluator will be used instead.',
+							tag('b', $c->addBasePath($c->{sourceFile}))
+						) =%>
+					</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" id="revert_confirm_proceed" class="btn btn-primary">
+						<%= maketext('Delete') =%>
+					</button>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<%= maketext('Cancel') =%>
+					</button>
+				</div>
+			</div>
 		</div>
-	</div>
-	<div id="delete_confirm_err_msg" role="alert" class="alert alert-danger p-1 d-inline-flex d-none">
-		<%= maketext('Please confirm it is okay to delete course override permanently.') %>
 	</div>
 % }
