@@ -275,33 +275,30 @@
 			document.querySelectorAll('[name^="filetrial"]').forEach((prob) => pathlist.push(prob.value));
 		}
 
+		const body = new URLSearchParams(request);
+		for (const path of pathlist) body.append('problemPaths', path);
+
 		try {
-			// The requests must be awaited in the for loop so that the problems are added in the correct order.
-			// FIXME: It would be better to add a api call to add multiple problems in one request.
-			for (const path of pathlist) {
-				request.problemPath = path;
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 10000 * pathlist.length);
 
-				const controller = new AbortController();
-				const timeoutId = setTimeout(() => controller.abort(), 10000);
+			const response = await fetch(`${apiURL}/addProblems`, {
+				method: 'post',
+				mode: 'same-origin',
+				body,
+				signal: controller.signal
+			});
 
-				const response = await fetch(`${apiURL}/addProblem`, {
-					method: 'post',
-					mode: 'same-origin',
-					body: new URLSearchParams(request),
-					signal: controller.signal
-				});
+			clearTimeout(timeoutId);
 
-				clearTimeout(timeoutId);
-
-				if (!response.ok) {
-					throw 'Unknown server communication error.';
-				} else {
-					const data = await response.json();
-					if (data.error) throw data.error;
-				}
+			if (!response.ok) {
+				throw 'Unknown server communication error.';
+			} else {
+				const data = await response.json();
+				if (data.error) throw data.error;
 			}
 		} catch (e) {
-			alertToast(`${apiURL}/addProblem`, e?.message ?? e);
+			alertToast(`${apiURL}/addProblems`, e?.message ?? e);
 			return;
 		}
 

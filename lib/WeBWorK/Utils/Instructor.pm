@@ -27,6 +27,7 @@ our @EXPORT_OK = qw(
 	assignSetToGivenUsers
 	unassignSetsFromUsers
 	assignProblemToAllSetUsers
+	assignProblemsToAllSetUsers
 	addProblemToSet
 	getDefList
 );
@@ -422,7 +423,7 @@ sub unassignSetsFromUsers {
 
 =head2 assignProblemToAllSetUsers
 
-    assignProblemToAllSetUsers($GlobalProblem)
+    assignProblemToAllSetUsers($db, $GlobalProblem)
 
 Assigns the problem specified to all users to whom the problem's set is
 assigned. The problem is also added to all existing versions of the set.
@@ -431,16 +432,46 @@ assigned. The problem is also added to all existing versions of the set.
 
 sub assignProblemToAllSetUsers {
 	my ($db, $GlobalProblem) = @_;
+	return assignProblemsToAllSetUsers($db, $GlobalProblem);
+}
 
-	for my $userID ($db->listSetUsers($GlobalProblem->set_id)) {
-		assignProblemToUser($db, $userID, $GlobalProblem);
+=head2 assignProblemsToAllSetUsers
+
+    assignProblemsToAllSetUsers($db, @GlobalProblems)
+
+Assigns the problems specified to all users to whom the set containing the
+problems is assigned. All of the problems must be in the same set. The problems
+are also added to all existing versions of the set. This is more efficient than
+repeatedly calling C<assignProblemToAllSetUsers>. If any assignments fail, an
+exception is thrown.
+
+=cut
+
+sub assignProblemsToAllSetUsers {
+	my ($db, @GlobalProblems) = @_;
+
+	return unless @GlobalProblems;
+
+	my $setID = $GlobalProblems[0]->set_id;
+
+	eval {
+		$db->start_transaction;
+		_assignMultipleProblemsToGivenUsers($db, [ $db->listSetUsers($setID) ],
+			$setID, map { $_->problem_id } @GlobalProblems);
+		$db->end_transaction;
+	};
+	if (my $err = $@) {
+		$db->abort_transaction;
+		die $err;
 	}
 
-	# A copy of the global problem is passed since assignProblemToUserSetVersion
+	# A copy of each global problem is passed since assignProblemToUserSetVersion
 	# changes the source file of a problem that draws from a grouping problem.
-	for my $setVersion ($db->getSetVersionsWhere({ set_id => $GlobalProblem->set_id })) {
-		assignProblemToUserSetVersion($db, $setVersion->user_id, $setVersion, $db->newGlobalProblem($GlobalProblem),
-			{});
+	for my $setVersion ($db->getSetVersionsWhere({ set_id => $setID })) {
+		for my $GlobalProblem (@GlobalProblems) {
+			assignProblemToUserSetVersion($db, $setVersion->user_id, $setVersion,
+				$db->newGlobalProblem($GlobalProblem), {});
+		}
 	}
 
 	return;

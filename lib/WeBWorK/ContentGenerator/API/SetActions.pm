@@ -4,9 +4,7 @@ use Mojo::Base 'WeBWorK::ContentGenerator::API', -signatures;
 use Mojo::JSON            qw(from_json);
 use Data::Structure::Util qw(unbless);
 
-use WeBWorK::Utils             qw(max);
-use WeBWorK::Utils::Instructor qw(assignProblemToAllSetUsers assignSetToGivenUsers);
-use WeBWorK::Utils::JITAR      qw(seq_to_jitar_id jitar_id_to_seq);
+use WeBWorK::Utils::Instructor qw(addProblemToSet assignProblemsToAllSetUsers assignSetToGivenUsers);
 
 our @apiCalls = qw(
 	listGlobalSets
@@ -26,6 +24,7 @@ our @apiCalls = qw(
 	saveUserSets
 	unassignSetFromUsers
 	addProblem
+	addProblems
 	deleteProblem
 );
 
@@ -367,58 +366,57 @@ sub saveUserSets ($c) {
 }
 
 sub addProblem ($c) {
-	return $c->renderError('You do not have permission for the saveUserSets api command.')
+	return $c->renderError('You do not have permission for the addProblem api command.')
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_student_data');
+	return $c->addProblemsToSet($c->req->param('problemID'), $c->req->param('problemPath'));
+}
 
+sub addProblems ($c) {
+	return $c->renderError('You do not have permission for the addProblems api command.')
+		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_student_data');
+	return $c->addProblemsToSet(undef, @{ $c->req->every_param('problemPaths') });
+}
+
+sub addProblemsToSet ($c, $problemID, @files) {
 	my $db    = $c->db;
 	my $setID = $c->req->param('set_id');
-	my $file  = $c->req->param('problemPath');
 
-	my $problemID = $c->req->param('problemID');
-	my $set       = $db->getGlobalSet($setID);
-	return $c->renderError("Set $setID not found.") unless $set;
+	return $c->renderError('No problem path specified.') if !@files || grep { !$_ } @files;
+	return $c->renderError("Set $setID not found.") unless $db->existsGlobalSet($setID);
 
 	return $c->renderError("Problems cannot be added to set $setID because students have begun working the test.")
 		if $db->existsSetVersionWhere({ set_id => $setID, user_id => { '!=' => $c->authen->{user_id} } });
 
-	if (!defined $problemID || $problemID eq '') {
-		if ($set->assignment_type eq 'jitar') {
-			# For jitar sets the next problem id is the next top level problem.
-			my @problemIDs = $db->listGlobalProblems($setID);
-			my @seq        = (0);
-			@seq       = jitar_id_to_seq($problemIDs[-1]) if $#problemIDs != -1;
-			$problemID = seq_to_jitar_id($seq[0] + 1);
-		} else {
-			$problemID = max($db->listGlobalProblems($setID)) + 1;
-		}
-	}
+	my $value = $c->req->param('value');
 
-	my $problemRecord = $db->newGlobalProblem(
-		problem_id  => $problemID,
-		set_id      => $setID,
-		source_file => $file,
-		value       => defined $c->req->param('value')
-			&& $c->req->param('value') ne '' ? $c->req->param('value') : $c->ce->{problemDefaults}{value},
-		max_attempts         => $c->req->param('maxAttempts')    // $c->ce->{problemDefaults}{max_attempts},
-		showMeAnother        => $c->req->param('showMeAnother')  // $c->ce->{problemDefaults}{showMeAnother},
-		showHintsAfter       => $c->req->param('showHintsAfter') // $c->ce->{problemDefaults}{showHintsAfter},
-		showMeAnotherCount   => 0,
-		att_to_open_children => $c->req->param('att_to_open_children')
-			|| $c->ce->{problemDefaults}{att_to_open_children},
-		counts_parent_grade => $c->req->param('counts_parent_grade')
-			|| $c->ce->{problemDefaults}{counts_parent_grade},
-		prPeriod => $c->req->param('prPeriod') // $c->ce->{problemDefaults}->{prPeriod},
-		prCount  => 0
+	my %problemParams = (
+		setName           => $setID,
+		value             => defined $value && $value ne '' ? $value : undef,
+		maxAttempts       => $c->req->param('maxAttempts'),
+		showMeAnother     => $c->req->param('showMeAnother'),
+		showHintsAfter    => $c->req->param('showHintsAfter'),
+		prPeriod          => $c->req->param('prPeriod'),
+		attToOpenChildren => $c->req->param('att_to_open_children'),
+		countsParentGrade => $c->req->param('counts_parent_grade')
 	);
-	$db->addGlobalProblem($problemRecord);
 
-	assignProblemToAllSetUsers($db, $problemRecord);
+	assignProblemsToAllSetUsers(
+		$db,
+		map {
+			addProblemToSet(
+				$db, $c->ce->{problemDefaults},
+				%problemParams,
+				sourceFile => $_,
+				problemID  => $problemID
+			)
+		} @files
+	);
 
-	return $c->render(json => { message => "Problem added to $setID" });
+	return $c->render(json => { message => @files == 1 ? "Problem added to $setID" : "Problems added to $setID" });
 }
 
 sub deleteProblem ($c) {
-	return $c->renderError('You do not have permission for the saveUserSets api command.')
+	return $c->renderError('You do not have permission for the deleteProblem api command.')
 		unless $c->authz->hasPermissions($c->authen->{user_id}, 'modify_student_data');
 
 	my $setID = $c->req->param('set_id');
