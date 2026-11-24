@@ -571,6 +571,7 @@
 											. (@editForUser ? '' : ' px-1 px-sm-2'),
 											target => 'WW_Editor',
 											data   => {
+												problem_id   => $problemID,
 												bs_toggle    => 'tooltip',
 												bs_placement => 'top',
 												bs_title     => maketext('Edit Problem')
@@ -598,24 +599,19 @@
 													% }
 												% )->fragment("prob$problemNumber");
 											% }
-										% } else {
+										% } elsif (@editForUser == 1) {
 											% $problemLink = $c->systemLink(
 												% url_for(
 													% 'problem_detail',
 													% setID     => $setID,
 													% problemID => $problemID
 												% ),
-												% params => {
-													% effectiveUser => @editForUser == 1
-													% ? $editForUser[0]
-													% : $authen->{user_id}
-												% }
+												% params => { effectiveUser => $editForUser[0] }
 											% );
 										% }
 										% if ($problemLink) {
 											<%= link_to $problemLink,
-												class => 'psd_view btn btn-secondary btn-sm'
-												. (@editForUser ? '' : ' px-1 px-sm-2'),
+												class  => 'psd_view btn btn-secondary btn-sm',
 												target => 'WW_View',
 												data   => {
 													bs_toggle    => 'tooltip',
@@ -812,7 +808,7 @@
 			<%= label_for add_blank_problem => maketext('Add'), class => 'input-group-text' =%>
 			<%= text_field add_n_problems => 1, id => 'add_n_problems', class => 'form-control flex-grow-0' =%>
 			<%= label_for
-				add_n_problems => maketext('blank problem template(s) to end of homework set'),
+				add_n_problems => maketext('blank problem(s) to end of homework set'),
 				class          => 'input-group-text' =%>
 		</div>
 	% }
