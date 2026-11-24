@@ -22,6 +22,7 @@ use WeBWorK::Localize;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::HTML::SingleProblemGrader;
 use WeBWorK::HTML::StudentNav qw(studentNav);
+use WeBWorK::ExternalProblem  qw(isExternalSource);
 
 # GET/POST Parameters for this module
 #
@@ -804,7 +805,9 @@ sub page_title ($c) {
 	}
 
 	# Add the edit link to the sub header if the user has the permissions to edit problems.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets')) {
+	if (!isExternalSource($problem->source_file)
+		&& $c->authz->hasPermissions($c->authen->{user_id}, 'modify_problem_sets'))
+	{
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(
@@ -824,7 +827,7 @@ sub page_title ($c) {
 	}
 
 	# Add the tag edit button to the sub header if the user has permission to edit tags.
-	if ($c->authz->hasPermissions($c->authen->{user_id}, 'modify_tags')) {
+	if (!isExternalSource($problem->source_file) && $c->authz->hasPermissions($c->authen->{user_id}, 'modify_tags')) {
 		$subheader = $c->c(
 			$subheader,
 			$c->tag(

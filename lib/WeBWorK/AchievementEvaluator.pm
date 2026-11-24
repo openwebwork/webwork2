@@ -50,7 +50,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	my $isGatewaySet = ($set->assignment_type =~ /gateway/) ? 1 : 0;
 	my $isJitarSet   = ($set->assignment_type eq 'jitar')   ? 1 : 0;
 
-	# If its a gateway set get the current version.
+	# If it's a gateway set get the current version.
 	if ($isGatewaySet) {
 		$set = $db->getSetVersion($user_id, $set_id, $options{setVersion});
 	}
@@ -71,7 +71,7 @@ sub checkForAchievements ($problem_in, $c, %options) {
 	our $localData         = {};
 	our $globalData        = {};
 	our $userAchievements  = {};
-	our $tags;
+	our $tags              = undef;
 	our @setProblems;
 	our @courseDateTime = (
 		$dtCourseTime->sec,   $dtCourseTime->min,  $dtCourseTime->hour, $dtCourseTime->day,
@@ -141,13 +141,12 @@ sub checkForAchievements ($problem_in, $c, %options) {
 		$globalData->{completedSetIds}{$set_id} = 1;
 	}
 
-	# Get the problem tags if its not a gateway.
+	# Get the problem tags if it's not a gateway.
 	# If it is a gateway get rid of $problem since it doesn't make sense.
 	if ($isGatewaySet) {
 		$problem = undef;
 	} else {
-		my $templateDir = $ce->{courseDirs}{templates};
-		$tags = WeBWorK::Utils::Tags->new($templateDir . '/' . $problem->source_file());
+		$tags = WeBWorK::Utils::Tags->forSource($ce, $problem->source_file);
 	}
 
 	# These variables are shared with the safe compartment.

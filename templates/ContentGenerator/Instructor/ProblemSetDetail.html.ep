@@ -1,7 +1,8 @@
-% use WeBWorK::Utils        qw(sortByName getAssetURL);
-% use WeBWorK::Utils::Files qw(listFilesRecursive);
-% use WeBWorK::Utils::JITAR qw(seq_to_jitar_id jitar_id_to_seq);
-% use WeBWorK::Utils::Sets  qw(get_test_problem_position format_set_name_display);
+% use WeBWorK::Utils           qw(sortByName getAssetURL);
+% use WeBWorK::Utils::Files    qw(listFilesRecursive);
+% use WeBWorK::Utils::JITAR    qw(seq_to_jitar_id jitar_id_to_seq);
+% use WeBWorK::Utils::Sets     qw(get_test_problem_position format_set_name_display);
+% use WeBWorK::ExternalProblem qw(isExternalSource);
 %
 % content_for css => begin
 	<%= stylesheet getAssetURL($ce, 'node_modules/flatpickr/dist/flatpickr.min.css') =%>
@@ -562,23 +563,25 @@
 											<i class="icon fa-regular fa-image" aria-hidden="true"></i>
 											<span class="visually-hidden"><%= maketext('Render') %></span>
 										</button>
-										<%= link_to $c->systemLink(url_for(
-											'instructor_problem_editor_withset_withproblem',
-											setID     => $setID,
-											problemID => $problemID
-											)),
-											class => 'psd_edit btn btn-secondary btn-sm'
-											. (@editForUser ? '' : ' px-1 px-sm-2'),
-											target => 'WW_Editor',
-											data   => {
-												bs_toggle    => 'tooltip',
-												bs_placement => 'top',
-												bs_title     => maketext('Edit Problem')
-											},
-											begin =%>
-											<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
-											<span class="visually-hidden"><%= maketext('Edit') =%></span>
-										<% end =%>
+										% unless (isExternalSource($problemFile)) {
+											<%= link_to $c->systemLink(url_for(
+												'instructor_problem_editor_withset_withproblem',
+												setID     => $setID,
+												problemID => $problemID
+												)),
+												class => 'psd_edit btn btn-secondary btn-sm'
+												. (@editForUser ? '' : ' px-1 px-sm-2'),
+												target => 'WW_Editor',
+												data   => {
+													bs_toggle    => 'tooltip',
+													bs_placement => 'top',
+													bs_title     => maketext('Edit Problem')
+												},
+												begin =%>
+												<i class="icon fa-solid fa-pencil-alt" aria-hidden="true"></i>
+												<span class="visually-hidden"><%= maketext('Edit') =%></span>
+											<% end =%>
+										% }
 										% my $problemLink;
 										% if ($isGatewaySet) {
 											% # Only link to a test when editing a test version.
@@ -750,7 +753,7 @@
 			<ol
 				id="psd_list"
 				class="sortable-branch <%= @editForUser || $problemsLocked ? 'disable_renumber' : '' %>"
-				data-repeat-file-text="<%= maketext('This problem uses the same source file as number ~[_1~].') %>"
+				data-repeat-file-text="<%= maketext('This problem uses the same source as number ~[_1~].') %>"
 			>
 				% if ($isJitarSet) {
 					% # If this is a jitar set then print nested lists.
