@@ -25,7 +25,9 @@
 % } else {
 	<%= form_for current_route, method => 'POST', enctype => 'multipart/form-data', begin =%>
 		<%= $c->hidden_authen_fields =%>
-		<%= $c->hidden_fields(qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions)) =%>
+		<%= $c->hidden_fields(
+			qw(route set problem showOldAnswers showCorrectAnswers showHints showSolutions problemError problemWarnings)
+		) =%>
 		%
 		<div class="mb-3">
 			<%= maketext(
@@ -33,6 +35,11 @@
 					. 'to report an error in a problem you are attempting. Along with your message, additional '
 					. 'information about the state of the system will be included.') =%>
 		</div>
+		% if (param('problemWarnings')) {
+			<div class="alert alert-info mb-3">
+				<%= maketext('The warning messages shown for the problem will be included in the email.') =%>
+			</div>
+		% }
 		<div class="row mb-3">
 			<%= label_for 'from', class => 'col-form-label col-auto', begin =%><b><%= maketext('From:') %></b><% end =%>
 			<div class="col-auto">
@@ -60,7 +67,7 @@
 			<%= text_area
 				feedback    => '',
 				id          => 'feedback',
-				rows        => '20',
+				rows        => '5',
 				class       => 'form-control',
 				placeholder => maketext('Compose Email Message'),
 				required    => undef =%>
@@ -77,9 +84,34 @@
 					accept => 'image/*,application/pdf,application/zip,text/plain,text/csv' =%>
 			</div>
 		</div>
-		<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary mb-1' =%>
+		% my $screenshot = stash 'screenshot';
+		% if ($screenshot) {
+			<div class="form-check mb-3">
+				<%= hidden_field screenshot => $screenshot =%>
+				<%= check_box
+					includeScreenshot => 1,
+					id                => 'includeScreenshot',
+					class             => 'form-check-input' =%>
+				<%= label_for
+					includeScreenshot =>
+					maketext('Include the screenshot below (only if it would help explain your message)'),
+					class => 'form-check-label' =%>
+			</div>
+		% }
+		<div class="d-flex flex-wrap gap-2 mb-3">
+			<%= submit_button maketext('Send E-mail'), name => 'sendFeedback', class => 'btn btn-primary' =%>
+			% if ($returnURL) {
+				<%= link_to maketext('Cancel E-mail') => $returnURL, class => 'btn btn-primary' =%>
+			% }
+		</div>
+		% if ($screenshot) {
+			<div class="mb-3">
+				<img
+					src="<%= $screenshot %>"
+					class="img-fluid border rounded"
+					alt="<%= maketext('Screenshot of the problem') %>"
+				>
+			</div>
+		% }
 	<% end =%>
-	% if ($returnURL) {
-		<div><%= link_to maketext('Cancel E-mail') => $returnURL, class => 'btn btn-primary mt-2' =%></div>
-	% }
 % }

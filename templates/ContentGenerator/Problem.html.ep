@@ -40,7 +40,12 @@
 			data  => { taxonomy => "$ce->{webworkURLs}{htdocs}/DATA/tagging-taxonomy.json" } =%>
 	% }
 	%
-	% # This is for any page specific js.  Right now its just used for achievement popups
+	% # This is used to take a screenshot of the problem for feedback emails.
+	% if ($ce->{mail}{feedbackScreenshot}) {
+		<%= javascript getAssetURL($ce, 'node_modules/modern-screenshot/dist/index.js'), defer => undef =%>
+	% }
+	%
+	% # This is for any page specific js.  Right now its used for achievement popups and feedback screenshots.
 	<%= javascript getAssetURL($ce, 'js/Problem/problem.js'), defer => undef =%>
 	%
 	% # Add JS files requested by problems via ADD_JS_FILE() in the PG file.
